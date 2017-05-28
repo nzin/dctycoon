@@ -15,10 +15,10 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.91 r13725"
-   sodipodi:docname="wallL1.svg"
-   inkscape:export-filename="/Users/nzin/go/src/github.com/nzin/sws/resources/wallL1.png"
-   inkscape:export-xdpi="152.10001"
-   inkscape:export-ydpi="152.10001">
+   sodipodi:docname="wall0.svg"
+   inkscape:export-filename="/Users/nzin/go/src/github.com/nzin/dctycoon/resources/wall0.png"
+   inkscape:export-xdpi="151.55"
+   inkscape:export-ydpi="151.55">
   <defs
      id="defs4" />
   <sodipodi:namedview
@@ -28,9 +28,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="8"
-     inkscape:cx="183.28966"
-     inkscape:cy="377.83929"
+     inkscape:zoom="4"
+     inkscape:cx="131.72716"
+     inkscape:cy="397.83929"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -77,19 +77,19 @@
          x="190.52559"
          y="674.36212" /></text>
     <path
-       style="fill:#000000;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;fill-opacity:1"
-       d="m 228.63071,704.36214 -20.78461,12 0,-12 20.78461,0"
-       id="path4164"
+       style="fill:#dedfb6;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;fill-opacity:1"
+       d="m 176.66918,698.36214 41.56922,-24 0,-120 -41.56922,24 z"
+       id="path5431"
        inkscape:connector-curvature="0" />
     <path
-       style="fill:#dedfb6;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;fill-opacity:1"
-       d="m 187.06149,704.36214 0,-60 20.78461,-12 0,60 z"
-       id="path4166"
+       style="fill:#dedfb6;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;fill-opacity:0.94117647"
+       d="m 218.2384,698.36214 41.56922,0 -41.56922,24 z"
+       id="path5433"
        inkscape:connector-curvature="0" />
     <path
        style="fill:#8d8d8d;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;fill-opacity:1"
-       d="m 187.06149,704.36214 0,-4 20.78461,-12 0,4 z"
-       id="path6537"
+       d="m 176.66918,698.36214 0,-12 41.56922,-24 0,12 z"
+       id="path5435"
        inkscape:connector-curvature="0" />
   </g>
 </svg>

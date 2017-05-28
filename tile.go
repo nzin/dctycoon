@@ -123,11 +123,36 @@ func (self *Tile) Load() {
 
 func (self *Tile) Draw(rotate uint32) *sdl.Surface {
     if self.surface == nil || self.previousRotate!=rotate{
-        self.surface,_ = sdl.CreateRGBSurface(0,140,182,32,0x00ff0000,0x0000ff00,0x000000ff,0xff000000)
+        self.surface,_ = sdl.CreateRGBSurface(0,140,283,32,0x00ff0000,0x0000ff00,0x000000ff,0xff000000)
+        if self.wall[rotate] != "" {
+            wall := getSprite("resources/"+self.wall[rotate]+"0.png")
+            //wall.SetBlendMode(sdl.BLENDMODE_MOD)
+            rectSrc := sdl.Rect{0,0,wall.W,wall.H}
+            rectDst := sdl.Rect{0,283-wall.H,wall.W,wall.H}
+            wall.Blit(&rectSrc,self.surface,&rectDst)
+        }
+        if self.wall[(rotate-1)%4] != "" {
+            wall := getSprite("resources/"+self.wall[(rotate-1)%4]+"1.png")
+            rectSrc := sdl.Rect{0,0,wall.W,wall.H}
+            rectDst := sdl.Rect{0,283-wall.H,wall.W,wall.H}
+            wall.Blit(&rectSrc,self.surface,&rectDst)
+        }
         floor := getSprite("resources/"+self.floor+strconv.Itoa(int(rotate))+".png")
         rectSrc := sdl.Rect{0,0,floor.W,floor.H}
-        rectDst := sdl.Rect{0,182-floor.H,floor.W,floor.H}
+        rectDst := sdl.Rect{0,283-floor.H,floor.W,floor.H}
         floor.Blit(&rectSrc,self.surface,&rectDst)
+        if self.wall[(rotate-2)%4] != "" {
+            wall := getSprite("resources/"+self.wall[(rotate-2)%4]+"2.png")
+            rectSrc := sdl.Rect{0,0,wall.W,wall.H}
+            rectDst := sdl.Rect{0,283-wall.H,wall.W,wall.H}
+            wall.Blit(&rectSrc,self.surface,&rectDst)
+        }
+        if self.wall[(rotate-3)%4] != "" {
+            wall := getSprite("resources/"+self.wall[(rotate-3)%4]+"3.png")
+            rectSrc := sdl.Rect{0,0,wall.W,wall.H}
+            rectDst := sdl.Rect{0,283-wall.H,wall.W,wall.H}
+            wall.Blit(&rectSrc,self.surface,&rectDst)
+        }
 
 //    return self.element.Draw()
     }
