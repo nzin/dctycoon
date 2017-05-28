@@ -3,6 +3,7 @@ package dctycoon
 import (
     "github.com/veandco/go-sdl2/sdl"
     "github.com/veandco/go-sdl2/sdl_image"
+    "fmt"
 )
 
 // base "class" for all tiles
@@ -87,10 +88,72 @@ func (self *ElectricalElement) Power() int32 {
 
 
 
+
+type GrassElement struct {
+    surface   *sdl.Surface
+}
+
+func (self *GrassElement) Save() {
+}
+
+func (self *GrassElement) Load() {
+}
+
+func (self *GrassElement) Draw() *sdl.Surface {
+    return self.surface
+}
+
+func (self *GrassElement) Rotate(face uint32) {
+}
+
+func (self *GrassElement) Power() int32 {
+    return 0
+}
+
+func CreateGrassElement() *GrassElement {
+    surface := getSprite("resources/green.png")
+    ge := &GrassElement { 
+        surface: surface,
+    }
+    return ge
+}
+
+
+
 type Tile struct {
-    wall [4]string // "" when nothing
-    floor string
+    wall    [4]string // "" when nothing
+    floor   string
     element DcElement
+}
+
+func (self *Tile) Save() {
+}
+
+func (self *Tile) Load() {
+}
+
+func (self *Tile) Draw() *sdl.Surface {
+    return self.element.Draw()
+}
+
+func (self *Tile) Rotate(face uint32) {
+    self.element.Rotate(face)
+}
+
+func (self *Tile) Power() int32 {
+    return self.element.Power()
+}
+
+
+
+
+func CreateGrassTile() *Tile {
+    tile := &Tile {
+        wall: [4]string{"","","",""},
+        floor: "green",
+        element: CreateGrassElement(),
+    }
+    return tile
 }
 
 
@@ -98,11 +161,15 @@ type Tile struct {
 var spritecache map[string]*sdl.Surface
 
 func getSprite(image string) *sdl.Surface{
+    if spritecache == nil {
+        spritecache = make(map[string]*sdl.Surface)
+    }
     sprite:=spritecache[image]
     if (sprite==nil) {
        var err error
        sprite,err=img.Load(image)
-       if sprite==nil {
+       if sprite==nil || err!=nil {
+           fmt.Println("Error loading ",image,err)
            panic(err)
        }
        spritecache[image]=sprite

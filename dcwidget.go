@@ -9,7 +9,7 @@ import (
 
 type DcWidget struct {
     sws.SWS_CoreWidget
-    tiles       [][]*DcElement
+    tiles       [][]*Tile
     xRoot,yRoot int32
 }
 
@@ -22,7 +22,7 @@ func (self *DcWidget) Repaint() {
             if tile!=nil {
                 surface := (*tile).Draw()
                 rectSrc := sdl.Rect{0,0,surface.W,surface.H}
-                rectDst := sdl.Rect{self.xRoot+35*int32(x),self.yRoot+20*int32(y),surface.W,surface.H}
+                rectDst := sdl.Rect{self.xRoot+(self.Surface().W/2)+70*int32(x)-70*int32(y),self.yRoot+40*int32(x)+40*int32(y),surface.W,surface.H}
                 surface.Blit(&rectSrc,self.Surface(),&rectDst)
             }
         }
@@ -45,9 +45,12 @@ func (self *DcWidget) Repaint() {
 func (self *DcWidget) LoadMap(dc map[string]interface{}) {
     width := int32(dc["width"].(float64))
     height := int32(dc["height"].(float64))
-    self.tiles = make([][]*DcElement,height)
+    self.tiles = make([][]*Tile,height)
     for y:= range self.tiles {
-        self.tiles[y] = make([]*DcElement,width)
+        self.tiles[y] = make([]*Tile,width)
+        for x:= range self.tiles[y] {
+            self.tiles[y][x] = CreateGrassTile()
+        }
     }
 }
 
@@ -62,7 +65,7 @@ func (self *DcWidget) SaveMap() map[string]interface{} {
 func CreateDcWidget(w,h int32) *DcWidget {
     corewidget := sws.CreateCoreWidget(w,h)
     widget := &DcWidget { SWS_CoreWidget: *corewidget,
-        tiles: [][]*DcElement{{}},
+        tiles: [][]*Tile{{}},
         xRoot: 0,
         yRoot: 0,
     }

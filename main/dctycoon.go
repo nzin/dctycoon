@@ -12,7 +12,7 @@ import (
 
 func main() {
     root := sws.Init(800,600)
-    dc := dctycoon.CreateDcWidget(800,600)
+    dc := dctycoon.CreateDcWidget(root.Width(),root.Height())
     gamefile,err:=os.Open("example.map")
     if err != nil {
         fmt.Println(err.Error())
