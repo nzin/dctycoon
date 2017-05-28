@@ -4,6 +4,7 @@ import (
     "github.com/veandco/go-sdl2/sdl"
     "github.com/veandco/go-sdl2/sdl_image"
     "fmt"
+    "strconv"
 )
 
 // base "class" for all tiles
@@ -48,7 +49,8 @@ func (self *Rack) Draw() *sdl.Surface {
     return self.surface
 }
 
-func (self *Rack) Rotate(face int32) {
+func (self *Rack) Rotate(rotation uint32) {
+    self.rotation=rotation
 }
 
 func (self *Rack) Power() int32 {
@@ -79,7 +81,7 @@ func (self *ElectricalElement) Draw() *sdl.Surface {
     return self.surface
 }
 
-func (self *ElectricalElement) Rotate(face int32) {
+func (self *ElectricalElement) Rotate(face uint32) {
 }
 
 func (self *ElectricalElement) Power() int32 {
@@ -88,42 +90,29 @@ func (self *ElectricalElement) Power() int32 {
 
 
 
-
-type GrassElement struct {
-    surface   *sdl.Surface
-}
-
-func (self *GrassElement) Save() {
-}
-
-func (self *GrassElement) Load() {
-}
-
-func (self *GrassElement) Draw() *sdl.Surface {
-    return self.surface
-}
-
-func (self *GrassElement) Rotate(face uint32) {
-}
-
-func (self *GrassElement) Power() int32 {
-    return 0
-}
-
-func CreateGrassElement() *GrassElement {
-    surface := getSprite("resources/green.png")
-    ge := &GrassElement { 
+func CreateElectricalElement(flavor string, payload map[string]interface{}) *ElectricalElement {
+    rotation := uint32(payload["rotation"].(float64))
+    power := int32(payload["power"].(float64))
+    capacity := int32(payload["capacity"].(float64))
+    surface := getSprite("resources/"+flavor+strconv.Itoa(int(rotation))+".png")
+    ee := &ElectricalElement { 
+        flavor: flavor,
+        power: power,
+        capacity: capacity,
         surface: surface,
+        rotation: rotation,
     }
-    return ge
+    return ee
 }
 
 
 
 type Tile struct {
-    wall    [4]string // "" when nothing
-    floor   string
-    element DcElement
+    wall           [4]string // "" when nothing
+    floor          string
+    element        DcElement
+    surface        *sdl.Surface
+    previousRotate uint32
 }
 
 func (self *Tile) Save() {
@@ -132,12 +121,26 @@ func (self *Tile) Save() {
 func (self *Tile) Load() {
 }
 
-func (self *Tile) Draw() *sdl.Surface {
-    return self.element.Draw()
+func (self *Tile) Draw(rotate uint32) *sdl.Surface {
+    if self.surface == nil || self.previousRotate!=rotate{
+        self.surface,_ = sdl.CreateRGBSurface(0,140,182,32,0x00ff0000,0x0000ff00,0x000000ff,0xff000000)
+        floor := getSprite("resources/"+self.floor+strconv.Itoa(int(rotate))+".png")
+        rectSrc := sdl.Rect{0,0,floor.W,floor.H}
+        rectDst := sdl.Rect{0,182-floor.H,floor.W,floor.H}
+        floor.Blit(&rectSrc,self.surface,&rectDst)
+
+//    return self.element.Draw()
+    }
+    self.previousRotate=rotate
+    return self.surface
 }
 
+// individual rotate
 func (self *Tile) Rotate(face uint32) {
-    self.element.Rotate(face)
+    self.surface=nil
+    if self.element!=nil {
+        self.element.Rotate(face)
+    }
 }
 
 func (self *Tile) Power() int32 {
@@ -151,7 +154,22 @@ func CreateGrassTile() *Tile {
     tile := &Tile {
         wall: [4]string{"","","",""},
         floor: "green",
-        element: CreateGrassElement(),
+        element: nil,
+    }
+    return tile
+}
+
+
+
+func CreateElectricalTile(wall0,wall1,wall2,wall3,floor,dcelementtype string, dcelement map[string]interface{}) *Tile {
+    var element *ElectricalElement
+    if dcelementtype!="" {
+        element = CreateElectricalElement(dcelementtype,dcelement)
+    }
+    tile := &Tile {
+        wall: [4]string{wall0,wall1,wall2,wall3},
+        floor: floor,
+        element: element,
     }
     return tile
 }

@@ -15,10 +15,10 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.91 r13725"
-   sodipodi:docname="green.svg"
+   sodipodi:docname="inside.svg"
    inkscape:export-filename="/Users/nzin/go/src/github.com/nzin/dctycoon/resources/green.png"
-   inkscape:export-xdpi="151.875"
-   inkscape:export-ydpi="151.875">
+   inkscape:export-xdpi="152.10001"
+   inkscape:export-ydpi="152.10001">
   <defs
      id="defs4" />
   <sodipodi:namedview
@@ -28,8 +28,8 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="16"
-     inkscape:cx="193.62648"
+     inkscape:zoom="8"
+     inkscape:cx="208.93898"
      inkscape:cy="340.51888"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -56,7 +56,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>

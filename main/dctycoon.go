@@ -27,6 +27,7 @@ func main() {
 
     dc.LoadMap(v)
     root.AddChild(dc)
+    root.SetFocus(dc)
     
     for sws.PoolEvent() == false {
     }
