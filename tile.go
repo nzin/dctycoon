@@ -7,6 +7,12 @@ import (
     "strconv"
 )
 
+const (
+    TILE_WIDTH_STEP = 140
+    TILE_HEIGHT_STEP = 80
+    TILE_HEIGHT = 283
+)
+
 // base "class" for all tiles
 type DcElement interface { // should be passive, rack, ...
     Save() // json
@@ -123,6 +129,9 @@ func (self *Tile) Load() {
 
 func (self *Tile) Draw(rotate uint32) *sdl.Surface {
     if self.surface == nil || self.previousRotate!=rotate{
+        if self.surface != nil {
+            self.surface.Free()
+        }
         self.surface,_ = sdl.CreateRGBSurface(0,140,283,32,0x00ff0000,0x0000ff00,0x000000ff,0xff000000)
         if self.wall[rotate] != "" {
             wall := getSprite("resources/"+self.wall[rotate]+"0.png")
