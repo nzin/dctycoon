@@ -15,11 +15,11 @@ const (
 
 // base "class" for all tiles
 type DcElement interface { // should be passive, rack, ...
-    Save() // json
-    Load() // json
+    ElementType() string // to know which type to save
+    Save() string // json
     Draw() *sdl.Surface
     Rotate(face uint32) // face can be 0,1,2,3 (i.e. 0, 90, 180, 270)
-    Power() int32 // ampere
+    Power() float64 // ampere
 }
 
 
@@ -28,7 +28,7 @@ type RackPart struct {
     size          int32 // 1u,2u,4u, 8u...
     name          string // space, rack2u, rack4u, blade, switch, KVM ...
     //sprite        string // name of the png 
-    power         int32  // in Ampere
+    power         float64  // in Ampere
     // what about elements: disk, cpu, RAM...
     disksize      int32 // in Go
     disknum       int32
@@ -38,27 +38,21 @@ type RackPart struct {
 }
 
 func CreateRackPart(payload map[string]interface{}) *RackPart {
+    var val interface{}
+    var ok bool
+    var disksize,disknum,cpunum,ramsize int32
+    var power float64
+    var virtualizable bool
+
     name:=payload["name"].(string)
     size:=int32(payload["size"].(float64))
-    if (name=="space") {
-        rp := &RackPart {
-            size: size,
-            name: name,
-            power: 0,
-            disksize: 0,
-            disknum: 0,
-            cpunum: 0,
-            ramsize: 0,
-            virtualizable: false,
-        }
-        return rp
-    }
-    power:=int32(payload["power"].(float64))
-    disksize:=int32(payload["disksize"].(float64))
-    disknum:=int32(payload["disknum"].(float64))
-    cpunum:=int32(payload["cpunum"].(float64))
-    ramsize:=int32(payload["ramsize"].(float64))
-    virtualizable:=payload["vt"].(bool)
+
+    if val,ok = payload["power"]; ok {power=val.(float64) }
+    if val,ok = payload["disksize"]; ok { disksize=int32(val.(float64)) }
+    if val,ok = payload["disknum"]; ok { disknum=int32(val.(float64)) }
+    if val,ok = payload["cpunum"]; ok { cpunum=int32(val.(float64)) }
+    if val,ok = payload["ramsize"]; ok { ramsize=int32(val.(float64)) }
+    if val,ok = payload["vt"]; ok { virtualizable=val.(bool) }
     
     rp :=&RackPart {
         size: size,
@@ -73,6 +67,19 @@ func CreateRackPart(payload map[string]interface{}) *RackPart {
     return rp
 }
 
+func (self *RackPart) Save() string {
+    return fmt.Sprintf(`{"name":"%s", "size":%d, "power":%g, "disksize":%d, "disknum":%d, "cpunum":%d, "ramsize":%d, "vt":%t}`,
+        self.name,
+        self.size,
+        self.power,
+        self.disksize,
+        self.disknum,
+        self.cpunum,
+        self.ramsize,
+        self.virtualizable,
+        )
+}
+
 
 
 type RackElement struct {
@@ -81,10 +88,20 @@ type RackElement struct {
     rotation  uint32
 }
 
-func (self *RackElement) Save() {
+func (self *RackElement) ElementType() string {
+    return "rack"
 }
 
-func (self *RackElement) Load() {
+func (self *RackElement) Save() string {
+    s:=fmt.Sprintf(`{"rotation":%d, "rackmount":[`,self.rotation)
+    for i,rp := range self.rackmount {
+        s=s+rp.Save()
+        if i<len(self.rackmount)-1 {
+            s=s+","
+        }
+    }
+    s=s+"]}"
+    return s
 }
 
 func (self *RackElement) Draw() *sdl.Surface {
@@ -112,8 +129,8 @@ func (self *RackElement) Rotate(rotation uint32) {
     self.rotation=rotation
 }
 
-func (self *RackElement) Power() int32 {
-    power := int32(0)
+func (self *RackElement) Power() float64 {
+    power := float64(0)
     for _,e := range self.rackmount {
         power+=e.power
     }
@@ -141,16 +158,22 @@ func CreateRackElement(payload map[string]interface{}) *RackElement {
 
 type ElectricalElement struct {
     flavor    string // ac, battery, generatorA,generatorB
-    power     int32  // negative if it is a generator
+    power     float64  // negative if it is a generator
     capacity  int32  // kWh if it is a battery
     surface   *sdl.Surface
     rotation  uint32
 }
 
-func (self *ElectricalElement) Save() {
+func (self *ElectricalElement) ElementType() string {
+    return self.flavor
 }
 
-func (self *ElectricalElement) Load() {
+func (self *ElectricalElement) Save() string {
+    s:=fmt.Sprintf(`{"power":%g, "capacity":%d, "rotation":%d}`,
+        self.power,
+        self.capacity,
+        self.rotation)
+    return s
 }
 
 func (self *ElectricalElement) Draw() *sdl.Surface {
@@ -160,7 +183,7 @@ func (self *ElectricalElement) Draw() *sdl.Surface {
 func (self *ElectricalElement) Rotate(face uint32) {
 }
 
-func (self *ElectricalElement) Power() int32 {
+func (self *ElectricalElement) Power() float64 {
     return self.power
 }
 
@@ -168,7 +191,7 @@ func (self *ElectricalElement) Power() int32 {
 
 func CreateElectricalElement(flavor string, payload map[string]interface{}) *ElectricalElement {
     rotation := uint32(payload["rotation"].(float64))
-    power := int32(payload["power"].(float64))
+    power := payload["power"].(float64)
     capacity := int32(payload["capacity"].(float64))
     surface := getSprite("resources/"+flavor+strconv.Itoa(int(rotation))+".png")
     ee := &ElectricalElement { 
@@ -191,9 +214,6 @@ type Tile struct {
 }
 
 func (self *Tile) Save() {
-}
-
-func (self *Tile) Load() {
 }
 
 func (self *Tile) Draw() *sdl.Surface {
@@ -240,7 +260,7 @@ func (self *Tile) Rotate(face uint32) {
     }
 }
 
-func (self *Tile) Power() int32 {
+func (self *Tile) Power() float64 {
     return self.element.Power()
 }
 

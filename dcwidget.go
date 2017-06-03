@@ -4,6 +4,7 @@ import (
     "github.com/nzin/sws"
     "github.com/veandco/go-sdl2/sdl"
     "time"
+    "fmt"
 )
 
 
@@ -171,8 +172,43 @@ func (self *DcWidget) LoadMap(dc map[string]interface{}) {
 
 
 
-func (self *DcWidget) SaveMap() map[string]interface{} {
-    return nil
+func (self *DcWidget) SaveMap() string {
+    s:=fmt.Sprintf(`{"width":%d, "height":%d, "tiles": [`,len(self.tiles[0]), len(self.tiles))
+    previous:=false
+    for y,_ := range self.tiles {
+        for x,_ := range self.tiles[y] {
+            t:=self.tiles[y][x]
+            value:=""
+            if t.element==nil {
+                if (t.wall[0]!="" || t.wall[1]!="" || t.floor!="green") {
+                    value=fmt.Sprintf(`{"x":%d, "y":%d, "wall0":"%s", "wall1":"%s", "floor":"%s"}`,
+                      x,
+                      y,
+                      t.wall[0],
+                      t.wall[1],
+                      t.floor,
+                    )
+                }
+            } else {
+                value=fmt.Sprintf(`{"x":%d, "y":%d, "wall0":"%s", "wall1":"%s", "floor":"%s", "dcelementtype":"%s", "dcelement":%s}`,
+                    x,
+                    y,
+                    t.wall[0],
+                    t.wall[1],
+                    t.floor,
+                    t.element.ElementType(),
+                    t.element.Save(),
+                )
+            }
+            if value!="" {
+                if previous==true { s+=",\n"}
+                previous=true
+                s+=value
+            }
+        }
+    }
+    s+="]}"
+    return s
 }
 
 

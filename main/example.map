@@ -1,0 +1,30 @@
+{
+  "width": 10,
+  "height": 12,
+  "tiles": [
+    {"x":0, "y":0, "wall0":"","wall1":"","floor":"inside"},
+    {"x":1, "y":0, "wall0":"","wall1":"wall","floor":"inside"},
+    {"x":2, "y":0, "wall0":"","wall1":"","floor":"inside"},
+    {"x":0, "y":1, "wall0":"","wall1":"","floor":"inside"},
+    {"x":1, "y":1, "wall0":"wall","wall1":"wall","floor":"inside"},
+    {"x":2, "y":1, "wall0":"","wall1":"","floor":"inside"},
+    {"x":1, "y":2, "wall0":"wall","wall1":"","floor":"inside","dcelementtype":"rack",  "dcelement":{"rotation":0, "rackmount":[
+        {"size":1, "name":"server.1u","power":0,"disksize":0,"disknum":0,"cpunum":0,"ramsize":0,"vt":false},
+        {"size":2, "name":"space"},
+        {"size":1, "name":"server.1u","power":0,"disksize":0,"disknum":0,"cpunum":0,"ramsize":0,"vt":false},
+        {"size":1, "name":"server.1u","power":0,"disksize":0,"disknum":0,"cpunum":0,"ramsize":0,"vt":false}
+    ]}},
+    {"x":4, "y":4, "wall0":"","wall1":"","floor":"inside","dcelementtype":"rack",  "dcelement":{"rotation":1, "rackmount":[
+        {"size":1, "name":"server.1u","power":0,"disksize":0,"disknum":0,"cpunum":0,"ramsize":0,"vt":false},
+        {"size":2, "name":"space"},
+        {"size":1, "name":"server.1u","power":0,"disksize":0,"disknum":0,"cpunum":0,"ramsize":0,"vt":false},
+        {"size":1, "name":"server.1u","power":0,"disksize":0,"disknum":0,"cpunum":0,"ramsize":0,"vt":false}
+    ]}},
+    {"x":6, "y":8, "wall0":"","wall1":"","floor":"inside","dcelementtype":"rack",  "dcelement":{"rotation":2, "rackmount":[
+        {"size":1, "name":"server.1u","power":0,"disksize":0,"disknum":0,"cpunum":0,"ramsize":0,"vt":false},
+        {"size":2, "name":"space"},
+        {"size":1, "name":"server.1u","power":0,"disksize":0,"disknum":0,"cpunum":0,"ramsize":0,"vt":false},
+        {"size":1, "name":"server.1u","power":0,"disksize":0,"disknum":0,"cpunum":0,"ramsize":0,"vt":false}
+    ]}}
+  ]
+}

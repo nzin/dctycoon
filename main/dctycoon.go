@@ -24,6 +24,7 @@ func main() {
         fmt.Println("parsing game file", err.Error())
         os.Exit(1)
     }
+    gamefile.Close()
 
     dc.LoadMap(v)
     root.AddChild(dc)
@@ -31,4 +32,13 @@ func main() {
     
     for sws.PoolEvent() == false {
     }
+    data:=dc.SaveMap()
+    gamefile,err=os.Create("backup.map")
+    if err != nil {
+        fmt.Println(err.Error())
+        os.Exit(1)
+    }
+    gamefile.WriteString(data)
+    
+    gamefile.Close()
 }
