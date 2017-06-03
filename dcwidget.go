@@ -12,7 +12,6 @@ type DcWidget struct {
     sws.SWS_CoreWidget
     tiles       [][]*Tile
     xRoot,yRoot int32
-    rotate      uint32
 }
 
 
@@ -21,55 +20,14 @@ func (self *DcWidget) Repaint() {
     mapheight:=len(self.tiles)
     mapwidth:=len(self.tiles[0])
     self.FillRect(0,0,self.Width(),self.Height(),0xff000000)
-    if (self.rotate==0) {
-        for y:=0; y<mapheight; y++ {
-            for x:=0; x<mapwidth; x++ {
-                tile := self.tiles[y][x]
-                if tile!=nil {
-                    surface := (*tile).Draw(self.rotate)
-                    rectSrc := sdl.Rect{0,0,surface.W,surface.H}
-                    rectDst := sdl.Rect{self.xRoot+(self.Surface().W/2)+70*int32(x)-70*int32(y),self.yRoot+40*int32(x)+40*int32(y),surface.W,surface.H}
-                    surface.Blit(&rectSrc,self.Surface(),&rectDst)
-                }
-            }
-        }
-    }
-    if (self.rotate==1) {
+    for y:=0; y<mapheight; y++ {
         for x:=0; x<mapwidth; x++ {
-            for y:=mapheight-1; y>=0; y-- {
-                tile := self.tiles[y][x]
-                if tile!=nil {
-                    surface := (*tile).Draw(self.rotate)
-                    rectSrc := sdl.Rect{0,0,surface.W,surface.H}
-                    rectDst := sdl.Rect{-self.yRoot+(self.Surface().W/2)+70*int32(mapheight-1-y)-70*   int32(x),self.xRoot+40*int32(mapheight-1-y)+40*int32(x),surface.W,surface.H}
-                    surface.Blit(&rectSrc,self.Surface(),&rectDst)
-                }
-            }
-        }
-    }
-    if (self.rotate==2) {
-        for y:=mapheight-1; y>=0; y-- {
-            for x:=mapwidth-1; x>=0; x-- {
-                tile := self.tiles[y][x]
-                if tile!=nil {
-                    surface := (*tile).Draw(self.rotate)
-                    rectSrc := sdl.Rect{0,0,surface.W,surface.H}
-                    rectDst := sdl.Rect{-self.xRoot+(self.Surface().W/2)+70*int32(mapwidth-1-x)-70*int32(mapheight-1-y),-self.yRoot+40*int32(mapwidth-1-x)+40*int32(mapheight-1-y),surface.W,surface.H}
-                    surface.Blit(&rectSrc,self.Surface(),&rectDst)
-                }
-            }
-        }
-    }
-    if (self.rotate==3) {
-        for y:=0; y<mapheight; y++ {
-            for x:=mapwidth-1; x>=0; x-- {
-                tile := self.tiles[y][x]
-                if tile!=nil {
-                    surface := (*tile).Draw(self.rotate)
-                    rectSrc := sdl.Rect{0,0,surface.W,surface.H}
-                    rectDst := sdl.Rect{self.yRoot+(self.Surface().W/2)+70*int32(y)-70*   int32(mapwidth-1-x),-self.xRoot+40*int32(y)+40*int32(mapwidth-1-x),surface.W,surface.H}
-                    surface.Blit(&rectSrc,self.Surface(),&rectDst)
-                }
+            tile := self.tiles[y][x]
+            if tile!=nil {
+                surface := (*tile).Draw()
+                rectSrc := sdl.Rect{0,0,surface.W,surface.H}
+                rectDst := sdl.Rect{self.xRoot+(self.Surface().W/2)+(TILE_WIDTH_STEP/2)*int32(x)-(TILE_WIDTH_STEP/2)*int32(y),self.yRoot+(TILE_HEIGHT_STEP/2)*int32(x)+(TILE_HEIGHT_STEP/2)*int32(y),surface.W,surface.H}
+                surface.Blit(&rectSrc,self.Surface(),&rectDst)
             }
         }
     }
@@ -92,25 +50,25 @@ func (self *DcWidget) MouseMove(x,y,xrel,yrel int32) {
         sws.StopRepeat(te)
         te=nil
     }
-    if (x<10 && self.rotate==0) || (y<10 && self.rotate==1) || (x>self.Width()-10 && self.rotate==2) || (y>self.Height()-10 && self.rotate==3) {
+    if (x<10) {
         te=sws.TimerAddEvent(time.Now(),50*time.Millisecond,func() {
             self.MoveLeft()
         })
         return
     }
-    if (y<10 && self.rotate==0) || (x>self.Width()-10 && self.rotate==1) || (y>self.Height()-10 && self.rotate==2) || (x<10 && self.rotate==3) {
+    if (y<10) {
         te=sws.TimerAddEvent(time.Now(),50*time.Millisecond,func() {
             self.MoveUp()
         })
         return
     }
-    if (x>self.Width()-10 && self.rotate==0) || (y>self.Height()-10 && self.rotate==1) || (x<10 && self.rotate==2) || (y<10 && self.rotate==3) {
+    if (x>self.Width()-10) {
         te=sws.TimerAddEvent(time.Now(),50*time.Millisecond,func() {
             self.MoveRight()
         })
         return
     }
-    if (y>self.Height()-10 && self.rotate==0) || (x<10 && self.rotate==1) || (y<10 && self.rotate==2) || (x>self.Width()-10 && self.rotate==3) {
+    if (y>self.Height()-10) {
         te=sws.TimerAddEvent(time.Now(),50*time.Millisecond,func() {
             self.MoveDown()
         })
@@ -152,24 +110,19 @@ func (self *DcWidget) MoveDown() {
 }
 
 func (self *DcWidget) KeyDown(key sdl.Keycode, mod uint16) {
-    if (key == sdl.K_LEFT && self.rotate==0) || (key == sdl.K_UP && self.rotate==1) || (key == sdl.K_RIGHT && self.rotate==2) || (key == sdl.K_DOWN && self.          rotate==3) {
+    if (key == sdl.K_LEFT) {
         self.MoveLeft()
     }
-    if (key == sdl.K_UP && self.rotate==0) || (key == sdl.K_RIGHT && self.rotate==1) || (key == sdl.K_DOWN && self.rotate==2) || (key == sdl.K_LEFT && self.rotate==4) {
+    if (key == sdl.K_UP) {
         self.MoveUp()
     }
-    if (key == sdl.K_RIGHT && self.rotate==0) || (key == sdl.K_DOWN && self.rotate==1) || (key == sdl.K_LEFT && self.rotate==2) || (key == sdl.K_UP && self.rotate==3) {
+    if (key == sdl.K_RIGHT) {
         self.MoveRight()
     }
-    if (key == sdl.K_DOWN && self.rotate==0) || (key == sdl.K_LEFT && self.rotate==1) || (key == sdl.K_UP && self.rotate==2) || (key == sdl.K_RIGHT && self.rotate==4) {
+    if (key == sdl.K_DOWN) {
         self.MoveDown()
     }
 
-
-    if (key=='r') {
-        self.rotate=(self.rotate+1)%4
-        sws.PostUpdate()
-    }
 
 }
 
@@ -179,8 +132,8 @@ func (self *DcWidget) KeyDown(key sdl.Keycode, mod uint16) {
  *   "width": 10,
  *   "height": 10,
  *   "tiles": [
- *     {"x":0, "y":0, "wall0":"","wall1":"","wall2":"","wall3":"","floor":"inside","dcelementtype":"rack","dcelement":{...}},
- *     {"x":1, "y":0, "wall0":"","wall1":"","wall2":"","wall3":"","floor":"inside"},
+ *     {"x":0, "y":0, "wall0":"","wall1":"","floor":"inside","dcelementtype":"rack","dcelement":{...}},
+ *     {"x":1, "y":0, "wall0":"","wall1":"","floor":"inside"},
  *   ]
  * }
  */
@@ -201,8 +154,6 @@ func (self *DcWidget) LoadMap(dc map[string]interface{}) {
         y := int32(tile["y"].(float64))
         wall0 := tile["wall0"].(string)
         wall1 := tile["wall1"].(string)
-        wall2 := tile["wall2"].(string)
-        wall3 := tile["wall3"].(string)
         floor := tile["floor"].(string)
         var dcelementtype string
         var dcelement map[string]interface{}
@@ -212,8 +163,8 @@ func (self *DcWidget) LoadMap(dc map[string]interface{}) {
         if (tile["dcelement"]!=nil) {
             dcelement = tile["dcelement"].(map[string]interface{})
         }
-        if (dcelementtype=="") { // basic floor
-            self.tiles[y][x]=CreateElectricalTile(wall0,wall1,wall2,wall3,floor, dcelementtype, dcelement)
+        if (dcelementtype=="" || dcelementtype=="rack") { // basic floor
+            self.tiles[y][x]=CreateElectricalTile(wall0,wall1,floor, dcelementtype, dcelement)
         } 
     }
 }
