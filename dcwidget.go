@@ -156,6 +156,7 @@ func (self *DcWidget) LoadMap(dc map[string]interface{}) {
         wall0 := tile["wall0"].(string)
         wall1 := tile["wall1"].(string)
         floor := tile["floor"].(string)
+        rotation := uint32(tile["rotation"].(float64))
         var dcelementtype string
         var dcelement map[string]interface{}
         if (tile["dcelementtype"] != nil) {
@@ -165,7 +166,7 @@ func (self *DcWidget) LoadMap(dc map[string]interface{}) {
             dcelement = tile["dcelement"].(map[string]interface{})
         }
         if (dcelementtype=="" || dcelementtype=="rack") { // basic floor
-            self.tiles[y][x]=CreateElectricalTile(wall0,wall1,floor, dcelementtype, dcelement)
+            self.tiles[y][x]=CreateElectricalTile(wall0,wall1,floor,rotation, dcelementtype, dcelement)
         } 
     }
 }
@@ -181,21 +182,23 @@ func (self *DcWidget) SaveMap() string {
             value:=""
             if t.element==nil {
                 if (t.wall[0]!="" || t.wall[1]!="" || t.floor!="green") {
-                    value=fmt.Sprintf(`{"x":%d, "y":%d, "wall0":"%s", "wall1":"%s", "floor":"%s"}`,
+                    value=fmt.Sprintf(`{"x":%d, "y":%d, "wall0":"%s", "wall1":"%s", "floor":"%s","rotation":%d}`,
                       x,
                       y,
                       t.wall[0],
                       t.wall[1],
                       t.floor,
+                      t.rotation,
                     )
                 }
             } else {
-                value=fmt.Sprintf(`{"x":%d, "y":%d, "wall0":"%s", "wall1":"%s", "floor":"%s", "dcelementtype":"%s", "dcelement":%s}`,
+                value=fmt.Sprintf(`{"x":%d, "y":%d, "wall0":"%s", "wall1":"%s", "floor":"%s", "rotation":%d, "dcelementtype":"%s", "dcelement":%s}`,
                     x,
                     y,
                     t.wall[0],
                     t.wall[1],
                     t.floor,
+                    t.rotation,
                     t.element.ElementType(),
                     t.element.Save(),
                 )

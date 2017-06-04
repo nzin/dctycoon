@@ -17,8 +17,7 @@ const (
 type DcElement interface { // should be passive, rack, ...
     ElementType() string // to know which type to save
     Save() string // json
-    Draw() *sdl.Surface
-    Rotate(face uint32) // face can be 0,1,2,3 (i.e. 0, 90, 180, 270)
+    Draw(rotation uint32) *sdl.Surface // face can be 0,1,2,3 (i.e. 0, 90, 180, 270)
     Power() float64 // ampere
 }
 
@@ -83,9 +82,9 @@ func (self *RackPart) Save() string {
 
 
 type RackElement struct {
-    rackmount [] *RackPart // must fill 42u from bottom to top
-    surface   *sdl.Surface
-    rotation  uint32
+    rackmount        [] *RackPart // must fill 42u from bottom to top
+    surface          *sdl.Surface
+    previousrotation uint32
 }
 
 func (self *RackElement) ElementType() string {
@@ -93,7 +92,7 @@ func (self *RackElement) ElementType() string {
 }
 
 func (self *RackElement) Save() string {
-    s:=fmt.Sprintf(`{"rotation":%d, "rackmount":[`,self.rotation)
+    s:=fmt.Sprintf(`{"rackmount":[`)
     for i,rp := range self.rackmount {
         s=s+rp.Save()
         if i<len(self.rackmount)-1 {
@@ -104,29 +103,30 @@ func (self *RackElement) Save() string {
     return s
 }
 
-func (self *RackElement) Draw() *sdl.Surface {
+func (self *RackElement) Draw(rotation uint32) *sdl.Surface {
+    if (self.surface!=nil) && (self.previousrotation!=rotation) {
+        self.surface.Free()
+        self.surface=nil
+    }
     if (self.surface==nil) {
-        self.surface= getSprite("resources/rack.bottom"+strconv.Itoa(int(self.rotation))+".png")
+        self.surface= getSprite("resources/rack.bottom"+strconv.Itoa(int(rotation))+".png")
         var offset int32=0
         for _,rp := range self.rackmount {
             if rp.name!="space" {
-                img:=getSprite("resources/"+rp.name+strconv.Itoa(int(self.rotation))+".png")
+                img:=getSprite("resources/"+rp.name+strconv.Itoa(int(rotation))+".png")
                 rectSrc := sdl.Rect{0,0,img.W,img.H}
                 rectDst := sdl.Rect{0,TILE_HEIGHT-img.H-(offset+rp.size+1)*4,img.W,img.H}
                 img.Blit(&rectSrc,self.surface,&rectDst)
             }
             offset+=rp.size
         }
-        top:= getSprite("resources/rack.top"+strconv.Itoa(int(self.rotation))+".png")
+        top:= getSprite("resources/rack.top"+strconv.Itoa(int(rotation))+".png")
         rectSrc := sdl.Rect{0,0,top.W,top.H}
         rectDst := sdl.Rect{0,TILE_HEIGHT-top.H,top.W,top.H}
         top.Blit(&rectSrc,self.surface,&rectDst)
+        self.previousrotation=rotation
     }
     return self.surface
-}
-
-func (self *RackElement) Rotate(rotation uint32) {
-    self.rotation=rotation
 }
 
 func (self *RackElement) Power() float64 {
@@ -140,7 +140,6 @@ func (self *RackElement) Power() float64 {
 
 
 func CreateRackElement(payload map[string]interface{}) *RackElement {
-    rotation := uint32(payload["rotation"].(float64))
     rackmount := make([]*RackPart,0)
     rackParts := payload["rackmount"].([]interface{})
     for _,rp := range rackParts {
@@ -149,7 +148,6 @@ func CreateRackElement(payload map[string]interface{}) *RackElement {
     r := &RackElement { 
         rackmount: rackmount,
         surface: nil,
-        rotation: rotation,
     }
     return r
 }
@@ -161,7 +159,7 @@ type ElectricalElement struct {
     power     float64  // negative if it is a generator
     capacity  int32  // kWh if it is a battery
     surface   *sdl.Surface
-    rotation  uint32
+    previousrotation uint32
 }
 
 func (self *ElectricalElement) ElementType() string {
@@ -169,18 +167,22 @@ func (self *ElectricalElement) ElementType() string {
 }
 
 func (self *ElectricalElement) Save() string {
-    s:=fmt.Sprintf(`{"power":%g, "capacity":%d, "rotation":%d}`,
+    s:=fmt.Sprintf(`{"power":%g, "capacity":%d}`,
         self.power,
-        self.capacity,
-        self.rotation)
+        self.capacity)
     return s
 }
 
-func (self *ElectricalElement) Draw() *sdl.Surface {
+func (self *ElectricalElement) Draw(rotation uint32) *sdl.Surface {
+    if (rotation!=self.previousrotation && self.surface!=nil) {
+        self.surface.Free()
+        self.surface=nil
+    }
+    if (self.surface==nil) {
+        self.surface=getSprite("resources/"+self.flavor+strconv.Itoa(int(rotation))+".png")
+        self.previousrotation=rotation
+    }
     return self.surface
-}
-
-func (self *ElectricalElement) Rotate(face uint32) {
 }
 
 func (self *ElectricalElement) Power() float64 {
@@ -190,16 +192,14 @@ func (self *ElectricalElement) Power() float64 {
 
 
 func CreateElectricalElement(flavor string, payload map[string]interface{}) *ElectricalElement {
-    rotation := uint32(payload["rotation"].(float64))
     power := payload["power"].(float64)
     capacity := int32(payload["capacity"].(float64))
-    surface := getSprite("resources/"+flavor+strconv.Itoa(int(rotation))+".png")
     ee := &ElectricalElement { 
         flavor: flavor,
         power: power,
         capacity: capacity,
-        surface: surface,
-        rotation: rotation,
+        surface: nil,
+        previousrotation: 0,
     }
     return ee
 }
@@ -211,6 +211,7 @@ type Tile struct {
     floor          string
     element        DcElement
     surface        *sdl.Surface
+    rotation       uint32 // rotation of the inner element: floor+element (not the walls)
 }
 
 func (self *Tile) Save() {
@@ -243,7 +244,7 @@ func (self *Tile) Draw() *sdl.Surface {
         }
 
         if (self.element!=nil) {
-            elt:=self.element.Draw()
+            elt:=self.element.Draw(self.rotation)
             rectSrc := sdl.Rect{0,0,elt.W,elt.H}
             rectDst := sdl.Rect{0,TILE_HEIGHT-elt.H,elt.W,elt.H}
             elt.Blit(&rectSrc,self.surface,&rectDst)
@@ -252,12 +253,12 @@ func (self *Tile) Draw() *sdl.Surface {
     return self.surface
 }
 
-// individual rotate
-func (self *Tile) Rotate(face uint32) {
-    self.surface=nil
-    if self.element!=nil {
-        self.element.Rotate(face)
+func (self *Tile) Rotate(rotation uint32) {
+    if (self.surface!=nil) {
+        self.surface.Free()
     }
+    self.surface=nil
+    self.rotation=rotation
 }
 
 func (self *Tile) Power() float64 {
@@ -270,6 +271,7 @@ func (self *Tile) Power() float64 {
 func CreateGrassTile() *Tile {
     tile := &Tile {
         wall: [2]string{"",""},
+        rotation: 0,
         floor: "green",
         element: nil,
     }
@@ -278,7 +280,8 @@ func CreateGrassTile() *Tile {
 
 
 
-func CreateElectricalTile(wall0,wall1,floor,dcelementtype string, dcelement map[string]interface{}) *Tile {
+func CreateElectricalTile(wall0,wall1,floor string,rotation uint32, dcelementtype string, dcelement map[string]interface{}) *Tile {
+    if (rotation>3) { rotation=0 }
     var element DcElement
     if dcelementtype=="rack" {
         element = CreateRackElement(dcelement)
@@ -287,6 +290,7 @@ func CreateElectricalTile(wall0,wall1,floor,dcelementtype string, dcelement map[
     }
     tile := &Tile {
         wall: [2]string{wall0,wall1},
+        rotation: rotation,
         floor: floor,
         element: element,
     }
