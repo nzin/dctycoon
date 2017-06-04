@@ -220,7 +220,7 @@ func (self *Tile) Save() {
 func (self *Tile) Draw() *sdl.Surface {
     if self.surface == nil {
         self.surface,_ = sdl.CreateRGBSurface(0,105,TILE_HEIGHT,32,0x00ff0000,0x0000ff00,0x000000ff,0xff000000)
-        floor := getSprite("resources/"+self.floor+".png")
+        floor := getSprite("resources/"+self.floor+strconv.                Itoa(int(self.rotation))+".png")
         rectSrc := sdl.Rect{0,0,floor.W,floor.H}
         rectDst := sdl.Rect{0,TILE_HEIGHT-floor.H,floor.W,floor.H}
         floor.Blit(&rectSrc,self.surface,&rectDst)
