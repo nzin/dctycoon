@@ -77,9 +77,9 @@ func TrendListLoad(json []interface{}) TrendList {
 
 
 
-func TrendListSave(t *TrendList) string {
+func TrendListSave(t TrendList) string {
     str:=`[`
-    for _,te := range *t {
+    for _,te := range t {
         str+=fmt.Sprintf(`{"pit":%g, "value":%v}`,te.Pit,te.Value)
     }
     str+=`]`
@@ -185,8 +185,8 @@ func (self *PriceTrend) CurrentValue(now time.Time) float64 {
 
 
 
-func PriceTrendListLoad(json map[string]interface{}) *PriceTrend {
-    pt:=&PriceTrend{
+func PriceTrendListLoad(json map[string]interface{}) PriceTrend {
+    pt:=PriceTrend{
     }
     trend:=json["trend"].([]interface{})
     noise:=json["noise"].([]interface{})
@@ -224,7 +224,7 @@ func PriceTrendListLoad(json map[string]interface{}) *PriceTrend {
 
 
 
-func PriceTrendListSave(pt *PriceTrend) string {
+func PriceTrendListSave(pt PriceTrend) string {
     str:=`{ "trend":[`
     for _,te := range pt.Trend {
         str+=fmt.Sprintf(`{"pit":%g, "value":%g}`,te.Pit,te.Value)
@@ -237,4 +237,49 @@ func PriceTrendListSave(pt *PriceTrend) string {
     return str
 }
 
+
+
+type Trend struct {
+    Corepercpu TrendList
+    Vt         TrendList
+    Disksize   TrendList
+    Ramsize    TrendList
+    
+    Cpuprice   PriceTrend
+    Diskprice  PriceTrend
+    Ramprice   PriceTrend
+}
+
+
+
+func TrendLoad(json map[string]interface{}) *Trend {
+    t:=&Trend{
+      Corepercpu:TrendListLoad(json["corepercpu"].([]interface{})),
+      Vt:        TrendListLoad(json["vt"].([]interface{})),
+      Disksize:  TrendListLoad(json["disksize"].([]interface{})),
+      Ramsize:   TrendListLoad(json["ramsize"].([]interface{})),
+    
+      Cpuprice:  PriceTrendListLoad(json["cpuprice"].(map[string]interface{})),
+      Diskprice: PriceTrendListLoad(json["diskprice"].(map[string]interface{})),
+      Ramprice:  PriceTrendListLoad(json["ramprice"].(map[string]interface{})),
+    }
+    
+    return t
+}
+
+
+
+func TrendSave(t *Trend) string {
+    str:="{\n"
+    str+=fmt.Sprintf(`"corepercpu": %s,`,TrendListSave(t.Corepercpu))+"\n"
+    str+=fmt.Sprintf(`"vt": %s,`,TrendListSave(t.Vt))+"\n"
+    str+=fmt.Sprintf(`"disksize": %s,`,TrendListSave(t.Disksize))+"\n"
+    str+=fmt.Sprintf(`"ramsize": %s,`,TrendListSave(t.Ramsize))+"\n"
+    
+    str+=fmt.Sprintf(`"cpuprice": %s,`,PriceTrendListSave(t.Cpuprice))+"\n"
+    str+=fmt.Sprintf(`"diskprice": %s,`,PriceTrendListSave(t.Diskprice))+"\n"
+    str+=fmt.Sprintf(`"ramprice": %s`,PriceTrendListSave(t.Ramprice))+"\n"
+    str+="}"
+    return str
+}
 

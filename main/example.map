@@ -28,5 +28,14 @@
         {"size":1, "name":"server.1u","power":0,"disksize":0,"disknum":0,"cpunum":0,"ramsize":0,"vt":false}
       ]}}
     ]
+  },
+  "trends": {
+      "corepercpu": [],
+      "vt": [],
+      "disksize":[],
+      "ramsize": [],
+      "cpuprice": {"trend":[],"noise":[]},
+      "diskprice": {"trend":[],"noise":[]},
+      "ramprice": {"trend":[],"noise":[]}
   }
 }
