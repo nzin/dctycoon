@@ -214,7 +214,18 @@ type Tile struct {
     rotation       uint32 // rotation of the inner element: floor+element (not the walls)
 }
 
-func (self *Tile) Save() {
+func (self *Tile) DcElement() DcElement{
+    return self.element
+}
+
+func  (self *Tile) IsElementAt(x,y int32) bool {
+    if self.element == nil { return false}
+    elt:=self.element.Draw(self.rotation)
+    y-=TILE_HEIGHT-elt.H
+    if (x<0) || (y<0) || (x>=elt.W) || (y>elt.H) {return false}
+    _,_,_,alpha := GetSurfacePixel(elt,x,y)
+    if alpha>0 { return true }
+    return false
 }
 
 func (self *Tile) Draw() *sdl.Surface {

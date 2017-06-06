@@ -11,8 +11,10 @@ import (
 
 type DcWidget struct {
     sws.SWS_CoreWidget
-    tiles       [][]*Tile
-    xRoot,yRoot int32
+    tiles         [][]*Tile
+    xRoot,yRoot   int32
+    activeTile    *Tile
+    activeElement DcElement
 }
 
 
@@ -33,6 +35,71 @@ func (self *DcWidget) Repaint() {
         }
     }
     sws.PostUpdate()
+}
+
+
+
+func GetSurfacePixel(surface *sdl.Surface, x,y int32) (red,green,blue,alpha uint8) {
+    if (x<0 || x>=surface.W || y<0 || y>= surface.H) {
+        return 0,0,0,0
+    }
+    err := surface.Lock()
+    if err!=nil {
+        panic(err)
+    }
+    bpp := surface.Format.BytesPerPixel
+    bytes:=surface.Pixels() 
+    red=bytes[int(y) * int(surface.Pitch) + int(x) * int(bpp)]
+    green=bytes[int(y) * int(surface.Pitch) + int(x) * int(bpp) +1]
+    blue=bytes[int(y) * int(surface.Pitch) + int(x) * int(bpp)  +2]
+    alpha=bytes[int(y) * int(surface.Pitch) + int(x) * int(bpp) +3]
+    
+    surface.Unlock()
+    return
+}
+
+
+
+func (self *DcWidget) MousePressDown(x,y int32, button uint8) {
+    self.activeTile=nil
+    self.activeElement=nil
+    mapheight:=len(self.tiles)
+    mapwidth:=len(self.tiles[0])
+    for ty:=mapheight-1; ty>=0; ty-- {
+        for tx:=mapwidth-1; tx>=0; tx-- {
+            tile:=self.tiles[ty][tx]
+            surface := (*tile).Draw()
+            xShift:=self.xRoot+(self.Surface().W/2)+(TILE_WIDTH_STEP/2)*int32(tx)-(TILE_WIDTH_STEP/2)*int32(ty)
+            yShift:=self.yRoot+(TILE_HEIGHT_STEP/2)*int32(tx)+(TILE_HEIGHT_STEP/2)*int32(ty)
+
+            if (x>=xShift) &&
+               (y>=yShift) &&
+               (x<xShift+surface.W) &&
+               (y<yShift+surface.H) {
+               _,_,_,alpha := GetSurfacePixel(surface,x-xShift,y-yShift)
+               if alpha>0 {
+                   //fmt.Println("activeTile: "+tile.floor,tx,ty)
+                   self.activeTile=tile
+                   // now, do we have an active item inside the tile
+                   if tile.IsElementAt(x-xShift,y-yShift) {
+                       //fmt.Println("active element!!!")
+                       self.activeElement=tile.DcElement()
+                   }
+                   break
+               }
+           }
+        }
+        if self.activeTile!=nil {
+            break
+        }
+    }
+}
+
+
+
+func (self *DcWidget) MousePressUp(x,y int32, button uint8) {
+    if (self.activeElement!=nil) {
+    }
 }
 
 
@@ -76,6 +143,7 @@ func (self *DcWidget) MouseMove(x,y,xrel,yrel int32) {
         return
     }
 }
+
 
 
 func (self *DcWidget) MoveLeft() {
