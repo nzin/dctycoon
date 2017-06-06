@@ -24,8 +24,8 @@ import (
  * - and the same for customer needs?
  */
 type TrendItem struct {
-    pit    time.Time
-    value  interface{}
+    Pit    time.Time
+    Value  interface{}
 }
 
 type TrendList []TrendItem
@@ -41,7 +41,7 @@ func (self TrendList) Swap(i,j int) {
 }
 
 func (self TrendList) Less(i, j int) bool {
-    return self[i].pit.Before(self[j].pit)
+    return self[i].Pit.Before(self[j].Pit)
 }
 
 func (self TrendList) Sort() {
@@ -52,11 +52,11 @@ func (self TrendList) CurrentValue(now time.Time) interface{} {
     if (len(self)==0) { panic("no elements in the array") }
     
     index:=0
-    for (index<len(self) && self[index].pit.Before(now)) {
+    for (index<len(self) && self[index].Pit.Before(now)) {
         index++
     }
-    if (index==0) { return self[0].value }
-    return self[index-1].value
+    if (index==0) { return self[0].Value }
+    return self[index-1].Value
 }
 
 func TrendListLoad(json []interface{}) TrendList {
@@ -65,10 +65,10 @@ func TrendListLoad(json []interface{}) TrendList {
         te:=t.(map[string]interface{})
         var date time.Time
         var year,month,day int
-        fmt.Sscanf(te["pit"].(string),"%d-%d-%d",&year,&month,&day)
+        fmt.Sscanf(te["Pit"].(string),"%d-%d-%d",&year,&month,&day)
         tl[i]=TrendItem{
-            pit:   date,
-            value: te["value"],
+            Pit:   date,
+            Value: te["Value"],
         }
     }
     tl.Sort()
@@ -77,13 +77,26 @@ func TrendListLoad(json []interface{}) TrendList {
 
 
 
+func TrendListSave(t *TrendList) string {
+    str:=`[`
+    for _,te := range *t {
+        str+=fmt.Sprintf(`{"pit":%g, "value":%v}`,te.Pit,te.Value)
+    }
+    str+=`]`
+    return str
+}
+
+
+
+
+
 /*****************/
 
 
 
 type PriceTrendItem struct {
-    pit    time.Time
-    value  float64
+    Pit    time.Time
+    Value  float64
 }
 
 type PriceTrendList []PriceTrendItem
@@ -97,118 +110,131 @@ func (self PriceTrendList) Swap(i,j int) {
 }
 
 func (self PriceTrendList) Less(i, j int) bool {
-    return self[i].pit.Before(self[j].pit)
+    return self[i].Pit.Before(self[j].Pit)
 }
 
 func (self PriceTrendList) Sort() {
     sort.Sort(self)
 }
 
-func (self PriceTrendList) CurrentValue(now time.Time) float64 {
-    if (len(self)==0) { panic("no elements in the array") }
-   
-    index:=0
-    for (index<len(self) && self[index].pit.Before(now)) {
-        index++
-    }
-    if (index==0) { return self[0].value }
-    if (index==len(self)) { return self[index-1].value }
-    interval:=(self[index].pit.Sub(self[index-1].pit)).Hours()
-    since:=now.Sub(self[index-1].pit).Hours()
-    return self[index-1].value*(since/interval)+self[index].value*((interval-since)/interval)
+
+type PriceTrend struct {
+    Trend PriceTrendList
+    Noise PriceTrendList
 }
 
 
-func PriceTrendListLoad(json []interface{}) PriceTrendList {
-    tl := make(PriceTrendList,len(json))
-    for i,t := range json {
+func (self *PriceTrend) CurrentValue(now time.Time) float64 {
+    if (self.Trend==nil) || (len(self.Trend)==0) {
+        temp:=make(PriceTrendList,1)
+        temp[0].Pit=now
+        temp[0].Value=0.0
+        self.Trend=temp
+    }
+   
+    index:=0
+    for (index<len(self.Trend) && self.Trend[index].Pit.Before(now)) {
+        index++
+    }
+    
+    var Value float64
+    if (index==0) {
+        Value=self.Trend[0].Value
+    } else if (index==len(self.Trend)) {
+        Value=self.Trend[index-1].Value
+    } else {
+        interval:=(self.Trend[index].Pit.Sub(self.Trend[index-1].Pit)).Hours()
+        since:=now.Sub(self.Trend[index-1].Pit).Hours()
+        Value= self.Trend[index-1].Value*(since/interval)+self.Trend[index].Value*((interval-since)/interval)
+    }
+    
+    // now compute the noise
+    
+    if (self.Noise==nil) || len(self.Noise)==0 {
+        temp:=make(PriceTrendList,1)
+        temp[0].Pit=now
+        temp[0].Value=0.0
+        self.Noise=temp
+    }
+    endarray:=len(self.Noise)-1
+    if (! now.Before((self.Noise)[endarray].Pit) ) {
+       random:=rand.Float64()
+       if random<0.1 { random=0.1 }
+       elt:=PriceTrendItem{
+           Pit:   now.AddDate(0,0,int(100*random)),
+           Value: 1.0-random,
+       }
+       self.Noise=append(self.Noise,elt)
+    }
+
+    for (index<len(self.Noise) && (self.Noise)[index].Pit.Before(now)) {
+        index++
+    }
+    var noise float64
+    if (index==0) {
+        noise= (self.Noise)[0].Value
+    } else if (index==len(self.Noise)) {
+        return (self.Noise)[index-1].Value
+    } else {
+        interval:=((self.Noise)[index].Pit.Sub((self.Noise)[index-1].Pit)).Hours()
+        since:=now.Sub((self.Noise)[index-1].Pit).Hours()
+        noise= (self.Noise)[index-1].Value*(since/interval)+(self.Noise)[index].Value*((interval-since)/interval)
+    }
+    return Value*(noise+1.0)
+}
+
+
+
+func PriceTrendListLoad(json map[string]interface{}) *PriceTrend {
+    pt:=&PriceTrend{
+    }
+    trend:=json["trend"].([]interface{})
+    noise:=json["noise"].([]interface{})
+    
+    tl := make(PriceTrendList,len(trend))
+    for i,t := range trend {
         te:=t.(map[string]interface{})
         var date time.Time
         var year,month,day int
         fmt.Sscanf(te["pit"].(string),"%d-%d-%d",&year,&month,&day)
         tl[i]=PriceTrendItem{
-            pit:   date,
-            value: te["value"].(float64),
+            Pit:   date,
+            Value: te["value"].(float64),
         }
     }
     tl.Sort()
-    return tl
-}
-
-
-
-/*********************/
-
-
-
-type NoiseTrendItem struct {
-    pit    time.Time
-    value  float64
-}
-
-type NoiseTrendList []NoiseTrendItem
-
-func (self NoiseTrendList) Len() int {
-  return len(self)
-}
-
-func (self NoiseTrendList) Swap(i,j int) {
-    self[i],self[j] = self[j],self[i]
-}
-
-func (self NoiseTrendList) Less(i, j int) bool {
-    return self[i].pit.Before(self[j].pit)
-}
-
-func (self NoiseTrendList) Sort() {
-    sort.Sort(self)
-}
-
-func (self *NoiseTrendList) CurrentValue(now time.Time) float64 {
-    if self==nil || len(*self)==0 {
-        temp:=make(NoiseTrendList,1)
-        temp[0].pit=now
-        temp[0].value=0.0
-        self=&temp
-    }
-    endarray:=len(*self)-1
-    if (! now.Before((*self)[endarray].pit) ) {
-       random:=rand.Float64()
-       if random<0.1 { random=0.1 }
-       elt:=NoiseTrendItem{
-           pit:   now.AddDate(0,0,int(100*random)),
-           value: 1.0-random,
-       }
-       *self=append(*self,elt)
-    }
-
-    index:=0
-    for (index<len(*self) && (*self)[index].pit.Before(now)) {
-        index++
-    }
-    if (index==0) { return (*self)[0].value }
-    if (index==len(*self)) { return (*self)[index-1].value }
-
-    interval:=((*self)[index].pit.Sub((*self)[index-1].pit)).Hours()
-    since:=now.Sub((*self)[index-1].pit).Hours()
-    return (*self)[index-1].value*(since/interval)+(*self)[index].value*((interval-   since)/interval)
-}
-
-func NoiseTrendListLoad(json []interface{}) *NoiseTrendList {
-    tl := make(NoiseTrendList,len(json))
-    for i,t := range json {
-        te:=t.(map[string]interface{})
+    pt.Trend=tl
+    
+    nl := make(PriceTrendList,len(noise))
+    for i,n := range noise {
+        ne:=n.(map[string]interface{})
         var date time.Time
         var year,month,day int
-        fmt.Sscanf(te["pit"].(string),"%d-%d-%d",&year,&month,&day)
-        tl[i]=NoiseTrendItem{
-            pit:   date,
-            value: te["value"].(float64),
+        fmt.Sscanf(ne["pit"].(string),"%d-%d-%d",&year,&month,&day)
+        nl[i]=PriceTrendItem{
+            Pit:   date,
+            Value: ne["value"].(float64),
         }
     }
-    tl.Sort()
-    return &tl
+    nl.Sort()
+    pt.Noise=nl
+
+    return pt
 }
 
+
+
+func PriceTrendListSave(pt *PriceTrend) string {
+    str:=`{ "trend":[`
+    for _,te := range pt.Trend {
+        str+=fmt.Sprintf(`{"pit":%g, "value":%g}`,te.Pit,te.Value)
+    }
+    str+=`],"noise":[`
+    for _,ne := range pt.Noise {
+        str+=fmt.Sprintf(`{"pit":%g, "value":%g}`,ne.Pit,ne.Value)
+    }
+    str+=`]}`
+    return str
+}
 
 
