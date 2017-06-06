@@ -78,7 +78,8 @@ func TrendListLoad(json []interface{}) TrendList {
 
 func TrendListSave(t TrendList) string {
     str:=`[`
-    for _,te := range t {
+    for i,te := range t {
+        if i>0 {str+=","}
         str+=fmt.Sprintf(`{"pit":"%d-%d-%d", "value":%v}`,te.Pit.Year(),te.Pit.Month(),te.Pit.Day(),te.Value)
     }
     str+=`]`
@@ -144,7 +145,7 @@ func (self *PriceTrend) CurrentValue(now time.Time) float64 {
     } else {
         interval:=(self.Trend[index].Pit.Sub(self.Trend[index-1].Pit)).Hours()
         since:=now.Sub(self.Trend[index-1].Pit).Hours()
-        Value= self.Trend[index-1].Value*(since/interval)+self.Trend[index].Value*((interval-since)/interval)
+        Value= self.Trend[index-1].Value*((interval-since)/interval)+self.Trend[index].Value*(since/interval)
     }
     
     // now compute the noise
@@ -156,14 +157,15 @@ func (self *PriceTrend) CurrentValue(now time.Time) float64 {
         self.Noise=temp
     }
     endarray:=len(self.Noise)-1
-    if (! now.Before((self.Noise)[endarray].Pit) ) {
+    for (now.Before((self.Noise)[endarray].Pit) == false) {
        random:=rand.Float64()
        if random<0.1 { random=0.1 }
        elt:=PriceTrendItem{
-           Pit:   now.AddDate(0,0,int(100*random)),
+           Pit:   (self.Noise)[endarray].Pit.AddDate(0,0,int(100*random)),
            Value: 1.0-random,
        }
        self.Noise=append(self.Noise,elt)
+       endarray=len(self.Noise)-1
     }
 
     for (index<len(self.Noise) && (self.Noise)[index].Pit.Before(now)) {
@@ -177,7 +179,7 @@ func (self *PriceTrend) CurrentValue(now time.Time) float64 {
     } else {
         interval:=((self.Noise)[index].Pit.Sub((self.Noise)[index-1].Pit)).Hours()
         since:=now.Sub((self.Noise)[index-1].Pit).Hours()
-        noise= (self.Noise)[index-1].Value*(since/interval)+(self.Noise)[index].Value*((interval-since)/interval)
+        noise= (self.Noise)[index-1].Value*((interval-since)/interval)+(self.Noise)[index].Value*(since/interval)
     }
     return Value*(noise+1.0)
 }
@@ -193,11 +195,10 @@ func PriceTrendListLoad(json map[string]interface{}) PriceTrend {
     tl := make(PriceTrendList,len(trend))
     for i,t := range trend {
         te:=t.(map[string]interface{})
-        var date time.Time
         var year,month,day int
         fmt.Sscanf(te["pit"].(string),"%d-%d-%d",&year,&month,&day)
         tl[i]=PriceTrendItem{
-            Pit:   date,
+            Pit:   time.Date(year,time.Month(month),day,0,0,0,0,time.UTC),
             Value: te["value"].(float64),
         }
     }
@@ -224,11 +225,13 @@ func PriceTrendListLoad(json map[string]interface{}) PriceTrend {
 
 func PriceTrendListSave(pt PriceTrend) string {
     str:=`{ "trend":[`
-    for _,te := range pt.Trend {
+    for i,te := range pt.Trend {
+        if i>0 {str+=","}
         str+=fmt.Sprintf(`{"pit":"%d-%d-%d", "value":%g}`,te.Pit.Year(),te.Pit.   Month(),te.Pit.Day(),te.Value)
     }
     str+=`],"noise":[`
-    for _,ne := range pt.Noise {
+    for i,ne := range pt.Noise {
+        if i>0 {str+=","}
         str+=fmt.Sprintf(`{"pit":"%d-%d-%d", "value":%g}`,ne.Pit.Year(),ne.Pit.   Month(),ne.Pit.Day(),ne.Value)
     }
     str+=`]}`
