@@ -63,12 +63,11 @@ func TrendListLoad(json []interface{}) TrendList {
     tl := make(TrendList,len(json))
     for i,t := range json {
         te:=t.(map[string]interface{})
-        var date time.Time
         var year,month,day int
-        fmt.Sscanf(te["Pit"].(string),"%d-%d-%d",&year,&month,&day)
+        fmt.Sscanf(te["pit"].(string),"%d-%d-%d",&year,&month,&day)
         tl[i]=TrendItem{
-            Pit:   date,
-            Value: te["Value"],
+            Pit:   time.Date(year,time.Month(month),day,0,0,0,0,time.UTC),
+            Value: te["value"],
         }
     }
     tl.Sort()
@@ -80,7 +79,7 @@ func TrendListLoad(json []interface{}) TrendList {
 func TrendListSave(t TrendList) string {
     str:=`[`
     for _,te := range t {
-        str+=fmt.Sprintf(`{"pit":%g, "value":%v}`,te.Pit,te.Value)
+        str+=fmt.Sprintf(`{"pit":"%d-%d-%d", "value":%v}`,te.Pit.Year(),te.Pit.Month(),te.Pit.Day(),te.Value)
     }
     str+=`]`
     return str
@@ -208,11 +207,10 @@ func PriceTrendListLoad(json map[string]interface{}) PriceTrend {
     nl := make(PriceTrendList,len(noise))
     for i,n := range noise {
         ne:=n.(map[string]interface{})
-        var date time.Time
         var year,month,day int
         fmt.Sscanf(ne["pit"].(string),"%d-%d-%d",&year,&month,&day)
         nl[i]=PriceTrendItem{
-            Pit:   date,
+            Pit:   time.Date(year,time.Month(month),day,0,0,0,0,time.UTC),
             Value: ne["value"].(float64),
         }
     }
@@ -227,11 +225,11 @@ func PriceTrendListLoad(json map[string]interface{}) PriceTrend {
 func PriceTrendListSave(pt PriceTrend) string {
     str:=`{ "trend":[`
     for _,te := range pt.Trend {
-        str+=fmt.Sprintf(`{"pit":%g, "value":%g}`,te.Pit,te.Value)
+        str+=fmt.Sprintf(`{"pit":"%d-%d-%d", "value":%g}`,te.Pit.Year(),te.Pit.   Month(),te.Pit.Day(),te.Value)
     }
     str+=`],"noise":[`
     for _,ne := range pt.Noise {
-        str+=fmt.Sprintf(`{"pit":%g, "value":%g}`,ne.Pit,ne.Value)
+        str+=fmt.Sprintf(`{"pit":"%d-%d-%d", "value":%g}`,ne.Pit.Year(),ne.Pit.   Month(),ne.Pit.Day(),ne.Value)
     }
     str+=`]}`
     return str
