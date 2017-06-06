@@ -30,12 +30,34 @@
     ]
   },
   "trends": {
-      "corepercpu": [],
-      "vt": [],
+      "corepercpu": [
+        {"pit":"1979-01-01","value":1},
+        {"pit":"2006-01-01","value":2},
+        {"pit":"2009-01-01","value":4},
+        {"pit":"2011-01-01","value":6},
+        {"pit":"2012-06-01","value":8},
+        {"pit":"2017-06-01","value":12},
+        {"pit":"2018-06-01","value":16}
+      ],
+      "vt": [{"pit":"1979-01-01","value":false},{"pit":"2005-01-01","value":true}],
       "disksize":[],
       "ramsize": [],
-      "cpuprice": {"trend":[],"noise":[]},
-      "diskprice": {"trend":[],"noise":[]},
-      "ramprice": {"trend":[],"noise":[]}
+      "cpuprice": {
+        "trend":[
+          {"pit":"1979-01-01","value":4000},
+          {"pit":"1990-01-01","value":1000},
+          {"pit":"2000-01-01","value":500},
+          {"pit":"2006-01-01","value":400},
+          {"pit":"2012-01-01","value":200}
+        ],
+        "noise":[
+          {"pit":"1979-01-01","value":0.5}
+        ]},
+      "diskprice": {
+        "trend":[],
+        "noise":[]},
+      "ramprice": {
+        "trend":[],
+        "noise":[]}
   }
 }

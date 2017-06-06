@@ -284,3 +284,6 @@ func TrendSave(t *Trend) string {
     return str
 }
 
+
+
+var Trends *Trend

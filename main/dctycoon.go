@@ -30,9 +30,12 @@ func main() {
 
     gamemap := v["map"].(map[string]interface{})
     dc.LoadMap(gamemap)
-    trends:=dctycoon.TrendLoad(v["trends"].(map[string]interface{}))
+    dctycoon.Trends=dctycoon.TrendLoad(v["trends"].(map[string]interface{}))
     root.AddChild(dc)
     root.SetFocus(dc)
+
+
+    fmt.Println(dctycoon.Trends.Cpuprice.CurrentValue(time.Now()))
     
     for sws.PoolEvent() == false {
     }
@@ -44,7 +47,7 @@ func main() {
     }
     gamefile.WriteString("{")
     gamefile.WriteString(fmt.Sprintf(`"map": %s,`,data)+"\n")
-    gamefile.WriteString(fmt.Sprintf(`"trends": %s`,dctycoon.TrendSave(trends))+"\n")
+    gamefile.WriteString(fmt.Sprintf(`"trends": %s`,dctycoon.TrendSave(dctycoon.Trends))+"\n")
     gamefile.WriteString("}\n")
     
     gamefile.Close()
