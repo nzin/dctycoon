@@ -11,6 +11,7 @@ import (
 
 
 func main() {
+    
     root := sws.Init(800,600)
     dc := dctycoon.CreateDcWidget(root.Width(),root.Height())
     gamefile,err:=os.Open("example.map")
@@ -26,7 +27,8 @@ func main() {
     }
     gamefile.Close()
 
-    dc.LoadMap(v)
+    gamemap := v["map"].(map[string]interface{})
+    dc.LoadMap(gamemap)
     root.AddChild(dc)
     root.SetFocus(dc)
     
