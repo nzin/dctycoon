@@ -11,7 +11,7 @@ import(
  * 2,4 processors: 2u,4u
  * blade: 2 processors/blade + 1 disk
  * 
- * each component: price x 1.10
+ * each component: price x ~ 1.05
  *
  * power consumption:
  * - processor+fan: 100W 
