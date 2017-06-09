@@ -108,14 +108,14 @@ var te *sws.TimerEvent
 
 func (self *DcWidget) HasFocus(focus bool) {
     if (focus==false) {
-        sws.StopRepeat(te)
+        te.StopRepeat()
         te=nil
     }
 }
 
 func (self *DcWidget) MouseMove(x,y,xrel,yrel int32) {
     if te!=nil {
-        sws.StopRepeat(te)
+        te.StopRepeat()
         te=nil
     }
     if (x<10) {
