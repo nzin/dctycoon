@@ -1,13 +1,11 @@
 package dctycoon
 
 import (
+	"fmt"
 	"github.com/nzin/sws"
 	"github.com/veandco/go-sdl2/sdl"
 	"time"
-	"fmt"
 )
-
-
 
 //
 // This widget allow to display a Datacenter map (and more)
@@ -30,7 +28,7 @@ func (self *DcWidget) Repaint() {
 			if tile != nil {
 				surface := (*tile).Draw()
 				rectSrc := sdl.Rect{0, 0, surface.W, surface.H}
-				rectDst := sdl.Rect{self.xRoot + (self.Surface().W / 2) + (TILE_WIDTH_STEP / 2) * int32(x) - (TILE_WIDTH_STEP / 2) * int32(y), self.yRoot + (TILE_HEIGHT_STEP / 2) * int32(x) + (TILE_HEIGHT_STEP / 2) * int32(y), surface.W, surface.H}
+				rectDst := sdl.Rect{self.xRoot + (self.Surface().W / 2) + (TILE_WIDTH_STEP/2)*int32(x) - (TILE_WIDTH_STEP/2)*int32(y), self.yRoot + (TILE_HEIGHT_STEP/2)*int32(x) + (TILE_HEIGHT_STEP/2)*int32(y), surface.W, surface.H}
 				surface.Blit(&rectSrc, self.Surface(), &rectDst)
 			}
 		}
@@ -38,15 +36,13 @@ func (self *DcWidget) Repaint() {
 	sws.PostUpdate()
 }
 
-
-
 //
 // helper function, to know which pixel is in (x.y)
 //
 // It is mainly used to know if we are on a transparent pixel
 //
 func GetSurfacePixel(surface *sdl.Surface, x, y int32) (red, green, blue, alpha uint8) {
-	if (x < 0 || x >= surface.W || y < 0 || y >= surface.H) {
+	if x < 0 || x >= surface.W || y < 0 || y >= surface.H {
 		return 0, 0, 0, 0
 	}
 	err := surface.Lock()
@@ -55,10 +51,10 @@ func GetSurfacePixel(surface *sdl.Surface, x, y int32) (red, green, blue, alpha 
 	}
 	bpp := surface.Format.BytesPerPixel
 	bytes := surface.Pixels()
-	red = bytes[int(y) * int(surface.Pitch) + int(x) * int(bpp)]
-	green = bytes[int(y) * int(surface.Pitch) + int(x) * int(bpp) + 1]
-	blue = bytes[int(y) * int(surface.Pitch) + int(x) * int(bpp) + 2]
-	alpha = bytes[int(y) * int(surface.Pitch) + int(x) * int(bpp) + 3]
+	red = bytes[int(y)*int(surface.Pitch)+int(x)*int(bpp)]
+	green = bytes[int(y)*int(surface.Pitch)+int(x)*int(bpp)+1]
+	blue = bytes[int(y)*int(surface.Pitch)+int(x)*int(bpp)+2]
+	alpha = bytes[int(y)*int(surface.Pitch)+int(x)*int(bpp)+3]
 
 	surface.Unlock()
 	return
@@ -73,19 +69,19 @@ func (self *DcWidget) MousePressDown(x, y int32, button uint8) {
 		for tx := mapwidth - 1; tx >= 0; tx-- {
 			tile := self.tiles[ty][tx]
 			surface := (*tile).Draw()
-			xShift := self.xRoot + (self.Surface().W / 2) + (TILE_WIDTH_STEP / 2) * int32(tx) - (TILE_WIDTH_STEP / 2) * int32(ty)
-			yShift := self.yRoot + (TILE_HEIGHT_STEP / 2) * int32(tx) + (TILE_HEIGHT_STEP / 2) * int32(ty)
+			xShift := self.xRoot + (self.Surface().W / 2) + (TILE_WIDTH_STEP/2)*int32(tx) - (TILE_WIDTH_STEP/2)*int32(ty)
+			yShift := self.yRoot + (TILE_HEIGHT_STEP/2)*int32(tx) + (TILE_HEIGHT_STEP/2)*int32(ty)
 
 			if (x >= xShift) &&
 				(y >= yShift) &&
-				(x < xShift + surface.W) &&
-				(y < yShift + surface.H) {
-				_, _, _, alpha := GetSurfacePixel(surface, x - xShift, y - yShift)
+				(x < xShift+surface.W) &&
+				(y < yShift+surface.H) {
+				_, _, _, alpha := GetSurfacePixel(surface, x-xShift, y-yShift)
 				if alpha > 0 {
 					//fmt.Println("activeTile: "+tile.floor,tx,ty)
 					self.activeTile = tile
 					// now, do we have an active item inside the tile
-					if tile.IsElementAt(x - xShift, y - yShift) {
+					if tile.IsElementAt(x-xShift, y-yShift) {
 						//fmt.Println("active element!!!")
 						self.activeElement = tile.DcElement()
 					}
@@ -100,14 +96,14 @@ func (self *DcWidget) MousePressDown(x, y int32, button uint8) {
 }
 
 func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
-	if (self.activeElement != nil) {
+	if self.activeElement != nil {
 	}
 }
 
 var te *sws.TimerEvent
 
 func (self *DcWidget) HasFocus(focus bool) {
-	if (focus == false) {
+	if focus == false {
 		te.StopRepeat()
 		te = nil
 	}
@@ -118,26 +114,26 @@ func (self *DcWidget) MouseMove(x, y, xrel, yrel int32) {
 		te.StopRepeat()
 		te = nil
 	}
-	if (x < 10) {
-		te = sws.TimerAddEvent(time.Now(), 50 * time.Millisecond, func() {
+	if x < 10 {
+		te = sws.TimerAddEvent(time.Now(), 50*time.Millisecond, func() {
 			self.MoveLeft()
 		})
 		return
 	}
-	if (y < 10) {
-		te = sws.TimerAddEvent(time.Now(), 50 * time.Millisecond, func() {
+	if y < 10 {
+		te = sws.TimerAddEvent(time.Now(), 50*time.Millisecond, func() {
 			self.MoveUp()
 		})
 		return
 	}
-	if (x > self.Width() - 10) {
-		te = sws.TimerAddEvent(time.Now(), 50 * time.Millisecond, func() {
+	if x > self.Width()-10 {
+		te = sws.TimerAddEvent(time.Now(), 50*time.Millisecond, func() {
 			self.MoveRight()
 		})
 		return
 	}
-	if (y > self.Height() - 10) {
-		te = sws.TimerAddEvent(time.Now(), 50 * time.Millisecond, func() {
+	if y > self.Height()-10 {
+		te = sws.TimerAddEvent(time.Now(), 50*time.Millisecond, func() {
 			self.MoveDown()
 		})
 		return
@@ -145,53 +141,52 @@ func (self *DcWidget) MouseMove(x, y, xrel, yrel int32) {
 }
 
 func (self *DcWidget) MoveLeft() {
-	width := int32(len(self.tiles[0]) + len(self.tiles) + 1) * TILE_WIDTH_STEP / 2
-	if self.xRoot - width / 2 + self.Width() / 2 < 0 {
+	width := int32(len(self.tiles[0])+len(self.tiles)+1) * TILE_WIDTH_STEP / 2
+	if self.xRoot-width/2+self.Width()/2 < 0 {
 		self.xRoot += 20
 		sws.PostUpdate()
 	}
 }
 
 func (self *DcWidget) MoveUp() {
-	height := int32(len(self.tiles[0]) + len(self.tiles)) * TILE_HEIGHT_STEP / 2 + TILE_HEIGHT
-	if self.yRoot - height / 2 + self.Height() / 2 < 0 {
+	height := int32(len(self.tiles[0])+len(self.tiles))*TILE_HEIGHT_STEP/2 + TILE_HEIGHT
+	if self.yRoot-height/2+self.Height()/2 < 0 {
 		self.yRoot += 20
 		sws.PostUpdate()
 	}
 }
 
 func (self *DcWidget) MoveRight() {
-	width := int32(len(self.tiles[0]) + len(self.tiles) + 1) * TILE_WIDTH_STEP / 2
-	if self.xRoot + width > self.Width() {
+	width := int32(len(self.tiles[0])+len(self.tiles)+1) * TILE_WIDTH_STEP / 2
+	if self.xRoot+width > self.Width() {
 		self.xRoot -= 20
 		sws.PostUpdate()
 	}
 }
 
 func (self *DcWidget) MoveDown() {
-	height := int32(len(self.tiles[0]) + len(self.tiles)) * TILE_HEIGHT_STEP / 2 + TILE_HEIGHT
-	if self.yRoot + height > self.Height() {
+	height := int32(len(self.tiles[0])+len(self.tiles))*TILE_HEIGHT_STEP/2 + TILE_HEIGHT
+	if self.yRoot+height > self.Height() {
 		self.yRoot -= 20
 		sws.PostUpdate()
 	}
 }
 
 func (self *DcWidget) KeyDown(key sdl.Keycode, mod uint16) {
-	if (key == sdl.K_LEFT) {
+	if key == sdl.K_LEFT {
 		self.MoveLeft()
 	}
-	if (key == sdl.K_UP) {
+	if key == sdl.K_UP {
 		self.MoveUp()
 	}
-	if (key == sdl.K_RIGHT) {
+	if key == sdl.K_RIGHT {
 		self.MoveRight()
 	}
-	if (key == sdl.K_DOWN) {
+	if key == sdl.K_DOWN {
 		self.MoveDown()
 	}
 
 }
-
 
 //
 // LoadMap typically load a map like:
@@ -225,13 +220,13 @@ func (self *DcWidget) LoadMap(dc map[string]interface{}) {
 		rotation := uint32(tile["rotation"].(float64))
 		var dcelementtype string
 		var dcelement map[string]interface{}
-		if (tile["dcelementtype"] != nil) {
+		if tile["dcelementtype"] != nil {
 			dcelementtype = tile["dcelementtype"].(string)
 		}
-		if (tile["dcelement"] != nil) {
+		if tile["dcelement"] != nil {
 			dcelement = tile["dcelement"].(map[string]interface{})
 		}
-		if (dcelementtype == "" || dcelementtype == "rack") {
+		if dcelementtype == "" || dcelementtype == "rack" {
 			// basic floor
 			self.tiles[y][x] = CreateElectricalTile(wall0, wall1, floor, rotation, dcelementtype, dcelement)
 		}
@@ -246,7 +241,7 @@ func (self *DcWidget) SaveMap() string {
 			t := self.tiles[y][x]
 			value := ""
 			if t.element == nil {
-				if (t.wall[0] != "" || t.wall[1] != "" || t.floor != "green") {
+				if t.wall[0] != "" || t.wall[1] != "" || t.floor != "green" {
 					value = fmt.Sprintf(`{"x":%d, "y":%d, "wall0":"%s", "wall1":"%s", "floor":"%s","rotation":%d}`,
 						x,
 						y,

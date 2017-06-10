@@ -1,38 +1,38 @@
 package dctycoon
 
 import (
+	"fmt"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/sdl_image"
-	"fmt"
 	"strconv"
 )
 
 const (
-	TILE_WIDTH_STEP = 96
+	TILE_WIDTH_STEP  = 96
 	TILE_HEIGHT_STEP = 48
-	TILE_HEIGHT = 257
+	TILE_HEIGHT      = 257
 )
 
 // base "class" for all tiles
 type DcElement interface {
 	// should be passive, rack, ...
-	ElementType() string // to know which type to save
-	Save() string // json
+	ElementType() string               // to know which type to save
+	Save() string                      // json
 	Draw(rotation uint32) *sdl.Surface // face can be 0,1,2,3 (i.e. 0, 90, 180, 270)
-	Power() float64 // ampere
+	Power() float64                    // ampere
 }
 
 type RackPart struct {
-	size          int32   // 1u,2u,4u, 8u...
-	name          string  // space, rack2u, rack4u, blade, switch, KVM ...
-			      //sprite        string // name of the png
-	power         float64 // in Ampere
-			      // what about elements: disk, cpu, RAM...
-	disksize      int32   // in Go
+	size int32  // 1u,2u,4u, 8u...
+	name string // space, rack2u, rack4u, blade, switch, KVM ...
+	//sprite        string // name of the png
+	power float64 // in Ampere
+	// what about elements: disk, cpu, RAM...
+	disksize      int32 // in Go
 	disknum       int32
 	cpunum        int32
-	ramsize       int32   // in Go
-	virtualizable bool    // does it has VT
+	ramsize       int32 // in Go
+	virtualizable bool  // does it has VT
 }
 
 func CreateRackPart(payload map[string]interface{}) *RackPart {
@@ -65,13 +65,13 @@ func CreateRackPart(payload map[string]interface{}) *RackPart {
 	}
 
 	rp := &RackPart{
-		size: size,
-		name: name,
-		power: power,
-		disksize: disksize,
-		disknum: disknum,
-		cpunum: cpunum,
-		ramsize: ramsize,
+		size:          size,
+		name:          name,
+		power:         power,
+		disksize:      disksize,
+		disknum:       disknum,
+		cpunum:        cpunum,
+		ramsize:       ramsize,
 		virtualizable: virtualizable,
 	}
 	return rp
@@ -91,7 +91,7 @@ func (self *RackPart) Save() string {
 }
 
 type RackElement struct {
-	rackmount        [] *RackPart // must fill 42u from bottom to top
+	rackmount        []*RackPart // must fill 42u from bottom to top
 	surface          *sdl.Surface
 	previousrotation uint32
 }
@@ -104,7 +104,7 @@ func (self *RackElement) Save() string {
 	s := fmt.Sprintf(`{"rackmount":[`)
 	for i, rp := range self.rackmount {
 		s = s + rp.Save()
-		if i < len(self.rackmount) - 1 {
+		if i < len(self.rackmount)-1 {
 			s = s + ","
 		}
 	}
@@ -117,14 +117,14 @@ func (self *RackElement) Draw(rotation uint32) *sdl.Surface {
 		self.surface.Free()
 		self.surface = nil
 	}
-	if (self.surface == nil) {
+	if self.surface == nil {
 		self.surface = getSprite("resources/rack.bottom" + strconv.Itoa(int(rotation)) + ".png")
 		var offset int32 = 0
 		for _, rp := range self.rackmount {
 			if rp.name != "space" {
 				img := getSprite("resources/" + rp.name + strconv.Itoa(int(rotation)) + ".png")
 				rectSrc := sdl.Rect{0, 0, img.W, img.H}
-				rectDst := sdl.Rect{0, TILE_HEIGHT - img.H - (offset + rp.size + 1) * 4, img.W, img.H}
+				rectDst := sdl.Rect{0, TILE_HEIGHT - img.H - (offset+rp.size+1)*4, img.W, img.H}
 				img.Blit(&rectSrc, self.surface, &rectDst)
 			}
 			offset += rp.size
@@ -154,7 +154,7 @@ func CreateRackElement(payload map[string]interface{}) *RackElement {
 	}
 	r := &RackElement{
 		rackmount: rackmount,
-		surface: nil,
+		surface:   nil,
 	}
 	return r
 }
@@ -179,11 +179,11 @@ func (self *ElectricalElement) Save() string {
 }
 
 func (self *ElectricalElement) Draw(rotation uint32) *sdl.Surface {
-	if (rotation != self.previousrotation && self.surface != nil) {
+	if rotation != self.previousrotation && self.surface != nil {
 		self.surface.Free()
 		self.surface = nil
 	}
-	if (self.surface == nil) {
+	if self.surface == nil {
 		self.surface = getSprite("resources/" + self.flavor + strconv.Itoa(int(rotation)) + ".png")
 		self.previousrotation = rotation
 	}
@@ -198,10 +198,10 @@ func CreateElectricalElement(flavor string, payload map[string]interface{}) *Ele
 	power := payload["power"].(float64)
 	capacity := int32(payload["capacity"].(float64))
 	ee := &ElectricalElement{
-		flavor: flavor,
-		power: power,
-		capacity: capacity,
-		surface: nil,
+		flavor:           flavor,
+		power:            power,
+		capacity:         capacity,
+		surface:          nil,
 		previousrotation: 0,
 	}
 	return ee
@@ -212,7 +212,7 @@ type Tile struct {
 	floor    string
 	element  DcElement
 	surface  *sdl.Surface
-	rotation uint32    // rotation of the inner element: floor+element (not the walls)
+	rotation uint32 // rotation of the inner element: floor+element (not the walls)
 }
 
 func (self *Tile) DcElement() DcElement {
@@ -261,7 +261,7 @@ func (self *Tile) Draw() *sdl.Surface {
 			wall.Blit(&rectSrc, self.surface, &rectDst)
 		}
 
-		if (self.element != nil) {
+		if self.element != nil {
 			elt := self.element.Draw(self.rotation)
 			rectSrc := sdl.Rect{0, 0, elt.W, elt.H}
 			rectDst := sdl.Rect{0, TILE_HEIGHT - elt.H, elt.W, elt.H}
@@ -272,7 +272,7 @@ func (self *Tile) Draw() *sdl.Surface {
 }
 
 func (self *Tile) Rotate(rotation uint32) {
-	if (self.surface != nil) {
+	if self.surface != nil {
 		self.surface.Free()
 	}
 	self.surface = nil
@@ -285,16 +285,16 @@ func (self *Tile) Power() float64 {
 
 func CreateGrassTile() *Tile {
 	tile := &Tile{
-		wall: [2]string{"", ""},
+		wall:     [2]string{"", ""},
 		rotation: 0,
-		floor: "green",
-		element: nil,
+		floor:    "green",
+		element:  nil,
 	}
 	return tile
 }
 
 func CreateElectricalTile(wall0, wall1, floor string, rotation uint32, dcelementtype string, dcelement map[string]interface{}) *Tile {
-	if (rotation > 3) {
+	if rotation > 3 {
 		rotation = 0
 	}
 	var element DcElement
@@ -304,10 +304,10 @@ func CreateElectricalTile(wall0, wall1, floor string, rotation uint32, dcelement
 		element = CreateElectricalElement(dcelementtype, dcelement)
 	}
 	tile := &Tile{
-		wall: [2]string{wall0, wall1},
+		wall:     [2]string{wall0, wall1},
 		rotation: rotation,
-		floor: floor,
-		element: element,
+		floor:    floor,
+		element:  element,
 	}
 	return tile
 }
@@ -319,7 +319,7 @@ func getSprite(image string) *sdl.Surface {
 		spritecache = make(map[string]*sdl.Surface)
 	}
 	sprite := spritecache[image]
-	if (sprite == nil) {
+	if sprite == nil {
 		var err error
 		sprite, err = img.Load(image)
 		if sprite == nil || err != nil {
@@ -330,6 +330,3 @@ func getSprite(image string) *sdl.Surface {
 	}
 	return sprite
 }
-
-
-

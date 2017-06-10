@@ -1,13 +1,11 @@
 package dctycoon
 
 import (
-	"time"
-	"sort"
 	"fmt"
 	"math/rand"
+	"sort"
+	"time"
 )
-
-
 
 //
 // We will have different trends to follow:
@@ -44,18 +42,18 @@ func (self TrendList) Sort() {
 }
 
 func (self TrendList) CurrentValue(now time.Time) interface{} {
-	if (len(self) == 0) {
+	if len(self) == 0 {
 		panic("no elements in the array")
 	}
 
 	index := 0
-	for (index < len(self) && self[index].Pit.Before(now)) {
+	for index < len(self) && self[index].Pit.Before(now) {
 		index++
 	}
-	if (index == 0) {
+	if index == 0 {
 		return self[0].Value
 	}
-	return self[index - 1].Value
+	return self[index-1].Value
 }
 
 func TrendListLoad(json []interface{}) TrendList {
@@ -84,9 +82,6 @@ func TrendListSave(t TrendList) string {
 	str += `]`
 	return str
 }
-
-
-
 
 // Other type of trend: price trends (+noise):
 //
@@ -124,7 +119,6 @@ type PriceTrend struct {
 	Noise PriceTrendList
 }
 
-
 //
 // function to compute the price+noise for a given date
 //
@@ -137,19 +131,19 @@ func (self *PriceTrend) CurrentValue(now time.Time) float64 {
 	}
 
 	index := 0
-	for (index < len(self.Trend) && self.Trend[index].Pit.Before(now)) {
+	for index < len(self.Trend) && self.Trend[index].Pit.Before(now) {
 		index++
 	}
 
 	var Value float64
-	if (index == 0) {
+	if index == 0 {
 		Value = self.Trend[0].Value
-	} else if (index == len(self.Trend)) {
-		Value = self.Trend[index - 1].Value
+	} else if index == len(self.Trend) {
+		Value = self.Trend[index-1].Value
 	} else {
-		interval := (self.Trend[index].Pit.Sub(self.Trend[index - 1].Pit)).Hours()
-		since := now.Sub(self.Trend[index - 1].Pit).Hours()
-		Value = self.Trend[index - 1].Value * ((interval - since) / interval) + self.Trend[index].Value * (since / interval)
+		interval := (self.Trend[index].Pit.Sub(self.Trend[index-1].Pit)).Hours()
+		since := now.Sub(self.Trend[index-1].Pit).Hours()
+		Value = self.Trend[index-1].Value*((interval-since)/interval) + self.Trend[index].Value*(since/interval)
 	}
 
 	// now compute the noise
@@ -161,38 +155,37 @@ func (self *PriceTrend) CurrentValue(now time.Time) float64 {
 		self.Noise = temp
 	}
 	endarray := len(self.Noise) - 1
-	for (now.Before((self.Noise)[endarray].Pit) == false) {
+	for now.Before((self.Noise)[endarray].Pit) == false {
 		random := rand.Float64()
 		if random < 0.1 {
 			random = 0.1
 		}
 		elt := PriceTrendItem{
-			Pit:   (self.Noise)[endarray].Pit.AddDate(0, 0, int(100 * random)),
+			Pit:   (self.Noise)[endarray].Pit.AddDate(0, 0, int(100*random)),
 			Value: 1.0 - random,
 		}
 		self.Noise = append(self.Noise, elt)
 		endarray = len(self.Noise) - 1
 	}
 
-	for (index < len(self.Noise) && (self.Noise)[index].Pit.Before(now)) {
+	for index < len(self.Noise) && (self.Noise)[index].Pit.Before(now) {
 		index++
 	}
 	var noise float64
-	if (index == 0) {
+	if index == 0 {
 		noise = (self.Noise)[0].Value
-	} else if (index == len(self.Noise)) {
-		return (self.Noise)[index - 1].Value
+	} else if index == len(self.Noise) {
+		return (self.Noise)[index-1].Value
 	} else {
-		interval := ((self.Noise)[index].Pit.Sub((self.Noise)[index - 1].Pit)).Hours()
-		since := now.Sub((self.Noise)[index - 1].Pit).Hours()
-		noise = (self.Noise)[index - 1].Value * ((interval - since) / interval) + (self.Noise)[index].Value * (since / interval)
+		interval := ((self.Noise)[index].Pit.Sub((self.Noise)[index-1].Pit)).Hours()
+		since := now.Sub((self.Noise)[index-1].Pit).Hours()
+		noise = (self.Noise)[index-1].Value*((interval-since)/interval) + (self.Noise)[index].Value*(since/interval)
 	}
 	return Value * (noise + 1.0)
 }
 
 func PriceTrendListLoad(json map[string]interface{}) PriceTrend {
-	pt := PriceTrend{
-	}
+	pt := PriceTrend{}
 	trend := json["trend"].([]interface{})
 	noise := json["noise"].([]interface{})
 
@@ -253,70 +246,70 @@ type Trend struct {
 	Disksize   TrendList
 	Ramsize    TrendList
 
-	Cpuprice   PriceTrend
-	Diskprice  PriceTrend
-	Ramprice   PriceTrend
+	Cpuprice  PriceTrend
+	Diskprice PriceTrend
+	Ramprice  PriceTrend
 }
 
 var initVt = []TrendItem{
-	TrendItem{Pit: time.Date(1979, time.Month(01), 01, 0, 0, 0, 0, time.UTC), Value: 0 },
-	TrendItem{Pit: time.Date(2005, time.Month(01), 01, 0, 0, 0, 0, time.UTC), Value: 1 },
+	TrendItem{Pit: time.Date(1979, time.Month(01), 01, 0, 0, 0, 0, time.UTC), Value: 0},
+	TrendItem{Pit: time.Date(2005, time.Month(01), 01, 0, 0, 0, 0, time.UTC), Value: 1},
 }
 
 var initCorepercpu = []TrendItem{
-	TrendItem{Pit: time.Date(1979, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value: 1 },
-	TrendItem{Pit: time.Date(2006, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value: 2 },
-	TrendItem{Pit: time.Date(2009, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value: 4 },
-	TrendItem{Pit: time.Date(2011, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value: 6 },
-	TrendItem{Pit: time.Date(2012, time.Month(6), 1, 0, 0, 0, 0, time.UTC), Value: 8 },
-	TrendItem{Pit: time.Date(2017, time.Month(6), 1, 0, 0, 0, 0, time.UTC), Value: 12 },
-	TrendItem{Pit: time.Date(2018, time.Month(9), 1, 0, 0, 0, 0, time.UTC), Value: 16 },
+	TrendItem{Pit: time.Date(1979, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value: 1},
+	TrendItem{Pit: time.Date(2006, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value: 2},
+	TrendItem{Pit: time.Date(2009, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value: 4},
+	TrendItem{Pit: time.Date(2011, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value: 6},
+	TrendItem{Pit: time.Date(2012, time.Month(6), 1, 0, 0, 0, 0, time.UTC), Value: 8},
+	TrendItem{Pit: time.Date(2017, time.Month(6), 1, 0, 0, 0, 0, time.UTC), Value: 12},
+	TrendItem{Pit: time.Date(2018, time.Month(9), 1, 0, 0, 0, 0, time.UTC), Value: 16},
 }
 
 // size : http://www.pcworld.com/article/127105/article.html
-var initDisksize = []TrendItem{// in MB
-	TrendItem{Pit: time.Date(1983, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value: 10 },
-	TrendItem{Pit: time.Date(1992, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value: 170 },
-	TrendItem{Pit: time.Date(1993, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value: 270 },
-	TrendItem{Pit: time.Date(1994, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value: 540 },
-	TrendItem{Pit: time.Date(1995, time.Month(6), 1, 0, 0, 0, 0, time.UTC), Value: 1000 },
-	TrendItem{Pit: time.Date(1997, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value: 3200 },
-	TrendItem{Pit: time.Date(1998, time.Month(7), 1, 0, 0, 0, 0, time.UTC), Value: 6400 },
-	TrendItem{Pit: time.Date(2000, time.Month(2), 1, 0, 0, 0, 0, time.UTC), Value: 12000 },
-	TrendItem{Pit: time.Date(2001, time.Month(7), 1, 0, 0, 0, 0, time.UTC), Value: 50000 },
-	TrendItem{Pit: time.Date(2003, time.Month(4), 1, 0, 0, 0, 0, time.UTC), Value: 120000 },
-	TrendItem{Pit: time.Date(2005, time.Month(12), 1, 0, 0, 0, 0, time.UTC), Value: 500000 },
-	TrendItem{Pit: time.Date(2006, time.Month(9), 1, 0, 0, 0, 0, time.UTC), Value: 750000 },
-	TrendItem{Pit: time.Date(2007, time.Month(3), 1, 0, 0, 0, 0, time.UTC), Value: 1000000 },
-	TrendItem{Pit: time.Date(2008, time.Month(4), 1, 0, 0, 0, 0, time.UTC), Value: 1500000 },
-	TrendItem{Pit: time.Date(2009, time.Month(10), 1, 0, 0, 0, 0, time.UTC), Value: 2000000 },
-	TrendItem{Pit: time.Date(2010, time.Month(7), 1, 0, 0, 0, 0, time.UTC), Value: 3000000 },
-	TrendItem{Pit: time.Date(2011, time.Month(2), 1, 0, 0, 0, 0, time.UTC), Value: 4000000 },
-	TrendItem{Pit: time.Date(2013, time.Month(2), 1, 0, 0, 0, 0, time.UTC), Value: 6000000 },
-	TrendItem{Pit: time.Date(2014, time.Month(11), 1, 0, 0, 0, 0, time.UTC), Value: 8000000 },
-	TrendItem{Pit: time.Date(2017, time.Month(5), 1, 0, 0, 0, 0, time.UTC), Value: 12000000 },
+var initDisksize = []TrendItem{ // in MB
+	TrendItem{Pit: time.Date(1983, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value: 10},
+	TrendItem{Pit: time.Date(1992, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value: 170},
+	TrendItem{Pit: time.Date(1993, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value: 270},
+	TrendItem{Pit: time.Date(1994, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value: 540},
+	TrendItem{Pit: time.Date(1995, time.Month(6), 1, 0, 0, 0, 0, time.UTC), Value: 1000},
+	TrendItem{Pit: time.Date(1997, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value: 3200},
+	TrendItem{Pit: time.Date(1998, time.Month(7), 1, 0, 0, 0, 0, time.UTC), Value: 6400},
+	TrendItem{Pit: time.Date(2000, time.Month(2), 1, 0, 0, 0, 0, time.UTC), Value: 12000},
+	TrendItem{Pit: time.Date(2001, time.Month(7), 1, 0, 0, 0, 0, time.UTC), Value: 50000},
+	TrendItem{Pit: time.Date(2003, time.Month(4), 1, 0, 0, 0, 0, time.UTC), Value: 120000},
+	TrendItem{Pit: time.Date(2005, time.Month(12), 1, 0, 0, 0, 0, time.UTC), Value: 500000},
+	TrendItem{Pit: time.Date(2006, time.Month(9), 1, 0, 0, 0, 0, time.UTC), Value: 750000},
+	TrendItem{Pit: time.Date(2007, time.Month(3), 1, 0, 0, 0, 0, time.UTC), Value: 1000000},
+	TrendItem{Pit: time.Date(2008, time.Month(4), 1, 0, 0, 0, 0, time.UTC), Value: 1500000},
+	TrendItem{Pit: time.Date(2009, time.Month(10), 1, 0, 0, 0, 0, time.UTC), Value: 2000000},
+	TrendItem{Pit: time.Date(2010, time.Month(7), 1, 0, 0, 0, 0, time.UTC), Value: 3000000},
+	TrendItem{Pit: time.Date(2011, time.Month(2), 1, 0, 0, 0, 0, time.UTC), Value: 4000000},
+	TrendItem{Pit: time.Date(2013, time.Month(2), 1, 0, 0, 0, 0, time.UTC), Value: 6000000},
+	TrendItem{Pit: time.Date(2014, time.Month(11), 1, 0, 0, 0, 0, time.UTC), Value: 8000000},
+	TrendItem{Pit: time.Date(2017, time.Month(5), 1, 0, 0, 0, 0, time.UTC), Value: 12000000},
 }
-var initRamsize = []TrendItem{// in MB
-	TrendItem{Pit: time.Date(1994, time.Month(04), 01, 0, 0, 0, 0, time.UTC), Value: 4 },
-	TrendItem{Pit: time.Date(1996, time.Month(04), 01, 0, 0, 0, 0, time.UTC), Value: 8 },
-	TrendItem{Pit: time.Date(1999, time.Month(04), 01, 0, 0, 0, 0, time.UTC), Value: 16 },
-	TrendItem{Pit: time.Date(2002, time.Month(11), 01, 0, 0, 0, 0, time.UTC), Value: 32 },
-	TrendItem{Pit: time.Date(2004, time.Month(04), 01, 0, 0, 0, 0, time.UTC), Value: 64 },
-	TrendItem{Pit: time.Date(2006, time.Month(11), 01, 0, 0, 0, 0, time.UTC), Value: 128 },
-	TrendItem{Pit: time.Date(2008, time.Month(04), 01, 0, 0, 0, 0, time.UTC), Value: 256 },
-	TrendItem{Pit: time.Date(2009, time.Month(11), 01, 0, 0, 0, 0, time.UTC), Value: 512 },
-	TrendItem{Pit: time.Date(2011, time.Month(04), 01, 0, 0, 0, 0, time.UTC), Value: 1024 },
-	TrendItem{Pit: time.Date(2012, time.Month(11), 01, 0, 0, 0, 0, time.UTC), Value: 2048 },
-	TrendItem{Pit: time.Date(2014, time.Month(04), 01, 0, 0, 0, 0, time.UTC), Value: 4096 },
-	TrendItem{Pit: time.Date(2017, time.Month(05), 01, 0, 0, 0, 0, time.UTC), Value: 8192 },
+var initRamsize = []TrendItem{ // in MB
+	TrendItem{Pit: time.Date(1994, time.Month(04), 01, 0, 0, 0, 0, time.UTC), Value: 4},
+	TrendItem{Pit: time.Date(1996, time.Month(04), 01, 0, 0, 0, 0, time.UTC), Value: 8},
+	TrendItem{Pit: time.Date(1999, time.Month(04), 01, 0, 0, 0, 0, time.UTC), Value: 16},
+	TrendItem{Pit: time.Date(2002, time.Month(11), 01, 0, 0, 0, 0, time.UTC), Value: 32},
+	TrendItem{Pit: time.Date(2004, time.Month(04), 01, 0, 0, 0, 0, time.UTC), Value: 64},
+	TrendItem{Pit: time.Date(2006, time.Month(11), 01, 0, 0, 0, 0, time.UTC), Value: 128},
+	TrendItem{Pit: time.Date(2008, time.Month(04), 01, 0, 0, 0, 0, time.UTC), Value: 256},
+	TrendItem{Pit: time.Date(2009, time.Month(11), 01, 0, 0, 0, 0, time.UTC), Value: 512},
+	TrendItem{Pit: time.Date(2011, time.Month(04), 01, 0, 0, 0, 0, time.UTC), Value: 1024},
+	TrendItem{Pit: time.Date(2012, time.Month(11), 01, 0, 0, 0, 0, time.UTC), Value: 2048},
+	TrendItem{Pit: time.Date(2014, time.Month(04), 01, 0, 0, 0, 0, time.UTC), Value: 4096},
+	TrendItem{Pit: time.Date(2017, time.Month(05), 01, 0, 0, 0, 0, time.UTC), Value: 8192},
 }
 
 func TrendLoad(json map[string]interface{}) *Trend {
 	t := &Trend{
-		Corepercpu:initCorepercpu,
-		Vt:        initVt,
-		Disksize:  initDisksize,
-		Ramsize:   initRamsize,
+		Corepercpu: initCorepercpu,
+		Vt:         initVt,
+		Disksize:   initDisksize,
+		Ramsize:    initRamsize,
 
 		Cpuprice:  PriceTrendListLoad(json["cpuprice"].(map[string]interface{})),
 		Diskprice: PriceTrendListLoad(json["diskprice"].(map[string]interface{})),

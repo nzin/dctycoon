@@ -98,22 +98,19 @@ type ServerConf struct {
 
 func (self *ServerConf) PowerConsumption() float64 {
 	var consumption float64
-	consumption = float64(self.NbProcessors) * 100.0 +
-		float64(self.NbDisks) * 7.0 +
-		float64(self.NbSlotRam) * 4.0 +
+	consumption = float64(self.NbProcessors)*100.0 +
+		float64(self.NbDisks)*7.0 +
+		float64(self.NbSlotRam)*4.0 +
 		60.0
 	return consumption
 }
 
 func (self *ServerConf) Price(now time.Time) float64 {
 	var price float64
-	complexity := float64(self.NbProcessors) / 10 + float64(self.NbDisks) / 20 + float64(self.NbSlotRam) / 40 + 1
+	complexity := float64(self.NbProcessors)/10 + float64(self.NbDisks)/20 + float64(self.NbSlotRam)/40 + 1
 	price = self.ConfType.BackplanePrice +
-		Trends.Cpuprice.CurrentValue(now) * float64(self.NbProcessors) +
-		Trends.Diskprice.CurrentValue(now) * float64(self.NbDisks * self.DiskSize) +
-		Trends.Ramprice.CurrentValue(now) * float64(self.NbSlotRam * self.RamSize)
+		Trends.Cpuprice.CurrentValue(now)*float64(self.NbProcessors) +
+		Trends.Diskprice.CurrentValue(now)*float64(self.NbDisks*self.DiskSize) +
+		Trends.Ramprice.CurrentValue(now)*float64(self.NbSlotRam*self.RamSize)
 	return price * complexity
 }
-
-
-
