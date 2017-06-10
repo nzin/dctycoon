@@ -11,9 +11,13 @@ import (
 
 //
 // We will have different trends to follow:
+//
 // - number of cores/CPU.
+//
 // - vt.
+//
 // - disk size / plateau.
+//
 // - ram size / slot.
 //
 type TrendItem struct {
@@ -85,8 +89,11 @@ func TrendListSave(t TrendList) string {
 
 
 // Other type of trend: price trends (+noise):
+//
 // - cpu price / core + noise.
+//
 // - disk price / Go + noise.
+//
 // - ram price / Go + noise.
 //
 type PriceTrendItem struct {
