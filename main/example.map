@@ -30,22 +30,10 @@
     ]
   },
   "trends": {
-      "cpuprice": {
-        "trend":[
-          {"pit":"1979-01-01","value":4000},
-          {"pit":"1990-01-01","value":1000},
-          {"pit":"2000-01-01","value":500},
-          {"pit":"2006-01-01","value":400},
-          {"pit":"2012-01-01","value":200}
-        ],
-        "noise":[
+      "cpupricenoise": [
           {"pit":"1979-01-01","value":0.5}
-        ]},
-      "diskprice": {
-        "trend":[],
-        "noise":[]},
-      "ramprice": {
-        "trend":[],
-        "noise":[]}
+        ],
+      "diskpricenoise":[],
+      "rampricenoise":[]
   }
 }

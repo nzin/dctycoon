@@ -184,23 +184,11 @@ func (self *PriceTrend) CurrentValue(now time.Time) float64 {
 	return Value * (noise + 1.0)
 }
 
-func PriceTrendListLoad(json map[string]interface{}) PriceTrend {
+func PriceTrendListLoad(noise []interface{}, trend []PriceTrendItem) PriceTrend {
 	pt := PriceTrend{}
-	trend := json["trend"].([]interface{})
-	noise := json["noise"].([]interface{})
 
-	tl := make(PriceTrendList, len(trend))
-	for i, t := range trend {
-		te := t.(map[string]interface{})
-		var year, month, day int
-		fmt.Sscanf(te["pit"].(string), "%d-%d-%d", &year, &month, &day)
-		tl[i] = PriceTrendItem{
-			Pit:   time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC),
-			Value: te["value"].(float64),
-		}
-	}
-	tl.Sort()
-	pt.Trend = tl
+	//tl.Sort()
+	pt.Trend = trend
 
 	nl := make(PriceTrendList, len(noise))
 	for i, n := range noise {
@@ -219,21 +207,14 @@ func PriceTrendListLoad(json map[string]interface{}) PriceTrend {
 }
 
 func PriceTrendListSave(pt PriceTrend) string {
-	str := `{ "trend":[`
-	for i, te := range pt.Trend {
-		if i > 0 {
-			str += ","
-		}
-		str += fmt.Sprintf(`{"pit":"%d-%d-%d", "value":%g}`, te.Pit.Year(), te.Pit.Month(), te.Pit.Day(), te.Value)
-	}
-	str += `],"noise":[`
+	str := `[`
 	for i, ne := range pt.Noise {
 		if i > 0 {
 			str += ","
 		}
 		str += fmt.Sprintf(`{"pit":"%d-%d-%d", "value":%g}`, ne.Pit.Year(), ne.Pit.Month(), ne.Pit.Day(), ne.Value)
 	}
-	str += `]}`
+	str += `]`
 	return str
 }
 
@@ -304,6 +285,74 @@ var initRamsize = []TrendItem{ // in MB
 	TrendItem{Pit: time.Date(2017, time.Month(05), 01, 0, 0, 0, 0, time.UTC), Value: 8192},
 }
 
+// source: http://www.mkomo.com/cost-per-gigabyte
+var diskPriceTrend = []PriceTrendItem{ // $/Go
+	PriceTrendItem{Pit: time.Date(1981, time.Month(11), 1, 0, 0, 0, 0, time.UTC),Value: 340000}, // Seagate 5M
+	PriceTrendItem{Pit: time.Date(1983, time.Month(12), 1, 0, 0, 0, 0, time.UTC),Value: 190000}, // Xcomp 10M
+	PriceTrendItem{Pit: time.Date(1984, time.Month(3), 1, 0, 0, 0, 0, time.UTC),Value: 170000},  // Tandon 10M
+	PriceTrendItem{Pit: time.Date(1984, time.Month(5), 1, 0, 0, 0, 0, time.UTC),Value: 80000},   // Pegaus 23M
+	PriceTrendItem{Pit: time.Date(1985, time.Month(7), 1, 0, 0, 0, 0, time.UTC),Value: 71000},   // First class peripherals 10M
+	PriceTrendItem{Pit: time.Date(1987, time.Month(10), 1, 0, 0, 0, 0, time.UTC),Value: 45000},  // Iomega 40 M
+	PriceTrendItem{Pit: time.Date(1988, time.Month(5), 1, 0, 0, 0, 0, time.UTC),Value: 30000},   // ?? 60M
+	PriceTrendItem{Pit: time.Date(1989, time.Month(9), 1, 0, 0, 0, 0, time.UTC),Value: 12000},   // ??
+	PriceTrendItem{Pit: time.Date(1990, time.Month(9), 1, 0, 0, 0, 0, time.UTC),Value: 9000},    // ??
+	PriceTrendItem{Pit: time.Date(1991, time.Month(9), 1, 0, 0, 0, 0, time.UTC),Value: 7000},    // ??
+	PriceTrendItem{Pit: time.Date(1992, time.Month(9), 1, 0, 0, 0, 0, time.UTC),Value: 4000},    // ??
+	PriceTrendItem{Pit: time.Date(1993, time.Month(9), 1, 0, 0, 0, 0, time.UTC),Value: 2000},    // ??
+	PriceTrendItem{Pit: time.Date(1994, time.Month(9), 1, 0, 0, 0, 0, time.UTC),Value: 950},     // ??
+	PriceTrendItem{Pit: time.Date(1995, time.Month(4), 1, 0, 0, 0, 0, time.UTC),Value: 756},     // ?? 1000M
+	PriceTrendItem{Pit: time.Date(1996, time.Month(6), 1, 0, 0, 0, 0, time.UTC),Value: 295},     // Western Digital 1600 M
+	PriceTrendItem{Pit: time.Date(1997, time.Month(8), 13, 0, 0, 0, 0, time.UTC),Value: 141},    // Western Digital 4000 M
+	PriceTrendItem{Pit: time.Date(1998, time.Month(1), 16, 0, 0, 0, 0, time.UTC),Value: 95.20},  // Maxtor 6400 M
+	PriceTrendItem{Pit: time.Date(1998, time.Month(5), 11, 0, 0, 0, 0, time.UTC),Value: 58.90},  // Fujitsu 6400 M
+	PriceTrendItem{Pit: time.Date(1999, time.Month(2), 26, 0, 0, 0, 0, time.UTC),Value: 37.70},  // Maxtor 8400 M
+	PriceTrendItem{Pit: time.Date(1999, time.Month(2), 26, 0, 0, 0, 0, time.UTC),Value: 37.70},  // Maxtor 8400 M
+	PriceTrendItem{Pit: time.Date(1999, time.Month(5), 27, 0, 0, 0, 0, time.UTC),Value: 24.50},  // Fujitsu UDMA 17.3 G
+	PriceTrendItem{Pit: time.Date(1999, time.Month(10), 1, 0, 0, 0, 0, time.UTC),Value: 20.60},  // Western Digital 27.3G
+	PriceTrendItem{Pit: time.Date(1999, time.Month(10), 1, 0, 0, 0, 0, time.UTC),Value: 20.60},  // Western Digital 27.3G
+	PriceTrendItem{Pit: time.Date(1999, time.Month(12), 1, 0, 0, 0, 0, time.UTC),Value: 16.30},  // Fujitsu IDE 27.3G
+	PriceTrendItem{Pit: time.Date(2000, time.Month(4), 1, 0, 0, 0, 0, time.UTC),Value: 13.00},   // Maxtor UDMA 36.5G
+	PriceTrendItem{Pit: time.Date(2000, time.Month(8), 1, 0, 0, 0, 0, time.UTC),Value: 10.90},   // Maxtor 40.9G
+	PriceTrendItem{Pit: time.Date(2000, time.Month(10), 27, 0, 0, 0, 0, time.UTC),Value: 7.30},  // Maxtor 81.9G
+	PriceTrendItem{Pit: time.Date(2001, time.Month(11), 30, 0, 0, 0, 0, time.UTC),Value: 2.99},  // Western Digital 100G
+	PriceTrendItem{Pit: time.Date(2002, time.Month(9), 6, 0, 0, 0, 0, time.UTC),Value: 2.59},    // Western Digital 120G
+	PriceTrendItem{Pit: time.Date(2003, time.Month(11), 29, 0, 0, 0, 0, time.UTC),Value: 1.61},  // Maxtor Seria ATA 120G
+	PriceTrendItem{Pit: time.Date(2004, time.Month(3), 27, 0, 0, 0, 0, time.UTC),Value: 1.70},   // Western Digital Caviar 250G
+	PriceTrendItem{Pit: time.Date(2004, time.Month(12), 4, 0, 0, 0, 0, time.UTC),Value: 0.70},   // Barracuda 400G
+	PriceTrendItem{Pit: time.Date(2005, time.Month(8), 29, 0, 0, 0, 0, time.UTC),Value: 0.75},   // ?? 400G
+	PriceTrendItem{Pit: time.Date(2006, time.Month(7), 5, 0, 0, 0, 0, time.UTC),Value: 0.60},    // Seagate Barracuda 500G
+	PriceTrendItem{Pit: time.Date(2008, time.Month(1), 13, 0, 0, 0, 0, time.UTC),Value: 0.27},   // Seagate Barracuda 750G
+	PriceTrendItem{Pit: time.Date(2009, time.Month(7), 24, 0, 0, 0, 0, time.UTC),Value: 0.14},   // HITACHI 1000G
+	PriceTrendItem{Pit: time.Date(2010, time.Month(1), 1, 0, 0, 0, 0, time.UTC),Value: 0.07},    // ?? 2000G
+	PriceTrendItem{Pit: time.Date(2010, time.Month(7), 1, 0, 0, 0, 0, time.UTC),Value: 0.05},    // ?? 3000G
+	PriceTrendItem{Pit: time.Date(2011, time.Month(2), 1, 0, 0, 0, 0, time.UTC), Value: 0.03},   // ?? 4000G
+	PriceTrendItem{Pit: time.Date(2013, time.Month(2), 1, 0, 0, 0, 0, time.UTC), Value: 0.02},   // ?? 6000G
+	PriceTrendItem{Pit: time.Date(2014, time.Month(11), 1, 0, 0, 0, 0, time.UTC), Value: 0.015}, // ?? 8000G
+	PriceTrendItem{Pit: time.Date(2017, time.Month(5), 1, 0, 0, 0, 0, time.UTC), Value:  0.01},  // ?? 12000G
+}
+
+// based on https://arstechnica.com/gadgets/2016/11/how-cheap-ram-changes-computing/
+var ramPriceTrend = []PriceTrendItem{ // $/Go
+	PriceTrendItem{Pit: time.Date(1980, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value:  10000000},
+	PriceTrendItem{Pit: time.Date(1985, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value:  1000000},
+	PriceTrendItem{Pit: time.Date(1990, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value:  100000},
+	PriceTrendItem{Pit: time.Date(1995, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value:  50000},
+	PriceTrendItem{Pit: time.Date(2000, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value:  1000},
+	PriceTrendItem{Pit: time.Date(2005, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value:  500},
+	PriceTrendItem{Pit: time.Date(2010, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value:  50},
+	PriceTrendItem{Pit: time.Date(2015, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value:  8},
+	PriceTrendItem{Pit: time.Date(2020, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value:  1},
+}
+
+// imaginaries values (I didn't find good data on internet)
+var cpucorePriceTrend = []PriceTrendItem{ // $/core
+	PriceTrendItem{Pit: time.Date(1979, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value:  4000},
+	PriceTrendItem{Pit: time.Date(1990, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value:  1000},
+	PriceTrendItem{Pit: time.Date(2000, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value:  500},
+	PriceTrendItem{Pit: time.Date(2006, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value:  400},
+	PriceTrendItem{Pit: time.Date(2012, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value:  100},
+}
+
 func TrendLoad(json map[string]interface{}) *Trend {
 	t := &Trend{
 		Corepercpu: initCorepercpu,
@@ -311,9 +360,9 @@ func TrendLoad(json map[string]interface{}) *Trend {
 		Disksize:   initDisksize,
 		Ramsize:    initRamsize,
 
-		Cpuprice:  PriceTrendListLoad(json["cpuprice"].(map[string]interface{})),
-		Diskprice: PriceTrendListLoad(json["diskprice"].(map[string]interface{})),
-		Ramprice:  PriceTrendListLoad(json["ramprice"].(map[string]interface{})),
+		Cpuprice:  PriceTrendListLoad(json["cpupricenoise"].([]interface{}),cpucorePriceTrend),
+		Diskprice: PriceTrendListLoad(json["diskpricenoise"].([]interface{}),diskPriceTrend),
+		Ramprice:  PriceTrendListLoad(json["rampricenoise"].([]interface{}),ramPriceTrend),
 	}
 
 	return t
@@ -321,9 +370,9 @@ func TrendLoad(json map[string]interface{}) *Trend {
 
 func TrendSave(t *Trend) string {
 	str := "{\n"
-	str += fmt.Sprintf(`"cpuprice": %s,`, PriceTrendListSave(t.Cpuprice)) + "\n"
-	str += fmt.Sprintf(`"diskprice": %s,`, PriceTrendListSave(t.Diskprice)) + "\n"
-	str += fmt.Sprintf(`"ramprice": %s`, PriceTrendListSave(t.Ramprice)) + "\n"
+	str += fmt.Sprintf(`"cpupricenoise": %s,`, PriceTrendListSave(t.Cpuprice)) + "\n"
+	str += fmt.Sprintf(`"diskpricenoise": %s,`, PriceTrendListSave(t.Diskprice)) + "\n"
+	str += fmt.Sprintf(`"rampricenoise": %s`, PriceTrendListSave(t.Ramprice)) + "\n"
 	str += "}"
 	return str
 }
