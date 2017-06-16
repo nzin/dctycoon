@@ -73,7 +73,7 @@ var AvailableConfs = []ServerConfType{
 		NbDisks:        [2]int32{8, 8},
 		NbSlotRam:      [2]int32{16, 16},
 		BackplanePrice: 6000,
-		ServerSprite:   "server.blade",
+		ServerSprite:   "server.blade.8u",
 		NbU:            8,
 	},
 	ServerConfType{
@@ -82,18 +82,26 @@ var AvailableConfs = []ServerConfType{
 		NbDisks:        [2]int32{8, 8},
 		NbSlotRam:      [2]int32{16, 16},
 		BackplanePrice: 8000,
-		ServerSprite:   "server.blade",
+		ServerSprite:   "server.blade.8u",
 		NbU:            8,
 	},
 }
 
+//
+// based on the different type of chassis available
+// and the vendor(s) options, the final server conf
+// will have these caracteristics
+//
 type ServerConf struct {
-	NbProcessors int32
-	NbDisks      int32
-	NbSlotRam    int32
+	NbProcessors int32 //chosen
+	NbCore       int32 // depend on the current trend
+	VtSupport    bool  // depend on the current trend
+	NbDisks      int32 // chosen
+	NbSlotRam    int32 // chosen
 	DiskSize     int32 // 3 options: Trend.Disksize: 1,1/2,1/4
 	RamSize      int32 // 4 options: Trend.Ramsize: 1,1/2,1/4,1/8
 	ConfType     *ServerConfType
+	PricePaid    float64
 }
 
 func (self *ServerConf) PowerConsumption() float64 {
@@ -114,3 +122,4 @@ func (self *ServerConf) Price(now time.Time) float64 {
 		Trends.Ramprice.CurrentValue(now)*float64(self.NbSlotRam*self.RamSize)
 	return price * complexity
 }
+
