@@ -13,6 +13,7 @@ func main() {
 
 	root := sws.Init(800, 600)
 	dc := dctycoon.CreateDcWidget(root.Width(), root.Height())
+	supplier := dctycoon.CreateSupplier(root)
 	gamefile, err := os.Open("example.map")
 	if err != nil {
 		fmt.Println(err.Error())
@@ -31,6 +32,7 @@ func main() {
 	dctycoon.Trends = dctycoon.TrendLoad(v["trends"].(map[string]interface{}))
 	root.AddChild(dc)
 	root.SetFocus(dc)
+	supplier.Show()
 
 	fmt.Println(dctycoon.Trends.Cpuprice.CurrentValue(time.Now()))
 
