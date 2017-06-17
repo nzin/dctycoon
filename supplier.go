@@ -88,7 +88,7 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 	sv.SetRightWidget(scrollwidget)
 
 	// server page
-	serverpage:=supplier.CreateServerPageWidget(600,550)
+	serverpage:=supplier.CreateServerPageWidget(600,850)
 	widget.serverpage=serverpage
 	scrollwidget.SetInnerWidget(serverpage)
 	
@@ -97,22 +97,22 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 	banners.Move(120,40)
 	serverpage.AddChild(banners)
 	
-	explore:=supplier.CreateServerPageExploreWidget(480,500)
+	explore:=supplier.CreateServerPageExploreWidget(480,700)
 	explore.Move(120,160)
 	serverpage.AddChild(explore)
 	widget.content=explore
 	
-	towerpage:=supplier.CreateServerPageTowerWidget(480,500)
+	towerpage:=supplier.CreateServerPageTowerWidget(480,700)
 	towerpage.Move(120,160)
 	
-	rackpage:=supplier.CreateServerPageRackWidget(480,500)
+	rackpage:=supplier.CreateServerPageRackWidget(480,700)
 	rackpage.Move(120,160)
 	
-	bladepage:=supplier.CreateServerPageBladeWidget(480,500)
+	bladepage:=supplier.CreateServerPageBladeWidget(480,700)
 	bladepage.Move(120,160)
 	
 	// configure
-	configurepage:=supplier.CreateServerPageConfigureWidget(480,620)
+	configurepage:=supplier.CreateServerPageConfigureWidget(480,700)
 	configurepage.Move(120,40)
 	
 	// buttons callback
@@ -121,6 +121,8 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 		serverpage.RemoveChild(widget.content)
 		serverpage.AddChild(banners)
 		serverpage.AddChild(explore)
+		scrollwidget.SetHorizontalPosition(0)
+		scrollwidget.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
 
@@ -128,6 +130,8 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 		serverpage.RemoveChild(widget.content)
 		serverpage.AddChild(banners)
 		serverpage.AddChild(towerpage)
+		scrollwidget.SetHorizontalPosition(0)
+		scrollwidget.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
 	
@@ -135,6 +139,8 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 		serverpage.RemoveChild(widget.content)
 		serverpage.AddChild(banners)
 		serverpage.AddChild(rackpage)
+		scrollwidget.SetHorizontalPosition(0)
+		scrollwidget.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
 	
@@ -142,6 +148,8 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 		serverpage.RemoveChild(widget.content)
 		serverpage.AddChild(banners)
 		serverpage.AddChild(bladepage)
+		scrollwidget.SetHorizontalPosition(0)
+		scrollwidget.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
 	
@@ -149,6 +157,8 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 		serverpage.RemoveChild(widget.content)
 		serverpage.AddChild(banners)
 		serverpage.AddChild(towerpage)
+		scrollwidget.SetHorizontalPosition(0)
+		scrollwidget.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
 	
@@ -156,6 +166,8 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 		serverpage.RemoveChild(widget.content)
 		serverpage.AddChild(banners)
 		serverpage.AddChild(rackpage)
+		scrollwidget.SetHorizontalPosition(0)
+		scrollwidget.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
 	
@@ -163,6 +175,8 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 		serverpage.RemoveChild(widget.content)
 		serverpage.AddChild(banners)
 		serverpage.AddChild(bladepage)
+		scrollwidget.SetHorizontalPosition(0)
+		scrollwidget.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
 	
@@ -171,6 +185,8 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 		serverpage.RemoveChild(banners)
 		configurepage.SetConfType("T1000")
 		serverpage.AddChild(configurepage)
+		scrollwidget.SetHorizontalPosition(0)
+		scrollwidget.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
 	
