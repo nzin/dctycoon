@@ -16,6 +16,7 @@ type DcWidget struct {
 	xRoot, yRoot  int32
 	activeTile    *Tile
 	activeElement DcElement
+	te            *sws.TimerEvent
 }
 
 func (self *DcWidget) Repaint() {
@@ -100,40 +101,38 @@ func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 	}
 }
 
-var te *sws.TimerEvent
-
 func (self *DcWidget) HasFocus(focus bool) {
 	if focus == false {
-		te.StopRepeat()
-		te = nil
+		self.te.StopRepeat()
+		self.te = nil
 	}
 }
 
 func (self *DcWidget) MouseMove(x, y, xrel, yrel int32) {
-	if te != nil {
-		te.StopRepeat()
-		te = nil
+	if self.te != nil {
+		self.te.StopRepeat()
+		self.te = nil
 	}
 	if x < 10 {
-		te = sws.TimerAddEvent(time.Now(), 50*time.Millisecond, func() {
+		self.te = sws.TimerAddEvent(time.Now(), 50*time.Millisecond, func() {
 			self.MoveLeft()
 		})
 		return
 	}
 	if y < 10 {
-		te = sws.TimerAddEvent(time.Now(), 50*time.Millisecond, func() {
+		self.te = sws.TimerAddEvent(time.Now(), 50*time.Millisecond, func() {
 			self.MoveUp()
 		})
 		return
 	}
 	if x > self.Width()-10 {
-		te = sws.TimerAddEvent(time.Now(), 50*time.Millisecond, func() {
+		self.te = sws.TimerAddEvent(time.Now(), 50*time.Millisecond, func() {
 			self.MoveRight()
 		})
 		return
 	}
 	if y > self.Height()-10 {
-		te = sws.TimerAddEvent(time.Now(), 50*time.Millisecond, func() {
+		self.te = sws.TimerAddEvent(time.Now(), 50*time.Millisecond, func() {
 			self.MoveDown()
 		})
 		return

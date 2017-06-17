@@ -2,8 +2,8 @@ package dctycoon
 
 import(
 	"github.com/nzin/sws"
-	"github.com/veandco/go-sdl2/sdl_image"
 	"github.com/veandco/go-sdl2/sdl"
+	"github.com/nzin/dctycoon/supplier"
 )
 //
 // top 'menu': [Deal] <shop>  <in transit> <support> <cart>
@@ -20,7 +20,8 @@ type Supplier struct {
 	rootwindow   *sws.SWS_RootWidget 
 	mainwidget   *sws.SWS_MainWidget
 	scrollwidget *sws.SWS_ScrollWidget
-	serverpage   *sws.SWS_CoreWidget
+	serverpage   *supplier.ServerPageWidget
+	content      sws.SWS_Widget
 }
 
 func (self *Supplier) Show() {
@@ -29,18 +30,22 @@ func (self *Supplier) Show() {
 
 func (self *Supplier) Hide() {
 	self.rootwindow.RemoveChild(self.mainwidget)
+	children:=self.rootwindow.GetChildren()
+	if len(children)>0 {
+		self.rootwindow.SetFocus(children[0])
+	}
 }
 
 func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 	mainwidget := sws.CreateMainWidget(600,400," Your DEAL supplier",true,true)
-	scrollwidget := sws.CreateScrollWidget(600,350)
-	supplier := &Supplier{
+	scrollwidget := sws.CreateScrollWidget(600,550)
+	widget := &Supplier{
 		rootwindow: root,
 		mainwidget: mainwidget,
 		scrollwidget: scrollwidget,
 	}
 	mainwidget.SetCloseCallback(func() {
-		supplier.Hide()
+		widget.Hide()
 	})
 	sv := sws.CreateSplitviewWidget(200,200,false)
 	sv.PlaceSplitBar(50)
@@ -51,12 +56,10 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 	banner:=sws.CreateCoreWidget(600,50)
 	banner.SetColor(0xff0684dc)
 	sv.SetLeftWidget(banner)
-	suppliericon:=sws.CreateLabel(100,50,"")
-	suppliericon.SetColor(0xff0684dc)
-	if img,err := img.Load("resources/deal.small2.png"); err==nil {
-		suppliericon.SetImage(img)
-	}
-	banner.AddChild(suppliericon)
+	widgeticon:=sws.CreateLabel(100,50,"")
+	widgeticon.SetColor(0xff0684dc)
+	widgeticon.SetImage("resources/deal.small2.png")
+	banner.AddChild(widgeticon)
 
 	shop:=sws.CreateFlatButtonWidget(100,50,"Shop")
 	shop.SetColor(0xff0684dc)
@@ -78,49 +81,81 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 	
 	cart:=sws.CreateFlatButtonWidget(100,50,"")
 	cart.SetColor(0xff0684dc)
-	if img,err := img.Load("resources/cart.small.png"); err==nil {
-		cart.SetImage(img)
-	}
+	cart.SetImage("resources/cart.small.png")
 	cart.Move(400,0)
 	banner.AddChild(cart)
 	
 	sv.SetRightWidget(scrollwidget)
 
 	// server page
-	serverpage:=sws.CreateCoreWidget(600,350)
-	supplier.serverpage=serverpage
-	servertitle:=sws.CreateLabel(100,40,"DEAL Servers")
-	servertitle.Move(40,0)
-	serverpage.AddChild(servertitle)
-
-	towerservers:=sws.CreateFlatButtonWidget(120,20,"> Tower Servers")
-	towerservers.SetTextColor(sdl.Color{0x06,0x84,0xdc,0xff})
-	towerservers.SetCentered(false)
-	towerservers.Move(0,40)
-	serverpage.AddChild(towerservers)
-	
-	rackservers:=sws.CreateFlatButtonWidget(120,20,"> Rack Servers")
-	rackservers.SetTextColor(sdl.Color{0x06,0x84,0xdc,0xff})
-	rackservers.SetCentered(false)
-	rackservers.Move(0,60)
-	serverpage.AddChild(rackservers)
-	
-	bladeservers:=sws.CreateFlatButtonWidget(120,20,"> Blade Servers")
-	bladeservers.SetTextColor(sdl.Color{0x06,0x84,0xdc,0xff})
-	bladeservers.SetCentered(false)
-	bladeservers.Move(0,80)
-	serverpage.AddChild(bladeservers)
-	
+	serverpage:=supplier.CreateServerPageWidget(600,550)
+	widget.serverpage=serverpage
 	scrollwidget.SetInnerWidget(serverpage)
-
+	
 	// content
-	content := sws.CreateCoreWidget(480,300)
-	content.SetColor(0xffffffff)
-	content.Move(120,40)
-
-	serverpage.AddChild(content)
+	banners:=supplier.CreateBannerWidget(480,120)
+	banners.Move(120,40)
+	serverpage.AddChild(banners)
 	
-
+	explore:=supplier.CreateServerPageExploreWidget(480,500)
+	explore.Move(120,160)
+	serverpage.AddChild(explore)
+	widget.content=explore
 	
-	return supplier
+	towerpage:=supplier.CreateServerPageTowerWidget(480,500)
+	towerpage.Move(120,160)
+	
+	rackpage:=supplier.CreateServerPageRackWidget(480,500)
+	rackpage.Move(120,160)
+	
+	bladepage:=supplier.CreateServerPageBladeWidget(480,500)
+	bladepage.Move(120,160)
+	
+	// configure
+	
+	// buttons callback
+	
+	shop.SetClicked(func() {
+		serverpage.RemoveChild(widget.content)
+		serverpage.AddChild(explore)
+		sws.PostUpdate()
+	})
+
+	serverpage.SetTowerCallback(func() {
+		serverpage.RemoveChild(widget.content)
+		serverpage.AddChild(towerpage)
+		sws.PostUpdate()
+	})
+	
+	serverpage.SetRackCallback(func() {
+		serverpage.RemoveChild(widget.content)
+		serverpage.AddChild(rackpage)
+		sws.PostUpdate()
+	})
+	
+	serverpage.SetBladeCallback(func() {
+		serverpage.RemoveChild(widget.content)
+		serverpage.AddChild(bladepage)
+		sws.PostUpdate()
+	})
+	
+	explore.SetTowerCallback(func() {
+		serverpage.RemoveChild(widget.content)
+		serverpage.AddChild(towerpage)
+		sws.PostUpdate()
+	})
+	
+	explore.SetRackCallback(func() {
+		serverpage.RemoveChild(widget.content)
+		serverpage.AddChild(rackpage)
+		sws.PostUpdate()
+	})
+	
+	explore.SetBladeCallback(func() {
+		serverpage.RemoveChild(widget.content)
+		serverpage.AddChild(bladepage)
+		sws.PostUpdate()
+	})
+	
+	return widget
 }
