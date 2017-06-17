@@ -12,6 +12,7 @@ type ServerPageRackWidget struct {
 	configurerack1 *sws.SWS_ButtonWidget
 	configurerack2 *sws.SWS_ButtonWidget
 	configurerack4 *sws.SWS_ButtonWidget
+	configurerack6 *sws.SWS_ButtonWidget
 }
 
 func (self *ServerPageRackWidget) SetConfigureRack1Callback(callback func()) {
@@ -24,6 +25,10 @@ func (self *ServerPageRackWidget) SetConfigureRack2Callback(callback func()) {
 
 func (self *ServerPageRackWidget) SetConfigureRack4Callback(callback func()) {
 	self.configurerack4.SetClicked(callback)
+}
+
+func (self *ServerPageRackWidget) SetConfigureRack6Callback(callback func()) {
+	self.configurerack6.SetClicked(callback)
 }
 
 func CreateServerPageRackWidget(width,height int32) *ServerPageRackWidget {
@@ -94,6 +99,26 @@ func CreateServerPageRackWidget(width,height int32) *ServerPageRackWidget {
 	rack4Button.Move(300,320)
 	serverpagerack.AddChild(rack4Button)
 	serverpagerack.configurerack4=rack4Button
+
+
+	rack6Icon:=sws.CreateLabel(150,100,"")
+	rack6Icon.SetImage("resources/server.4u0.png")
+	rack6Icon.SetColor(0xffffffff)
+        rack6Icon.SetCentered(true)
+	rack6Icon.Move(0,360)
+        serverpagerack.AddChild(rack6Icon)
+
+	rack6Title:=sws.CreateLabel(150,20,"Rack R600 server")
+	rack6Title.SetColor(0xffffffff)
+	rack6Title.Move(0,460)
+        serverpagerack.AddChild(rack6Title)
+
+	rack6Button:=sws.CreateButtonWidget(100,25,"Configure >")
+	rack6Button.SetColor(0xffffffff)
+	rack6Button.Move(0,660)
+	serverpagerack.AddChild(rack6Button)
+	serverpagerack.configurerack6=rack6Button
+
 
 	return serverpagerack
 }
