@@ -41,7 +41,7 @@ func (self TrendList) Sort() {
 	sort.Sort(self)
 }
 
-func (self TrendList) CurrentValue(now time.Time) interface{} {
+func (self TrendList) CurrentValue(now time.Time) int32 {
 	if len(self) == 0 {
 		panic("no elements in the array")
 	}
@@ -168,6 +168,7 @@ func (self *PriceTrend) CurrentValue(now time.Time) float64 {
 		endarray = len(self.Noise) - 1
 	}
 
+	index = 0
 	for index < len(self.Noise) && (self.Noise)[index].Pit.Before(now) {
 		index++
 	}
@@ -177,6 +178,7 @@ func (self *PriceTrend) CurrentValue(now time.Time) float64 {
 	} else if index == len(self.Noise) {
 		return (self.Noise)[index-1].Value
 	} else {
+		fmt.Println(index)
 		interval := ((self.Noise)[index].Pit.Sub((self.Noise)[index-1].Pit)).Hours()
 		since := now.Sub((self.Noise)[index-1].Pit).Hours()
 		noise = (self.Noise)[index-1].Value*((interval-since)/interval) + (self.Noise)[index].Value*(since/interval)

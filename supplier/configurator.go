@@ -38,7 +38,7 @@ var AvailableConfs = []ServerConfType{
 		NbSlotRam:      [2]int32{1, 4},
 		BackplanePrice: 200,
 		ServerSprite:   "tower",
-		NbU:            8,
+		NbU:            -1,
 	},
 	ServerConfType{
 		ServerName:     "R100",
@@ -126,9 +126,9 @@ func (self *ServerConf) Price(now time.Time) float64 {
 	var price float64
 	complexity := float64(self.NbProcessors)/10 + float64(self.NbDisks)/20 + float64(self.NbSlotRam)/40 + 1
 	price = self.ConfType.BackplanePrice +
-		Trends.Cpuprice.CurrentValue(now)*float64(self.NbProcessors) +
-		Trends.Diskprice.CurrentValue(now)*float64(self.NbDisks*self.DiskSize) +
-		Trends.Ramprice.CurrentValue(now)*float64(self.NbSlotRam*self.RamSize)
+		Trends.Cpuprice.CurrentValue(now)*float64(self.NbProcessors)*float64(self.NbCore) +
+		Trends.Diskprice.CurrentValue(now)*float64(self.NbDisks*self.DiskSize)/1000 +
+		Trends.Ramprice.CurrentValue(now)*float64(self.NbSlotRam*self.RamSize)/1000
 	return price * complexity
 }
 

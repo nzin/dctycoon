@@ -4,6 +4,7 @@ import(
 	"github.com/nzin/sws"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/nzin/dctycoon/supplier"
+	"time"
 )
 //
 // top 'menu': [Deal] <shop>  <in transit> <support> <cart>
@@ -183,7 +184,7 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 	towerpage.SetConfigureTower1Callback(func() {
 		serverpage.RemoveChild(widget.content)
 		serverpage.RemoveChild(banners)
-		configurepage.SetConfType("T1000")
+		configurepage.SetConfType("T1000",time.Now())
 		serverpage.AddChild(configurepage)
 		scrollwidget.SetHorizontalPosition(0)
 		scrollwidget.SetVerticalPosition(0)
