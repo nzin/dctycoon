@@ -5,6 +5,9 @@ import(
 	"github.com/veandco/go-sdl2/sdl"
 )
 
+//
+// Page Shop
+//
 type ServerPageWidget struct {
 	sws.SWS_CoreWidget
         towerbutton *sws.SWS_FlatButtonWidget

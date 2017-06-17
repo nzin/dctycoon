@@ -1,4 +1,4 @@
-package dctycoon
+package supplier
 
 import (
 	"time"
@@ -32,7 +32,16 @@ type ServerConfType struct {
 
 var AvailableConfs = []ServerConfType{
 	ServerConfType{
-		ServerName:     "small",
+		ServerName:     "T1000",
+		NbProcessors:   [2]int32{1, 2},
+		NbDisks:        [2]int32{1, 2},
+		NbSlotRam:      [2]int32{1, 4},
+		BackplanePrice: 200,
+		ServerSprite:   "tower",
+		NbU:            8,
+	},
+	ServerConfType{
+		ServerName:     "R100",
 		NbProcessors:   [2]int32{1, 2},
 		NbDisks:        [2]int32{1, 1},
 		NbSlotRam:      [2]int32{1, 2},
@@ -41,7 +50,7 @@ var AvailableConfs = []ServerConfType{
 		NbU:            1,
 	},
 	ServerConfType{
-		ServerName:     "medium",
+		ServerName:     "R200",
 		NbProcessors:   [2]int32{1, 2},
 		NbDisks:        [2]int32{1, 4},
 		NbSlotRam:      [2]int32{1, 4},
@@ -50,7 +59,7 @@ var AvailableConfs = []ServerConfType{
 		NbU:            2,
 	},
 	ServerConfType{
-		ServerName:     "large.d1",
+		ServerName:     "R400",
 		NbProcessors:   [2]int32{1, 2},
 		NbDisks:        [2]int32{1, 10},
 		NbSlotRam:      [2]int32{1, 8},
@@ -59,7 +68,7 @@ var AvailableConfs = []ServerConfType{
 		NbU:            4,
 	},
 	ServerConfType{
-		ServerName:     "large.c1",
+		ServerName:     "R600",
 		NbProcessors:   [2]int32{2, 4},
 		NbDisks:        [2]int32{1, 6},
 		NbSlotRam:      [2]int32{1, 8},
@@ -68,7 +77,7 @@ var AvailableConfs = []ServerConfType{
 		NbU:            4,
 	},
 	ServerConfType{
-		ServerName:     "blade1",
+		ServerName:     "B100",
 		NbProcessors:   [2]int32{8, 8},
 		NbDisks:        [2]int32{8, 8},
 		NbSlotRam:      [2]int32{16, 16},
@@ -77,7 +86,7 @@ var AvailableConfs = []ServerConfType{
 		NbU:            8,
 	},
 	ServerConfType{
-		ServerName:     "blade2",
+		ServerName:     "B200",
 		NbProcessors:   [2]int32{16, 16},
 		NbDisks:        [2]int32{8, 8},
 		NbSlotRam:      [2]int32{16, 16},

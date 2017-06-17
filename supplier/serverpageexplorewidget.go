@@ -4,6 +4,9 @@ import(
 	"github.com/nzin/sws"
 )
 
+//
+// Page Shop>>Explore
+//
 type ServerPageExploreWidget struct {
 	sws.SWS_CoreWidget
 	towerbutton *sws.SWS_ButtonWidget

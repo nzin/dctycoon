@@ -4,8 +4,26 @@ import(
 	"github.com/nzin/sws"
 )
 
+//
+// Page Shop>>Explore>>Rack servers
+//
 type ServerPageRackWidget struct {
 	sws.SWS_CoreWidget
+	configurerack1 *sws.SWS_ButtonWidget
+	configurerack2 *sws.SWS_ButtonWidget
+	configurerack4 *sws.SWS_ButtonWidget
+}
+
+func (self *ServerPageRackWidget) SetConfigureRack1Callback(callback func()) {
+	self.configurerack1.SetClicked(callback)
+}
+
+func (self *ServerPageRackWidget) SetConfigureRack2Callback(callback func()) {
+	self.configurerack2.SetClicked(callback)
+}
+
+func (self *ServerPageRackWidget) SetConfigureRack4Callback(callback func()) {
+	self.configurerack4.SetClicked(callback)
 }
 
 func CreateServerPageRackWidget(width,height int32) *ServerPageRackWidget {
@@ -37,6 +55,7 @@ func CreateServerPageRackWidget(width,height int32) *ServerPageRackWidget {
 	rack1Button.SetColor(0xffffffff)
 	rack1Button.Move(0,320)
 	serverpagerack.AddChild(rack1Button)
+	serverpagerack.configurerack1=rack1Button
 
 
 	rack2Icon:=sws.CreateLabel(150,100,"")
@@ -55,6 +74,7 @@ func CreateServerPageRackWidget(width,height int32) *ServerPageRackWidget {
 	rack2Button.SetColor(0xffffffff)
 	rack2Button.Move(150,320)
 	serverpagerack.AddChild(rack2Button)
+	serverpagerack.configurerack2=rack2Button
 
 
 	rack4Icon:=sws.CreateLabel(150,100,"")
@@ -73,6 +93,7 @@ func CreateServerPageRackWidget(width,height int32) *ServerPageRackWidget {
 	rack4Button.SetColor(0xffffffff)
 	rack4Button.Move(300,320)
 	serverpagerack.AddChild(rack4Button)
+	serverpagerack.configurerack4=rack4Button
 
 	return serverpagerack
 }

@@ -4,8 +4,21 @@ import(
 	"github.com/nzin/sws"
 )
 
+//
+// Page Shop>>Explore>>Blade servers
+//
 type ServerPageBladeWidget struct {
 	sws.SWS_CoreWidget
+	configureblade2 *sws.SWS_ButtonWidget
+	configureblade1 *sws.SWS_ButtonWidget
+}
+
+func (self *ServerPageBladeWidget) SetConfigureBlade1Callback(callback func()) {
+	self.configureblade1.SetClicked(callback)
+}
+
+func (self *ServerPageBladeWidget) SetConfigureBlade2Callback(callback func()) {
+	self.configureblade2.SetClicked(callback)
 }
 
 func CreateServerPageBladeWidget(width,height int32) *ServerPageBladeWidget {
@@ -37,6 +50,7 @@ func CreateServerPageBladeWidget(width,height int32) *ServerPageBladeWidget {
 	blade1Button.SetColor(0xffffffff)
 	blade1Button.Move(0,320)
 	serverpageblade.AddChild(blade1Button)
+	serverpageblade.configureblade1=blade1Button
 
 
 	blade2Icon:=sws.CreateLabel(150,100,"")
@@ -55,6 +69,7 @@ func CreateServerPageBladeWidget(width,height int32) *ServerPageBladeWidget {
 	blade2Button.SetColor(0xffffffff)
 	blade2Button.Move(150,320)
 	serverpageblade.AddChild(blade2Button)
+	serverpageblade.configureblade2=blade2Button
 
 
 	return serverpageblade

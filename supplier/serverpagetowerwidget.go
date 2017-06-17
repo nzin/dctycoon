@@ -4,9 +4,18 @@ import(
 	"github.com/nzin/sws"
 )
 
+//
+// Page Shop>>Explore>>Tower servers
+//
 type ServerPageTowerWidget struct {
 	sws.SWS_CoreWidget
+	configuretower1 *sws.SWS_ButtonWidget
 }
+
+func (self *ServerPageTowerWidget) SetConfigureTower1Callback(callback func()) {
+	self.configuretower1.SetClicked(callback)
+}
+
 
 func CreateServerPageTowerWidget(width,height int32) *ServerPageTowerWidget {
 	serverpagetower:=&ServerPageTowerWidget{
@@ -37,6 +46,7 @@ func CreateServerPageTowerWidget(width,height int32) *ServerPageTowerWidget {
 	towerButton.SetColor(0xffffffff)
 	towerButton.Move(0,320)
 	serverpagetower.AddChild(towerButton)
+	serverpagetower.configuretower1=towerButton
 
 
 	return serverpagetower

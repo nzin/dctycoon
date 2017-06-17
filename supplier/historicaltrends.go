@@ -1,4 +1,4 @@
-package dctycoon
+package supplier
 
 import (
 	"fmt"

@@ -112,48 +112,65 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 	bladepage.Move(120,160)
 	
 	// configure
+	configurepage:=supplier.CreateServerPageConfigureWidget(480,620)
+	configurepage.Move(120,40)
 	
 	// buttons callback
 	
 	shop.SetClicked(func() {
 		serverpage.RemoveChild(widget.content)
+		serverpage.AddChild(banners)
 		serverpage.AddChild(explore)
 		sws.PostUpdate()
 	})
 
 	serverpage.SetTowerCallback(func() {
 		serverpage.RemoveChild(widget.content)
+		serverpage.AddChild(banners)
 		serverpage.AddChild(towerpage)
 		sws.PostUpdate()
 	})
 	
 	serverpage.SetRackCallback(func() {
 		serverpage.RemoveChild(widget.content)
+		serverpage.AddChild(banners)
 		serverpage.AddChild(rackpage)
 		sws.PostUpdate()
 	})
 	
 	serverpage.SetBladeCallback(func() {
 		serverpage.RemoveChild(widget.content)
+		serverpage.AddChild(banners)
 		serverpage.AddChild(bladepage)
 		sws.PostUpdate()
 	})
 	
 	explore.SetTowerCallback(func() {
 		serverpage.RemoveChild(widget.content)
+		serverpage.AddChild(banners)
 		serverpage.AddChild(towerpage)
 		sws.PostUpdate()
 	})
 	
 	explore.SetRackCallback(func() {
 		serverpage.RemoveChild(widget.content)
+		serverpage.AddChild(banners)
 		serverpage.AddChild(rackpage)
 		sws.PostUpdate()
 	})
 	
 	explore.SetBladeCallback(func() {
 		serverpage.RemoveChild(widget.content)
+		serverpage.AddChild(banners)
 		serverpage.AddChild(bladepage)
+		sws.PostUpdate()
+	})
+	
+	towerpage.SetConfigureTower1Callback(func() {
+		serverpage.RemoveChild(widget.content)
+		serverpage.RemoveChild(banners)
+		configurepage.SetConfType("T1000")
+		serverpage.AddChild(configurepage)
 		sws.PostUpdate()
 	})
 	

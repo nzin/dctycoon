@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/nzin/dctycoon"
+	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/sws"
 	"os"
 	"time"
@@ -13,7 +14,7 @@ func main() {
 
 	root := sws.Init(800, 600)
 	dc := dctycoon.CreateDcWidget(root.Width(), root.Height())
-	supplier := dctycoon.CreateSupplier(root)
+	supplierwidget := dctycoon.CreateSupplier(root)
 	gamefile, err := os.Open("example.map")
 	if err != nil {
 		fmt.Println(err.Error())
@@ -29,12 +30,12 @@ func main() {
 
 	gamemap := v["map"].(map[string]interface{})
 	dc.LoadMap(gamemap)
-	dctycoon.Trends = dctycoon.TrendLoad(v["trends"].(map[string]interface{}))
+	supplier.Trends = supplier.TrendLoad(v["trends"].(map[string]interface{}))
 	root.AddChild(dc)
 	root.SetFocus(dc)
-	supplier.Show()
+	supplierwidget.Show()
 
-	fmt.Println(dctycoon.Trends.Cpuprice.CurrentValue(time.Now()))
+	fmt.Println(supplier.Trends.Cpuprice.CurrentValue(time.Now()))
 
 	for sws.PoolEvent() == false {
 	}
@@ -46,7 +47,7 @@ func main() {
 	}
 	gamefile.WriteString("{")
 	gamefile.WriteString(fmt.Sprintf(`"map": %s,`, data) + "\n")
-	gamefile.WriteString(fmt.Sprintf(`"trends": %s`, dctycoon.TrendSave(dctycoon.Trends)) + "\n")
+	gamefile.WriteString(fmt.Sprintf(`"trends": %s`, supplier.TrendSave(supplier.Trends)) + "\n")
 	gamefile.WriteString("}\n")
 
 	gamefile.Close()

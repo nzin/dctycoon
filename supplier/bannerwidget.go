@@ -6,6 +6,9 @@ import(
 	"strconv"
 )
 
+//
+// ad widget
+//
 type BannerWidget struct {
 	sws.SWS_CoreWidget
 	banners       []*sws.SWS_Label
