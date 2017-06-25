@@ -1,6 +1,7 @@
 package supplier
 
 import(
+	"github.com/veandco/go-sdl2/sdl"
 	"github.com/nzin/sws"
 )
 
@@ -53,8 +54,16 @@ func CreateServerPageRackWidget(width,height int32) *ServerPageRackWidget {
 
 	rack1Title:=sws.CreateLabel(150,20,"Rack R100 server")
 	rack1Title.SetColor(0xffffffff)
+	rack1Title.SetTextColor(sdl.Color{0x06,0x84,0xdc,0xff})
 	rack1Title.Move(0,120)
         serverpagerack.AddChild(rack1Title)
+
+	rack1Desc:=sws.CreateTextAreaWidget(150,160,"This thin yet powerfull 1U rack server is equipped from 1 to 2 CPU and up to 2 RAM slots for the best processing job you need")
+	rack1Desc.SetReadonly(true)
+	rack1Desc.SetFont(sws.LatoRegular14)
+	rack1Desc.SetColor(0xffffffff)
+	rack1Desc.Move(0,160)
+	serverpagerack.AddChild(rack1Desc)
 
 	rack1Button:=sws.CreateButtonWidget(100,25,"Configure >")
 	rack1Button.SetColor(0xffffffff)
@@ -72,8 +81,16 @@ func CreateServerPageRackWidget(width,height int32) *ServerPageRackWidget {
 
 	rack2Title:=sws.CreateLabel(150,20,"Rack R200 server")
 	rack2Title.SetColor(0xffffffff)
+	rack2Title.SetTextColor(sdl.Color{0x06,0x84,0xdc,0xff})
 	rack2Title.Move(150,120)
         serverpagerack.AddChild(rack2Title)
+
+	rack2Desc:=sws.CreateTextAreaWidget(150,160,"Our best balanced 2U rack server, is equipped from 1 to 2 CPU and up to 4 RAM slots and up to 4 disks to fit all job you require")
+	rack2Desc.SetReadonly(true)
+	rack2Desc.SetFont(sws.LatoRegular14)
+	rack2Desc.SetColor(0xffffffff)
+	rack2Desc.Move(150,160)
+	serverpagerack.AddChild(rack2Desc)
 
 	rack2Button:=sws.CreateButtonWidget(100,25,"Configure >")
 	rack2Button.SetColor(0xffffffff)
@@ -91,8 +108,16 @@ func CreateServerPageRackWidget(width,height int32) *ServerPageRackWidget {
 
 	rack4Title:=sws.CreateLabel(150,20,"Rack R400 server")
 	rack4Title.SetColor(0xffffffff)
+	rack4Title.SetTextColor(sdl.Color{0x06,0x84,0xdc,0xff})
 	rack4Title.Move(300,120)
 	serverpagerack.AddChild(rack4Title)
+
+	rack4Desc:=sws.CreateTextAreaWidget(150,160,"This 4U storage rack server, with 1 to 2 CPU and up to 10 disks is specifically designed for your heavy storage fulfillment")
+	rack4Desc.SetReadonly(true)
+	rack4Desc.SetFont(sws.LatoRegular14)
+	rack4Desc.SetColor(0xffffffff)
+	rack4Desc.Move(300,160)
+	serverpagerack.AddChild(rack4Desc)
 
 	rack4Button:=sws.CreateButtonWidget(100,25,"Configure >")
 	rack4Button.SetColor(0xffffffff)
@@ -110,8 +135,16 @@ func CreateServerPageRackWidget(width,height int32) *ServerPageRackWidget {
 
 	rack6Title:=sws.CreateLabel(150,20,"Rack R600 server")
 	rack6Title.SetColor(0xffffffff)
+	rack6Title.SetTextColor(sdl.Color{0x06,0x84,0xdc,0xff})
 	rack6Title.Move(0,460)
         serverpagerack.AddChild(rack6Title)
+
+	rack6Desc:=sws.CreateTextAreaWidget(150,160,"This 4U HPC rack server, with 2 to 4 CPU and up to 8 RAM slots will put in the dust any cpu-intensive job")
+	rack6Desc.SetReadonly(true)
+	rack6Desc.SetFont(sws.LatoRegular14)
+	rack6Desc.SetColor(0xffffffff)
+	rack6Desc.Move(0,500)
+	serverpagerack.AddChild(rack6Desc)
 
 	rack6Button:=sws.CreateButtonWidget(100,25,"Configure >")
 	rack6Button.SetColor(0xffffffff)

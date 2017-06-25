@@ -1,6 +1,7 @@
 package supplier
 
 import(
+	"github.com/veandco/go-sdl2/sdl"
 	"github.com/nzin/sws"
 )
 
@@ -39,8 +40,16 @@ func CreateServerPageTowerWidget(width,height int32) *ServerPageTowerWidget {
 
 	towerTitle:=sws.CreateLabel(150,20,"Tower T1000")
 	towerTitle.SetColor(0xffffffff)
+	towerTitle.SetTextColor(sdl.Color{0x06,0x84,0xdc,0xff})
 	towerTitle.Move(0,120)
         serverpagetower.AddChild(towerTitle)
+
+	tower1Desc:=sws.CreateTextAreaWidget(150,160,"Our professional workstation with up to 2 processors, is the ideal powerhouse machine you need to tackle your engineering problem")
+	tower1Desc.SetReadonly(true)
+	tower1Desc.SetFont(sws.LatoRegular14)
+	tower1Desc.SetColor(0xffffffff)
+	tower1Desc.Move(0,160)
+	serverpagetower.AddChild(tower1Desc)
 
 	towerButton:=sws.CreateButtonWidget(100,25,"Configure >")
 	towerButton.SetColor(0xffffffff)
