@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/nzin/dctycoon"
 	"github.com/nzin/dctycoon/supplier"
+	"github.com/nzin/dctycoon/timer"
 	"github.com/nzin/sws"
 	"os"
 	"time"
@@ -15,7 +16,7 @@ func main() {
 
 	root := sws.Init(800, 600)
 
-	dctycoon.GlobalEventPublisher=dctycoon.CreateEventPublisher(root)
+	timer.GlobalEventPublisher=timer.CreateEventPublisher(root)
 
 	dc := dctycoon.CreateDcWidget(root.Width(), root.Height())
 	supplierwidget := dctycoon.CreateSupplier(root)
@@ -32,17 +33,19 @@ func main() {
 	}
 	gamefile.Close()
 
+	// initiate the game timer
+	timer.GlobalGameTimer=timer.GameTimerLoad(v["clock"].(map[string]interface{}))
+
 	gamemap := v["map"].(map[string]interface{})
 	dc.LoadMap(gamemap)
 	root.AddChild(dc)
 	root.SetFocus(dc)
 	
-	// dock + timer
-	dctycoon.GlobalGameTimer=dctycoon.GameTimerLoad(v["clock"].(map[string]interface{}))
-	dock:=dctycoon.CreateDockWidget(dctycoon.GlobalGameTimer)
+	// dock 
+	dock:=dctycoon.CreateDockWidget(timer.GlobalGameTimer)
 	dock.Move(root.Width()-dock.Width(),0)
 	root.AddChild(dock)
-	
+
 	supplier.Trends = supplier.TrendLoad(v["trends"].(map[string]interface{}))
 	dock.SetShopCallback(func() {
 		supplierwidget.Show()
@@ -65,7 +68,7 @@ func main() {
 	gamefile.WriteString("{")
 	gamefile.WriteString(fmt.Sprintf(`"map": %s,`, data) + "\n")
 	gamefile.WriteString(fmt.Sprintf(`"trends": %s,`, supplier.TrendSave(supplier.Trends)) + "\n")
-	gamefile.WriteString(fmt.Sprintf(`"clock": %s`, dctycoon.GlobalGameTimer.Save() + "\n"))
+	gamefile.WriteString(fmt.Sprintf(`"clock": %s`, timer.GlobalGameTimer.Save() + "\n"))
 	gamefile.WriteString("}\n")
 
 	gamefile.Close()

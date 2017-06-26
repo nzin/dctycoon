@@ -1,4 +1,4 @@
-package dctycoon
+package timer
 
 import(
 	"github.com/nzin/sws"
