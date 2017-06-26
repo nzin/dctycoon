@@ -14,6 +14,9 @@ func main() {
 	quit:=false
 
 	root := sws.Init(800, 600)
+
+	dctycoon.GlobalEventPublisher=dctycoon.CreateEventPublisher(root)
+
 	dc := dctycoon.CreateDcWidget(root.Width(), root.Height())
 	supplierwidget := dctycoon.CreateSupplier(root)
 	gamefile, err := os.Open("example.map")
@@ -35,8 +38,8 @@ func main() {
 	root.SetFocus(dc)
 	
 	// dock + timer
-	dctycoon.GlobalTimer=dctycoon.TimerLoad(v["clock"].(map[string]interface{}))
-	dock:=dctycoon.CreateDockWidget(dctycoon.GlobalTimer)
+	dctycoon.GlobalGameTimer=dctycoon.GameTimerLoad(v["clock"].(map[string]interface{}))
+	dock:=dctycoon.CreateDockWidget(dctycoon.GlobalGameTimer)
 	dock.Move(root.Width()-dock.Width(),0)
 	root.AddChild(dock)
 	
@@ -62,7 +65,7 @@ func main() {
 	gamefile.WriteString("{")
 	gamefile.WriteString(fmt.Sprintf(`"map": %s,`, data) + "\n")
 	gamefile.WriteString(fmt.Sprintf(`"trends": %s,`, supplier.TrendSave(supplier.Trends)) + "\n")
-	gamefile.WriteString(fmt.Sprintf(`"clock": %s`, dctycoon.GlobalTimer.Save() + "\n"))
+	gamefile.WriteString(fmt.Sprintf(`"clock": %s`, dctycoon.GlobalGameTimer.Save() + "\n"))
 	gamefile.WriteString("}\n")
 
 	gamefile.Close()

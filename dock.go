@@ -9,7 +9,7 @@ import(
 type DockWidget struct {
 	sws.SWS_CoreWidget
 	currentDay    *sws.SWS_Label
-	timer         *Timer
+	timer         *GameTimer
 	pause         *sws.SWS_FlatButtonWidget
 	play          *sws.SWS_FlatButtonWidget
 	forward       *sws.SWS_FlatButtonWidget
@@ -26,7 +26,7 @@ func (self *DockWidget) SetShopCallback(callback func()) {
 	self.shop.SetClicked(callback)
 }
 
-func CreateDockWidget(timer *Timer) *DockWidget {
+func CreateDockWidget(timer *GameTimer) *DockWidget {
 	corewidget := sws.CreateCoreWidget(150, 100)
 	today:=fmt.Sprintf("%d %s %d",timer.CurrentTime.Day(),timer.CurrentTime.Month().String(),timer.CurrentTime.Year())
 	widget := &DockWidget { 
