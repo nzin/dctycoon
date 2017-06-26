@@ -1,13 +1,13 @@
 package dctycoon
 
-package (
+import (
 	"time"
 )
 
 //
 // payable or reception of money (depending of the sign of Amount
 //
-type LedgerEvent {
+type LedgerEvent struct {
 	Description string
 	Amount      float64
 	Date        time.Time
@@ -18,7 +18,7 @@ type LedgerEvent {
 // to invoice (supplier) or pay (customer) the DC
 //
 type StakeHolderMonthly interface {
-	movement(t time.Time) LedgerEvent
+	Movement(t time.Time) LedgerEvent
 }
 
 //
@@ -30,8 +30,8 @@ type Ledger struct {
 }
 
 func (self *Ledger) AddEvent(ev LedgerEvent) {
-	self.events=append(self.events,ev)
-	self.currentBalance+=ev.Amount
+	self.Events=append(self.Events,ev)
+	self.CurrentBalance+=ev.Amount
 }
 
 //
@@ -42,11 +42,11 @@ type Bank struct {
 	moneyOwned float64
 }
 
-func (self *Bank) movement(t time.Time) LedgerEvent (
+func (self *Bank) Movement(t time.Time) LedgerEvent {
 	return LedgerEvent{
-	        Description: "mortage",
-        	Amount:      self.location.bankinterestrate*self.moneyOwned,
-        	Date:        t,
+		Description: "mortage",
+		Amount:      self.location.bankinterestrate*self.moneyOwned,
+		Date:        t,
 	}
 }
 
