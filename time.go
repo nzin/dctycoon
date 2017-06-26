@@ -18,7 +18,9 @@ func TimerLoad(game map[string]interface{}) *Timer {
 	timer :=&Timer{
 		CurrentTime: time.Date(year, time.Month(month), day, 0, 0, 0, 0,   time.UTC),
 	}
-	timer.TimerClock=func() { timer.CurrentTime.Add(24*time.Hour) }
+	timer.TimerClock=func() { 
+		timer.CurrentTime=timer.CurrentTime.Add(24*time.Hour)
+	}
 	return timer
 }
 

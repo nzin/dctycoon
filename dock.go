@@ -2,6 +2,7 @@ package dctycoon
 
 import(
 	"github.com/nzin/sws"
+	"time"
 	"fmt"
 )
 
@@ -11,6 +12,7 @@ type DockWidget struct {
 	timer         *Timer
 	shop          *sws.SWS_FlatButtonWidget
 	quit          *sws.SWS_FlatButtonWidget
+	timerevent    *sws.TimerEvent
 }
 
 func (self *DockWidget) SetQuitCallback(callback func()) {
@@ -28,6 +30,7 @@ func CreateDockWidget(timer *Timer) *DockWidget {
 		SWS_CoreWidget: *corewidget,
 		currentDay: sws.CreateLabel(100,25,today),
 		timer: timer,
+		timerevent: nil,
 	}
 	title:=sws.CreateLabel(100,25,"DC Tycoon")
 	title.SetCentered(true)
@@ -39,16 +42,41 @@ func CreateDockWidget(timer *Timer) *DockWidget {
 	pause:=sws.CreateFlatButtonWidget(25,25,"")
 	pause.Move(0,50)
 	pause.SetImage("resources/icon-pause-symbol.png")
+	pause.SetClicked(func() {
+		if widget.timerevent!=nil {
+			widget.timerevent.StopRepeat()
+		}
+	})
 	widget.AddChild(pause)
 	
 	play:=sws.CreateFlatButtonWidget(25,25,"")
 	play.Move(25,50)
 	play.SetImage("resources/icon-arrowhead-pointing-to-the-right.png")
+	play.SetClicked(func() {
+		if widget.timerevent!=nil {
+			widget.timerevent.StopRepeat()
+		}
+		widget.timerevent=sws.TimerAddEvent(time.Now().Add(4*time.Second),4*time.Second,func() {
+			timer.TimerClock()
+			today:=fmt.Sprintf("%d %s %d",timer.CurrentTime.Day(),timer.CurrentTime.Month().String(),timer.CurrentTime.Year())
+			widget.currentDay.SetText(today)
+		})
+	})
 	widget.AddChild(play)
 	
 	forward:=sws.CreateFlatButtonWidget(25,25,"")
 	forward.Move(50,50)
 	forward.SetImage("resources/icon-forward-button.png")
+	forward.SetClicked(func() {
+		if widget.timerevent!=nil {
+			widget.timerevent.StopRepeat()
+		}
+		widget.timerevent=sws.TimerAddEvent(time.Now().Add(time.Second),time.Second,func() {
+			timer.TimerClock()
+			today:=fmt.Sprintf("%d %s %d",timer.CurrentTime.Day(),timer.CurrentTime.Month().String(),timer.CurrentTime.Year())
+			widget.currentDay.SetText(today)
+		})
+	})
 	widget.AddChild(forward)
 	
 	widget.shop=sws.CreateFlatButtonWidget(25,25,"")
