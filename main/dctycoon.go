@@ -11,6 +11,7 @@ import (
 )
 
 func main() {
+	quit:=false
 
 	root := sws.Init(800, 600)
 	dc := dctycoon.CreateDcWidget(root.Width(), root.Height())
@@ -30,14 +31,27 @@ func main() {
 
 	gamemap := v["map"].(map[string]interface{})
 	dc.LoadMap(gamemap)
-	supplier.Trends = supplier.TrendLoad(v["trends"].(map[string]interface{}))
 	root.AddChild(dc)
 	root.SetFocus(dc)
-	supplierwidget.Show()
+	
+	// dock + timer
+	dctycoon.GlobalTimer=dctycoon.TimerLoad(v["clock"].(map[string]interface{}))
+	dock:=dctycoon.CreateDockWidget(dctycoon.GlobalTimer)
+	dock.Move(root.Width()-dock.Width(),0)
+	root.AddChild(dock)
+	
+	supplier.Trends = supplier.TrendLoad(v["trends"].(map[string]interface{}))
+	dock.SetShopCallback(func() {
+		supplierwidget.Show()
+	})
+
+	dock.SetQuitCallback(func() {
+		quit=true
+	})
 
 	fmt.Println(supplier.Trends.Cpuprice.CurrentValue(time.Now()))
 
-	for sws.PoolEvent() == false {
+	for sws.PoolEvent() == false && quit == false {
 	}
 	data := dc.SaveMap()
 	gamefile, err = os.Create("backup.map")
@@ -47,7 +61,8 @@ func main() {
 	}
 	gamefile.WriteString("{")
 	gamefile.WriteString(fmt.Sprintf(`"map": %s,`, data) + "\n")
-	gamefile.WriteString(fmt.Sprintf(`"trends": %s`, supplier.TrendSave(supplier.Trends)) + "\n")
+	gamefile.WriteString(fmt.Sprintf(`"trends": %s,`, supplier.TrendSave(supplier.Trends)) + "\n")
+	gamefile.WriteString(fmt.Sprintf(`"clock": %s`, dctycoon.GlobalTimer.Save() + "\n"))
 	gamefile.WriteString("}\n")
 
 	gamefile.Close()
