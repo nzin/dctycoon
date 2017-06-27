@@ -36,7 +36,7 @@ func GameTimerLoad(game map[string]interface{}) *GameTimer {
 		// trigger all events that are <= timer.CurrentTime
 		for ev:=timer.events.Min(); ev!=nil; ev=timer.events.Min() {
 			e:=ev.(*GamerTimerEvent)
-			if !e.Date.Before(timer.CurrentTime) {
+			if e.Date.After(timer.CurrentTime) {
 				break
 			} else {
 				e.Trigger()
