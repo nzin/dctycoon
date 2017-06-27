@@ -347,26 +347,30 @@ func TrendLoad(json map[string]interface{}) *Trend {
 	}
 	
 	for _,core:=range(initCorepercpu) {
-		timer.GlobalGameTimer.AddEvent(core.Pit,func() {
-			timer.GlobalEventPublisher.Publish(core.ShortDesc,core.LongDesc)
+		c:=core
+		timer.GlobalGameTimer.AddEvent(c.Pit,func() {
+			timer.GlobalEventPublisher.Publish(c.ShortDesc,c.LongDesc)
 		})
 	} 
 
 	for _,vt:=range(initVt) {
-		timer.GlobalGameTimer.AddEvent(vt.Pit,func() {
-			timer.GlobalEventPublisher.Publish(vt.ShortDesc,vt.LongDesc)
+		v:=vt
+		timer.GlobalGameTimer.AddEvent(v.Pit,func() {
+			timer.GlobalEventPublisher.Publish(v.ShortDesc,v.LongDesc)
 		})
 	} 
 
 	for _,dd:=range(initDisksize) {
-		timer.GlobalGameTimer.AddEvent(dd.Pit,func() {
-			timer.GlobalEventPublisher.Publish(dd.ShortDesc,dd.LongDesc)
+		d:=dd
+		timer.GlobalGameTimer.AddEvent(d.Pit,func() {
+			timer.GlobalEventPublisher.Publish(d.ShortDesc,d.LongDesc)
 		})
 	} 
 
 	for _,ram:=range(initRamsize) {
-		timer.GlobalGameTimer.AddEvent(ram.Pit,func() {
-			timer.GlobalEventPublisher.Publish(ram.ShortDesc,ram.LongDesc)
+		r:=ram
+		timer.GlobalGameTimer.AddEvent(r.Pit,func() {
+			timer.GlobalEventPublisher.Publish(r.ShortDesc,r.LongDesc)
 		})
 	} 
 

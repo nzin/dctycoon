@@ -84,8 +84,8 @@ func (self *ServerPageConfigureWidget) SetConfType(conftypename string, today ti
 	if (maxcores<=4) {
 		self.nbcorechoice=[]int32{1,2,4}
 		if (maxcores==1) { choices=[]string{"Altium"} }
-		if (maxcores<=2) { choices=[]string{"Altium","Altium Duo"} }
-		if (maxcores<=4) { choices=[]string{"Altium","Altium Duo","Altium Quad"} }
+		if (maxcores>=2) { choices=[]string{"Altium","Altium Duo"} }
+		if (maxcores>=4) { choices=[]string{"Altium","Altium Duo","Altium Quad"} }
 	} else {
 		for i:=maxcores-4;i<=maxcores;i+=2 {
 			choices=append(choices,"Altium "+strconv.Itoa(int(i))+" cores")

@@ -189,9 +189,10 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 	
 	// callback configure
 	towerpage.SetConfigureTower1Callback(func() {
+		now:=timer.GlobalGameTimer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		serverpage.RemoveChild(banners)
-		configurepage.SetConfType("T1000",timer.GlobalGameTimer.CurrentTime)
+		configurepage.SetConfType("T1000",now)
 		widget.content=configurepage
 		serverpage.AddChild(configurepage)
 		scrollwidget.SetHorizontalPosition(0)
@@ -200,9 +201,10 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 	})
 	
 	rackpage.SetConfigureRack1Callback(func() {
+		now:=timer.GlobalGameTimer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		serverpage.RemoveChild(banners)
-		configurepage.SetConfType("R100",timer.GlobalGameTimer.CurrentTime)
+		configurepage.SetConfType("R100",now)
 		widget.content=configurepage
 		serverpage.AddChild(configurepage)
 		scrollwidget.SetHorizontalPosition(0)
@@ -211,9 +213,10 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 	})
 	
 	rackpage.SetConfigureRack2Callback(func() {
+		now:=timer.GlobalGameTimer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		serverpage.RemoveChild(banners)
-		configurepage.SetConfType("R200",timer.GlobalGameTimer.CurrentTime)
+		configurepage.SetConfType("R200",now)
 		widget.content=configurepage
 		serverpage.AddChild(configurepage)
 		scrollwidget.SetHorizontalPosition(0)
@@ -222,9 +225,10 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 	})
 	
 	rackpage.SetConfigureRack4Callback(func() {
+		now:=timer.GlobalGameTimer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		serverpage.RemoveChild(banners)
-		configurepage.SetConfType("R400",timer.GlobalGameTimer.CurrentTime)
+		configurepage.SetConfType("R400",now)
 		widget.content=configurepage
 		serverpage.AddChild(configurepage)
 		scrollwidget.SetHorizontalPosition(0)
@@ -233,9 +237,10 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 	})
 	
 	rackpage.SetConfigureRack6Callback(func() {
+		now:=timer.GlobalGameTimer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		serverpage.RemoveChild(banners)
-		configurepage.SetConfType("R600",timer.GlobalGameTimer.CurrentTime)
+		configurepage.SetConfType("R600",now)
 		widget.content=configurepage
 		serverpage.AddChild(configurepage)
 		scrollwidget.SetHorizontalPosition(0)
@@ -244,9 +249,10 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 	})
 	
 	bladepage.SetConfigureBlade1Callback(func() {
+		now:=timer.GlobalGameTimer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		serverpage.RemoveChild(banners)
-		configurepage.SetConfType("B100",timer.GlobalGameTimer.CurrentTime)
+		configurepage.SetConfType("B100",now)
 		widget.content=configurepage
 		serverpage.AddChild(configurepage)
 		scrollwidget.SetHorizontalPosition(0)
@@ -255,9 +261,10 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 	})
 	
 	bladepage.SetConfigureBlade2Callback(func() {
+		now:=timer.GlobalGameTimer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		serverpage.RemoveChild(banners)
-		configurepage.SetConfType("B200",timer.GlobalGameTimer.CurrentTime)
+		configurepage.SetConfType("B200",now)
 		widget.content=configurepage
 		serverpage.AddChild(configurepage)
 		scrollwidget.SetHorizontalPosition(0)
