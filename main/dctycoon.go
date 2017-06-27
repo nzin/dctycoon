@@ -8,7 +8,6 @@ import (
 	"github.com/nzin/dctycoon/timer"
 	"github.com/nzin/sws"
 	"os"
-	"time"
 )
 
 func main() {
@@ -55,7 +54,7 @@ func main() {
 		quit=true
 	})
 
-	fmt.Println(supplier.Trends.Cpuprice.CurrentValue(time.Now()))
+	//fmt.Println(supplier.Trends.Cpuprice.CurrentValue(time.Now()))
 
 	for sws.PoolEvent() == false && quit == false {
 	}

@@ -4,7 +4,7 @@ import(
 	"github.com/nzin/sws"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/nzin/dctycoon/supplier"
-	"time"
+	"github.com/nzin/dctycoon/timer"
 )
 //
 // top 'menu': [Deal] <shop>  <in transit> <support> <cart>
@@ -191,7 +191,7 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 	towerpage.SetConfigureTower1Callback(func() {
 		serverpage.RemoveChild(widget.content)
 		serverpage.RemoveChild(banners)
-		configurepage.SetConfType("T1000",time.Now())
+		configurepage.SetConfType("T1000",timer.GlobalGameTimer.CurrentTime)
 		widget.content=configurepage
 		serverpage.AddChild(configurepage)
 		scrollwidget.SetHorizontalPosition(0)
@@ -202,7 +202,7 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 	rackpage.SetConfigureRack1Callback(func() {
 		serverpage.RemoveChild(widget.content)
 		serverpage.RemoveChild(banners)
-		configurepage.SetConfType("R100",time.Now())
+		configurepage.SetConfType("R100",timer.GlobalGameTimer.CurrentTime)
 		widget.content=configurepage
 		serverpage.AddChild(configurepage)
 		scrollwidget.SetHorizontalPosition(0)
@@ -213,7 +213,7 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 	rackpage.SetConfigureRack2Callback(func() {
 		serverpage.RemoveChild(widget.content)
 		serverpage.RemoveChild(banners)
-		configurepage.SetConfType("R200",time.Now())
+		configurepage.SetConfType("R200",timer.GlobalGameTimer.CurrentTime)
 		widget.content=configurepage
 		serverpage.AddChild(configurepage)
 		scrollwidget.SetHorizontalPosition(0)
@@ -224,7 +224,7 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 	rackpage.SetConfigureRack4Callback(func() {
 		serverpage.RemoveChild(widget.content)
 		serverpage.RemoveChild(banners)
-		configurepage.SetConfType("R400",time.Now())
+		configurepage.SetConfType("R400",timer.GlobalGameTimer.CurrentTime)
 		widget.content=configurepage
 		serverpage.AddChild(configurepage)
 		scrollwidget.SetHorizontalPosition(0)
@@ -235,7 +235,7 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 	rackpage.SetConfigureRack6Callback(func() {
 		serverpage.RemoveChild(widget.content)
 		serverpage.RemoveChild(banners)
-		configurepage.SetConfType("R600",time.Now())
+		configurepage.SetConfType("R600",timer.GlobalGameTimer.CurrentTime)
 		widget.content=configurepage
 		serverpage.AddChild(configurepage)
 		scrollwidget.SetHorizontalPosition(0)
@@ -246,7 +246,7 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 	bladepage.SetConfigureBlade1Callback(func() {
 		serverpage.RemoveChild(widget.content)
 		serverpage.RemoveChild(banners)
-		configurepage.SetConfType("B100",time.Now())
+		configurepage.SetConfType("B100",timer.GlobalGameTimer.CurrentTime)
 		widget.content=configurepage
 		serverpage.AddChild(configurepage)
 		scrollwidget.SetHorizontalPosition(0)
@@ -257,7 +257,7 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 	bladepage.SetConfigureBlade2Callback(func() {
 		serverpage.RemoveChild(widget.content)
 		serverpage.RemoveChild(banners)
-		configurepage.SetConfType("B200",time.Now())
+		configurepage.SetConfType("B200",timer.GlobalGameTimer.CurrentTime)
 		widget.content=configurepage
 		serverpage.AddChild(configurepage)
 		scrollwidget.SetHorizontalPosition(0)
