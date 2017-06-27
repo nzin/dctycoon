@@ -8,6 +8,7 @@ import(
 type EventPublished struct{
 	sws.SWS_CoreWidget
 	eventpub    *EventPublisher
+	messagewidget *sws.SWS_MainWidget
 	shortdesc   string
 	longdesc    string
 	fadeintime  int32 // remaining second before appearing
@@ -29,6 +30,12 @@ func CreateEventPublished(shortdesc string, longdesc string, eventpub *EventPubl
 	}
 	flat:=sws.CreateFlatButtonWidget(300,30,shortdesc)
 	widget.AddChild(flat)
+	
+	flat.SetClicked(func() {
+		if widget.messagewidget==nil {
+			widget.messagewidget=CreateEventMessageWidget(eventpub.root,longdesc)
+		}
+	})
 	
 	widget.Move(eventpub.root.Width()-300,eventpub.root.Height()-30-30*pos)
 	widget.te=sws.TimerAddEvent(time.Now(),25*time.Millisecond,func() {
