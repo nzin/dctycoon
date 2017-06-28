@@ -16,6 +16,8 @@ func main() {
 	root := sws.Init(800, 600)
 
 	timer.GlobalEventPublisher=timer.CreateEventPublisher(root)
+	dctycoon.GlobalLedger=dctycoon.CreateLedger()
+	timer.GlobalGameTimer=timer.CreateGameTimer()
 
 	dc := dctycoon.CreateDcWidget(root.Width(), root.Height())
 	supplierwidget := dctycoon.CreateSupplier(root)
@@ -32,8 +34,11 @@ func main() {
 	}
 	gamefile.Close()
 
+	// initiate the ledger
+	dctycoon.GlobalLedger.Load(v["ledger"].(map[string]interface{}))
+	
 	// initiate the game timer
-	timer.GlobalGameTimer=timer.GameTimerLoad(v["clock"].(map[string]interface{}))
+	timer.GlobalGameTimer.Load(v["clock"].(map[string]interface{}))
 
 	gamemap := v["map"].(map[string]interface{})
 	dc.LoadMap(gamemap)
@@ -68,6 +73,7 @@ func main() {
 	gamefile.WriteString(fmt.Sprintf(`"map": %s,`, data) + "\n")
 	gamefile.WriteString(fmt.Sprintf(`"trends": %s,`, supplier.TrendSave(supplier.Trends)) + "\n")
 	gamefile.WriteString(fmt.Sprintf(`"clock": %s`, timer.GlobalGameTimer.Save() + "\n"))
+	gamefile.WriteString(fmt.Sprintf(`"ledger": %s`, dctycoon.GlobalLedger.Save() + "\n"))
 	gamefile.WriteString("}\n")
 
 	gamefile.Close()

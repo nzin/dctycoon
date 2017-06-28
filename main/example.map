@@ -36,6 +36,9 @@
       "diskpricenoise":[],
       "rampricenoise":[]
   },
+  "ledger": {
+    "movements": [{"description":"initial opening","amount":6000,"date":"1990-01-01"}]
+  },
   "clock": {
     "timer": "1996-12-15"
   }

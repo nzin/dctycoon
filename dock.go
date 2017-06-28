@@ -16,6 +16,7 @@ type DockWidget struct {
 	forward       *sws.SWS_FlatButtonWidget
 	shop          *sws.SWS_FlatButtonWidget
 	quit          *sws.SWS_FlatButtonWidget
+	ledger        *sws.SWS_FlatButtonWidget
 	timerevent    *sws.TimerEvent
 }
 
@@ -27,8 +28,12 @@ func (self *DockWidget) SetShopCallback(callback func()) {
 	self.shop.SetClicked(callback)
 }
 
+func (self *DockWidget) CurrentLedgerBalance(balance float64) {
+	self.ledger.SetText(fmt.Sprintf("%.2f $",balance))
+}
+
 func CreateDockWidget(timer *timer.GameTimer) *DockWidget {
-	corewidget := sws.CreateCoreWidget(150, 100)
+	corewidget := sws.CreateCoreWidget(150, 125)
 	today:=fmt.Sprintf("%d %s %d",timer.CurrentTime.Day(),timer.CurrentTime.Month().String(),timer.CurrentTime.Year())
 	widget := &DockWidget { 
 		SWS_CoreWidget: *corewidget,
@@ -112,6 +117,11 @@ func CreateDockWidget(timer *timer.GameTimer) *DockWidget {
 	widget.quit.Move(100,75)
 	widget.quit.SetImage("resources/icon-power-button-off.png")
 	widget.AddChild(widget.quit)
+	
+	widget.ledger=sws.CreateFlatButtonWidget(150,25,"")
+	widget.ledger.Move(0,100)
+	widget.AddChild(widget.ledger)
+	GlobalLedger.AddSubscriber(widget)
 	
 	return widget
 }
