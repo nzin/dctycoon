@@ -1,4 +1,5 @@
 {
+  "location":"siliconvalley",
   "map": {
     "width": 20,
     "height": 22,
@@ -37,7 +38,9 @@
       "rampricenoise":[]
   },
   "ledger": {
-    "movements": [{"description":"initial opening","amount":6000,"date":"1990-01-01"}]
+    "movements": [{"description":"initial opening","amount":6000,"date":"1990-01-01","from":"4561" ,"to":"5121"},
+      {"description":"noop","amount":0,"date":"1996-01-01","from": "5121" ,"to":"5121"}
+    ]
   },
   "clock": {
     "timer": "1996-12-15"

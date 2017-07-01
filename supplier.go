@@ -27,6 +27,7 @@ type Supplier struct {
 
 func (self *Supplier) Show() {
 	self.rootwindow.AddChild(self.mainwidget)
+	self.rootwindow.SetFocus(self.mainwidget)
 }
 
 func (self *Supplier) Hide() {

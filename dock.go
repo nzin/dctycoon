@@ -3,6 +3,7 @@ package dctycoon
 import(
 	"github.com/nzin/sws"
 	"github.com/nzin/dctycoon/timer"
+	"github.com/nzin/dctycoon/accounting"
 	"time"
 	"fmt"
 )
@@ -28,8 +29,13 @@ func (self *DockWidget) SetShopCallback(callback func()) {
 	self.shop.SetClicked(callback)
 }
 
-func (self *DockWidget) CurrentLedgerBalance(balance float64) {
-	self.ledger.SetText(fmt.Sprintf("%.2f $",balance))
+func (self *DockWidget) SetLedgerCallback(callback func()) {
+	self.ledger.SetClicked(callback)
+}
+
+func (self *DockWidget) LedgerChange(ledger *accounting.Ledger) {
+	accounts:=ledger.GetYearAccount(self.timer.CurrentTime.Year())
+	self.ledger.SetText(fmt.Sprintf("%.2f $",accounts["51"]))
 }
 
 func CreateDockWidget(timer *timer.GameTimer) *DockWidget {
@@ -121,7 +127,7 @@ func CreateDockWidget(timer *timer.GameTimer) *DockWidget {
 	widget.ledger=sws.CreateFlatButtonWidget(150,25,"")
 	widget.ledger.Move(0,100)
 	widget.AddChild(widget.ledger)
-	GlobalLedger.AddSubscriber(widget)
+	accounting.GlobalLedger.AddSubscriber(widget)
 	
 	return widget
 }

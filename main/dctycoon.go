@@ -6,6 +6,7 @@ import (
 	"github.com/nzin/dctycoon"
 	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/dctycoon/timer"
+	"github.com/nzin/dctycoon/accounting"
 	"github.com/nzin/sws"
 	"os"
 )
@@ -14,13 +15,15 @@ func main() {
 	quit:=false
 
 	root := sws.Init(800, 600)
+	dctycoon.GlobalLocation="siliconvalley"
 
 	timer.GlobalEventPublisher=timer.CreateEventPublisher(root)
-	dctycoon.GlobalLedger=dctycoon.CreateLedger()
+	accounting.GlobalLedger=accounting.CreateLedger(dctycoon.AvailableLocation[dctycoon.GlobalLocation].Taxrate)
 	timer.GlobalGameTimer=timer.CreateGameTimer()
 
 	dc := dctycoon.CreateDcWidget(root.Width(), root.Height())
 	supplierwidget := dctycoon.CreateSupplier(root)
+	accountingui := accounting.CreateAccounting(root)
 	gamefile, err := os.Open("example.map")
 	if err != nil {
 		fmt.Println(err.Error())
@@ -34,8 +37,12 @@ func main() {
 	}
 	gamefile.Close()
 
+	// initiate the location
+	dctycoon.GlobalLocation=v["location"].(string)
+	
 	// initiate the ledger
-	dctycoon.GlobalLedger.Load(v["ledger"].(map[string]interface{}))
+	accounting.GlobalLedger.Load(v["ledger"].(map[string]interface{}),dctycoon.AvailableLocation[dctycoon.GlobalLocation].Taxrate)
+	accountingui.SetBankinterestrate(dctycoon.AvailableLocation[dctycoon.GlobalLocation].Bankinterestrate)
 	
 	// initiate the game timer
 	timer.GlobalGameTimer.Load(v["clock"].(map[string]interface{}))
@@ -58,6 +65,10 @@ func main() {
 	dock.SetQuitCallback(func() {
 		quit=true
 	})
+	
+	dock.SetLedgerCallback(func() {
+		accountingui.Show()
+	})
 
 	//fmt.Println(supplier.Trends.Cpuprice.CurrentValue(time.Now()))
 
@@ -70,10 +81,11 @@ func main() {
 		os.Exit(1)
 	}
 	gamefile.WriteString("{")
+	gamefile.WriteString(fmt.Sprintf(`"location": "%s",`, dctycoon.GlobalLocation) + "\n")
 	gamefile.WriteString(fmt.Sprintf(`"map": %s,`, data) + "\n")
 	gamefile.WriteString(fmt.Sprintf(`"trends": %s,`, supplier.TrendSave(supplier.Trends)) + "\n")
 	gamefile.WriteString(fmt.Sprintf(`"clock": %s`, timer.GlobalGameTimer.Save() + "\n"))
-	gamefile.WriteString(fmt.Sprintf(`"ledger": %s`, dctycoon.GlobalLedger.Save() + "\n"))
+	gamefile.WriteString(fmt.Sprintf(`"ledger": %s`, accounting.GlobalLedger.Save() + "\n"))
 	gamefile.WriteString("}\n")
 
 	gamefile.Close()
