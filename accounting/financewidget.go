@@ -18,6 +18,8 @@ type FinanceWidget struct {
 	sws.SWS_CoreWidget
 	lines map[string]FinanceLine
 	y     int32
+	yearN  *sws.SWS_Label
+	yearN1 *sws.SWS_Label
 }
 
 func (self *FinanceWidget) addLine(name, title string) {
@@ -57,8 +59,14 @@ func CreateFinanceWidget() *FinanceWidget {
 	widget:=&FinanceWidget{
 		SWS_CoreWidget: *sws.CreateCoreWidget(400,50),
 		lines: make(map[string]FinanceLine),
-		y:     0,
+		y:     25,
+		yearN: sws.CreateLabel(100,25,"Year N"),
+		yearN1: sws.CreateLabel(100,25,"Year N-1"),
 	}
+	widget.yearN.Move(200,0)
+	widget.AddChild(widget.yearN)
+	widget.yearN1.Move(300,0)
+	widget.AddChild(widget.yearN1)
 	
 	return widget
 }

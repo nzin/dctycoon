@@ -39,6 +39,9 @@
   },
   "ledger": {
     "movements": [{"description":"initial opening","amount":6000,"date":"1990-01-01","from":"4561" ,"to":"5121"},
+      {"description":"electricity","amount":100,"date":"1996-01-31","from": "5121" ,"to":"60612"},
+      {"description":"sale client 1","amount":200,"date":"1995-11-01","from": "7083" ,"to":"5121"},
+      {"description":"sale client 1","amount":200,"date":"1996-11-01","from": "7083" ,"to":"5121"},
       {"description":"noop","amount":0,"date":"1996-01-01","from": "5121" ,"to":"5121"}
     ]
   },

@@ -40,13 +40,13 @@ func main() {
 	// initiate the location
 	dctycoon.GlobalLocation=v["location"].(string)
 	
+	// initiate the game timer
+	timer.GlobalGameTimer.Load(v["clock"].(map[string]interface{}))
+
 	// initiate the ledger
 	accounting.GlobalLedger.Load(v["ledger"].(map[string]interface{}),dctycoon.AvailableLocation[dctycoon.GlobalLocation].Taxrate)
 	accountingui.SetBankinterestrate(dctycoon.AvailableLocation[dctycoon.GlobalLocation].Bankinterestrate)
 	
-	// initiate the game timer
-	timer.GlobalGameTimer.Load(v["clock"].(map[string]interface{}))
-
 	gamemap := v["map"].(map[string]interface{})
 	dc.LoadMap(gamemap)
 	root.AddChild(dc)
