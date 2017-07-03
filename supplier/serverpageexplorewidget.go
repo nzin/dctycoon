@@ -11,20 +11,26 @@ import(
 type ServerPageExploreWidget struct {
 	sws.SWS_CoreWidget
 	towerbutton *sws.SWS_ButtonWidget
+	towerflat   *sws.SWS_FlatButtonWidget
 	rackbutton  *sws.SWS_ButtonWidget
+	rackflat    *sws.SWS_FlatButtonWidget
 	bladebutton *sws.SWS_ButtonWidget
+	bladeflat   *sws.SWS_FlatButtonWidget
 }
 
 func (self *ServerPageExploreWidget) SetTowerCallback(callback func()) {
 	self.towerbutton.SetClicked(callback)
+	self.towerflat.SetClicked(callback)
 }
 
 func (self *ServerPageExploreWidget) SetRackCallback(callback func()) {
 	self.rackbutton.SetClicked(callback)
+	self.rackflat.SetClicked(callback)
 }
 
 func (self *ServerPageExploreWidget) SetBladeCallback(callback func()) {
 	self.bladebutton.SetClicked(callback)
+	self.bladeflat.SetClicked(callback)
 }
 
 func CreateServerPageExploreWidget(width,height int32) *ServerPageExploreWidget {
@@ -40,12 +46,13 @@ func CreateServerPageExploreWidget(width,height int32) *ServerPageExploreWidget 
         title.SetCentered(false)
         serverpageexplore.AddChild(title)
 
-	towerIcon:=sws.CreateLabel(150,100,"")
+	towerIcon:=sws.CreateFlatButtonWidget(150,100,"")
 	towerIcon.SetImage("resources/tower0.png")
 	towerIcon.SetColor(0xffffffff)
         towerIcon.SetCentered(true)
 	towerIcon.Move(0,20)
         serverpageexplore.AddChild(towerIcon)
+        serverpageexplore.towerflat=towerIcon
 
 	towerTitle:=sws.CreateLabel(150,20,"Tower servers")
 	towerTitle.SetColor(0xffffffff)
@@ -53,7 +60,7 @@ func CreateServerPageExploreWidget(width,height int32) *ServerPageExploreWidget 
 	towerTitle.Move(0,120)
         serverpageexplore.AddChild(towerTitle)
 
-        towerDesc:=sws.CreateTextAreaWidget(150,160,"Our professional          workstation with up to 2 processors, is the ideal powerhouse machine you need   to tackle your engineering problem")
+        towerDesc:=sws.CreateTextAreaWidget(150,160,"Our professional workstation with up to 2 processors, is the ideal powerhouse machine you need to tackle your engineering problem")
         towerDesc.SetReadonly(true)
         towerDesc.SetFont(sws.LatoRegular14)
         towerDesc.SetColor(0xffffffff)
@@ -67,12 +74,13 @@ func CreateServerPageExploreWidget(width,height int32) *ServerPageExploreWidget 
 	serverpageexplore.AddChild(towerButton)
 
 
-	rackIcon:=sws.CreateLabel(150,100,"")
+	rackIcon:=sws.CreateFlatButtonWidget(150,100,"")
 	rackIcon.SetImage("resources/server.2u0.png")
 	rackIcon.SetColor(0xffffffff)
         rackIcon.SetCentered(true)
 	rackIcon.Move(150,20)
         serverpageexplore.AddChild(rackIcon)
+        serverpageexplore.rackflat=rackIcon
 
 	rackTitle:=sws.CreateLabel(150,20,"Rack servers")
 	rackTitle.SetColor(0xffffffff)
@@ -94,12 +102,13 @@ func CreateServerPageExploreWidget(width,height int32) *ServerPageExploreWidget 
 	serverpageexplore.AddChild(rackButton)
 
 
-	bladeIcon:=sws.CreateLabel(150,100,"")
+	bladeIcon:=sws.CreateFlatButtonWidget(150,100,"")
 	bladeIcon.SetImage("resources/server.blade.8u0.png")
 	bladeIcon.SetColor(0xffffffff)
         bladeIcon.SetCentered(true)
 	bladeIcon.Move(300,20)
         serverpageexplore.AddChild(bladeIcon)
+        serverpageexplore.bladeflat=bladeIcon
 
 	bladeTitle:=sws.CreateLabel(150,20,"Blade servers")
 	bladeTitle.SetColor(0xffffffff)

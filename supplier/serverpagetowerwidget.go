@@ -10,11 +10,13 @@ import(
 //
 type ServerPageTowerWidget struct {
 	sws.SWS_CoreWidget
-	configuretower1 *sws.SWS_ButtonWidget
+	configuretower1     *sws.SWS_ButtonWidget
+	configuretowerflat1 *sws.SWS_FlatButtonWidget
 }
 
 func (self *ServerPageTowerWidget) SetConfigureTower1Callback(callback func()) {
 	self.configuretower1.SetClicked(callback)
+	self.configuretowerflat1.SetClicked(callback)
 }
 
 
@@ -31,12 +33,13 @@ func CreateServerPageTowerWidget(width,height int32) *ServerPageTowerWidget {
         title.SetCentered(false)
         serverpagetower.AddChild(title)
 
-	towerIcon:=sws.CreateLabel(150,100,"")
+	towerIcon:=sws.CreateFlatButtonWidget(150,100,"")
 	towerIcon.SetImage("resources/tower0.png")
 	towerIcon.SetColor(0xffffffff)
         towerIcon.SetCentered(true)
 	towerIcon.Move(0,20)
         serverpagetower.AddChild(towerIcon)
+        serverpagetower.configuretowerflat1=towerIcon
 
 	towerTitle:=sws.CreateLabel(150,20,"Tower T1000")
 	towerTitle.SetColor(0xffffffff)

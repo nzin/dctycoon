@@ -10,16 +10,20 @@ import(
 //
 type ServerPageBladeWidget struct {
 	sws.SWS_CoreWidget
-	configureblade2 *sws.SWS_ButtonWidget
-	configureblade1 *sws.SWS_ButtonWidget
+	configureblade2     *sws.SWS_ButtonWidget
+	configurebladeflat2 *sws.SWS_FlatButtonWidget
+	configureblade1     *sws.SWS_ButtonWidget
+	configurebladeflat1 *sws.SWS_FlatButtonWidget
 }
 
 func (self *ServerPageBladeWidget) SetConfigureBlade1Callback(callback func()) {
 	self.configureblade1.SetClicked(callback)
+	self.configurebladeflat1.SetClicked(callback)
 }
 
 func (self *ServerPageBladeWidget) SetConfigureBlade2Callback(callback func()) {
 	self.configureblade2.SetClicked(callback)
+	self.configurebladeflat2.SetClicked(callback)
 }
 
 func CreateServerPageBladeWidget(width,height int32) *ServerPageBladeWidget {
@@ -35,12 +39,13 @@ func CreateServerPageBladeWidget(width,height int32) *ServerPageBladeWidget {
         title.SetCentered(false)
         serverpageblade.AddChild(title)
 
-	blade1Icon:=sws.CreateLabel(150,100,"")
+	blade1Icon:=sws.CreateFlatButtonWidget(150,100,"")
 	blade1Icon.SetImage("resources/server.blade.8u0.png")
 	blade1Icon.SetColor(0xffffffff)
         blade1Icon.SetCentered(true)
 	blade1Icon.Move(0,20)
         serverpageblade.AddChild(blade1Icon)
+        serverpageblade.configurebladeflat1=blade1Icon
 
 	blade1Title:=sws.CreateLabel(150,20,"Blade B100 server")
 	blade1Title.SetColor(0xffffffff)
@@ -62,12 +67,13 @@ func CreateServerPageBladeWidget(width,height int32) *ServerPageBladeWidget {
 	serverpageblade.configureblade1=blade1Button
 
 
-	blade2Icon:=sws.CreateLabel(150,100,"")
+	blade2Icon:=sws.CreateFlatButtonWidget(150,100,"")
 	blade2Icon.SetImage("resources/server.blade.8u0.png")
 	blade2Icon.SetColor(0xffffffff)
         blade2Icon.SetCentered(true)
 	blade2Icon.Move(150,20)
         serverpageblade.AddChild(blade2Icon)
+        serverpageblade.configurebladeflat2=blade2Icon
 
 	blade2Title:=sws.CreateLabel(150,20,"Blade B200 server")
 	blade2Title.SetColor(0xffffffff)
