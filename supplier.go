@@ -18,11 +18,13 @@ import(
 // cart currently in cart, not paid
 
 type Supplier struct {
-	rootwindow   *sws.SWS_RootWidget 
-	mainwidget   *sws.SWS_MainWidget
-	scrollwidget *sws.SWS_ScrollWidget
-	serverpage   *supplier.ServerPageWidget
-	content      sws.SWS_Widget
+	rootwindow       *sws.SWS_RootWidget 
+	mainwidget       *sws.SWS_MainWidget
+	scrollwidgetshop *sws.SWS_ScrollWidget
+	scrollwidgetcart *sws.SWS_ScrollWidget
+	serverpage       *supplier.ServerPageWidget
+	cartpage         *supplier.CartPageWidget
+	content          sws.SWS_Widget
 }
 
 func (self *Supplier) Show() {
@@ -40,11 +42,13 @@ func (self *Supplier) Hide() {
 
 func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 	mainwidget := sws.CreateMainWidget(650,400," Your DEAL supplier",true,true)
-	scrollwidget := sws.CreateScrollWidget(600,550)
+	scrollwidgetshop := sws.CreateScrollWidget(600,550)
+	scrollwidgetcart := sws.CreateScrollWidget(600,550)
 	widget := &Supplier{
 		rootwindow: root,
 		mainwidget: mainwidget,
-		scrollwidget: scrollwidget,
+		scrollwidgetshop: scrollwidgetshop,
+		scrollwidgetcart: scrollwidgetcart,
 	}
 	mainwidget.SetCloseCallback(func() {
 		widget.Hide()
@@ -87,12 +91,12 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 	cart.Move(400,0)
 	banner.AddChild(cart)
 	
-	sv.SetRightWidget(scrollwidget)
+	sv.SetRightWidget(scrollwidgetshop)
 
 	// server page
 	serverpage:=supplier.CreateServerPageWidget(600,850)
 	widget.serverpage=serverpage
-	scrollwidget.SetInnerWidget(serverpage)
+	scrollwidgetshop.SetInnerWidget(serverpage)
 	
 	// content
 	banners:=supplier.CreateBannerWidget(480,120)
@@ -124,8 +128,8 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 		serverpage.AddChild(banners)
 		widget.content=explore
 		serverpage.AddChild(explore)
-		scrollwidget.SetHorizontalPosition(0)
-		scrollwidget.SetVerticalPosition(0)
+		scrollwidgetshop.SetHorizontalPosition(0)
+		scrollwidgetshop.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
 
@@ -133,8 +137,8 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 		serverpage.RemoveChild(widget.content)
 		serverpage.AddChild(banners)
 		serverpage.AddChild(towerpage)
-		scrollwidget.SetHorizontalPosition(0)
-		scrollwidget.SetVerticalPosition(0)
+		scrollwidgetshop.SetHorizontalPosition(0)
+		scrollwidgetshop.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
 	
@@ -143,8 +147,8 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 		serverpage.AddChild(banners)
 		widget.content=rackpage
 		serverpage.AddChild(rackpage)
-		scrollwidget.SetHorizontalPosition(0)
-		scrollwidget.SetVerticalPosition(0)
+		scrollwidgetshop.SetHorizontalPosition(0)
+		scrollwidgetshop.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
 	
@@ -153,8 +157,8 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 		serverpage.AddChild(banners)
 		widget.content=bladepage
 		serverpage.AddChild(bladepage)
-		scrollwidget.SetHorizontalPosition(0)
-		scrollwidget.SetVerticalPosition(0)
+		scrollwidgetshop.SetHorizontalPosition(0)
+		scrollwidgetshop.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
 	
@@ -163,8 +167,8 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 		serverpage.AddChild(banners)
 		widget.content=towerpage
 		serverpage.AddChild(towerpage)
-		scrollwidget.SetHorizontalPosition(0)
-		scrollwidget.SetVerticalPosition(0)
+		scrollwidgetshop.SetHorizontalPosition(0)
+		scrollwidgetshop.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
 	
@@ -173,8 +177,8 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 		serverpage.AddChild(banners)
 		widget.content=rackpage
 		serverpage.AddChild(rackpage)
-		scrollwidget.SetHorizontalPosition(0)
-		scrollwidget.SetVerticalPosition(0)
+		scrollwidgetshop.SetHorizontalPosition(0)
+		scrollwidgetshop.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
 	
@@ -183,8 +187,8 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 		serverpage.AddChild(banners)
 		widget.content=bladepage
 		serverpage.AddChild(bladepage)
-		scrollwidget.SetHorizontalPosition(0)
-		scrollwidget.SetVerticalPosition(0)
+		scrollwidgetshop.SetHorizontalPosition(0)
+		scrollwidgetshop.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
 	
@@ -196,8 +200,8 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 		configurepage.SetConfType("T1000",now)
 		widget.content=configurepage
 		serverpage.AddChild(configurepage)
-		scrollwidget.SetHorizontalPosition(0)
-		scrollwidget.SetVerticalPosition(0)
+		scrollwidgetshop.SetHorizontalPosition(0)
+		scrollwidgetshop.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
 	
@@ -208,8 +212,8 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 		configurepage.SetConfType("R100",now)
 		widget.content=configurepage
 		serverpage.AddChild(configurepage)
-		scrollwidget.SetHorizontalPosition(0)
-		scrollwidget.SetVerticalPosition(0)
+		scrollwidgetshop.SetHorizontalPosition(0)
+		scrollwidgetshop.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
 	
@@ -220,8 +224,8 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 		configurepage.SetConfType("R200",now)
 		widget.content=configurepage
 		serverpage.AddChild(configurepage)
-		scrollwidget.SetHorizontalPosition(0)
-		scrollwidget.SetVerticalPosition(0)
+		scrollwidgetshop.SetHorizontalPosition(0)
+		scrollwidgetshop.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
 	
@@ -232,8 +236,8 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 		configurepage.SetConfType("R400",now)
 		widget.content=configurepage
 		serverpage.AddChild(configurepage)
-		scrollwidget.SetHorizontalPosition(0)
-		scrollwidget.SetVerticalPosition(0)
+		scrollwidgetshop.SetHorizontalPosition(0)
+		scrollwidgetshop.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
 	
@@ -244,8 +248,8 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 		configurepage.SetConfType("R600",now)
 		widget.content=configurepage
 		serverpage.AddChild(configurepage)
-		scrollwidget.SetHorizontalPosition(0)
-		scrollwidget.SetVerticalPosition(0)
+		scrollwidgetshop.SetHorizontalPosition(0)
+		scrollwidgetshop.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
 	
@@ -256,8 +260,8 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 		configurepage.SetConfType("B100",now)
 		widget.content=configurepage
 		serverpage.AddChild(configurepage)
-		scrollwidget.SetHorizontalPosition(0)
-		scrollwidget.SetVerticalPosition(0)
+		scrollwidgetshop.SetHorizontalPosition(0)
+		scrollwidgetshop.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
 	
@@ -268,9 +272,19 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 		configurepage.SetConfType("B200",now)
 		widget.content=configurepage
 		serverpage.AddChild(configurepage)
-		scrollwidget.SetHorizontalPosition(0)
-		scrollwidget.SetVerticalPosition(0)
+		scrollwidgetshop.SetHorizontalPosition(0)
+		scrollwidgetshop.SetVerticalPosition(0)
 		sws.PostUpdate()
+	})
+	
+	widget.cartpage=supplier.CreateCartPageWidget(600,850)
+	scrollwidgetcart.SetInnerWidget(widget.cartpage)
+	
+	shop.SetClicked(func() {
+		sv.SetRightWidget(scrollwidgetshop)
+	})
+	cart.SetClicked(func() {
+		sv.SetRightWidget(scrollwidgetcart)
 	})
 	
 	return widget
