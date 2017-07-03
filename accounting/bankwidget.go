@@ -80,7 +80,7 @@ func CreateBankWidget() *BankWidget {
 	bankwidget.paybackbutton.Move(10,140)
 	bankwidget.AddChild(bankwidget.paybackbutton)
 	
-	bankwidget.askloanbutton = sws.CreateButtonWidget(150,25,"Ask for debt")
+	bankwidget.askloanbutton = sws.CreateButtonWidget(150,25,"Ask for loan")
 	bankwidget.askloanbutton.Move(170,140)
 	bankwidget.AddChild(bankwidget.askloanbutton)
 	

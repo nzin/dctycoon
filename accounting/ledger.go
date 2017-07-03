@@ -206,7 +206,7 @@ func (self *Ledger) Load(game map[string]interface{},taxrate float64) {
 // = resultat courant avant impots (EBT)
 // - taxes sur les benefices (44 (en fait 444))
 // = benefices/resultat net
-func computeYearlyTaxes(accounts AccountYearly, taxrate float64) float64 {
+func computeYearlyTaxes(accounts AccountYearly, taxrate float64) (profitlost, taxes float64) {
 	var ebt float64
 	ebt += -accounts["70"]
 	for k, v := range accounts {
@@ -218,9 +218,9 @@ func computeYearlyTaxes(accounts AccountYearly, taxrate float64) float64 {
 	ebt -= accounts["29"] // depreciations
 	ebt -= accounts["66"] // interets sur la dette
 	if ebt > 0 {
-		return ebt * taxrate
+		taxes = ebt * taxrate
 	}
-	return 0
+	return ebt-taxes,taxes
 }
 
 func (self *Ledger) RunLedger() (accounts map[int]AccountYearly) {
@@ -239,7 +239,9 @@ func (self *Ledger) RunLedger() (accounts map[int]AccountYearly) {
 			fmt.Println("compute taxes for ",currentyear)
 			previousYear := currentyear
 			currentyear = ev.Date.Year()
-			accounts[previousYear]["44"] = computeYearlyTaxes(accounts[previousYear],self.taxrate)
+			profitlost,taxes := computeYearlyTaxes(accounts[previousYear],self.taxrate)
+			accounts[previousYear]["44"]=taxes
+			
 			accounts[previousYear]["51"] -= accounts[previousYear]["44"]
 			accounts[currentyear] = make(AccountYearly)
 			// copy from previous year, accounts 1 to 5 (except 44 => 0)
@@ -249,6 +251,7 @@ func (self *Ledger) RunLedger() (accounts map[int]AccountYearly) {
 				}
 			}
 			accounts[currentyear]["44"] = 0
+			accounts[currentyear]["45"]-=profitlost
 		}
 
 		accounts[currentyear][from] = accounts[currentyear][from] - ev.Amount
