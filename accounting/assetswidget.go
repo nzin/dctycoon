@@ -23,10 +23,12 @@ type AssetsWidget struct {
 }
 
 func (self *AssetsWidget) LedgerChange(ledger *Ledger) {
-	self.yearN.SetText(fmt.Sprintf("%d", timer.GlobalGameTimer.CurrentTime.Year()))
+	self.yearN.SetText(fmt.Sprintf("%d (est.)", timer.GlobalGameTimer.CurrentTime.Year()))
 	self.yearN1.SetText(fmt.Sprintf("%d", timer.GlobalGameTimer.CurrentTime.Year()-1))
 	yearaccountN := GlobalLedger.GetYearAccount(timer.GlobalGameTimer.CurrentTime.Year())
 	yearaccountN1 := GlobalLedger.GetYearAccount(timer.GlobalGameTimer.CurrentTime.Year()-1)
+	// forecast account 44
+	_, taxN := computeYearlyTaxes(yearaccountN, ledger.taxrate)
 
 	self.lines["23"].N.SetText(fmt.Sprintf("%.2f $",yearaccountN["23"]))
 	self.lines["23"].N1.SetText(fmt.Sprintf("%.2f $",yearaccountN1["23"]))
@@ -35,10 +37,10 @@ func (self *AssetsWidget) LedgerChange(ledger *Ledger) {
 	self.lines["28"].N.SetText(fmt.Sprintf("%.2f $",yearaccountN["28"]))
 	self.lines["28"].N1.SetText(fmt.Sprintf("%.2f $",yearaccountN1["28"]))
 
-	self.lines["51"].N.SetText(fmt.Sprintf("%.2f $",yearaccountN["51"]))
+	self.lines["51"].N.SetText(fmt.Sprintf("%.2f $",yearaccountN["51"]-taxN))
 	self.lines["51"].N1.SetText(fmt.Sprintf("%.2f $",yearaccountN1["51"]))
 	
-	assetsN:=yearaccountN["23"]+yearaccountN["37"]-yearaccountN["28"]+yearaccountN["51"]
+	assetsN:=yearaccountN["23"]+yearaccountN["37"]-yearaccountN["28"]+yearaccountN["51"]-taxN
 	assetsN1:=yearaccountN1["23"]+yearaccountN1["37"]-yearaccountN1["28"]+yearaccountN1["51"]
 	self.lines["assets"].N.SetText(fmt.Sprintf("%.2f $",assetsN))
 	self.lines["assets"].N1.SetText(fmt.Sprintf("%.2f $",assetsN1))

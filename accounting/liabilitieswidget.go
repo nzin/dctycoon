@@ -18,10 +18,12 @@ type LiabilitiesWidget struct {
 }
 
 func (self *LiabilitiesWidget) LedgerChange(ledger *Ledger) {
-	self.yearN.SetText(fmt.Sprintf("%d", timer.GlobalGameTimer.CurrentTime.Year()))
+	self.yearN.SetText(fmt.Sprintf("%d (est.)", timer.GlobalGameTimer.CurrentTime.Year()))
 	self.yearN1.SetText(fmt.Sprintf("%d", timer.GlobalGameTimer.CurrentTime.Year()-1))
 	yearaccountN := GlobalLedger.GetYearAccount(timer.GlobalGameTimer.CurrentTime.Year())
 	yearaccountN1 := GlobalLedger.GetYearAccount(timer.GlobalGameTimer.CurrentTime.Year()-1)
+	// forecast account 44
+	_, taxN := computeYearlyTaxes(yearaccountN, ledger.taxrate)
 
 	self.lines["45"].N.SetText(fmt.Sprintf("%.2f $",-yearaccountN["45"]))
 	self.lines["45"].N1.SetText(fmt.Sprintf("%.2f $",-yearaccountN1["45"]))
@@ -37,7 +39,7 @@ func (self *LiabilitiesWidget) LedgerChange(ledger *Ledger) {
 	profitN1-=yearaccountN1["28"]
 	profitN-=yearaccountN["29"]
 	profitN1-=yearaccountN1["29"]
-	profitN-=yearaccountN["44"]
+	profitN-=taxN
 	profitN1-=yearaccountN1["44"]
 
 	

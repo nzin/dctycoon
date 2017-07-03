@@ -60,7 +60,7 @@ func CreateFinanceWidget() *FinanceWidget {
 		SWS_CoreWidget: *sws.CreateCoreWidget(400,50),
 		lines: make(map[string]FinanceLine),
 		y:     25,
-		yearN: sws.CreateLabel(100,25,"Year N"),
+		yearN: sws.CreateLabel(100,25,"Year N (forecast)"),
 		yearN1: sws.CreateLabel(100,25,"Year N-1"),
 	}
 	widget.yearN.Move(200,0)
