@@ -28,6 +28,7 @@ type ServerPageConfigureWidget struct {
 	ramsize       *sws.SWS_DropdownWidget
 	pricevalue    *sws.SWS_Label
 	howmany       *sws.SWS_DropdownWidget
+	unitprice     float64
 	nbunits       int32
 	pricetotal    *sws.SWS_Label
 	conftype      *ServerConfType
@@ -35,7 +36,7 @@ type ServerPageConfigureWidget struct {
 	today         time.Time
 }
 
-func (self *ServerPageConfigureWidget) SetBuyCallback(callback func()) {
+func (self *ServerPageConfigureWidget) SetAddCartCallback(callback func()) {
 	self.buybutton.SetClicked(callback)
 }
 
@@ -64,7 +65,6 @@ func (self *ServerPageConfigureWidget) SetConfType(conftypename string, today ti
 		DiskSize:    Trends.Disksize.CurrentValue(self.today)/4,
 		RamSize:     Trends.Ramsize.CurrentValue(self.today)/8,
 		ConfType:    self.conftype,
-		PricePaid:   0,
 	}
 	//////// configuration
 	// processors
@@ -138,7 +138,7 @@ func (self *ServerPageConfigureWidget) SetConfType(conftypename string, today ti
 		ramsize[2]=strconv.Itoa(int(maxramsize/2000))+" Go"
 		ramsize[3]=strconv.Itoa(int(maxramsize/1000))+" Go"
 	} else {
-		ramsize[0]=strconv.Itoa(int(maxramsize/4))+" Mo"
+		ramsize[0]=strconv.Itoa(int(maxramsize/8))+" Mo"
 		ramsize[1]=strconv.Itoa(int(maxramsize/4))+" Mo"
 		ramsize[2]=strconv.Itoa(int(maxramsize/2))+" Mo"
 		ramsize[3]=strconv.Itoa(int(maxramsize))+" Mo"
@@ -146,21 +146,33 @@ func (self *ServerPageConfigureWidget) SetConfType(conftypename string, today ti
 	self.ramsize.SetChoices(ramsize)
 
 	// price
-	self.conf.PricePaid=math.Floor(self.conf.Price(self.today))
-	self.pricevalue.SetText(strconv.FormatFloat(self.conf.PricePaid,'f',0,64))
+	self.unitprice=math.Floor(self.conf.Price(self.today))
+	self.pricevalue.SetText(strconv.FormatFloat(self.unitprice,'f',0,64))
 	
 	// how many
 	self.howmany.SetChoices([]string{"1","2","3","4","5","6","7","8","9","10"})
 	self.nbunits=1
 	
 	// price total
-	self.pricetotal.SetText(strconv.FormatFloat(self.conf.PricePaid*float64(self.nbunits),'f',0,64)) 
+	self.pricetotal.SetText(strconv.FormatFloat(self.unitprice*float64(self.nbunits),'f',0,64)) 
 	//////// configuration
 	sws.PostUpdate()
 }
 
+func (self *ServerPageConfigureWidget) GetProductType() int32 {
+	return PRODUCT_SERVER
+}
+
 func (self *ServerPageConfigureWidget) GetConf() *ServerConf {
 	return self.conf
+}
+
+func (self *ServerPageConfigureWidget) GetUnitPrice() float64 {
+	return self.unitprice
+}
+
+func (self *ServerPageConfigureWidget) GetNbUnit() int32 {
+	return self.nbunits
 }
 
 func CreateServerPageConfigureWidget(width,height int32) *ServerPageConfigureWidget {
@@ -200,9 +212,9 @@ func CreateServerPageConfigureWidget(width,height int32) *ServerPageConfigureWid
 		if choice,err:=strconv.Atoi(nbproc.Choices[nbproc.ActiveChoice]); err==nil {
 			serverpageconfigure.conf.NbProcessors=int32(choice)
 		}
-		serverpageconfigure.conf.PricePaid=math.Floor(serverpageconfigure.conf.Price(serverpageconfigure.today))
-		serverpageconfigure.pricevalue.SetText(strconv.FormatFloat(serverpageconfigure.conf.PricePaid,'f',0,64))
-		serverpageconfigure.pricetotal.SetText(strconv.FormatFloat(serverpageconfigure.conf.PricePaid*float64(serverpageconfigure.nbunits),'f',0,64))
+		serverpageconfigure.unitprice=math.Floor(serverpageconfigure.conf.Price(serverpageconfigure.today))
+		serverpageconfigure.pricevalue.SetText(strconv.FormatFloat(serverpageconfigure.unitprice,'f',0,64))
+		serverpageconfigure.pricetotal.SetText(strconv.FormatFloat(serverpageconfigure.unitprice*float64(serverpageconfigure.nbunits),'f',0,64))
 	})
 
 	nbcoretitle:=sws.CreateLabel(430,20,"")
@@ -233,9 +245,9 @@ func CreateServerPageConfigureWidget(width,height int32) *ServerPageConfigureWid
 	serverpageconfigure.nbcores=nbcores
 	nbcores.SetClicked(func() {
 		serverpageconfigure.conf.NbCore=serverpageconfigure.nbcorechoice[nbcores.ActiveChoice]
-		serverpageconfigure.conf.PricePaid=math.Floor(serverpageconfigure.conf.Price(serverpageconfigure.today))
-		serverpageconfigure.pricevalue.SetText(strconv.FormatFloat(serverpageconfigure.conf.PricePaid,'f',0,64))
-		serverpageconfigure.pricetotal.SetText(strconv.FormatFloat(serverpageconfigure.conf.PricePaid*float64(serverpageconfigure.nbunits),'f',0,64))
+		serverpageconfigure.unitprice=math.Floor(serverpageconfigure.conf.Price(serverpageconfigure.today))
+		serverpageconfigure.pricevalue.SetText(strconv.FormatFloat(serverpageconfigure.unitprice,'f',0,64))
+		serverpageconfigure.pricetotal.SetText(strconv.FormatFloat(serverpageconfigure.unitprice*float64(serverpageconfigure.nbunits),'f',0,64))
 	})
 
 
@@ -254,9 +266,9 @@ func CreateServerPageConfigureWidget(width,height int32) *ServerPageConfigureWid
 		if choice,err:=strconv.Atoi(nbdisk.Choices[nbdisk.ActiveChoice]); err==nil {
 			serverpageconfigure.conf.NbDisks=int32(choice)
 		}
-		serverpageconfigure.conf.PricePaid=math.Floor(serverpageconfigure.conf.Price(serverpageconfigure.today))
-		serverpageconfigure.pricevalue.SetText(strconv.FormatFloat(serverpageconfigure.conf.PricePaid,'f',0,64))
-		serverpageconfigure.pricetotal.SetText(strconv.FormatFloat(serverpageconfigure.conf.PricePaid*float64(serverpageconfigure.nbunits),'f',0,64))
+		serverpageconfigure.unitprice=math.Floor(serverpageconfigure.conf.Price(serverpageconfigure.today))
+		serverpageconfigure.pricevalue.SetText(strconv.FormatFloat(serverpageconfigure.unitprice,'f',0,64))
+		serverpageconfigure.pricetotal.SetText(strconv.FormatFloat(serverpageconfigure.unitprice*float64(serverpageconfigure.nbunits),'f',0,64))
 	})
 
 	
@@ -273,9 +285,9 @@ func CreateServerPageConfigureWidget(width,height int32) *ServerPageConfigureWid
 	serverpageconfigure.disksize=disksize
 	disksize.SetClicked(func() {
 		serverpageconfigure.conf.DiskSize=serverpageconfigure.ddsizechoice[disksize.ActiveChoice]
-		serverpageconfigure.conf.PricePaid=math.Floor(serverpageconfigure.conf.Price(serverpageconfigure.today))
-		serverpageconfigure.pricevalue.SetText(strconv.FormatFloat(serverpageconfigure.conf.PricePaid,'f',0,64))
-		serverpageconfigure.pricetotal.SetText(strconv.FormatFloat(serverpageconfigure.conf.PricePaid*float64(serverpageconfigure.nbunits),'f',0,64))
+		serverpageconfigure.unitprice=math.Floor(serverpageconfigure.conf.Price(serverpageconfigure.today))
+		serverpageconfigure.pricevalue.SetText(strconv.FormatFloat(serverpageconfigure.unitprice,'f',0,64))
+		serverpageconfigure.pricetotal.SetText(strconv.FormatFloat(serverpageconfigure.unitprice*float64(serverpageconfigure.nbunits),'f',0,64))
 	})
 
 	
@@ -294,9 +306,9 @@ func CreateServerPageConfigureWidget(width,height int32) *ServerPageConfigureWid
 		if choice,err:=strconv.Atoi(nbram.Choices[nbram.ActiveChoice]); err==nil {
 			serverpageconfigure.conf.NbSlotRam=int32(choice)
 		}
-		serverpageconfigure.conf.PricePaid=math.Floor(serverpageconfigure.conf.Price(serverpageconfigure.today))
-		serverpageconfigure.pricevalue.SetText(strconv.FormatFloat(serverpageconfigure.conf.PricePaid,'f',0,64))
-		serverpageconfigure.pricetotal.SetText(strconv.FormatFloat(serverpageconfigure.conf.PricePaid*float64(serverpageconfigure.nbunits),'f',0,64))
+		serverpageconfigure.unitprice=math.Floor(serverpageconfigure.conf.Price(serverpageconfigure.today))
+		serverpageconfigure.pricevalue.SetText(strconv.FormatFloat(serverpageconfigure.unitprice,'f',0,64))
+		serverpageconfigure.pricetotal.SetText(strconv.FormatFloat(serverpageconfigure.unitprice*float64(serverpageconfigure.nbunits),'f',0,64))
 	})
 
 	
@@ -313,9 +325,9 @@ func CreateServerPageConfigureWidget(width,height int32) *ServerPageConfigureWid
 	serverpageconfigure.ramsize=ramsize
 	ramsize.SetClicked(func() {
 		serverpageconfigure.conf.RamSize=serverpageconfigure.ramsizechoice[ramsize.ActiveChoice]
-		serverpageconfigure.conf.PricePaid=math.Floor(serverpageconfigure.conf.Price(serverpageconfigure.today))
-		serverpageconfigure.pricevalue.SetText(strconv.FormatFloat(serverpageconfigure.conf.PricePaid,'f',0,64))
-		serverpageconfigure.pricetotal.SetText(strconv.FormatFloat(serverpageconfigure.conf.PricePaid*float64(serverpageconfigure.nbunits),'f',0,64))
+		serverpageconfigure.unitprice=math.Floor(serverpageconfigure.conf.Price(serverpageconfigure.today))
+		serverpageconfigure.pricevalue.SetText(strconv.FormatFloat(serverpageconfigure.unitprice,'f',0,64))
+		serverpageconfigure.pricetotal.SetText(strconv.FormatFloat(serverpageconfigure.unitprice*float64(serverpageconfigure.nbunits),'f',0,64))
 	})
 
 	
@@ -355,9 +367,9 @@ func CreateServerPageConfigureWidget(width,height int32) *ServerPageConfigureWid
 		if choice,err:=strconv.Atoi(nbunits.Choices[nbunits.ActiveChoice]); err==nil {
 			serverpageconfigure.nbunits=int32(choice)
 		}
-		serverpageconfigure.conf.PricePaid=math.Floor(serverpageconfigure.conf.Price(serverpageconfigure.today))
-		serverpageconfigure.pricevalue.SetText(strconv.FormatFloat(serverpageconfigure.conf.PricePaid,'f',0,64))
-		serverpageconfigure.pricetotal.SetText(strconv.FormatFloat(serverpageconfigure.conf.PricePaid*float64(serverpageconfigure.nbunits),'f',0,64))
+		serverpageconfigure.unitprice=math.Floor(serverpageconfigure.conf.Price(serverpageconfigure.today))
+		serverpageconfigure.pricevalue.SetText(strconv.FormatFloat(serverpageconfigure.unitprice,'f',0,64))
+		serverpageconfigure.pricetotal.SetText(strconv.FormatFloat(serverpageconfigure.unitprice*float64(serverpageconfigure.nbunits),'f',0,64))
 	})
 
 	
@@ -376,7 +388,7 @@ func CreateServerPageConfigureWidget(width,height int32) *ServerPageConfigureWid
 
 	
 	// buy button
-	buyButton:=sws.CreateButtonWidget(100,25,"Buy >")
+	buyButton:=sws.CreateButtonWidget(100,25,"Add to cart >")
 	buyButton.SetColor(0xffffffff)
 	buyButton.Move(150,430)
 	serverpageconfigure.AddChild(buyButton)

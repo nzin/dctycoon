@@ -44,6 +44,7 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 	mainwidget := sws.CreateMainWidget(650,400," Your DEAL supplier",true,true)
 	scrollwidgetshop := sws.CreateScrollWidget(600,550)
 	scrollwidgetcart := sws.CreateScrollWidget(600,550)
+	scrollwidgetcart.SetColor(0xffffffff)
 	widget := &Supplier{
 		rootwindow: root,
 		mainwidget: mainwidget,
@@ -124,6 +125,7 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 	// buttons callback
 	
 	shop.SetClicked(func() {
+		sv.SetRightWidget(scrollwidgetshop)
 		serverpage.RemoveChild(widget.content)
 		serverpage.AddChild(banners)
 		widget.content=explore
@@ -280,11 +282,17 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 	widget.cartpage=supplier.CreateCartPageWidget(600,850)
 	scrollwidgetcart.SetInnerWidget(widget.cartpage)
 	
-	shop.SetClicked(func() {
-		sv.SetRightWidget(scrollwidgetshop)
-	})
 	cart.SetClicked(func() {
 		sv.SetRightWidget(scrollwidgetcart)
+		scrollwidgetcart.SetHorizontalPosition(0)
+		scrollwidgetcart.SetVerticalPosition(0)
+		sws.PostUpdate()
+	})
+	configurepage.SetAddCartCallback(func() {
+		sv.SetRightWidget(scrollwidgetcart)
+		widget.cartpage.AddItem(configurepage.GetProductType(),configurepage.GetConf(),configurepage.GetUnitPrice(),configurepage.GetNbUnit())
+		scrollwidgetcart.Resize(scrollwidgetcart.Width(),scrollwidgetcart.Height())
+		sws.PostUpdate()
 	})
 	
 	return widget

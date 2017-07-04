@@ -45,6 +45,10 @@
       {"description":"noop","amount":0,"date":"1996-01-01","from": "5121" ,"to":"5121"}
     ]
   },
+  "inventory": {
+    "increment":0,
+    "items": []
+  },
   "clock": {
     "timer": "1996-12-15"
   }
