@@ -123,8 +123,9 @@ func (self *CartPageWidget) AddItem(productitem int32, conf *ServerConf, unitpri
 			unitprice,
 			nb,func() {
 				var totalprice float64
-				for _,item := range self.items {
-					totalprice+=item.price*float64(item.qty)
+				item.Nb=ui.qty
+				for _,itemui := range self.items {
+					totalprice+=itemui.price*float64(itemui.qty)
 				}
 				self.grandTotal.SetText(fmt.Sprintf("%.2f $",totalprice))
 			})
