@@ -85,12 +85,24 @@ type CartPageWidget struct {
 	buy         *sws.SWS_ButtonWidget
 }
 
+func (self *CartPageWidget) SetBuyCallback(callback func()) {
+	self.buy.SetClicked(callback)
+}
+
+func (self *CartPageWidget) Reset() {
+	for _,i := range self.items {
+		self.vbox.RemoveChild(i)
+	}
+	self.items=make([]*CartPageItemUi,0)
+	GlobalInventory.Cart=make([]*CartItem,0)
+}
+
 func (self *CartPageWidget) AddItem(productitem int32, conf *ServerConf, unitprice float64, nb int32) {
 	item:=&CartItem {
-		typeitem:   productitem,
-		serverconf: conf,
-		unitprice:  unitprice,
-		nb:         nb,
+		Typeitem:   productitem,
+		Serverconf: conf,
+		Unitprice:  unitprice,
+		Nb:         nb,
 	}
 	GlobalInventory.Cart=append(GlobalInventory.Cart,item)
 	var ui *CartPageItemUi

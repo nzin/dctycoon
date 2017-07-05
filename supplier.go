@@ -1,10 +1,12 @@
 package dctycoon
 
 import(
+	"fmt"
 	"github.com/nzin/sws"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/dctycoon/timer"
+	"github.com/nzin/dctycoon/accounting"
 )
 //
 // top 'menu': [Deal] <shop>  <in transit> <support> <cart>
@@ -293,6 +295,23 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 		widget.cartpage.AddItem(configurepage.GetProductType(),configurepage.GetConf(),configurepage.GetUnitPrice(),configurepage.GetNbUnit())
 		scrollwidgetcart.Resize(scrollwidgetcart.Width(),scrollwidgetcart.Height())
 		sws.PostUpdate()
+	})
+	
+	widget.cartpage.SetBuyCallback(func() {
+		var totalprice float64
+		for _,item := range supplier.GlobalInventory.Cart {
+			totalprice+=item.Unitprice*float64(item.Nb)
+		}
+		accounts:=accounting.GlobalLedger.GetYearAccount(timer.GlobalGameTimer.CurrentTime.Year())
+		bankAccount:=accounts["51"]
+		if bankAccount<totalprice {
+			// show modal window
+			ShowModalError(widget.rootwindow,"Not enough funds",fmt.Sprintf("You cannot buy for %.2f $ of goods: your bank account is currently credited of %.2f $!",totalprice,bankAccount),nil)
+		} else {
+			// we buy
+			// we reset the cart
+			widget.cartpage.Reset()
+		}
 	})
 	
 	return widget

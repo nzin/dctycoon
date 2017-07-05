@@ -14,10 +14,10 @@ const(
 )
 
 type CartItem struct {
-	typeitem   int32
-	serverconf *ServerConf // if it is an PRODUCT_SERVER
-	unitprice  float64
-	nb         int32
+	Typeitem   int32
+	Serverconf *ServerConf // if it is an PRODUCT_SERVER
+	Unitprice  float64
+	Nb         int32
 }
 
 //
