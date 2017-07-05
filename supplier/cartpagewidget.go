@@ -17,12 +17,13 @@ type CartPageItemUi struct {
 	qtyD   *sws.SWS_DropdownWidget
 	delete *sws.SWS_ButtonWidget
 	total  *sws.SWS_Label
+	totalchanged func()
 }
 
-func CreateCartPageItemUi(icon, desc string, price float64, qty int32) *CartPageItemUi {
-	choices:=make([]string,qty)
-	for i:=0; i<int(qty);i++ {
-		choices[i]=fmt.Sprintf("%d",int(qty)-i)
+func CreateCartPageItemUi(icon, desc string, price float64, qty int32,totalcallback func()) *CartPageItemUi {
+	choices:=make([]string,10)
+	for i:=1; i<=10;i++ {
+		choices[i-1]=fmt.Sprintf("%d",i)
 	}
 	cartitem:=&CartPageItemUi{
 		SWS_CoreWidget: *sws.CreateCoreWidget(600,100),
@@ -34,7 +35,10 @@ func CreateCartPageItemUi(icon, desc string, price float64, qty int32) *CartPage
 		qtyD: sws.CreateDropdownWidget(50,25,choices),
 		delete: sws.CreateButtonWidget(100,25,"remove"),
 		total: sws.CreateLabel(100,25,fmt.Sprintf("%.2f $",price*float64(qty))),
+		totalchanged: totalcallback,
 	}
+	cartitem.qtyD.SetActiveChoice(qty-1)
+
 	cartitem.SetColor(0xffffffff)
 	cartitem.icon.SetImage(icon)
 	cartitem.icon.SetColor(0xffffffff)
@@ -64,6 +68,7 @@ func CreateCartPageItemUi(icon, desc string, price float64, qty int32) *CartPage
                 if choice,err:=strconv.Atoi(cartitem.qtyD.Choices[cartitem.qtyD.ActiveChoice]); err==nil {
                         cartitem.qty=int32(choice)
 			cartitem.total.SetText(fmt.Sprintf("%.2f $",price*float64(choice)))
+			cartitem.totalchanged()
 			sws.PostUpdate()
                 }
 	})
@@ -116,7 +121,13 @@ func (self *CartPageWidget) AddItem(productitem int32, conf *ServerConf, unitpri
 		ui=CreateCartPageItemUi("resources/"+conf.ConfType.ServerSprite+"0.png",
 			fmt.Sprintf("%dx %d cores\n%s RAM\n%d disks",conf.NbProcessors,conf.NbCore,ramSizeText,conf.NbDisks),
 			unitprice,
-			nb)
+			nb,func() {
+				var totalprice float64
+				for _,item := range self.items {
+					totalprice+=item.price*float64(item.qty)
+				}
+				self.grandTotal.SetText(fmt.Sprintf("%.2f $",totalprice))
+			})
 	}
 	
 	self.items=append(self.items,ui)
