@@ -95,6 +95,7 @@ func (self *CartPageWidget) Reset() {
 	}
 	self.items=make([]*CartPageItemUi,0)
 	GlobalInventory.Cart=make([]*CartItem,0)
+	self.grandTotal.SetText("0 $")
 }
 
 func (self *CartPageWidget) AddItem(productitem int32, conf *ServerConf, unitprice float64, nb int32) {
