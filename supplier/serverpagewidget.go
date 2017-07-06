@@ -31,16 +31,19 @@ func CreateServerPageWidget(width,height int32) *ServerPageWidget {
 	serverpage:=&ServerPageWidget{
 		SWS_CoreWidget: *sws.CreateCoreWidget(width,height),
 	}
+	serverpage.SetColor(0xffffffff)
 
         servertitle:=sws.CreateLabel(150,40,"DEAL Servers")
         servertitle.SetFont(sws.LatoRegular20)
         servertitle.SetCentered(false)
+	servertitle.SetColor(0xffffffff)
         servertitle.Move(40,0)
         serverpage.AddChild(servertitle)
 
         towerservers:=sws.CreateFlatButtonWidget(120,20,"> Tower Servers")
         towerservers.SetTextColor(sdl.Color{0x06,0x84,0xdc,0xff})
         towerservers.SetCentered(false)
+	towerservers.SetColor(0xffffffff)
         towerservers.Move(0,40)
 	serverpage.towerbutton=towerservers
         serverpage.AddChild(towerservers)
@@ -48,6 +51,7 @@ func CreateServerPageWidget(width,height int32) *ServerPageWidget {
         rackservers:=sws.CreateFlatButtonWidget(120,20,"> Rack Servers")
         rackservers.SetTextColor(sdl.Color{0x06,0x84,0xdc,0xff})
         rackservers.SetCentered(false)
+	rackservers.SetColor(0xffffffff)
         rackservers.Move(0,60)
 	serverpage.rackbutton=rackservers
         serverpage.AddChild(rackservers)
@@ -55,6 +59,7 @@ func CreateServerPageWidget(width,height int32) *ServerPageWidget {
         bladeservers:=sws.CreateFlatButtonWidget(120,20,"> Blade Servers")
         bladeservers.SetTextColor(sdl.Color{0x06,0x84,0xdc,0xff})
         bladeservers.SetCentered(false)
+	bladeservers.SetColor(0xffffffff)
         bladeservers.Move(0,80)
 	serverpage.bladebutton=bladeservers
         serverpage.AddChild(bladeservers)

@@ -179,18 +179,18 @@ func CreateServerPageConfigureWidget(width,height int32) *ServerPageConfigureWid
 	serverpageconfigure:=&ServerPageConfigureWidget{
 		SWS_CoreWidget: *sws.CreateCoreWidget(width,height),
 	}
-	serverpageconfigure.SetColor(0xffffffff)
+	serverpageconfigure.SetColor(0xffeeeeee)
 	
         title:=sws.CreateLabel(200,20,"Configure Server")
         title.SetFont(sws.LatoRegular20)
-	title.SetColor(0xffffffff)
+	title.SetColor(0xffeeeeee)
         title.Move(20,0)
         title.SetCentered(false)
         serverpageconfigure.AddChild(title)
         serverpageconfigure.title=title
 
 	configureIcon:=sws.CreateLabel(150,100,"")
-	configureIcon.SetColor(0xffffffff)
+	configureIcon.SetColor(0xffeeeeee)
         configureIcon.SetCentered(true)
 	configureIcon.Move(0,20)
         serverpageconfigure.AddChild(configureIcon)
@@ -199,12 +199,12 @@ func CreateServerPageConfigureWidget(width,height int32) *ServerPageConfigureWid
 
 	// nb processors
 	nbproctitle:=sws.CreateLabel(150,25,"Nb Processors:")
-	nbproctitle.SetColor(0xffffffff)
+	nbproctitle.SetColor(0xffeeeeee)
 	nbproctitle.Move(0,140)
         serverpageconfigure.AddChild(nbproctitle)
 	
 	nbproc:=sws.CreateDropdownWidget(75,25,[]string{})
-	nbproc.SetColor(0xffffffff)
+	nbproc.SetColor(0xffeeeeee)
 	nbproc.Move(150,140)
         serverpageconfigure.AddChild(nbproc)
 	serverpageconfigure.nbproc=nbproc
@@ -219,14 +219,14 @@ func CreateServerPageConfigureWidget(width,height int32) *ServerPageConfigureWid
 
 	nbcoretitle:=sws.CreateLabel(430,20,"")
 	nbcoretitle.SetFont(sws.LatoRegular12)
-	nbcoretitle.SetColor(0xffffffff)
+	nbcoretitle.SetColor(0xffeeeeee)
 	nbcoretitle.Move(0,165)
         serverpageconfigure.AddChild(nbcoretitle)
         serverpageconfigure.nbcoretitle=nbcoretitle
 	
 	vttitle:=sws.CreateLabel(430,20,"")
 	vttitle.SetFont(sws.LatoRegular12)
-	vttitle.SetColor(0xffffffff)
+	vttitle.SetColor(0xffeeeeee)
 	vttitle.Move(0,185)
         serverpageconfigure.AddChild(vttitle)
         serverpageconfigure.vttitle=vttitle
@@ -234,12 +234,12 @@ func CreateServerPageConfigureWidget(width,height int32) *ServerPageConfigureWid
 
 	// processor type
 	processor:=sws.CreateLabel(150,25,"Processor")
-	processor.SetColor(0xffffffff)
+	processor.SetColor(0xffeeeeee)
 	processor.Move(0,205)
 	serverpageconfigure.AddChild(processor)
 
 	nbcores:=sws.CreateDropdownWidget(150,25,[]string{})
-	nbcores.SetColor(0xffffffff)
+	nbcores.SetColor(0xffeeeeee)
 	nbcores.Move(150,205)
         serverpageconfigure.AddChild(nbcores)
 	serverpageconfigure.nbcores=nbcores
@@ -253,12 +253,12 @@ func CreateServerPageConfigureWidget(width,height int32) *ServerPageConfigureWid
 
 	// nb disks
 	nbdisktitle:=sws.CreateLabel(150,25,"Nb disks")
-	nbdisktitle.SetColor(0xffffffff)
+	nbdisktitle.SetColor(0xffeeeeee)
 	nbdisktitle.Move(0,230)
 	serverpageconfigure.AddChild(nbdisktitle)
 
 	nbdisk:=sws.CreateDropdownWidget(75,25,[]string{})
-	nbdisk.SetColor(0xffffffff)
+	nbdisk.SetColor(0xffeeeeee)
 	nbdisk.Move(150,230)
         serverpageconfigure.AddChild(nbdisk)
 	serverpageconfigure.nbdisk=nbdisk
@@ -274,12 +274,12 @@ func CreateServerPageConfigureWidget(width,height int32) *ServerPageConfigureWid
 	
 	// disk size
 	disksizetitle:=sws.CreateLabel(150,25,"Disks size")
-	disksizetitle.SetColor(0xffffffff)
+	disksizetitle.SetColor(0xffeeeeee)
 	disksizetitle.Move(0,255)
 	serverpageconfigure.AddChild(disksizetitle)
 
 	disksize:=sws.CreateDropdownWidget(75,25,[]string{})
-	disksize.SetColor(0xffffffff)
+	disksize.SetColor(0xffeeeeee)
 	disksize.Move(150,255)
         serverpageconfigure.AddChild(disksize)
 	serverpageconfigure.disksize=disksize
@@ -293,12 +293,12 @@ func CreateServerPageConfigureWidget(width,height int32) *ServerPageConfigureWid
 	
 	// nb ram
 	nbramtitle:=sws.CreateLabel(150,25,"Nb SDRAM DIMM")
-	nbramtitle.SetColor(0xffffffff)
+	nbramtitle.SetColor(0xffeeeeee)
 	nbramtitle.Move(0,280)
 	serverpageconfigure.AddChild(nbramtitle)
 
 	nbram:=sws.CreateDropdownWidget(75,25,[]string{})
-	nbram.SetColor(0xffffffff)
+	nbram.SetColor(0xffeeeeee)
 	nbram.Move(150,280)
         serverpageconfigure.AddChild(nbram)
 	serverpageconfigure.nbram=nbram
@@ -314,12 +314,12 @@ func CreateServerPageConfigureWidget(width,height int32) *ServerPageConfigureWid
 	
 	// ram size
 	ramsizetitle:=sws.CreateLabel(150,25,"SDRAM size")
-	ramsizetitle.SetColor(0xffffffff)
+	ramsizetitle.SetColor(0xffeeeeee)
 	ramsizetitle.Move(0,305)
 	serverpageconfigure.AddChild(ramsizetitle)
 
 	ramsize:=sws.CreateDropdownWidget(75,25,[]string{})
-	ramsize.SetColor(0xffffffff)
+	ramsize.SetColor(0xffeeeeee)
 	ramsize.Move(150,305)
         serverpageconfigure.AddChild(ramsize)
 	serverpageconfigure.ramsize=ramsize
@@ -334,19 +334,19 @@ func CreateServerPageConfigureWidget(width,height int32) *ServerPageConfigureWid
 	// shipping 
 	shipping:=sws.CreateLabel(200,20,"Ships in 3-5 business days")
 	shipping.SetFont(sws.LatoRegular12)
-	shipping.SetColor(0xffffffff)
+	shipping.SetColor(0xffeeeeee)
 	shipping.Move(150,330)
         serverpageconfigure.AddChild(shipping)
 
 
 	// price 
 	priceText:=sws.CreateLabel(100,25,"Unit Price")
-	priceText.SetColor(0xffffffff)
+	priceText.SetColor(0xffeeeeee)
 	priceText.Move(0,355)
         serverpageconfigure.AddChild(priceText)
 
 	priceValue:=sws.CreateLabel(100,25,"0")
-	priceValue.SetColor(0xffffffff)
+	priceValue.SetColor(0xffeeeeee)
 	priceValue.Move(150,355)
         serverpageconfigure.AddChild(priceValue)
 	serverpageconfigure.pricevalue=priceValue
@@ -354,12 +354,12 @@ func CreateServerPageConfigureWidget(width,height int32) *ServerPageConfigureWid
 
 	// how many
 	nbunittitle:=sws.CreateLabel(150,25,"Nb Units")
-	nbunittitle.SetColor(0xffffffff)
+	nbunittitle.SetColor(0xffeeeeee)
 	nbunittitle.Move(0,380)
 	serverpageconfigure.AddChild(nbunittitle)
 
 	nbunits:=sws.CreateDropdownWidget(75,25,[]string{})
-	nbunits.SetColor(0xffffffff)
+	nbunits.SetColor(0xffeeeeee)
 	nbunits.Move(150,380)
         serverpageconfigure.AddChild(nbunits)
 	serverpageconfigure.howmany=nbunits
@@ -375,12 +375,12 @@ func CreateServerPageConfigureWidget(width,height int32) *ServerPageConfigureWid
 	
 	// price total
 	pricetotalText:=sws.CreateLabel(100,25,"Final Price")
-	pricetotalText.SetColor(0xffffffff)
+	pricetotalText.SetColor(0xffeeeeee)
 	pricetotalText.Move(0,405)
         serverpageconfigure.AddChild(pricetotalText)
 
 	pricetotalValue:=sws.CreateLabel(100,25,"0")
-	pricetotalValue.SetColor(0xffffffff)
+	pricetotalValue.SetColor(0xffeeeeee)
 	pricetotalValue.Move(150,405)
         serverpageconfigure.AddChild(pricetotalValue)
 	serverpageconfigure.pricetotal=pricetotalValue
@@ -389,7 +389,7 @@ func CreateServerPageConfigureWidget(width,height int32) *ServerPageConfigureWid
 	
 	// buy button
 	buyButton:=sws.CreateButtonWidget(100,25,"Add to cart >")
-	buyButton.SetColor(0xffffffff)
+	buyButton.SetColor(0xffeeeeee)
 	buyButton.Move(150,430)
 	serverpageconfigure.AddChild(buyButton)
 	serverpageconfigure.buybutton=buyButton
