@@ -3,6 +3,7 @@ package accounting
 import (
 	"fmt"
 	"github.com/google/btree"
+	"github.com/nzin/dctycoon/timer"
 	"time"
 )
 
@@ -10,6 +11,7 @@ import (
 // payable or reception of money (depending of the sign of Amount
 //
 type LedgerMovement struct {
+	Id          int32 // filled by Ledger.AddMovement
 	Description string
 	Amount      float64
 	AccountFrom string // from credit
@@ -18,7 +20,12 @@ type LedgerMovement struct {
 }
 
 func (self *LedgerMovement) Less(b btree.Item) bool {
-	return self.Date.Before(b.(*LedgerMovement).Date)
+	bmvt := b.(*LedgerMovement)
+	if (self.Date.Equal(bmvt.Date)) {
+		return self.Id<bmvt.Id
+	} else {
+		return self.Date.Before(bmvt.Date)
+	}
 }
 
 //
@@ -56,6 +63,7 @@ func (self *LedgerMovement) Less(b btree.Item) bool {
 //
 // 6. Charges
 // 60612. Électricité
+// 607. achat de marchandise
 // 6132. Location immobiliere
 // 6231. Publicité, Annonces et insertions
 // 6233. Publicité, Foires et expositions
@@ -138,10 +146,12 @@ type LedgerSubscriber interface {
 // Ledger
 //
 type Ledger struct {
+	autoinc     int32
 	Movements   *btree.BTree
 	subscribers []LedgerSubscriber
 	accounts    map[int]AccountYearly
 	taxrate     float64
+	computeYear func()
 }
 
 var GlobalLedger *Ledger
@@ -151,16 +161,100 @@ func (self *Ledger) GetYearAccount(year int) AccountYearly {
 }
 
 func (self *Ledger) AddMovement(ev LedgerMovement) {
+	ev.Id=self.autoinc
 	self.Movements.ReplaceOrInsert(&ev)
 	self.accounts = self.RunLedger()
 	for _, s := range self.subscribers {
 		s.LedgerChange(self)
 	}
+	self.autoinc++
 }
 
 func (self *Ledger) AddSubscriber(sub LedgerSubscriber) {
 	self.subscribers = append(self.subscribers, sub)
 	sub.LedgerChange(self)
+}
+
+//
+// 607 -> 2315 : product
+// 404 -> 2315 : product
+// et 5121 -> 4011 : money
+// 2315 -> 2815 : amortization
+func (self *Ledger) BuyProduct(desc string, t time.Time, price float64) {
+	product:=&LedgerMovement{
+		Id: self.autoinc,
+		Description: desc,
+		Amount: price,
+		AccountFrom: "404",
+		AccountTo: "2315",
+		Date: t,
+	}
+	self.autoinc++
+	self.Movements.ReplaceOrInsert(product)
+	
+	money:=&LedgerMovement{
+		Id: self.autoinc,
+		Description: desc,
+		Amount: price,
+		AccountFrom: "5121",
+		AccountTo: "4011",
+		Date: t,
+	}
+	self.autoinc++
+	self.Movements.ReplaceOrInsert(money)
+	
+	YN1:=time.Date(t.Year()+1, time.Month(1), 1, 0, 0, 0, 0, time.UTC)
+	YN2:=time.Date(t.Year()+2, time.Month(1), 1, 0, 0, 0, 0, time.UTC)
+	YN3:=time.Date(t.Year()+3, time.Month(1), 1, 0, 0, 0, 0, time.UTC)
+	YN4:=time.Date(t.Year()+3, t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
+	tillY1:=YN1.Sub(t).Hours()/24
+	Y1toY2:=YN2.Sub(YN1).Hours()/24
+	Y2toY3:=YN3.Sub(YN2).Hours()/24
+	Y3toY4:=YN4.Sub(YN3).Hours()/24
+	
+	self.Movements.ReplaceOrInsert(&LedgerMovement{
+		Id: self.autoinc,
+                Description: "ammo "+desc,
+                Amount: price*tillY1/(tillY1+Y1toY2+Y2toY3+Y3toY4),
+                AccountFrom: "2315",
+                AccountTo: "2815",
+                Date: t,
+        })
+	self.autoinc++
+	self.Movements.ReplaceOrInsert(&LedgerMovement{
+		Id: self.autoinc,
+                Description: "ammo "+desc,
+                Amount: price*Y1toY2/(tillY1+Y1toY2+Y2toY3+Y3toY4),
+                AccountFrom: "2315",
+                AccountTo: "2815",
+                Date: YN1,
+        })
+	self.autoinc++
+	self.Movements.ReplaceOrInsert(&LedgerMovement{
+		Id: self.autoinc,
+                Description: "ammo "+desc,
+                Amount: price*Y2toY3/(tillY1+Y1toY2+Y2toY3+Y3toY4),
+                AccountFrom: "2315",
+                AccountTo: "2815",
+                Date: YN2,
+        })
+	self.autoinc++
+	self.Movements.ReplaceOrInsert(&LedgerMovement{
+		Id: self.autoinc,
+                Description: "ammo "+desc,
+                Amount: price*Y3toY4/(tillY1+Y1toY2+Y2toY3+Y3toY4),
+                AccountFrom: "2315",
+                AccountTo: "2815",
+                Date: YN3,
+        })
+	self.autoinc++
+
+	// compute the ledger
+	
+	self.accounts = self.RunLedger()
+	for _, s := range self.subscribers {
+		s.LedgerChange(self)
+	}
 }
 
 func CreateLedger(taxrate float64) *Ledger {
@@ -194,6 +288,17 @@ func (self *Ledger) Load(game map[string]interface{},taxrate float64) {
 	for _, s := range self.subscribers {
 		s.LedgerChange(self)
 	}
+	
+	// compute fiscal year
+	self.computeYear=func() {
+		ledger:=self
+		ledger.accounts = ledger.RunLedger()
+		for _, s := range ledger.subscribers {
+			s.LedgerChange(self)
+		}
+		timer.GlobalGameTimer.AddEvent(time.Date(timer.GlobalGameTimer.CurrentTime.Year()+1, time.Month(1), 1, 0, 0, 0, 0, time.UTC),ledger.computeYear)
+	}
+	timer.GlobalGameTimer.AddEvent(time.Date(timer.GlobalGameTimer.CurrentTime.Year()+1, time.Month(1), 1, 0, 0, 0, 0, time.UTC),self.computeYear)
 }
 
 //   Comptes de produits (70)
@@ -208,10 +313,10 @@ func (self *Ledger) Load(game map[string]interface{},taxrate float64) {
 // = benefices/resultat net
 func computeYearlyTaxes(accounts AccountYearly, taxrate float64) (profitlost, taxes float64) {
 	var ebt float64
-	ebt += -accounts["70"]
+	ebt -= accounts["70"]
 	for k, v := range accounts {
 		if k[0] == '6' {
-			ebt -= v
+			ebt += v
 		}
 	}
 	ebt -= accounts["28"] // amortissements
@@ -252,11 +357,13 @@ func (self *Ledger) RunLedger() (accounts map[int]AccountYearly) {
 			}
 			accounts[currentyear]["44"] = 0
 			accounts[currentyear]["45"]-=profitlost
+			//accounts[currentyear]["23"] -= accounts[previousYear]["28"]
+			accounts[currentyear]["28"] = 0
 		}
 
 		accounts[currentyear][from] = accounts[currentyear][from] - ev.Amount
 		accounts[currentyear][to] = accounts[currentyear][to] + ev.Amount
-		//fmt.Println("from: ",from," to:",to, "currentyear: ",currentyear)
+		fmt.Println("from: ",from," to:",to, "currentyear: ",currentyear,",desc: ",ev.Description)
 
 		return true
 	})

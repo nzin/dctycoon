@@ -32,8 +32,8 @@ func (self *LiabilitiesWidget) LedgerChange(ledger *Ledger) {
 	profitN=-yearaccountN["70"]
 	profitN1=-yearaccountN1["70"]
 	for _,i :=range([]string{"60","61","62","63","64","65","66"}) {
-		profitN-=yearaccountN[i]
-		profitN1-=yearaccountN1[i]
+		profitN+=yearaccountN[i]
+		profitN1+=yearaccountN1[i]
 	}
 	profitN-=yearaccountN["28"]
 	profitN1-=yearaccountN1["28"]

@@ -1,7 +1,7 @@
 package supplier
 
 import(
-	"fmt"
+//	"fmt"
 	"time"
 //	"github.com/nzin/dctycoon/accounting"
 )
@@ -26,30 +26,66 @@ type CartItem struct {
 // - where it is situated (rack)
 // - which customer it is linked to
 //
-// id used to link back a rack element to an inventory element
-//
 type InventoryItem struct {
-	typeitem     int32
-	serverconf   *ServerConf // if it is an PRODUCT_SERVER
-	buydate      time.Time // for the amortizement
-	deliverydate time.Time // to know when to show it
+	//Id           int32
+	Typeitem     int32
+	Serverconf   *ServerConf // if it is an PRODUCT_SERVER
+	Buydate      time.Time // for the amortizement
+	Deliverydate time.Time // to know when to show it
+	xplaced,yplaced int32 // -1 if not placed (yet)
+	zplaced      int32 //only for racking servers
+	// offer
+	// sold/used
 }
 
 type Inventory struct {
-	increment int32
+	//increment int32
 	Cart  []*CartItem
-	Items map[int32]*InventoryItem
+	//Items map[int32]*InventoryItem
+	Items []*InventoryItem
 }
 
 var GlobalInventory *Inventory
 
+func (self *Inventory) BuyCart(buydate time.Time) {
+	for _,item := range(self.Cart) {
+		for i:=0;i<int(item.Nb);i++ {
+			inventory:=&InventoryItem{
+				Typeitem: item.Typeitem,
+				Serverconf: item.Serverconf,
+				Buydate: buydate,
+				Deliverydate: buydate.Add(96*time.Hour),
+				xplaced: -1,
+				yplaced: -1,
+				zplaced: -1,
+			}
+			self.Items=append(self.Items,inventory)
+		}
+	}
+	//self.Cart=make([]*CartItem,0) // done in CarpPageWidget.Reset()
+}
+
+//
+// to discard an item, it must not be placed
+//
+func (self *Inventory) DiscardItem(item *InventoryItem) bool {
+	if (item.xplaced!=-1) { return false }
+	for i,v := range(self.Items) {
+		if v==item {
+			self.Items=append(self.Items[:i],self.Items[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+
 func (self *Inventory) Load(conf map[string]interface{}) {
-	self.increment=int32(conf["increment"].(float64))
+	//self.increment=int32(conf["increment"].(float64))
 }
 
 func (self *Inventory) Save() string {
 	str:=""
-	str+=fmt.Sprintf(`"increment":%d`,self.increment)
+	//str+=fmt.Sprintf(`"increment":%d`,self.increment)
 	str+=`"items":[`
 
 	str+="]"
@@ -59,7 +95,8 @@ func (self *Inventory) Save() string {
 func CreateInventory() *Inventory {
 	inventory:=&Inventory{
 		Cart: make([]*CartItem,0),
-		Items: make(map[int32]*InventoryItem),
+		//Items: make(map[int32]*InventoryItem),
+		Items: make([]*InventoryItem,0),
 	}
 	return inventory
 }

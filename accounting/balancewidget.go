@@ -46,8 +46,8 @@ func (self *BalanceWidget) LedgerChange(ledger *Ledger) {
 	self.lines["6"].N.SetText(fmt.Sprintf("%.2f $",total60N))
 	self.lines["6"].N1.SetText(fmt.Sprintf("%.2f $",total60N1))
 	
-	ebitdaN:=totalSalesN-total60N
-	ebitdaN1:=totalSalesN1-total60N1
+	ebitdaN:=totalSalesN+total60N
+	ebitdaN1:=totalSalesN1+total60N1
 	self.lines["ebitda"].N.SetText(fmt.Sprintf("%.2f $",ebitdaN))
 	self.lines["ebitda"].N1.SetText(fmt.Sprintf("%.2f $",ebitdaN1))
 	

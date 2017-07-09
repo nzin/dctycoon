@@ -310,6 +310,21 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 			ShowModalError(widget.rootwindow,"Not enough funds",fmt.Sprintf("You cannot buy for %.2f $ of goods: your bank account is currently credited of %.2f $!",totalprice,bankAccount),nil)
 		} else {
 			// we buy
+			for _,item := range supplier.GlobalInventory.Cart {
+				var desc string
+				switch(item.Typeitem) {
+					case supplier.PRODUCT_SERVER:
+						desc = fmt.Sprintf("%dx %s",item.Nb,item.Serverconf.ConfType.ServerName)
+					case supplier.PRODUCT_RACK:
+						desc = fmt.Sprintf("%dx Rack",item.Nb)
+					case supplier.PRODUCT_AC:
+						desc = fmt.Sprintf("%dx AC",item.Nb)
+					case supplier.PRODUCT_GENERATOR:
+						desc = fmt.Sprintf("%dx Generator",item.Nb)
+				}
+				accounting.GlobalLedger.BuyProduct(desc,timer.GlobalGameTimer. CurrentTime,item.Unitprice*float64(item.Nb))
+			}
+			supplier.GlobalInventory.BuyCart(timer.GlobalGameTimer.CurrentTime)
 			// we reset the cart
 			widget.cartpage.Reset()
 		}

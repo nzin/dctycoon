@@ -7,16 +7,22 @@ import(
 )
 
 type GamerTimerEvent struct {
+	Id      int32
 	Date    time.Time
 	Trigger func()
 }
 
 func (self *GamerTimerEvent) Less(b btree.Item) bool {
-	return self.Date.Before(b.(*GamerTimerEvent).Date)
+	bevt:=b.(*GamerTimerEvent)
+	if self.Date.Equal(bevt.Date) {
+		return self.Id<bevt.Id
+	}
+	return self.Date.Before(bevt.Date)
 }
 
 
 type GameTimer struct {
+	autoinc     int32
 	CurrentTime time.Time // current day
 	TimerClock  func() // method to call when we switch to a new day
 	events      *btree.BTree
@@ -26,6 +32,7 @@ var GlobalGameTimer *GameTimer
 
 func CreateGameTimer() *GameTimer {
 	timer :=&GameTimer{
+		autoinc: 0,
 		CurrentTime: time.Date(1990, time.Month(01), 01, 0, 0, 0, 0,   time.UTC),
 		events: btree.New(10),
 	}
@@ -59,9 +66,11 @@ func (self *GameTimer) AddEvent(evdate time.Time, callback func()) {
 		return
 	}
 	self.events.ReplaceOrInsert(&GamerTimerEvent{
+		Id: self.autoinc,
 		Date: evdate,
 		Trigger: callback,
 	})
+	self.autoinc++
 }
 
 func (self *GameTimer) Save() string {
