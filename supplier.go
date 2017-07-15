@@ -20,13 +20,15 @@ import(
 // cart currently in cart, not paid
 
 type Supplier struct {
-	rootwindow       *sws.SWS_RootWidget 
-	mainwidget       *sws.SWS_MainWidget
-	scrollwidgetshop *sws.SWS_ScrollWidget
-	scrollwidgetcart *sws.SWS_ScrollWidget
-	serverpage       *supplier.ServerPageWidget
-	cartpage         *supplier.CartPageWidget
-	content          sws.SWS_Widget
+	rootwindow        *sws.SWS_RootWidget 
+	mainwidget        *sws.SWS_MainWidget
+	scrollwidgetshop  *sws.SWS_ScrollWidget
+	scrollwidgetcart  *sws.SWS_ScrollWidget
+	scrollwidgettrack *sws.SWS_ScrollWidget
+	serverpage        *supplier.ServerPageWidget
+	cartpage          *supplier.CartPageWidget
+	trackpage         *supplier.TrackPageWidget
+	content           sws.SWS_Widget
 }
 
 func (self *Supplier) Show() {
@@ -48,11 +50,14 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 	scrollwidgetshop.SetColor(0xffffffff)
 	scrollwidgetcart := sws.CreateScrollWidget(600,550)
 	scrollwidgetcart.SetColor(0xffffffff)
+	scrollwidgettrack := sws.CreateScrollWidget(600,550)
+	scrollwidgettrack.SetColor(0xffffffff)
 	widget := &Supplier{
 		rootwindow: root,
 		mainwidget: mainwidget,
 		scrollwidgetshop: scrollwidgetshop,
 		scrollwidgetcart: scrollwidgetcart,
+		scrollwidgettrack: scrollwidgettrack,
 	}
 	mainwidget.SetCloseCallback(func() {
 		widget.Hide()
@@ -77,11 +82,11 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 	shop.Move(100,0)
 	banner.AddChild(shop)
 	
-	ups:=sws.CreateFlatButtonWidget(100,50,"Tracking")
-	ups.SetColor(0xff0684dc)
-	ups.SetTextColor(sdl.Color{255,255,255,255})
-	ups.Move(200,0)
-	banner.AddChild(ups)
+	track:=sws.CreateFlatButtonWidget(100,50,"Tracking")
+	track.SetColor(0xff0684dc)
+	track.SetTextColor(sdl.Color{255,255,255,255})
+	track.Move(200,0)
+	banner.AddChild(track)
 	
 	support:=sws.CreateFlatButtonWidget(100,50,"Support")
 	support.SetTextColor(sdl.Color{255,255,255,255})
@@ -329,6 +334,16 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 			widget.cartpage.Reset()
 		}
 	})
+
+	widget.trackpage=supplier.NewTrackPageWidget(600,850,supplier.GlobalInventory)
+	scrollwidgettrack.SetInnerWidget(widget.trackpage)
 	
+	track.SetClicked(func() {
+		sv.SetRightWidget(scrollwidgettrack)
+		scrollwidgetcart.SetHorizontalPosition(0)
+		scrollwidgetcart.SetVerticalPosition(0)
+		sws.PostUpdate()
+	})
+
 	return widget
 }

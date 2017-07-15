@@ -78,7 +78,7 @@ func CreateDockWidget(timer *timer.GameTimer) *DockWidget {
 		if widget.timerevent!=nil {
 			widget.timerevent.StopRepeat()
 		}
-		widget.timerevent=sws.TimerAddEvent(time.Now().Add(4*time.Second),4*time.Second,func() {
+		widget.timerevent=sws.TimerAddEvent(time.Now().Add(2*time.Second),2*time.Second,func() {
 			timer.TimerClock()
 			today:=fmt.Sprintf("%d %s %d",timer.CurrentTime.Day(),timer.CurrentTime.Month().String(),timer.CurrentTime.Year())
 			widget.currentDay.SetText(today)
@@ -96,7 +96,7 @@ func CreateDockWidget(timer *timer.GameTimer) *DockWidget {
 		if widget.timerevent!=nil {
 			widget.timerevent.StopRepeat()
 		}
-		widget.timerevent=sws.TimerAddEvent(time.Now().Add(time.Second),time.Second,func() {
+		widget.timerevent=sws.TimerAddEvent(time.Now().Add(time.Second/2),time.Second/2,func() {
 			timer.TimerClock()
 			today:=fmt.Sprintf("%d %s %d",timer.CurrentTime.Day(),timer.CurrentTime.Month().String(),timer.CurrentTime.Year())
 			widget.currentDay.SetText(today)

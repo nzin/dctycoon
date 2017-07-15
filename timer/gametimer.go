@@ -30,7 +30,7 @@ type GameTimer struct {
 
 var GlobalGameTimer *GameTimer
 
-func CreateGameTimer() *GameTimer {
+func NewGameTimer() *GameTimer {
 	timer :=&GameTimer{
 		autoinc: 0,
 		CurrentTime: time.Date(1990, time.Month(01), 01, 0, 0, 0, 0,   time.UTC),

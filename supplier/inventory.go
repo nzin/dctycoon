@@ -4,6 +4,7 @@ import(
 //	"fmt"
 	"time"
 //	"github.com/nzin/dctycoon/accounting"
+	"github.com/nzin/dctycoon/timer"
 )
 
 const(
@@ -18,6 +19,11 @@ type CartItem struct {
 	Serverconf *ServerConf // if it is an PRODUCT_SERVER
 	Unitprice  float64
 	Nb         int32
+}
+
+type InventorySubscriber interface {
+	ItemInTransit(*InventoryItem)
+	ItemInStock(*InventoryItem)
 }
 
 //
@@ -43,10 +49,11 @@ type InventoryItem struct {
 
 type Inventory struct {
 	increment int32
-	Cart      []*CartItem
-	Items     map[int32]*InventoryItem
-	pools     []*ServerPool
-	offers    []*ServerOffer
+	Cart        []*CartItem
+	Items       map[int32]*InventoryItem
+	pools       []*ServerPool
+	offers      []*ServerOffer
+	subscribers []InventorySubscriber
 }
 
 var GlobalInventory *Inventory
@@ -66,6 +73,12 @@ func (self *Inventory) BuyCart(buydate time.Time) {
 			}
 			self.increment++
 			self.Items[inventory.Id]=inventory
+			for _,sub := range(self.subscribers) {
+				sub.ItemInTransit(inventory)
+				timer.GlobalGameTimer.AddEvent(inventory.Deliverydate,func() {
+					sub.ItemInStock(inventory)
+				})
+			}
 		}
 	}
 	//self.Cart=make([]*CartItem,0) // done in CarpPageWidget.Reset()
@@ -96,7 +109,11 @@ func (self *Inventory) Save() string {
 	return str
 }
 
-func CreateInventory() *Inventory {
+func (self *Inventory) AddSubscriber(subscriber InventorySubscriber) {
+	self.subscribers=append(self.subscribers,subscriber)
+}
+
+func NewInventory() *Inventory {
 	inventory:=&Inventory{
 		increment: 0,
 		Cart: make([]*CartItem,0),
@@ -104,6 +121,7 @@ func CreateInventory() *Inventory {
 		//Items: make([]*InventoryItem,0),
 		pools: make([]*ServerPool,0),
 		offers: make([]*ServerOffer,0),
+		subscribers: make([]InventorySubscriber,0),
 	}
 	return inventory
 }
