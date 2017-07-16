@@ -12,7 +12,17 @@ type SubInventory struct {
 	Widget  sws.SWS_Widget
 }
 
-type UnallocatedInventoryLineWidget struct {
+func NewUnallocatedInventorySub(inventory *Inventory) *SubInventory{
+	sub:=&SubInventory{
+		Icon: "resources/icon-delivery-truck-silhouette.png",
+		Title: "Unallocated inventory",
+		Buttons: make([]*sws.SWS_ButtonWidget,0),
+		Widget: sws.CreateScrollWidget(100, 100),
+	}
+	return sub
+}
+
+type UnallocatedServerLineWidget struct {
 	sws.SWS_CoreWidget
 	Checkbox  *sws.SWS_CheckboxWidget
 	desc      *sws.SWS_Label
@@ -20,7 +30,7 @@ type UnallocatedInventoryLineWidget struct {
 	item      *InventoryItem
 }
 
-func NewUnallocatedInventoryLineWidget(item *InventoryItem) *UnallocatedInventoryLineWidget{
+func NewUnallocatedServerLineWidget(item *InventoryItem) *UnallocatedServerLineWidget{
 //	ramSizeText:=fmt.Sprintf("%d Mo",item.Serverconf.NbSlotRam*item.Serverconf.RamSize)
 //	if (item.Serverconf.NbSlotRam*item.Serverconf.RamSize>=2048) {
 //		ramSizeText=fmt.Sprintf("%d Go",item.Serverconf.NbSlotRam*item.Serverconf.RamSize/1024)
@@ -31,7 +41,7 @@ func NewUnallocatedInventoryLineWidget(item *InventoryItem) *UnallocatedInventor
 	if (item.xplaced!=-1) {
 		placement=fmt.Sprintf("%d/%d",item.xplaced,item.yplaced)
 	}
-	line:=&UnallocatedInventoryLineWidget {
+	line:=&UnallocatedServerLineWidget {
 		SWS_CoreWidget: *sws.CreateCoreWidget(325, 25),
 		Checkbox: sws.CreateCheckboxWidget(),
 		desc: sws.CreateLabel(200,25,text),
@@ -52,31 +62,31 @@ func NewUnallocatedInventoryLineWidget(item *InventoryItem) *UnallocatedInventor
 	return line
 }
 
-type UnallocatedInventoryWidget struct {
+type UnallocatedServerWidget struct {
 	sws.SWS_CoreWidget
 	inventory *Inventory
 	scroll    *sws.SWS_ScrollWidget
 	vbox      *sws.SWS_VBoxWidget
 }
 
-func (self *UnallocatedInventoryWidget) ItemInTransit(*InventoryItem) {
+func (self *UnallocatedServerWidget) ItemInTransit(*InventoryItem) {
 }
 
-func (self *UnallocatedInventoryWidget) ItemInStock(item *InventoryItem) {
+func (self *UnallocatedServerWidget) ItemInStock(item *InventoryItem) {
 	if item.Typeitem==PRODUCT_SERVER {
-		self.vbox.AddChild(NewUnallocatedInventoryLineWidget(item))
+		self.vbox.AddChild(NewUnallocatedServerLineWidget(item))
 		sws.PostUpdate()
 	}
 }
 
-func (self *UnallocatedInventoryWidget) Resize(w,h int32) {
+func (self *UnallocatedServerWidget) Resize(w,h int32) {
 	self.SWS_CoreWidget.Resize(w,h)
 	h-=25
 	self.scroll.Resize(w,h)
 }
 
-func NewUnallocatedInventorySub(inventory *Inventory) *SubInventory{
-	widget:=&UnallocatedInventoryWidget{
+func NewUnallocatedServerSub(inventory *Inventory) *SubInventory{
+	widget:=&UnallocatedServerWidget{
 		SWS_CoreWidget: *sws.CreateCoreWidget(100, 100),
 		inventory: inventory,
 		scroll: sws.CreateScrollWidget(100,100),
@@ -88,7 +98,7 @@ func NewUnallocatedInventorySub(inventory *Inventory) *SubInventory{
 	widget.AddChild(globalcheckbox)
 	globalcheckbox.SetClicked(func() {
 		for _,child:=range(widget.vbox.GetChildren()) {
-			line:=child.(*UnallocatedInventoryLineWidget)
+			line:=child.(*UnallocatedServerLineWidget)
 			line.Checkbox.SetSelected(globalcheckbox.Selected)
 		}
 		sws.PostUpdate()
@@ -107,20 +117,10 @@ func NewUnallocatedInventorySub(inventory *Inventory) *SubInventory{
 	widget.AddChild(widget.scroll)
 	
 	sub:=&SubInventory{
-		Icon: "resources/icon-delivery-truck-silhouette.png",
-		Title: "Unallocated inventory",
-		Buttons: make([]*sws.SWS_ButtonWidget,0),
-		Widget: widget,
-	}
-	return sub
-}
-
-func NewUnallocatedServerSub(inventory *Inventory) *SubInventory{
-	sub:=&SubInventory{
 		Icon: "resources/icon-hard-drive.png",
 		Title: "Unallocated servers",
 		Buttons: make([]*sws.SWS_ButtonWidget,0),
-		Widget: sws.CreateScrollWidget(100, 100),
+		Widget: widget,
 	}
 	return sub
 }
