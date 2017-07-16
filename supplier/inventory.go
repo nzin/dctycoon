@@ -74,9 +74,10 @@ func (self *Inventory) BuyCart(buydate time.Time) {
 			self.increment++
 			self.Items[inventory.Id]=inventory
 			for _,sub := range(self.subscribers) {
+				instocksub:=sub
 				sub.ItemInTransit(inventory)
 				timer.GlobalGameTimer.AddEvent(inventory.Deliverydate,func() {
-					sub.ItemInStock(inventory)
+					instocksub.ItemInStock(inventory)
 				})
 			}
 		}

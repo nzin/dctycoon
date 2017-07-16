@@ -24,6 +24,7 @@ func main() {
 
 	dc := dctycoon.CreateDcWidget(root.Width(), root.Height())
 	supplierwidget := dctycoon.CreateSupplier(root)
+	inventorywidget := dctycoon.NewInventoryWidget(root)
 	accountingui := accounting.CreateAccounting(root)
 	gamefile, err := os.Open("example.map")
 	if err != nil {
@@ -71,6 +72,10 @@ func main() {
 	
 	dock.SetLedgerCallback(func() {
 		accountingui.Show()
+	})
+	
+	dock.SetInventoryCallback(func() {
+		inventorywidget.Show()
 	})
 
 	//fmt.Println(supplier.Trends.Cpuprice.CurrentValue(time.Now()))

@@ -16,6 +16,7 @@ type DockWidget struct {
 	play          *sws.SWS_FlatButtonWidget
 	forward       *sws.SWS_FlatButtonWidget
 	shop          *sws.SWS_FlatButtonWidget
+	inventory     *sws.SWS_FlatButtonWidget
 	quit          *sws.SWS_FlatButtonWidget
 	ledger        *sws.SWS_FlatButtonWidget
 	timerevent    *sws.TimerEvent
@@ -31,6 +32,10 @@ func (self *DockWidget) SetShopCallback(callback func()) {
 
 func (self *DockWidget) SetLedgerCallback(callback func()) {
 	self.ledger.SetClicked(callback)
+}
+
+func (self *DockWidget) SetInventoryCallback(callback func()) {
+	self.inventory.SetClicked(callback)
 }
 
 func (self *DockWidget) LedgerChange(ledger *accounting.Ledger) {
@@ -109,10 +114,10 @@ func CreateDockWidget(timer *timer.GameTimer) *DockWidget {
 	widget.shop.SetImage("resources/icon-shopping-cart-black-shape.png")
 	widget.AddChild(widget.shop)
 	
-	inventory:=sws.CreateFlatButtonWidget(25,25,"")
-	inventory.Move(50,75)
-	inventory.SetImage("resources/icon-dropbox-logo.png")
-	widget.AddChild(inventory)
+	widget.inventory=sws.CreateFlatButtonWidget(25,25,"")
+	widget.inventory.Move(50,75)
+	widget.inventory.SetImage("resources/icon-dropbox-logo.png")
+	widget.AddChild(widget.inventory)
 	
 	save:=sws.CreateFlatButtonWidget(25,25,"")
 	save.Move(75,75)
