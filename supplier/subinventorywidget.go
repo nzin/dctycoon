@@ -1,7 +1,7 @@
 package supplier
 
 import(
-	//"fmt"
+	"fmt"
 	"github.com/nzin/sws"
 )
 
@@ -14,25 +14,40 @@ type SubInventory struct {
 
 type UnallocatedInventoryLineWidget struct {
 	sws.SWS_CoreWidget
-	checkbox *sws.SWS_CheckboxWidget
-	desc     *sws.SWS_Label
-	item     *InventoryItem
+	Checkbox  *sws.SWS_CheckboxWidget
+	desc      *sws.SWS_Label
+	placement *sws.SWS_Label
+	item      *InventoryItem
 }
 
 func NewUnallocatedInventoryLineWidget(item *InventoryItem) *UnallocatedInventoryLineWidget{
-	text:="desc"
+//	ramSizeText:=fmt.Sprintf("%d Mo",item.Serverconf.NbSlotRam*item.Serverconf.RamSize)
+//	if (item.Serverconf.NbSlotRam*item.Serverconf.RamSize>=2048) {
+//		ramSizeText=fmt.Sprintf("%d Go",item.Serverconf.NbSlotRam*item.Serverconf.RamSize/1024)
+//	}
+//	text:=fmt.Sprintf("%dx %d cores\n%s RAM\n%d disks",item.Serverconf.NbProcessors,item.Serverconf.NbCore,ramSizeText,item.Serverconf.NbDisks)
+	text:=item.Serverconf.ConfType.ServerName
+	placement:=" - "
+	if (item.xplaced!=-1) {
+		placement=fmt.Sprintf("%d/%d",item.xplaced,item.yplaced)
+	}
 	line:=&UnallocatedInventoryLineWidget {
-		SWS_CoreWidget: *sws.CreateCoreWidget(225, 25),
-		checkbox: sws.CreateCheckboxWidget(),
+		SWS_CoreWidget: *sws.CreateCoreWidget(325, 25),
+		Checkbox: sws.CreateCheckboxWidget(),
 		desc: sws.CreateLabel(200,25,text),
+		placement: sws.CreateLabel(200,25,placement),
 		item: item,
 	}
-	line.checkbox.SetColor(0xffffffff)
-	line.AddChild(line.checkbox)
+	line.Checkbox.SetColor(0xffffffff)
+	line.AddChild(line.Checkbox)
 	
 	line.desc.SetColor(0xffffffff)
 	line.desc.Move(25,0)
 	line.AddChild(line.desc)
+	
+	line.placement.SetColor(0xffffffff)
+	line.placement.Move(225,0)
+	line.AddChild(line.placement)
 	
 	return line
 }
@@ -48,8 +63,10 @@ func (self *UnallocatedInventoryWidget) ItemInTransit(*InventoryItem) {
 }
 
 func (self *UnallocatedInventoryWidget) ItemInStock(item *InventoryItem) {
-	self.vbox.AddChild(NewUnallocatedInventoryLineWidget(item))
-	sws.PostUpdate()
+	if item.Typeitem==PRODUCT_SERVER {
+		self.vbox.AddChild(NewUnallocatedInventoryLineWidget(item))
+		sws.PostUpdate()
+	}
 }
 
 func (self *UnallocatedInventoryWidget) Resize(w,h int32) {
@@ -63,16 +80,27 @@ func NewUnallocatedInventorySub(inventory *Inventory) *SubInventory{
 		SWS_CoreWidget: *sws.CreateCoreWidget(100, 100),
 		inventory: inventory,
 		scroll: sws.CreateScrollWidget(100,100),
-		vbox: sws.CreateVBoxWidget(225,0),
+		vbox: sws.CreateVBoxWidget(325,0),
 	}
 	inventory.AddSubscriber(widget)
 	
 	globalcheckbox:=sws.CreateCheckboxWidget()
 	widget.AddChild(globalcheckbox)
+	globalcheckbox.SetClicked(func() {
+		for _,child:=range(widget.vbox.GetChildren()) {
+			line:=child.(*UnallocatedInventoryLineWidget)
+			line.Checkbox.SetSelected(globalcheckbox.Selected)
+		}
+		sws.PostUpdate()
+	})
 	
 	globaldesc:=sws.CreateLabel(200,25,"Description")
 	globaldesc.Move(25,0)
 	widget.AddChild(globaldesc)
+	
+	globalplacement:=sws.CreateLabel(100,25,"Placement")
+	globalplacement.Move(225,0)
+	widget.AddChild(globalplacement)
 	
 	widget.scroll.Move(0,25)
 	widget.scroll.SetInnerWidget(widget.vbox)
