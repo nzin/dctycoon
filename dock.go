@@ -111,7 +111,7 @@ func CreateDockWidget(timer *timer.GameTimer) *DockWidget {
 	
 	inventory:=sws.CreateFlatButtonWidget(25,25,"")
 	inventory.Move(50,75)
-	inventory.SetImage("resources/icon-delivery-truck-silhouette.png")
+	inventory.SetImage("resources/icon-dropbox-logo.png")
 	widget.AddChild(inventory)
 	
 	save:=sws.CreateFlatButtonWidget(25,25,"")
