@@ -7,15 +7,50 @@ import (
 	"time"
 )
 
+type RackWidget struct {
+	sws.SWS_MainWidget
+	rootwindow    *sws.SWS_RootWidget
+	xactiveElement int32
+	yactiveElement int32
+	activeElement  DcElement
+}
+
+func NewRackWidget(rootwindow *sws.SWS_RootWidget) *RackWidget {
+	rack:=&RackWidget{
+		SWS_MainWidget: *sws.CreateMainWidget(650,400," Rack info ",false,true),
+		rootwindow: rootwindow,
+		xactiveElement: -1,
+		yactiveElement: -1,
+		activeElement: nil,
+	}
+	rack.SetCloseCallback(func() {
+		rack.Hide()
+	})
+	return rack
+}
+
+func (self *RackWidget) Show() {
+	self.rootwindow.AddChild(self)
+	self.rootwindow.SetFocus(self)
+}
+
+func (self *RackWidget) Hide() {
+	self.rootwindow.RemoveChild(self)
+	children:=self.rootwindow.GetChildren()
+	if len(children)>0 {
+		self.rootwindow.SetFocus(children[0])
+	}
+}
+
 //
 // This widget allow to display a Datacenter map (and more)
 //
 type DcWidget struct {
 	sws.SWS_CoreWidget
+	rackwidget    *RackWidget
 	tiles         [][]*Tile
 	xRoot, yRoot  int32
 	activeTile    *Tile
-	activeElement DcElement
 	te            *sws.TimerEvent
 }
 
@@ -63,7 +98,7 @@ func GetSurfacePixel(surface *sdl.Surface, x, y int32) (red, green, blue, alpha 
 
 func (self *DcWidget) MousePressDown(x, y int32, button uint8) {
 	self.activeTile = nil
-	self.activeElement = nil
+	self.rackwidget.activeElement = nil
 	mapheight := len(self.tiles)
 	mapwidth := len(self.tiles[0])
 	for ty := mapheight - 1; ty >= 0; ty-- {
@@ -84,7 +119,9 @@ func (self *DcWidget) MousePressDown(x, y int32, button uint8) {
 					// now, do we have an active item inside the tile
 					if tile.IsElementAt(x-xShift, y-yShift) {
 						//fmt.Println("active element!!!")
-						self.activeElement = tile.DcElement()
+						self.rackwidget.activeElement = tile.DcElement()
+						self.rackwidget.xactiveElement = int32(tx)
+						self.rackwidget.yactiveElement = int32(ty)
 					}
 					break
 				}
@@ -97,7 +134,9 @@ func (self *DcWidget) MousePressDown(x, y int32, button uint8) {
 }
 
 func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
-	if self.activeElement != nil {
+	if self.rackwidget.activeElement != nil {
+		self.rackwidget.SetTitle(fmt.Sprintf("Rack details %d/%d",self.rackwidget.xactiveElement,self.rackwidget.yactiveElement))
+		self.rackwidget.Show()
 	}
 }
 
@@ -275,9 +314,11 @@ func (self *DcWidget) SaveMap() string {
 	return s
 }
 
-func CreateDcWidget(w, h int32) *DcWidget {
+func CreateDcWidget(w, h int32,rootwindow *sws.SWS_RootWidget) *DcWidget {
 	corewidget := sws.CreateCoreWidget(w, h)
+	rackwidget:=NewRackWidget(rootwindow)
 	widget := &DcWidget{SWS_CoreWidget: *corewidget,
+		rackwidget: rackwidget,
 		tiles: [][]*Tile{{}},
 		xRoot: 0,
 		yRoot: 0,
