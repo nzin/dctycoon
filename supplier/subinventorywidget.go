@@ -37,8 +37,8 @@ func NewUnallocatedServerLineWidget(item *InventoryItem) *UnallocatedServerLineW
 	}
 	text:=item.Serverconf.ConfType.ServerName
 	placement:=" - "
-	if (item.xplaced!=-1) {
-		placement=fmt.Sprintf("%d/%d",item.xplaced,item.yplaced)
+	if (item.Xplaced!=-1) {
+		placement=fmt.Sprintf("%d/%d",item.Xplaced,item.Yplaced)
 	}
 	line:=&UnallocatedServerLineWidget {
 		SWS_CoreWidget: *sws.CreateCoreWidget(625, 25),

@@ -4,41 +4,126 @@ import (
 	"fmt"
 	"github.com/nzin/sws"
 	"github.com/veandco/go-sdl2/sdl"
+	"github.com/nzin/dctycoon/supplier"
 	"time"
 )
 
+type ServerDragPayload struct {
+	item *supplier.InventoryItem
+}
+
+func (self *ServerDragPayload) GetType() int32 {
+	return 1
+}
+
+type RackWidgetLine struct {
+	sws.SWS_Label
+	item *supplier.InventoryItem
+}
+
+func (self *RackWidgetLine) MousePressDown(x, y int32, button uint8) {
+	payload:=&ServerDragPayload{
+		item: self.item,
+	}
+	var parent sws.SWS_Widget
+	parent=self
+	fmt.Println("RackWidgetLine::MousePressDown a")
+	for (parent!=nil) {
+		fmt.Println("RackWidgetLine::MousePressDown ",parent)
+		x+=parent.X()
+		y+=parent.Y()
+		parent=self.Parent()
+	}
+	fmt.Println("RackWidgetLine::MousePressDown b")
+	sws.NewDragEvent(x,y,"resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", payload)
+	fmt.Println("RackWidgetLine::MousePressDown c")
+}
+
+func NewRackWidgetLine(item *supplier.InventoryItem) *RackWidgetLine{
+	label:=sws.CreateLabel(200,25,"server")
+	return &RackWidgetLine{
+		SWS_Label: *label,
+		item: item,
+	}
+}
+
+//
+// 2 zones:
+// - one left creating DragEvent to populate the rack
+//   -> create row that dont send back GetChildren()
+// - one on the right that receive dragevent AND create DragEvent (to move, and to trash?)
+//
 type RackWidget struct {
-	sws.SWS_MainWidget
-	rootwindow    *sws.SWS_RootWidget
+	sws.SWS_CoreWidget
+	mainwidget     *sws.SWS_MainWidget
+	rootwindow     *sws.SWS_RootWidget
+	inventory      *supplier.Inventory
 	xactiveElement int32
 	yactiveElement int32
 	activeElement  DcElement
+	vbox           *sws.SWS_VBoxWidget
+	splitview      *sws.SWS_SplitviewWidget
 }
 
-func NewRackWidget(rootwindow *sws.SWS_RootWidget) *RackWidget {
+func NewRackWidget(rootwindow *sws.SWS_RootWidget,inventory *supplier.Inventory) *RackWidget {
+	mainwidget:=sws.CreateMainWidget(650,400," Rack info ",false,true)
+	sv:=sws.CreateSplitviewWidget(400,300,true)
+	
 	rack:=&RackWidget{
-		SWS_MainWidget: *sws.CreateMainWidget(650,400," Rack info ",false,true),
+		SWS_CoreWidget: *sws.CreateCoreWidget(650,400),
+		mainwidget: mainwidget,
 		rootwindow: rootwindow,
+		inventory: inventory,
 		xactiveElement: -1,
 		yactiveElement: -1,
 		activeElement: nil,
+		vbox: sws.CreateVBoxWidget(200,300),
+		splitview: sv,
 	}
-	rack.SetCloseCallback(func() {
+	inventory.AddSubscriber(rack)
+	
+	scroll:=sws.CreateScrollWidget(200,300)
+	scroll.ShowHorizontalScrollbar(false)
+	scroll.SetInnerWidget(rack.vbox)
+	
+	sv.PlaceSplitBar(200)
+	sv.SetLeftWidget(scroll)
+	
+	rack.AddChild(sv)
+
+	mainwidget.SetInnerWidget(rack)
+	mainwidget.SetCloseCallback(func() {
 		rack.Hide()
 	})
 	return rack
 }
 
+func (self *RackWidget) Resize(w,h int32) {
+	self.SWS_CoreWidget.Resize(w,h)
+	self.splitview.Resize(w,h)
+}
+
 func (self *RackWidget) Show() {
-	self.rootwindow.AddChild(self)
-	self.rootwindow.SetFocus(self)
+	self.rootwindow.AddChild(self.mainwidget)
+	self.rootwindow.SetFocus(self.mainwidget)
 }
 
 func (self *RackWidget) Hide() {
-	self.rootwindow.RemoveChild(self)
+	self.rootwindow.RemoveChild(self.mainwidget)
 	children:=self.rootwindow.GetChildren()
 	if len(children)>0 {
 		self.rootwindow.SetFocus(children[0])
+	}
+}
+
+func (self *RackWidget) ItemInTransit(item *supplier.InventoryItem) {
+}
+
+func (self *RackWidget) ItemInStock(item *supplier.InventoryItem) {
+	fmt.Println("RackWidget::ItemInStock")
+	if item.Typeitem==supplier.PRODUCT_SERVER && item.Serverconf.ConfType.NbU>0 && item.Xplaced==-1 {
+		fmt.Println("RackWidget::ItemInStock b")
+		self.vbox.AddChild(NewRackWidgetLine(item))
 	}
 }
 
@@ -135,7 +220,7 @@ func (self *DcWidget) MousePressDown(x, y int32, button uint8) {
 
 func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 	if self.rackwidget.activeElement != nil {
-		self.rackwidget.SetTitle(fmt.Sprintf("Rack details %d/%d",self.rackwidget.xactiveElement,self.rackwidget.yactiveElement))
+		self.rackwidget.mainwidget.SetTitle(fmt.Sprintf("Rack details %d/%d",self.rackwidget.xactiveElement,self.rackwidget.yactiveElement))
 		self.rackwidget.Show()
 	}
 }
@@ -314,9 +399,9 @@ func (self *DcWidget) SaveMap() string {
 	return s
 }
 
-func CreateDcWidget(w, h int32,rootwindow *sws.SWS_RootWidget) *DcWidget {
+func CreateDcWidget(w, h int32,rootwindow *sws.SWS_RootWidget,inventory *supplier.Inventory) *DcWidget {
 	corewidget := sws.CreateCoreWidget(w, h)
-	rackwidget:=NewRackWidget(rootwindow)
+	rackwidget:=NewRackWidget(rootwindow,inventory)
 	widget := &DcWidget{SWS_CoreWidget: *corewidget,
 		rackwidget: rackwidget,
 		tiles: [][]*Tile{{}},

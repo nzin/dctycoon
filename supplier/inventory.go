@@ -38,8 +38,8 @@ type InventoryItem struct {
 	Serverconf   *ServerConf // if it is a PRODUCT_SERVER
 	Buydate      time.Time // for the amortizement
 	Deliverydate time.Time // to know when to show it
-	xplaced,yplaced int32 // -1 if not placed (yet)
-	zplaced      int32 //only for racking servers
+	Xplaced,Yplaced int32 // -1 if not placed (yet)
+	Zplaced      int32 //only for racking servers
 	
 	//allocation
 	Coresallocated int32
@@ -67,9 +67,9 @@ func (self *Inventory) BuyCart(buydate time.Time) {
 				Serverconf: item.Serverconf,
 				Buydate: buydate,
 				Deliverydate: buydate.Add(96*time.Hour),
-				xplaced: -1,
-				yplaced: -1,
-				zplaced: -1,
+				Xplaced: -1,
+				Yplaced: -1,
+				Zplaced: -1,
 			}
 			self.increment++
 			self.Items[inventory.Id]=inventory
@@ -89,7 +89,7 @@ func (self *Inventory) BuyCart(buydate time.Time) {
 // to discard an item, it must not be placed
 //
 func (self *Inventory) DiscardItem(item *InventoryItem) bool {
-	if (item.xplaced!=-1) { return false }
+	if (item.Xplaced!=-1) { return false }
 	if _, ok := self.Items[item.Id]; ok { 
 		delete(self.Items,item.Id)
 		return true

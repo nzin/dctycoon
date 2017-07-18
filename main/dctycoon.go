@@ -22,7 +22,7 @@ func main() {
 	timer.GlobalGameTimer=timer.NewGameTimer()
 	supplier.GlobalInventory=supplier.NewInventory()
 
-	dc := dctycoon.CreateDcWidget(root.Width(), root.Height(),root)
+	dc := dctycoon.CreateDcWidget(root.Width(), root.Height(),root,supplier.GlobalInventory)
 	supplierwidget := dctycoon.CreateSupplier(root)
 	inventorywidget := dctycoon.NewInventoryWidget(root)
 	accountingui := accounting.CreateAccounting(root)
