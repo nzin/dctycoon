@@ -27,16 +27,12 @@ func (self *RackWidgetLine) MousePressDown(x, y int32, button uint8) {
 	}
 	var parent sws.SWS_Widget
 	parent=self
-	fmt.Println("RackWidgetLine::MousePressDown a")
 	for (parent!=nil) {
-		fmt.Println("RackWidgetLine::MousePressDown ",parent)
 		x+=parent.X()
 		y+=parent.Y()
-		parent=self.Parent()
+		parent=parent.Parent()
 	}
-	fmt.Println("RackWidgetLine::MousePressDown b")
 	sws.NewDragEvent(x,y,"resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", payload)
-	fmt.Println("RackWidgetLine::MousePressDown c")
 }
 
 func NewRackWidgetLine(item *supplier.InventoryItem) *RackWidgetLine{
@@ -45,6 +41,123 @@ func NewRackWidgetLine(item *supplier.InventoryItem) *RackWidgetLine{
 		SWS_Label: *label,
 		item: item,
 	}
+}
+
+type RackChassisWidget struct {
+	sws.SWS_CoreWidget
+	inventory  *supplier.Inventory
+	ydrag      int32
+	items      []*supplier.InventoryItem
+	comingitem *supplier.InventoryItem
+}
+
+func (self *RackChassisWidget) computeComingPos(ypos int32) int32 {
+	ypos=(ypos-10)/10
+	nbu:=self.comingitem.Serverconf.ConfType.NbU
+	var busy [42]bool
+	
+	// first create the map of what is filled
+	for _,item := range(self.items) {
+		itemNbU:=item.Serverconf.ConfType.NbU
+		for j:=0;j<int(itemNbU);j++ {
+			if j+int(item.Zplaced)<42 {
+				busy[j]=true
+			}
+		}
+	}
+	
+	// now try to find a nbu empty space
+	found:=false
+	for i:=0;i<42;i++ {
+		//upper
+		found=true
+		for j:=int(ypos);j<int(ypos+nbu);j++ {
+			if i+j<0 || i+j>=42 || busy[i+j]==true { found=false}
+		}
+		if (found==true) {
+			return int32(i)+ypos
+		}
+		
+		//lower
+		found=true
+		for j:=int(ypos);j<int(ypos+nbu);j++ {
+			if j-i<0 || j-i>=42 || busy[j-i]==true { found=false}
+		}
+		if (found==true) {
+			return ypos-int32(i)
+		}
+	}
+	return -1
+}
+
+func (self *RackChassisWidget) Repaint() {
+	self.SWS_CoreWidget.Repaint()
+	
+	self.SetDrawColor(0, 0, 0, 255)
+	self.DrawLine(9,9,110,9)
+	self.DrawLine(110,9,110,430)
+	self.DrawLine(110,430,9,430)
+	self.DrawLine(9,430,9,9)
+	
+	self.FillRect(10, 10, 100,420, 0xffaaaaaa)
+	
+	if (self.ydrag!=-1) {
+		ypos:=self.computeComingPos(self.ydrag)
+		if ypos!=-1 {
+			nbu:=self.comingitem.Serverconf.ConfType.NbU
+			self.SetDrawColor(255, 0, 0, 255)
+			self.DrawLine(10,10+ypos*10,19,10+ypos*10)
+			self.DrawLine(10,10+ypos*10,10,19+ypos*10)
+
+			self.DrawLine(109,10+ypos*10,100,10+ypos*10)
+			self.DrawLine(109,10+ypos*10,109,19+ypos*10)
+
+			self.DrawLine(10,9+(ypos+nbu)*10,19,9+(ypos+nbu)*10)
+			self.DrawLine(10,9+(ypos+nbu)*10,10,0+(ypos+nbu)*10)
+
+			self.DrawLine(109,9+(ypos+nbu)*10,100,9+(ypos+nbu)*10)
+			self.DrawLine(109,9+(ypos+nbu)*10,109,0+(ypos+nbu)*10)
+		}
+	}
+}
+
+func (self *RackChassisWidget) DragMove(x,y int32, payload sws.DragPayload) {
+	if payload.GetType()==1 {
+		self.ydrag=y
+		sws.PostUpdate()
+	}
+}
+
+func (self *RackChassisWidget) DragEnter(x,y int32, payload sws.DragPayload) {
+	if payload.GetType()==1 {
+		self.ydrag=y
+		self.comingitem=payload.(*ServerDragPayload).item
+		sws.PostUpdate()
+	}
+}
+
+func (self *RackChassisWidget) DragLeave() {
+	self.ydrag=-1
+	sws.PostUpdate()
+}
+
+func (self *RackChassisWidget) DragDrop(x,y int32, payload sws.DragPayload) {
+	if payload.GetType()==1 {
+		// TODO
+
+		self.ydrag=-1
+		sws.PostUpdate()
+	}
+}
+
+func NewRackChassisWidget(inventory *supplier.Inventory) *RackChassisWidget {
+	chassis:=&RackChassisWidget {
+		SWS_CoreWidget: *sws.CreateCoreWidget(300,600),
+		inventory: inventory,
+		ydrag: -1,
+		items: make([]*supplier.InventoryItem,0),
+	}
+	return chassis
 }
 
 //
@@ -82,12 +195,16 @@ func NewRackWidget(rootwindow *sws.SWS_RootWidget,inventory *supplier.Inventory)
 	}
 	inventory.AddSubscriber(rack)
 	
-	scroll:=sws.CreateScrollWidget(200,300)
-	scroll.ShowHorizontalScrollbar(false)
-	scroll.SetInnerWidget(rack.vbox)
+	scrollleft:=sws.CreateScrollWidget(200,300)
+	scrollleft.ShowHorizontalScrollbar(false)
+	scrollleft.SetInnerWidget(rack.vbox)
 	
 	sv.PlaceSplitBar(200)
-	sv.SetLeftWidget(scroll)
+	sv.SetLeftWidget(scrollleft)
+
+	scrollright:=sws.CreateScrollWidget(200,300)
+	scrollright.SetInnerWidget(NewRackChassisWidget(inventory))
+	sv.SetRightWidget(scrollright)
 	
 	rack.AddChild(sv)
 
