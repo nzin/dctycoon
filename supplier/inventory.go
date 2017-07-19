@@ -1,7 +1,7 @@
 package supplier
 
 import(
-//	"fmt"
+	"fmt"
 	"time"
 //	"github.com/nzin/dctycoon/accounting"
 	"github.com/nzin/dctycoon/timer"
@@ -45,6 +45,25 @@ type InventoryItem struct {
 	Coresallocated int32
 	Ramallocated   int32 // in Mo
 	Diskallocated  int32 // in Mo
+}
+
+func (self *InventoryItem) ShortDescription() string {
+	ramText:=fmt.Sprintf("%d Mo",self.Serverconf.NbSlotRam*self.Serverconf.RamSize)
+	if (self.Serverconf.NbSlotRam*self.Serverconf.RamSize>=2048) {
+		ramText=fmt.Sprintf("%d Go",self.Serverconf.NbSlotRam*self.Serverconf.RamSize/1024)
+	}
+        diskText:=fmt.Sprintf("%d Mo",self.Serverconf.NbDisks*self.Serverconf.DiskSize)
+        if self.Serverconf.NbDisks*self.Serverconf.DiskSize>4096 {
+                diskText=fmt.Sprintf("%d Go",self.Serverconf.NbDisks*self.Serverconf.DiskSize/1024)
+        }
+        if self.Serverconf.NbDisks*self.Serverconf.DiskSize>4*1024*1024 {
+                diskText=fmt.Sprintf("%d To",self.Serverconf.NbDisks*self.Serverconf.DiskSize/(1024*1024))
+        }
+	
+	return fmt.Sprintf("%d cores %s RAM %s disks",
+		self.Serverconf.NbProcessors*self.Serverconf.NbCore,
+		ramText,
+		diskText)
 }
 
 type Inventory struct {

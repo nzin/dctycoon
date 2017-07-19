@@ -36,7 +36,11 @@ func (self *RackWidgetLine) MousePressDown(x, y int32, button uint8) {
 }
 
 func NewRackWidgetLine(item *supplier.InventoryItem) *RackWidgetLine{
-	label:=sws.CreateLabel(200,25,"server")
+	label:=sws.CreateLabel(300,45,item.ShortDescription())
+	label.SetImage("resources/"+item.Serverconf.ConfType.ServerSprite+"half.png")
+	label.AlignImageLeft(true)
+	label.SetColor(0xffffffff)
+
 	return &RackWidgetLine{
 		SWS_Label: *label,
 		item: item,
@@ -190,16 +194,18 @@ func NewRackWidget(rootwindow *sws.SWS_RootWidget,inventory *supplier.Inventory)
 		xactiveElement: -1,
 		yactiveElement: -1,
 		activeElement: nil,
-		vbox: sws.CreateVBoxWidget(200,300),
+		vbox: sws.CreateVBoxWidget(300,0),
 		splitview: sv,
 	}
 	inventory.AddSubscriber(rack)
 	
-	scrollleft:=sws.CreateScrollWidget(200,300)
+	scrollleft:=sws.CreateScrollWidget(300,300)
 	scrollleft.ShowHorizontalScrollbar(false)
 	scrollleft.SetInnerWidget(rack.vbox)
+	scrollleft.SetColor(0xffffffff)
 	
-	sv.PlaceSplitBar(200)
+	sv.PlaceSplitBar(300)
+	sv.SplitBarMovable(false)
 	sv.SetLeftWidget(scrollleft)
 
 	scrollright:=sws.CreateScrollWidget(200,300)
@@ -337,7 +343,7 @@ func (self *DcWidget) MousePressDown(x, y int32, button uint8) {
 
 func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 	if self.rackwidget.activeElement != nil {
-		self.rackwidget.mainwidget.SetTitle(fmt.Sprintf("Rack details %d/%d",self.rackwidget.xactiveElement,self.rackwidget.yactiveElement))
+		self.rackwidget.mainwidget.SetTitle(fmt.Sprintf(" Rack details %d-%d ",self.rackwidget.xactiveElement,self.rackwidget.yactiveElement))
 		self.rackwidget.Show()
 	}
 }
