@@ -21,9 +21,19 @@ type CartItem struct {
 	Nb         int32
 }
 
+//
+// The lifecycle of an InventoryItem is
+// item is created -> ItemInTransit
+// item arrived -> ItemInStock
+// item is installed/racked -> ItemRemovedFromStock + ItemInstalled
+// item is uninstall/unracked -> ItemUninstalled + ItemInStock
+//
 type InventorySubscriber interface {
 	ItemInTransit(*InventoryItem)
 	ItemInStock(*InventoryItem)
+	ItemRemoveFromStock(*InventoryItem)
+	ItemInstalled(*InventoryItem)
+	ItemUninstalled(*InventoryItem)
 }
 
 //
@@ -104,12 +114,32 @@ func (self *Inventory) BuyCart(buydate time.Time) {
 	//self.Cart=make([]*CartItem,0) // done in CarpPageWidget.Reset()
 }
 
+func (self *Inventory) InstallItem(item *InventoryItem,x,y,z int32) bool {
+	if (item.Xplaced!=-1) { return false }
+	if _, ok := self.Items[item.Id]; ok {
+		for _,sub := range(self.subscribers) {
+			sub.ItemRemoveFromStock(item)
+		}
+		item.Xplaced=x
+		item.Yplaced=y
+		item.Zplaced=z
+		for _,sub := range(self.subscribers) {
+			sub.ItemInstalled(item)
+		}
+		return true
+	}
+	return false
+}
+
 //
 // to discard an item, it must not be placed
 //
 func (self *Inventory) DiscardItem(item *InventoryItem) bool {
 	if (item.Xplaced!=-1) { return false }
 	if _, ok := self.Items[item.Id]; ok { 
+		for _,sub := range(self.subscribers) {
+			sub.ItemRemoveFromStock(item)
+		}
 		delete(self.Items,item.Id)
 		return true
 	}

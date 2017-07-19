@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/img"
+	"github.com/nzin/dctycoon/supplier"
 	"strconv"
 )
 
@@ -22,76 +23,10 @@ type DcElement interface {
 	Power() float64                    // ampere
 }
 
-type RackPart struct {
-	size int32  // 1u,2u,4u, 8u...
-	name string // space, rack2u, rack4u, blade, switch, KVM ...
-	//sprite        string // name of the png
-	power float64 // in Ampere
-	// what about elements: disk, cpu, RAM...
-	disksize      int32 // in Go
-	disknum       int32
-	cpunum        int32
-	ramsize       int32 // in Go
-	virtualizable bool  // does it has VT
-}
-
-func CreateRackPart(payload map[string]interface{}) *RackPart {
-	var val interface{}
-	var ok bool
-	var disksize, disknum, cpunum, ramsize int32
-	var power float64
-	var virtualizable bool
-
-	name := payload["name"].(string)
-	size := int32(payload["size"].(float64))
-
-	if val, ok = payload["power"]; ok {
-		power = val.(float64)
-	}
-	if val, ok = payload["disksize"]; ok {
-		disksize = int32(val.(float64))
-	}
-	if val, ok = payload["disknum"]; ok {
-		disknum = int32(val.(float64))
-	}
-	if val, ok = payload["cpunum"]; ok {
-		cpunum = int32(val.(float64))
-	}
-	if val, ok = payload["ramsize"]; ok {
-		ramsize = int32(val.(float64))
-	}
-	if val, ok = payload["vt"]; ok {
-		virtualizable = val.(bool)
-	}
-
-	rp := &RackPart{
-		size:          size,
-		name:          name,
-		power:         power,
-		disksize:      disksize,
-		disknum:       disknum,
-		cpunum:        cpunum,
-		ramsize:       ramsize,
-		virtualizable: virtualizable,
-	}
-	return rp
-}
-
-func (self *RackPart) Save() string {
-	return fmt.Sprintf(`{"name":"%s", "size":%d, "power":%g, "disksize":%d, "disknum":%d, "cpunum":%d, "ramsize":%d, "vt":%t}`,
-		self.name,
-		self.size,
-		self.power,
-		self.disksize,
-		self.disknum,
-		self.cpunum,
-		self.ramsize,
-		self.virtualizable,
-	)
-}
-
 type RackElement struct {
-	rackmount        []*RackPart // must fill 42u from bottom to top
+	inventory        *supplier.Inventory
+	x                int32
+	y                int32
 	surface          *sdl.Surface
 	previousrotation uint32
 }
@@ -101,15 +36,7 @@ func (self *RackElement) ElementType() string {
 }
 
 func (self *RackElement) Save() string {
-	s := fmt.Sprintf(`{"rackmount":[`)
-	for i, rp := range self.rackmount {
-		s = s + rp.Save()
-		if i < len(self.rackmount)-1 {
-			s = s + ","
-		}
-	}
-	s = s + "]}"
-	return s
+	return ""
 }
 
 func (self *RackElement) Draw(rotation uint32) *sdl.Surface {
@@ -119,6 +46,7 @@ func (self *RackElement) Draw(rotation uint32) *sdl.Surface {
 	}
 	if self.surface == nil {
 		self.surface = getSprite("resources/rack.bottom" + strconv.Itoa(int(rotation)) + ".png")
+/*
 		var offset int32 = 0
 		for _, rp := range self.rackmount {
 			if rp.name != "space" {
@@ -129,6 +57,7 @@ func (self *RackElement) Draw(rotation uint32) *sdl.Surface {
 			}
 			offset += rp.size
 		}
+*/
 		top := getSprite("resources/rack.top" + strconv.Itoa(int(rotation)) + ".png")
 		rectSrc := sdl.Rect{0, 0, top.W, top.H}
 		rectDst := sdl.Rect{0, TILE_HEIGHT - top.H, top.W, top.H}
@@ -140,20 +69,19 @@ func (self *RackElement) Draw(rotation uint32) *sdl.Surface {
 
 func (self *RackElement) Power() float64 {
 	power := float64(0)
+/*
 	for _, e := range self.rackmount {
 		power += e.power
 	}
+*/
 	return power
 }
 
-func CreateRackElement(payload map[string]interface{}) *RackElement {
-	rackmount := make([]*RackPart, 0)
-	rackParts := payload["rackmount"].([]interface{})
-	for _, rp := range rackParts {
-		rackmount = append(rackmount, CreateRackPart(rp.(map[string]interface{})))
-	}
+func CreateRackElement(inventory *supplier.Inventory, x,y int32) *RackElement {
 	r := &RackElement{
-		rackmount: rackmount,
+		inventory: inventory,
+		x: x,
+		y: y,
 		surface:   nil,
 	}
 	return r
@@ -172,10 +100,7 @@ func (self *ElectricalElement) ElementType() string {
 }
 
 func (self *ElectricalElement) Save() string {
-	s := fmt.Sprintf(`{"power":%g, "capacity":%d}`,
-		self.power,
-		self.capacity)
-	return s
+	return ""
 }
 
 func (self *ElectricalElement) Draw(rotation uint32) *sdl.Surface {
@@ -194,13 +119,13 @@ func (self *ElectricalElement) Power() float64 {
 	return self.power
 }
 
-func CreateElectricalElement(flavor string, payload map[string]interface{}) *ElectricalElement {
-	power := payload["power"].(float64)
-	capacity := int32(payload["capacity"].(float64))
+func CreateElectricalElement(dcelementtype string) *ElectricalElement {
+	//power := payload["power"].(float64)
+	//capacity := int32(payload["capacity"].(float64))
 	ee := &ElectricalElement{
-		flavor:           flavor,
-		power:            power,
-		capacity:         capacity,
+		flavor:           dcelementtype,
+		power:            0,
+		capacity:         0,
 		surface:          nil,
 		previousrotation: 0,
 	}
@@ -293,15 +218,15 @@ func CreateGrassTile() *Tile {
 	return tile
 }
 
-func CreateElectricalTile(wall0, wall1, floor string, rotation uint32, dcelementtype string, dcelement map[string]interface{}) *Tile {
+func CreateElectricalTile(wall0, wall1, floor string, rotation uint32, dcelementtype string, inventory *supplier.Inventory, x,y int32) *Tile {
 	if rotation > 3 {
 		rotation = 0
 	}
 	var element DcElement
 	if dcelementtype == "rack" {
-		element = CreateRackElement(dcelement)
+		element = CreateRackElement(inventory,x,y)
 	} else if dcelementtype != "" {
-		element = CreateElectricalElement(dcelementtype, dcelement)
+		element = CreateElectricalElement(dcelementtype)
 	}
 	tile := &Tile{
 		wall:     [2]string{wall0, wall1},

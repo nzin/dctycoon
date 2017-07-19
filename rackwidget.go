@@ -88,16 +88,38 @@ func (self *RackWidgetItems) ItemInStock(item *supplier.InventoryItem) {
 	}
 }
 
+func (self *RackWidgetItems) ItemRemoveFromStock(item *supplier.InventoryItem) {
+	for _,elt := range(self.vbox.GetChildren()) {
+		line := elt.(*RackWidgetLine)
+		if line.item==item {
+			self.vbox.RemoveChild(elt)
+		}
+	}
+}
+
+func (self *RackWidgetItems) ItemInstalled(*supplier.InventoryItem) {
+}
+
+func (self *RackWidgetItems) ItemUninstalled(*supplier.InventoryItem) {
+}
+
 type RackChassisWidget struct {
 	sws.SWS_CoreWidget
 	inventory  *supplier.Inventory
+	xpos       int32
+	ypos       int32
 	ydrag      int32
 	items      []*supplier.InventoryItem
 	comingitem *supplier.InventoryItem
 }
 
-func (self *RackChassisWidget) computeComingPos(ypos int32) int32 {
-	ypos=(ypos-CHASSIS_OFFSET)/10
+func (self *RackChassisWidget) SetLocation(x,y int32) {
+	self.xpos=x
+	self.ypos=y
+}
+
+func (self *RackChassisWidget) computeComingPos(zpos int32) int32 {
+	zpos=(zpos-CHASSIS_OFFSET)/10
 	nbu:=self.comingitem.Serverconf.ConfType.NbU
 	var busy [42]bool
 	
@@ -116,20 +138,20 @@ func (self *RackChassisWidget) computeComingPos(ypos int32) int32 {
 	for i:=0;i<42;i++ {
 		//upper
 		found=true
-		for j:=int(ypos);j<int(ypos+nbu);j++ {
+		for j:=int(zpos);j<int(zpos+nbu);j++ {
 			if i+j<0 || i+j>=42 || busy[i+j]==true { found=false}
 		}
 		if (found==true) {
-			return int32(i)+ypos
+			return int32(i)+zpos
 		}
 		
 		//lower
 		found=true
-		for j:=int(ypos);j<int(ypos+nbu);j++ {
+		for j:=int(zpos);j<int(zpos+nbu);j++ {
 			if j-i<0 || j-i>=42 || busy[j-i]==true { found=false}
 		}
 		if (found==true) {
-			return ypos-int32(i)
+			return zpos-int32(i)
 		}
 	}
 	return -1
@@ -154,21 +176,21 @@ func (self *RackChassisWidget) Repaint() {
 	self.FillRect(10, CHASSIS_OFFSET, 100,420, 0xffaaaaaa)
 	
 	if (self.ydrag!=-1) {
-		ypos:=self.computeComingPos(self.ydrag)
-		if ypos!=-1 {
+		zpos:=self.computeComingPos(self.ydrag)
+		if zpos!=-1 {
 			nbu:=self.comingitem.Serverconf.ConfType.NbU
 			self.SetDrawColor(255, 0, 0, 255)
-			self.DrawLine(10,CHASSIS_OFFSET+ypos*10,19,CHASSIS_OFFSET+ypos*10)
-			self.DrawLine(10,CHASSIS_OFFSET+ypos*10,10,CHASSIS_OFFSET+9+ypos*10)
+			self.DrawLine(10,CHASSIS_OFFSET+zpos*10,19,CHASSIS_OFFSET+zpos*10)
+			self.DrawLine(10,CHASSIS_OFFSET+zpos*10,10,CHASSIS_OFFSET+9+zpos*10)
 
-			self.DrawLine(109,CHASSIS_OFFSET+ypos*10,100,CHASSIS_OFFSET+ypos*10)
-			self.DrawLine(109,CHASSIS_OFFSET+ypos*10,109,CHASSIS_OFFSET+9+ypos*10)
+			self.DrawLine(109,CHASSIS_OFFSET+zpos*10,100,CHASSIS_OFFSET+zpos*10)
+			self.DrawLine(109,CHASSIS_OFFSET+zpos*10,109,CHASSIS_OFFSET+9+zpos*10)
 
-			self.DrawLine(10,CHASSIS_OFFSET-1+(ypos+nbu)*10,19,CHASSIS_OFFSET-1+(ypos+nbu)*10)
-			self.DrawLine(10,CHASSIS_OFFSET-1+(ypos+nbu)*10,10,CHASSIS_OFFSET-10+(ypos+nbu)*10)
+			self.DrawLine(10,CHASSIS_OFFSET-1+(zpos+nbu)*10,19,CHASSIS_OFFSET-1+(zpos+nbu)*10)
+			self.DrawLine(10,CHASSIS_OFFSET-1+(zpos+nbu)*10,10,CHASSIS_OFFSET-10+(zpos+nbu)*10)
 
-			self.DrawLine(109,CHASSIS_OFFSET-1+(ypos+nbu)*10,100,CHASSIS_OFFSET-1+(ypos+nbu)*10)
-			self.DrawLine(109,CHASSIS_OFFSET-1+(ypos+nbu)*10,109,CHASSIS_OFFSET-10+(ypos+nbu)*10)
+			self.DrawLine(109,CHASSIS_OFFSET-1+(zpos+nbu)*10,100,CHASSIS_OFFSET-1+(zpos+nbu)*10)
+			self.DrawLine(109,CHASSIS_OFFSET-1+(zpos+nbu)*10,109,CHASSIS_OFFSET-10+(zpos+nbu)*10)
 		}
 	}
 }
@@ -182,7 +204,6 @@ func (self *RackChassisWidget) DragMove(x,y int32, payload sws.DragPayload) {
 
 func (self *RackChassisWidget) DragEnter(x,y int32, payload sws.DragPayload) {
 	if payload.GetType()==1 {
-		self.ydrag=y
 		self.comingitem=payload.(*ServerDragPayload).item
 		sws.PostUpdate()
 	}
@@ -195,7 +216,10 @@ func (self *RackChassisWidget) DragLeave() {
 
 func (self *RackChassisWidget) DragDrop(x,y int32, payload sws.DragPayload) {
 	if payload.GetType()==1 {
-		// TODO
+		zpos:=self.computeComingPos(self.ydrag)
+		if zpos!=-1 {
+			self.inventory.InstallItem(self.comingitem,self.xpos,self.ypos,zpos)
+		}
 
 		self.ydrag=-1
 		sws.PostUpdate()
@@ -207,6 +231,8 @@ func NewRackChassisWidget(inventory *supplier.Inventory) *RackChassisWidget {
 		SWS_CoreWidget: *sws.CreateCoreWidget(220,430+CHASSIS_OFFSET),
 		inventory: inventory,
 		ydrag: -1,
+		xpos: -1,
+		ypos: -1,
 		items: make([]*supplier.InventoryItem,0),
 	}
 	return chassis
@@ -227,6 +253,7 @@ type RackWidget struct {
 	yactiveElement int32
 	activeElement  DcElement
 	splitview      *sws.SWS_SplitviewWidget
+	rackchassis    *RackChassisWidget
 }
 
 func NewRackWidget(rootwindow *sws.SWS_RootWidget,inventory *supplier.Inventory) *RackWidget {
@@ -241,6 +268,7 @@ func NewRackWidget(rootwindow *sws.SWS_RootWidget,inventory *supplier.Inventory)
 		yactiveElement: -1,
 		activeElement: nil,
 		splitview: svBottom,
+		rackchassis: NewRackChassisWidget(inventory),
 	}
 
 	sv := sws.CreateSplitviewWidget(200,200,false)
@@ -267,7 +295,7 @@ func NewRackWidget(rootwindow *sws.SWS_RootWidget,inventory *supplier.Inventory)
 	svBottom.SetLeftWidget(NewRackWidgetItems(inventory))
 
 	scrollright:=sws.CreateScrollWidget(200,300)
-	scrollright.SetInnerWidget(NewRackChassisWidget(inventory))
+	scrollright.SetInnerWidget(rack.rackchassis)
 	svBottom.SetRightWidget(scrollright)
 	
 	sv.SetRightWidget(svBottom)
@@ -278,9 +306,13 @@ func NewRackWidget(rootwindow *sws.SWS_RootWidget,inventory *supplier.Inventory)
 	return rack
 }
 
-func (self *RackWidget) Show() {
+func (self *RackWidget) Show(x,y int32) {
 	self.rootwindow.AddChild(self.mainwidget)
 	self.rootwindow.SetFocus(self.mainwidget)
+	self.mainwidget.SetTitle(fmt.Sprintf(" Rack details %d-%d ",x,y))
+	self.xactiveElement=x
+	self.yactiveElement=y
+	self.rackchassis.SetLocation(x,y)
 }
 
 func (self *RackWidget) Hide() {

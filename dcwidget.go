@@ -18,6 +18,7 @@ type DcWidget struct {
 	xRoot, yRoot  int32
 	activeTile    *Tile
 	te            *sws.TimerEvent
+	inventory     *supplier.Inventory
 }
 
 func (self *DcWidget) Repaint() {
@@ -101,8 +102,7 @@ func (self *DcWidget) MousePressDown(x, y int32, button uint8) {
 
 func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 	if self.rackwidget.activeElement != nil {
-		self.rackwidget.mainwidget.SetTitle(fmt.Sprintf(" Rack details %d-%d ",self.rackwidget.xactiveElement,self.rackwidget.yactiveElement))
-		self.rackwidget.Show()
+		self.rackwidget.Show(self.rackwidget.xactiveElement,self.rackwidget.yactiveElement)
 	}
 }
 
@@ -223,16 +223,12 @@ func (self *DcWidget) LoadMap(dc map[string]interface{}) {
 		floor := tile["floor"].(string)
 		rotation := uint32(tile["rotation"].(float64))
 		var dcelementtype string
-		var dcelement map[string]interface{}
 		if tile["dcelementtype"] != nil {
 			dcelementtype = tile["dcelementtype"].(string)
 		}
-		if tile["dcelement"] != nil {
-			dcelement = tile["dcelement"].(map[string]interface{})
-		}
 		if dcelementtype == "" || dcelementtype == "rack" {
 			// basic floor
-			self.tiles[y][x] = CreateElectricalTile(wall0, wall1, floor, rotation, dcelementtype, dcelement)
+			self.tiles[y][x] = CreateElectricalTile(wall0, wall1, floor, rotation, dcelementtype, self.inventory,x,y)
 		}
 	}
 }
@@ -256,7 +252,7 @@ func (self *DcWidget) SaveMap() string {
 					)
 				}
 			} else {
-				value = fmt.Sprintf(`{"x":%d, "y":%d, "wall0":"%s", "wall1":"%s", "floor":"%s", "rotation":%d, "dcelementtype":"%s", "dcelement":%s}`,
+				value = fmt.Sprintf(`{"x":%d, "y":%d, "wall0":"%s", "wall1":"%s", "floor":"%s", "rotation":%d, "dcelementtype":"%s"}`,
 					x,
 					y,
 					t.wall[0],
@@ -264,7 +260,6 @@ func (self *DcWidget) SaveMap() string {
 					t.floor,
 					t.rotation,
 					t.element.ElementType(),
-					t.element.Save(),
 				)
 			}
 			if value != "" {
@@ -285,9 +280,10 @@ func CreateDcWidget(w, h int32,rootwindow *sws.SWS_RootWidget,inventory *supplie
 	rackwidget:=NewRackWidget(rootwindow,inventory)
 	widget := &DcWidget{SWS_CoreWidget: *corewidget,
 		rackwidget: rackwidget,
-		tiles: [][]*Tile{{}},
-		xRoot: 0,
-		yRoot: 0,
+		tiles:      [][]*Tile{{}},
+		xRoot:      0,
+		yRoot:      0,
+		inventory:  inventory,
 	}
 	return widget
 }

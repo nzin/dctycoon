@@ -124,6 +124,21 @@ func (self *UnallocatedServerWidget) ItemInStock(item *InventoryItem) {
 	}
 }
 
+func (self *UnallocatedServerWidget) ItemRemoveFromStock(item *InventoryItem) {
+	for _,elt := range(self.vbox.GetChildren()) {
+		line:=elt.(*UnallocatedServerLineWidget)
+		if line.item==item {
+			self.vbox.RemoveChild(elt)
+		}
+	}
+}
+
+func (self *UnallocatedServerWidget) ItemInstalled(*InventoryItem) {
+}
+
+func (self *UnallocatedServerWidget) ItemUninstalled(*InventoryItem) {
+}
+
 func (self *UnallocatedServerWidget) Resize(w,h int32) {
 	self.SWS_CoreWidget.Resize(w,h)
 	h-=25

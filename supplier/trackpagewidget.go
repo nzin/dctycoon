@@ -72,6 +72,16 @@ func (self *TrackPageWidget) ItemInStock(item *InventoryItem) {
 	sws.PostUpdate()
 }
 
+func (self *TrackPageWidget) ItemRemoveFromStock(*InventoryItem) {
+}
+
+func (self *TrackPageWidget) ItemInstalled(*InventoryItem) {
+}
+
+func (self *TrackPageWidget) ItemUninstalled(*InventoryItem) {
+}
+
+
 func NewTrackPageWidget(width,height int32,inventory *Inventory) *TrackPageWidget {
 	trackpage:=&TrackPageWidget{
 		SWS_CoreWidget: *sws.CreateCoreWidget(width,height),
