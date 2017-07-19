@@ -9,6 +9,7 @@ import (
 
 const (
 	CHASSIS_OFFSET=35
+	RACK_SIZE=15
 )
 
 type ServerDragPayload struct {
@@ -113,13 +114,41 @@ type RackChassisWidget struct {
 	comingitem *supplier.InventoryItem
 }
 
+func (self *RackChassisWidget) ItemInTransit(*supplier.InventoryItem) {
+}
+
+func (self *RackChassisWidget) ItemInStock(*supplier.InventoryItem) {
+}
+
+func (self *RackChassisWidget) ItemRemoveFromStock(*supplier.InventoryItem) {
+}
+
+func (self *RackChassisWidget) ItemInstalled(item *supplier.InventoryItem) {
+	fmt.Println("RackChassisWidget::ItemInstalled")
+	if item.Xplaced==self.xpos && item.Yplaced==self.ypos {
+		self.items=append(self.items,item)
+		sws.PostUpdate()
+	}
+}
+
+func (self *RackChassisWidget) ItemUninstalled(item *supplier.InventoryItem) {
+	if item.Xplaced==self.xpos && item.Yplaced==self.ypos {
+		for p,i := range (self.items) {
+			if i==item {
+				self.items=append(self.items[:p],self.items[p+1:]...)
+			}
+		}
+		sws.PostUpdate()
+	}
+}
+
 func (self *RackChassisWidget) SetLocation(x,y int32) {
 	self.xpos=x
 	self.ypos=y
 }
 
 func (self *RackChassisWidget) computeComingPos(zpos int32) int32 {
-	zpos=(zpos-CHASSIS_OFFSET)/10
+	zpos=(zpos-CHASSIS_OFFSET)/RACK_SIZE
 	nbu:=self.comingitem.Serverconf.ConfType.NbU
 	var busy [42]bool
 	
@@ -128,7 +157,7 @@ func (self *RackChassisWidget) computeComingPos(zpos int32) int32 {
 		itemNbU:=item.Serverconf.ConfType.NbU
 		for j:=0;j<int(itemNbU);j++ {
 			if j+int(item.Zplaced)<42 {
-				busy[j]=true
+				busy[j+int(item.Zplaced)]=true
 			}
 		}
 	}
@@ -169,28 +198,34 @@ func (self *RackChassisWidget) Repaint() {
 	
 	self.SetDrawColor(0, 0, 0, 255)
 	self.DrawLine(9,CHASSIS_OFFSET-1,110,CHASSIS_OFFSET-1)
-	self.DrawLine(110,CHASSIS_OFFSET-1,110,420+CHASSIS_OFFSET)
-	self.DrawLine(110,420+CHASSIS_OFFSET,9,420+CHASSIS_OFFSET)
-	self.DrawLine(9,420+CHASSIS_OFFSET,9,CHASSIS_OFFSET-1)
+	self.DrawLine(110,CHASSIS_OFFSET-1,110,42*RACK_SIZE+CHASSIS_OFFSET)
+	self.DrawLine(110,42*RACK_SIZE+CHASSIS_OFFSET,9,42*RACK_SIZE+CHASSIS_OFFSET)
+	self.DrawLine(9,42*RACK_SIZE+CHASSIS_OFFSET,9,CHASSIS_OFFSET-1)
 	
-	self.FillRect(10, CHASSIS_OFFSET, 100,420, 0xffaaaaaa)
+	self.FillRect(10, CHASSIS_OFFSET, 100,42*RACK_SIZE, 0xffaaaaaa)
+	
+	for _,i := range (self.items) {
+		nbu:=i.Serverconf.ConfType.NbU
+		self.FillRect(10, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE, 100,nbu*RACK_SIZE, 0xff000000)
+		self.WriteText(120,CHASSIS_OFFSET+i.Zplaced*RACK_SIZE,i.ShortDescription(),sdl.Color{0,0,0,255})
+	}
 	
 	if (self.ydrag!=-1) {
 		zpos:=self.computeComingPos(self.ydrag)
 		if zpos!=-1 {
 			nbu:=self.comingitem.Serverconf.ConfType.NbU
 			self.SetDrawColor(255, 0, 0, 255)
-			self.DrawLine(10,CHASSIS_OFFSET+zpos*10,19,CHASSIS_OFFSET+zpos*10)
-			self.DrawLine(10,CHASSIS_OFFSET+zpos*10,10,CHASSIS_OFFSET+9+zpos*10)
+			self.DrawLine(10,CHASSIS_OFFSET+zpos*RACK_SIZE,19,CHASSIS_OFFSET+zpos*RACK_SIZE)
+			self.DrawLine(10,CHASSIS_OFFSET+zpos*RACK_SIZE,10,CHASSIS_OFFSET+9+zpos*RACK_SIZE)
 
-			self.DrawLine(109,CHASSIS_OFFSET+zpos*10,100,CHASSIS_OFFSET+zpos*10)
-			self.DrawLine(109,CHASSIS_OFFSET+zpos*10,109,CHASSIS_OFFSET+9+zpos*10)
+			self.DrawLine(109,CHASSIS_OFFSET+zpos*RACK_SIZE,100,CHASSIS_OFFSET+zpos*RACK_SIZE)
+			self.DrawLine(109,CHASSIS_OFFSET+zpos*RACK_SIZE,109,CHASSIS_OFFSET+9+zpos*RACK_SIZE)
 
-			self.DrawLine(10,CHASSIS_OFFSET-1+(zpos+nbu)*10,19,CHASSIS_OFFSET-1+(zpos+nbu)*10)
-			self.DrawLine(10,CHASSIS_OFFSET-1+(zpos+nbu)*10,10,CHASSIS_OFFSET-10+(zpos+nbu)*10)
+			self.DrawLine(10,CHASSIS_OFFSET-1+(zpos+nbu)*RACK_SIZE,19,CHASSIS_OFFSET-1+(zpos+nbu)*RACK_SIZE)
+			self.DrawLine(10,CHASSIS_OFFSET-1+(zpos+nbu)*RACK_SIZE,10,CHASSIS_OFFSET-10+(zpos+nbu)*RACK_SIZE)
 
-			self.DrawLine(109,CHASSIS_OFFSET-1+(zpos+nbu)*10,100,CHASSIS_OFFSET-1+(zpos+nbu)*10)
-			self.DrawLine(109,CHASSIS_OFFSET-1+(zpos+nbu)*10,109,CHASSIS_OFFSET-10+(zpos+nbu)*10)
+			self.DrawLine(109,CHASSIS_OFFSET-1+(zpos+nbu)*RACK_SIZE,100,CHASSIS_OFFSET-1+(zpos+nbu)*RACK_SIZE)
+			self.DrawLine(109,CHASSIS_OFFSET-1+(zpos+nbu)*RACK_SIZE,109,CHASSIS_OFFSET-10+(zpos+nbu)*RACK_SIZE)
 		}
 	}
 }
@@ -228,13 +263,14 @@ func (self *RackChassisWidget) DragDrop(x,y int32, payload sws.DragPayload) {
 
 func NewRackChassisWidget(inventory *supplier.Inventory) *RackChassisWidget {
 	chassis:=&RackChassisWidget {
-		SWS_CoreWidget: *sws.CreateCoreWidget(220,430+CHASSIS_OFFSET),
+		SWS_CoreWidget: *sws.CreateCoreWidget(420,42*RACK_SIZE+10+CHASSIS_OFFSET),
 		inventory: inventory,
 		ydrag: -1,
 		xpos: -1,
 		ypos: -1,
 		items: make([]*supplier.InventoryItem,0),
 	}
+	inventory.AddSubscriber(chassis)
 	return chassis
 }
 
@@ -294,7 +330,7 @@ func NewRackWidget(rootwindow *sws.SWS_RootWidget,inventory *supplier.Inventory)
 	svBottom.SplitBarMovable(false)
 	svBottom.SetLeftWidget(NewRackWidgetItems(inventory))
 
-	scrollright:=sws.CreateScrollWidget(200,300)
+	scrollright:=sws.CreateScrollWidget(320,300)
 	scrollright.SetInnerWidget(rack.rackchassis)
 	svBottom.SetRightWidget(scrollright)
 	
