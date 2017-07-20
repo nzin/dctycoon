@@ -77,6 +77,7 @@ func NewRackWidgetItems(inventory *supplier.Inventory) *RackWidgetItems {
 }
 
 func (self *RackWidgetItems) Resize(w,h int32) {
+	self.SWS_CoreWidget.Resize(w,h)
 	self.scroll.Resize(w,h-25)
 }
 
@@ -145,6 +146,12 @@ func (self *RackChassisWidget) ItemUninstalled(item *supplier.InventoryItem) {
 func (self *RackChassisWidget) SetLocation(x,y int32) {
 	self.xpos=x
 	self.ypos=y
+	self.items=make([]*supplier.InventoryItem,0)
+	for _,item := range(self.inventory.Items) {
+		if item.Xplaced==x && item.Yplaced==y {
+			self.items=append(self.items,item)
+		}
+	}
 }
 
 func (self *RackChassisWidget) computeComingPos(zpos int32) int32 {
