@@ -192,6 +192,31 @@ func (self *DcWidget) KeyDown(key sdl.Keycode, mod uint16) {
 
 }
 
+func (self *DcWidget) ItemInTransit(*supplier.InventoryItem) {
+}
+
+func (self *DcWidget) ItemInStock(*supplier.InventoryItem) {
+}
+
+func (self *DcWidget) ItemRemoveFromStock(*supplier.InventoryItem) {
+}
+
+func (self *DcWidget) ItemInstalled(item *supplier.InventoryItem) {
+	mapheight := len(self.tiles)
+	mapwidth := len(self.tiles[0])
+	if (item.Xplaced<=int32(mapwidth) && item.Yplaced<=int32(mapheight) && item.Xplaced>=0 && item.Yplaced>=0 ) {
+		self.tiles[item.Yplaced][item.Xplaced].ItemInstalled(item)
+	}
+}
+
+func (self *DcWidget) ItemUninstalled(item *supplier.InventoryItem) {
+	mapheight := len(self.tiles)
+	mapwidth := len(self.tiles[0])
+	if (item.Xplaced<=int32(mapwidth) && item.Yplaced<=int32(mapheight) && item.Xplaced>=0 && item.Yplaced>=0 ) {
+		self.tiles[item.Yplaced][item.Xplaced].ItemUninstalled(item)
+	}
+}
+
 //
 // LoadMap typically load a map like:
 //   {
@@ -228,7 +253,7 @@ func (self *DcWidget) LoadMap(dc map[string]interface{}) {
 		}
 		if dcelementtype == "" || dcelementtype == "rack" {
 			// basic floor
-			self.tiles[y][x] = CreateElectricalTile(wall0, wall1, floor, rotation, dcelementtype, self.inventory,x,y)
+			self.tiles[y][x] = CreateElectricalTile(wall0, wall1, floor, rotation, dcelementtype)
 		}
 	}
 }
@@ -285,5 +310,6 @@ func CreateDcWidget(w, h int32,rootwindow *sws.SWS_RootWidget,inventory *supplie
 		yRoot:      0,
 		inventory:  inventory,
 	}
+	inventory.AddSubscriber(widget)
 	return widget
 }
