@@ -128,7 +128,6 @@ func (self *RackChassisWidget) ItemRemoveFromStock(*supplier.InventoryItem) {
 }
 
 func (self *RackChassisWidget) ItemInstalled(item *supplier.InventoryItem) {
-	fmt.Println("RackChassisWidget::ItemInstalled")
 	if item.Xplaced==self.xpos && item.Yplaced==self.ypos {
 		self.items=append(self.items,item)
 		sws.PostUpdate()

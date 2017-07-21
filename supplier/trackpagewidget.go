@@ -63,11 +63,13 @@ func (self *TrackPageWidget) ItemInTransit(item *InventoryItem) {
 	}
 	self.intransit[item]=NewTrackPageItemUi(icon, desc, item.Deliverydate)
 	self.vbox.AddChild(self.intransit[item])
+	self.Resize(600,80+self.vbox.Height())
 	sws.PostUpdate()
 }
 
 func (self *TrackPageWidget) ItemInStock(item *InventoryItem) {
 	self.vbox.RemoveChild(self.intransit[item])
+	self.Resize(600,80+self.vbox.Height())
 	delete(self.intransit,item)
 	sws.PostUpdate()
 }
