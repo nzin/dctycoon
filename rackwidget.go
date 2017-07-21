@@ -20,6 +20,9 @@ func (self *ServerDragPayload) GetType() int32 {
 	return 1
 }
 
+func (self *ServerDragPayload) PayloadAccepted(bool) {
+}
+
 type RackWidgetLine struct {
 	sws.SWS_Label
 	item *supplier.InventoryItem
@@ -256,16 +259,20 @@ func (self *RackChassisWidget) DragLeave() {
 	sws.PostUpdate()
 }
 
-func (self *RackChassisWidget) DragDrop(x,y int32, payload sws.DragPayload) {
+func (self *RackChassisWidget) DragDrop(x,y int32, payload sws.DragPayload) bool {
 	if payload.GetType()==1 {
 		zpos:=self.computeComingPos(self.ydrag)
 		if zpos!=-1 {
 			self.inventory.InstallItem(self.comingitem,self.xpos,self.ypos,zpos)
+			self.ydrag=-1
+			sws.PostUpdate()
+			return true
 		}
 
 		self.ydrag=-1
 		sws.PostUpdate()
 	}
+	return false
 }
 
 func NewRackChassisWidget(inventory *supplier.Inventory) *RackChassisWidget {
