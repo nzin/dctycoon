@@ -64,8 +64,18 @@ func (self *RackElement) Draw(rotation uint32) *sdl.Surface {
 		self.surface = nil
 	}
 	if self.surface == nil {
-		self.surface = getSprite("resources/rack.bottom" + strconv.Itoa(int(rotation)) + ".png")
+		var err error
+		bottom := getSprite("resources/rack.bottom" + strconv.Itoa(int(rotation)) + ".png")
+		self.surface,err = sdl.CreateRGBSurface(0, bottom.W, bottom.H, 32, 0x00ff0000,0x0000ff00, 0x000000ff, 0xff000000)
+		if err != nil {
+			panic(err)
+		}
+		rectSrc := sdl.Rect{0, 0, bottom.W, bottom.H}
+		rectDst := sdl.Rect{0, 0, bottom.W, bottom.H}
+		bottom.Blit(&rectSrc, self.surface, &rectDst)
+
 		for _,item := range (self.items) {
+			fmt.Println("RackElement::Draw",self.items)
 			img := getSprite("resources/" + item.Serverconf.ConfType.ServerSprite + strconv.Itoa(int(rotation)) + ".png")
 			rectSrc := sdl.Rect{0, 0, img.W, img.H}
 			rectDst := sdl.Rect{0, TILE_HEIGHT - img.H - ((42-item.Zplaced)+item.Serverconf.ConfType.NbU+1)*4, img.W, img.H}
@@ -73,8 +83,8 @@ func (self *RackElement) Draw(rotation uint32) *sdl.Surface {
 		}
 
 		top := getSprite("resources/rack.top" + strconv.Itoa(int(rotation)) + ".png")
-		rectSrc := sdl.Rect{0, 0, top.W, top.H}
-		rectDst := sdl.Rect{0, TILE_HEIGHT - top.H, top.W, top.H}
+		rectSrc = sdl.Rect{0, 0, top.W, top.H}
+		rectDst = sdl.Rect{0, TILE_HEIGHT - top.H, top.W, top.H}
 		top.Blit(&rectSrc, self.surface, &rectDst)
 		self.previousrotation = rotation
 	}

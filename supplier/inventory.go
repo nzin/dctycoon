@@ -131,6 +131,18 @@ func (self *Inventory) InstallItem(item *InventoryItem,x,y,z int32) bool {
 	return false
 }
 
+func (self *Inventory) UninstallItem(item *InventoryItem) {
+	for _,sub := range(self.subscribers) {
+		sub.ItemUninstalled(item)
+	}
+	item.Xplaced=-1
+	item.Yplaced=-1
+	item.Zplaced=-1
+	for _,sub := range(self.subscribers) {
+		sub.ItemInStock(item)
+	}
+}
+
 //
 // to discard an item, it must not be placed
 //

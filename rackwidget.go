@@ -23,6 +23,21 @@ func (self *ServerDragPayload) GetType() int32 {
 func (self *ServerDragPayload) PayloadAccepted(bool) {
 }
 
+type ServerMovePayload struct {
+	inventory *supplier.Inventory
+	item     *supplier.InventoryItem
+}
+
+func (self *ServerMovePayload) GetType() int32 {
+	return 2
+}
+
+func (self *ServerMovePayload) PayloadAccepted(accepted bool) {
+	if accepted==false {
+		self.inventory.UninstallItem(self.item)
+	}
+}
+
 type RackWidgetLine struct {
 	sws.SWS_Label
 	item *supplier.InventoryItem
@@ -115,6 +130,7 @@ type RackChassisWidget struct {
 	ypos       int32
 	ydrag      int32
 	items      []*supplier.InventoryItem
+	inmove     *supplier.InventoryItem
 	comingitem *supplier.InventoryItem
 }
 
@@ -163,6 +179,7 @@ func (self *RackChassisWidget) computeComingPos(zpos int32) int32 {
 	
 	// first create the map of what is filled
 	for _,item := range(self.items) {
+		if item==self.inmove { continue }
 		itemNbU:=item.Serverconf.ConfType.NbU
 		for j:=0;j<int(itemNbU);j++ {
 			if j+int(item.Zplaced)<42 {
@@ -214,6 +231,7 @@ func (self *RackChassisWidget) Repaint() {
 	self.FillRect(10, CHASSIS_OFFSET, 100,42*RACK_SIZE, 0xffaaaaaa)
 	
 	for _,i := range (self.items) {
+		if i==self.inmove { continue }
 		nbu:=i.Serverconf.ConfType.NbU
 		self.FillRect(10, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE, 100,nbu*RACK_SIZE, 0xff000000)
 		self.WriteText(120,CHASSIS_OFFSET+i.Zplaced*RACK_SIZE,i.ShortDescription(),sdl.Color{0,0,0,255})
@@ -239,8 +257,39 @@ func (self *RackChassisWidget) Repaint() {
 	}
 }
 
+func (self *RackChassisWidget) MousePressDown(x, y int32, button uint8) {
+	if (x>=10 && x<110 && y>=CHASSIS_OFFSET && y<42*RACK_SIZE+CHASSIS_OFFSET) {
+		var item *supplier.InventoryItem
+		for _,i := range(self.items) {
+			if y>=i.Zplaced*RACK_SIZE+CHASSIS_OFFSET && y<(i.Zplaced+i.Serverconf.ConfType.NbU)*RACK_SIZE+CHASSIS_OFFSET {
+				item=i
+			}
+		}
+
+		if item!=nil {
+			self.inmove=item
+			payload:=&ServerMovePayload{
+				item: item,
+				inventory: self.inventory,
+			}
+			var parent sws.SWS_Widget
+			parent=self
+			for (parent!=nil) {
+				x+=parent.X()
+				y+=parent.Y()
+				parent=parent.Parent()
+			}
+			sws.NewDragEvent(x,y,"resources/"+item.Serverconf.ConfType.ServerSprite+"0.png", payload)
+		}
+	}
+}
+
+func (self *RackChassisWidget) MousePressUp(x, y int32, button uint8) {
+	self.inmove=nil
+}
+
 func (self *RackChassisWidget) DragMove(x,y int32, payload sws.DragPayload) {
-	if payload.GetType()==1 {
+	if payload.GetType()==1 || payload.GetType()==2 {
 		self.ydrag=y
 		sws.PostUpdate()
 	}
@@ -249,13 +298,18 @@ func (self *RackChassisWidget) DragMove(x,y int32, payload sws.DragPayload) {
 func (self *RackChassisWidget) DragEnter(x,y int32, payload sws.DragPayload) {
 	if payload.GetType()==1 {
 		self.comingitem=payload.(*ServerDragPayload).item
+	}
+	if payload.GetType()==1 || payload.GetType()==2 {
+		self.ydrag=y
 		sws.PostUpdate()
 	}
 }
 
-func (self *RackChassisWidget) DragLeave() {
-	self.ydrag=-1
-	sws.PostUpdate()
+func (self *RackChassisWidget) DragLeave(payload sws.DragPayload) {
+	if payload.GetType()==1 || payload.GetType()==2 {
+		self.ydrag=-1
+		sws.PostUpdate()
+	}
 }
 
 func (self *RackChassisWidget) DragDrop(x,y int32, payload sws.DragPayload) bool {
@@ -270,6 +324,21 @@ func (self *RackChassisWidget) DragDrop(x,y int32, payload sws.DragPayload) bool
 
 		self.ydrag=-1
 		sws.PostUpdate()
+	}
+	if payload.GetType()==2 {
+		// we reset sel.inmove because MousePressUp disabled it
+		item:=payload.(*ServerMovePayload).item
+		self.inmove=item
+		zpos:=self.computeComingPos(self.ydrag)
+		self.inmove=nil
+		if zpos==-1 { panic("not able to find back a place") }
+		xpos:=item.Xplaced
+		ypos:=item.Yplaced
+		self.inventory.UninstallItem(item)
+		self.inventory.InstallItem(item,xpos,ypos,zpos)
+		self.ydrag=-1
+		sws.PostUpdate()
+		return true
 	}
 	return false
 }
