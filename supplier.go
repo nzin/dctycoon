@@ -1,13 +1,14 @@
 package dctycoon
 
-import(
+import (
 	"fmt"
-	"github.com/nzin/sws"
-	"github.com/veandco/go-sdl2/sdl"
+	"github.com/nzin/dctycoon/accounting"
 	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/dctycoon/timer"
-	"github.com/nzin/dctycoon/accounting"
+	"github.com/nzin/sws"
+	"github.com/veandco/go-sdl2/sdl"
 )
+
 //
 // top 'menu': [Deal] <shop>  <in transit> <support> <cart>
 //
@@ -20,7 +21,7 @@ import(
 // cart currently in cart, not paid
 
 type Supplier struct {
-	rootwindow        *sws.RootWidget 
+	rootwindow        *sws.RootWidget
 	mainwidget        *sws.MainWidget
 	scrollwidgetshop  *sws.ScrollWidget
 	scrollwidgetcart  *sws.ScrollWidget
@@ -38,105 +39,105 @@ func (self *Supplier) Show() {
 
 func (self *Supplier) Hide() {
 	self.rootwindow.RemoveChild(self.mainwidget)
-	children:=self.rootwindow.GetChildren()
-	if len(children)>0 {
+	children := self.rootwindow.GetChildren()
+	if len(children) > 0 {
 		self.rootwindow.SetFocus(children[0])
 	}
 }
 
 func NewSupplier(root *sws.RootWidget) *Supplier {
-	mainwidget := sws.NewMainWidget(650,400," Your DEAL supplier",true,true)
-	scrollwidgetshop := sws.NewScrollWidget(600,550)
+	mainwidget := sws.NewMainWidget(650, 400, " Your DEAL supplier", true, true)
+	scrollwidgetshop := sws.NewScrollWidget(600, 550)
 	scrollwidgetshop.SetColor(0xffffffff)
-	scrollwidgetcart := sws.NewScrollWidget(600,550)
+	scrollwidgetcart := sws.NewScrollWidget(600, 550)
 	scrollwidgetcart.SetColor(0xffffffff)
-	scrollwidgettrack := sws.NewScrollWidget(600,550)
+	scrollwidgettrack := sws.NewScrollWidget(600, 550)
 	scrollwidgettrack.SetColor(0xffffffff)
 	widget := &Supplier{
-		rootwindow: root,
-		mainwidget: mainwidget,
-		scrollwidgetshop: scrollwidgetshop,
-		scrollwidgetcart: scrollwidgetcart,
+		rootwindow:        root,
+		mainwidget:        mainwidget,
+		scrollwidgetshop:  scrollwidgetshop,
+		scrollwidgetcart:  scrollwidgetcart,
 		scrollwidgettrack: scrollwidgettrack,
 	}
 	mainwidget.SetCloseCallback(func() {
 		widget.Hide()
 	})
-	sv := sws.NewSplitviewWidget(200,200,false)
+	sv := sws.NewSplitviewWidget(200, 200, false)
 	sv.PlaceSplitBar(50)
 	sv.SplitBarMovable(false)
 	mainwidget.SetInnerWidget(sv)
-	
+
 	// banner
-	banner:=sws.NewCoreWidget(600,50)
+	banner := sws.NewCoreWidget(600, 50)
 	banner.SetColor(0xff0684dc)
 	sv.SetLeftWidget(banner)
-	widgeticon:=sws.NewLabelWidget(100,50,"")
+	widgeticon := sws.NewLabelWidget(100, 50, "")
 	widgeticon.SetColor(0xff0684dc)
 	widgeticon.SetImage("resources/deal.small2.png")
 	banner.AddChild(widgeticon)
 
-	shop:=sws.NewFlatButtonWidget(100,50,"Shop")
+	shop := sws.NewFlatButtonWidget(100, 50, "Shop")
 	shop.SetColor(0xff0684dc)
-	shop.SetTextColor(sdl.Color{255,255,255,255})
-	shop.Move(100,0)
+	shop.SetTextColor(sdl.Color{255, 255, 255, 255})
+	shop.Move(100, 0)
 	banner.AddChild(shop)
-	
-	track:=sws.NewFlatButtonWidget(100,50,"Tracking")
+
+	track := sws.NewFlatButtonWidget(100, 50, "Tracking")
 	track.SetColor(0xff0684dc)
-	track.SetTextColor(sdl.Color{255,255,255,255})
-	track.Move(200,0)
+	track.SetTextColor(sdl.Color{255, 255, 255, 255})
+	track.Move(200, 0)
 	banner.AddChild(track)
-	
-	support:=sws.NewFlatButtonWidget(100,50,"Support")
-	support.SetTextColor(sdl.Color{255,255,255,255})
+
+	support := sws.NewFlatButtonWidget(100, 50, "Support")
+	support.SetTextColor(sdl.Color{255, 255, 255, 255})
 	support.SetColor(0xff0684dc)
-	support.Move(300,0)
+	support.Move(300, 0)
 	banner.AddChild(support)
-	
-	cart:=sws.NewFlatButtonWidget(100,50,"")
+
+	cart := sws.NewFlatButtonWidget(100, 50, "")
 	cart.SetColor(0xff0684dc)
 	cart.SetImage("resources/cart.small.png")
-	cart.Move(400,0)
+	cart.Move(400, 0)
 	banner.AddChild(cart)
-	
+
 	sv.SetRightWidget(scrollwidgetshop)
 
 	// server page
-	serverpage:=supplier.NewServerPageWidget(600,850)
-	widget.serverpage=serverpage
+	serverpage := supplier.NewServerPageWidget(600, 850)
+	widget.serverpage = serverpage
 	scrollwidgetshop.SetInnerWidget(serverpage)
-	
+
 	// content
-	banners:=supplier.NewBannerWidget(480,120)
-	banners.Move(120,40)
+	banners := supplier.NewBannerWidget(480, 120)
+	banners.Move(120, 40)
 	serverpage.AddChild(banners)
-	
-	explore:=supplier.NewServerPageExploreWidget(480,700)
-	explore.Move(120,160)
+
+	explore := supplier.NewServerPageExploreWidget(480, 700)
+	explore.Move(120, 160)
 	serverpage.AddChild(explore)
-	widget.content=explore
-	
-	towerpage:=supplier.NewServerPageTowerWidget(480,700)
-	towerpage.Move(120,160)
-	
-	rackpage:=supplier.NewServerPageRackWidget(480,700)
-	rackpage.Move(120,160)
-	
-	bladepage:=supplier.NewServerPageBladeWidget(480,700)
-	bladepage.Move(120,160)
-	
+	widget.content = explore
+
+	towerpage := supplier.NewServerPageTowerWidget(480, 700)
+	towerpage.Move(120, 160)
+
+	rackpage := supplier.NewServerPageRackWidget(480, 700)
+	rackpage.Move(120, 160)
+
+	bladepage := supplier.NewServerPageBladeWidget(480, 700)
+	bladepage.Move(120, 160)
+
 	// configure
-	configurepage:=supplier.NewServerPageConfigureWidget(480,700)
-	configurepage.Move(120,160)
-	
+	configurepage := supplier.NewServerPageConfigureWidget(480, 700)
+	configurepage.Move(120, 160)
+
 	// buttons callback
-	
+
 	shop.SetClicked(func() {
 		sv.SetRightWidget(scrollwidgetshop)
 		serverpage.RemoveChild(widget.content)
 		serverpage.AddChild(banners)
-		widget.content=explore
+		widget.content = explore
 		serverpage.AddChild(explore)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
@@ -151,145 +152,145 @@ func NewSupplier(root *sws.RootWidget) *Supplier {
 		scrollwidgetshop.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
-	
+
 	serverpage.SetRackCallback(func() {
 		serverpage.RemoveChild(widget.content)
 		serverpage.AddChild(banners)
-		widget.content=rackpage
+		widget.content = rackpage
 		serverpage.AddChild(rackpage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
-	
+
 	serverpage.SetBladeCallback(func() {
 		serverpage.RemoveChild(widget.content)
 		serverpage.AddChild(banners)
-		widget.content=bladepage
+		widget.content = bladepage
 		serverpage.AddChild(bladepage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
-	
+
 	explore.SetTowerCallback(func() {
 		serverpage.RemoveChild(widget.content)
 		serverpage.AddChild(banners)
-		widget.content=towerpage
+		widget.content = towerpage
 		serverpage.AddChild(towerpage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
-	
+
 	explore.SetRackCallback(func() {
 		serverpage.RemoveChild(widget.content)
 		serverpage.AddChild(banners)
-		widget.content=rackpage
+		widget.content = rackpage
 		serverpage.AddChild(rackpage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
-	
+
 	explore.SetBladeCallback(func() {
 		serverpage.RemoveChild(widget.content)
 		serverpage.AddChild(banners)
-		widget.content=bladepage
+		widget.content = bladepage
 		serverpage.AddChild(bladepage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
-	
+
 	// callback configure
 	towerpage.SetConfigureTower1Callback(func() {
-		now:=timer.GlobalGameTimer.CurrentTime
+		now := timer.GlobalGameTimer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		//serverpage.RemoveChild(banners)
-		configurepage.SetConfType("T1000",now)
-		widget.content=configurepage
+		configurepage.SetConfType("T1000", now)
+		widget.content = configurepage
 		serverpage.AddChild(configurepage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
-	
+
 	rackpage.SetConfigureRack1Callback(func() {
-		now:=timer.GlobalGameTimer.CurrentTime
+		now := timer.GlobalGameTimer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		//serverpage.RemoveChild(banners)
-		configurepage.SetConfType("R100",now)
-		widget.content=configurepage
+		configurepage.SetConfType("R100", now)
+		widget.content = configurepage
 		serverpage.AddChild(configurepage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
-	
+
 	rackpage.SetConfigureRack2Callback(func() {
-		now:=timer.GlobalGameTimer.CurrentTime
+		now := timer.GlobalGameTimer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		//serverpage.RemoveChild(banners)
-		configurepage.SetConfType("R200",now)
-		widget.content=configurepage
+		configurepage.SetConfType("R200", now)
+		widget.content = configurepage
 		serverpage.AddChild(configurepage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
-	
+
 	rackpage.SetConfigureRack4Callback(func() {
-		now:=timer.GlobalGameTimer.CurrentTime
+		now := timer.GlobalGameTimer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		//serverpage.RemoveChild(banners)
-		configurepage.SetConfType("R400",now)
-		widget.content=configurepage
+		configurepage.SetConfType("R400", now)
+		widget.content = configurepage
 		serverpage.AddChild(configurepage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
-	
+
 	rackpage.SetConfigureRack6Callback(func() {
-		now:=timer.GlobalGameTimer.CurrentTime
+		now := timer.GlobalGameTimer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		//serverpage.RemoveChild(banners)
-		configurepage.SetConfType("R600",now)
-		widget.content=configurepage
+		configurepage.SetConfType("R600", now)
+		widget.content = configurepage
 		serverpage.AddChild(configurepage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
-	
+
 	bladepage.SetConfigureBlade1Callback(func() {
-		now:=timer.GlobalGameTimer.CurrentTime
+		now := timer.GlobalGameTimer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		//serverpage.RemoveChild(banners)
-		configurepage.SetConfType("B100",now)
-		widget.content=configurepage
+		configurepage.SetConfType("B100", now)
+		widget.content = configurepage
 		serverpage.AddChild(configurepage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
-	
+
 	bladepage.SetConfigureBlade2Callback(func() {
-		now:=timer.GlobalGameTimer.CurrentTime
+		now := timer.GlobalGameTimer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		//serverpage.RemoveChild(banners)
-		configurepage.SetConfType("B200",now)
-		widget.content=configurepage
+		configurepage.SetConfType("B200", now)
+		widget.content = configurepage
 		serverpage.AddChild(configurepage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
 		sws.PostUpdate()
 	})
-	
-	widget.cartpage=supplier.NewCartPageWidget(600,850)
+
+	widget.cartpage = supplier.NewCartPageWidget(600, 850)
 	scrollwidgetcart.SetInnerWidget(widget.cartpage)
-	
+
 	cart.SetClicked(func() {
 		sv.SetRightWidget(scrollwidgetcart)
 		scrollwidgetcart.SetHorizontalPosition(0)
@@ -298,36 +299,36 @@ func NewSupplier(root *sws.RootWidget) *Supplier {
 	})
 	configurepage.SetAddCartCallback(func() {
 		sv.SetRightWidget(scrollwidgetcart)
-		widget.cartpage.AddItem(configurepage.GetProductType(),configurepage.GetConf(),configurepage.GetUnitPrice(),configurepage.GetNbUnit())
-		scrollwidgetcart.Resize(scrollwidgetcart.Width(),scrollwidgetcart.Height())
+		widget.cartpage.AddItem(configurepage.GetProductType(), configurepage.GetConf(), configurepage.GetUnitPrice(), configurepage.GetNbUnit())
+		scrollwidgetcart.Resize(scrollwidgetcart.Width(), scrollwidgetcart.Height())
 		sws.PostUpdate()
 	})
-	
+
 	widget.cartpage.SetBuyCallback(func() {
 		var totalprice float64
-		for _,item := range supplier.GlobalInventory.Cart {
-			totalprice+=item.Unitprice*float64(item.Nb)
+		for _, item := range supplier.GlobalInventory.Cart {
+			totalprice += item.Unitprice * float64(item.Nb)
 		}
-		accounts:=accounting.GlobalLedger.GetYearAccount(timer.GlobalGameTimer.CurrentTime.Year())
-		bankAccount:=accounts["51"]
-		if bankAccount<totalprice {
+		accounts := accounting.GlobalLedger.GetYearAccount(timer.GlobalGameTimer.CurrentTime.Year())
+		bankAccount := accounts["51"]
+		if bankAccount < totalprice {
 			// show modal window
-			ShowModalError(widget.rootwindow,"Not enough funds",fmt.Sprintf("You cannot buy for %.2f $ of goods: your bank account is currently credited of %.2f $!",totalprice,bankAccount),nil)
+			ShowModalError(widget.rootwindow, "Not enough funds", fmt.Sprintf("You cannot buy for %.2f $ of goods: your bank account is currently credited of %.2f $!", totalprice, bankAccount), nil)
 		} else {
 			// we buy
-			for _,item := range supplier.GlobalInventory.Cart {
+			for _, item := range supplier.GlobalInventory.Cart {
 				var desc string
-				switch(item.Typeitem) {
-					case supplier.PRODUCT_SERVER:
-						desc = fmt.Sprintf("%dx %s",item.Nb,item.Serverconf.ConfType.ServerName)
-					case supplier.PRODUCT_RACK:
-						desc = fmt.Sprintf("%dx Rack",item.Nb)
-					case supplier.PRODUCT_AC:
-						desc = fmt.Sprintf("%dx AC",item.Nb)
-					case supplier.PRODUCT_GENERATOR:
-						desc = fmt.Sprintf("%dx Generator",item.Nb)
+				switch item.Typeitem {
+				case supplier.PRODUCT_SERVER:
+					desc = fmt.Sprintf("%dx %s", item.Nb, item.Serverconf.ConfType.ServerName)
+				case supplier.PRODUCT_RACK:
+					desc = fmt.Sprintf("%dx Rack", item.Nb)
+				case supplier.PRODUCT_AC:
+					desc = fmt.Sprintf("%dx AC", item.Nb)
+				case supplier.PRODUCT_GENERATOR:
+					desc = fmt.Sprintf("%dx Generator", item.Nb)
 				}
-				accounting.GlobalLedger.BuyProduct(desc,timer.GlobalGameTimer. CurrentTime,item.Unitprice*float64(item.Nb))
+				accounting.GlobalLedger.BuyProduct(desc, timer.GlobalGameTimer.CurrentTime, item.Unitprice*float64(item.Nb))
 			}
 			supplier.GlobalInventory.BuyCart(timer.GlobalGameTimer.CurrentTime)
 			// we reset the cart
@@ -335,9 +336,9 @@ func NewSupplier(root *sws.RootWidget) *Supplier {
 		}
 	})
 
-	widget.trackpage=supplier.NewTrackPageWidget(600,850,supplier.GlobalInventory)
+	widget.trackpage = supplier.NewTrackPageWidget(600, 850, supplier.GlobalInventory)
 	scrollwidgettrack.SetInnerWidget(widget.trackpage)
-	
+
 	track.SetClicked(func() {
 		sv.SetRightWidget(scrollwidgettrack)
 		scrollwidgetcart.SetHorizontalPosition(0)

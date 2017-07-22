@@ -32,33 +32,33 @@ func (self *Accounting) SetBankinterestrate(rate float64) {
 func NewAccounting(root *sws.RootWidget) *Accounting {
 	mainwidget := sws.NewMainWidget(650, 400, " Bank and Finance ", true, true)
 	tabwidget := sws.NewTabWidget(650, 400)
-	
+
 	ui := &Accounting{
 		rootwidget: root,
 		mainwidget: mainwidget,
 		tabwidget:  tabwidget,
 	}
-	ui.bankwidget=NewBankWidget()
-	bankScroll:=sws.NewScrollWidget(650,400)
+	ui.bankwidget = NewBankWidget()
+	bankScroll := sws.NewScrollWidget(650, 400)
 	bankScroll.SetInnerWidget(ui.bankwidget)
 	bankScroll.ShowHorizontalScrollbar(false)
-	tabwidget.AddTab("Bank",bankScroll)
-	
-	balanceScroll:=sws.NewScrollWidget(650,400)
+	tabwidget.AddTab("Bank", bankScroll)
+
+	balanceScroll := sws.NewScrollWidget(650, 400)
 	balanceScroll.SetInnerWidget(NewBalanceWidget())
 	balanceScroll.ShowHorizontalScrollbar(false)
-	tabwidget.AddTab("Balance",balanceScroll)
-	
-	liabilitiesScroll:=sws.NewScrollWidget(650,400)
+	tabwidget.AddTab("Balance", balanceScroll)
+
+	liabilitiesScroll := sws.NewScrollWidget(650, 400)
 	liabilitiesScroll.SetInnerWidget(NewLiabilitiesWidget())
 	liabilitiesScroll.ShowHorizontalScrollbar(false)
-	tabwidget.AddTab("Liabilities",liabilitiesScroll)
-	
-	assetScroll:=sws.NewScrollWidget(650,400)
+	tabwidget.AddTab("Liabilities", liabilitiesScroll)
+
+	assetScroll := sws.NewScrollWidget(650, 400)
 	assetScroll.SetInnerWidget(NewAssetsWidget())
 	assetScroll.ShowHorizontalScrollbar(false)
-	tabwidget.AddTab("Assets",assetScroll)
-	
+	tabwidget.AddTab("Assets", assetScroll)
+
 	mainwidget.SetCloseCallback(func() {
 		ui.Hide()
 	})

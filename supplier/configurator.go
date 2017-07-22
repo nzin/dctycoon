@@ -110,7 +110,7 @@ type ServerConf struct {
 	DiskSize     int32 // 3 options: Trend.Disksize: 1,1/2,1/4
 	RamSize      int32 // 4 options: Trend.Ramsize: 1,1/2,1/4,1/8
 	ConfType     *ServerConfType
-//	PricePaid    float64
+	//	PricePaid    float64
 }
 
 func (self *ServerConf) PowerConsumption() float64 {
@@ -131,4 +131,3 @@ func (self *ServerConf) Price(now time.Time) float64 {
 		Trends.Ramprice.CurrentValue(now)*float64(self.NbSlotRam*self.RamSize)/1000
 	return price * complexity
 }
-

@@ -2,9 +2,9 @@ package dctycoon
 
 import (
 	"fmt"
+	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/sws"
 	"github.com/veandco/go-sdl2/sdl"
-	"github.com/nzin/dctycoon/supplier"
 	"time"
 )
 
@@ -13,12 +13,12 @@ import (
 //
 type DcWidget struct {
 	sws.CoreWidget
-	rackwidget    *RackWidget
-	tiles         [][]*Tile
-	xRoot, yRoot  int32
-	activeTile    *Tile
-	te            *sws.TimerEvent
-	inventory     *supplier.Inventory
+	rackwidget   *RackWidget
+	tiles        [][]*Tile
+	xRoot, yRoot int32
+	activeTile   *Tile
+	te           *sws.TimerEvent
+	inventory    *supplier.Inventory
 }
 
 func (self *DcWidget) Repaint() {
@@ -102,7 +102,7 @@ func (self *DcWidget) MousePressDown(x, y int32, button uint8) {
 
 func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 	if self.rackwidget.activeElement != nil {
-		self.rackwidget.Show(self.rackwidget.xactiveElement,self.rackwidget.yactiveElement)
+		self.rackwidget.Show(self.rackwidget.xactiveElement, self.rackwidget.yactiveElement)
 	}
 }
 
@@ -204,7 +204,7 @@ func (self *DcWidget) ItemRemoveFromStock(*supplier.InventoryItem) {
 func (self *DcWidget) ItemInstalled(item *supplier.InventoryItem) {
 	mapheight := len(self.tiles)
 	mapwidth := len(self.tiles[0])
-	if (item.Xplaced<=int32(mapwidth) && item.Yplaced<=int32(mapheight) && item.Xplaced>=0 && item.Yplaced>=0 ) {
+	if item.Xplaced <= int32(mapwidth) && item.Yplaced <= int32(mapheight) && item.Xplaced >= 0 && item.Yplaced >= 0 {
 		self.tiles[item.Yplaced][item.Xplaced].ItemInstalled(item)
 	}
 }
@@ -212,7 +212,7 @@ func (self *DcWidget) ItemInstalled(item *supplier.InventoryItem) {
 func (self *DcWidget) ItemUninstalled(item *supplier.InventoryItem) {
 	mapheight := len(self.tiles)
 	mapwidth := len(self.tiles[0])
-	if (item.Xplaced<=int32(mapwidth) && item.Yplaced<=int32(mapheight) && item.Xplaced>=0 && item.Yplaced>=0 ) {
+	if item.Xplaced <= int32(mapwidth) && item.Yplaced <= int32(mapheight) && item.Xplaced >= 0 && item.Yplaced >= 0 {
 		self.tiles[item.Yplaced][item.Xplaced].ItemUninstalled(item)
 	}
 }
@@ -300,9 +300,9 @@ func (self *DcWidget) SaveMap() string {
 	return s
 }
 
-func NewDcWidget(w, h int32,rootwindow *sws.RootWidget,inventory *supplier.Inventory) *DcWidget {
+func NewDcWidget(w, h int32, rootwindow *sws.RootWidget, inventory *supplier.Inventory) *DcWidget {
 	corewidget := sws.NewCoreWidget(w, h)
-	rackwidget:=NewRackWidget(rootwindow,inventory)
+	rackwidget := NewRackWidget(rootwindow, inventory)
 	widget := &DcWidget{CoreWidget: *corewidget,
 		rackwidget: rackwidget,
 		tiles:      [][]*Tile{{}},

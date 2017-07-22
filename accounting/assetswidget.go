@@ -1,6 +1,6 @@
 package accounting
 
-import(
+import (
 	"fmt"
 	//"github.com/nzin/sws"
 	"github.com/nzin/dctycoon/timer"
@@ -26,41 +26,40 @@ func (self *AssetsWidget) LedgerChange(ledger *Ledger) {
 	self.yearN.SetText(fmt.Sprintf("%d (est.)", timer.GlobalGameTimer.CurrentTime.Year()))
 	self.yearN1.SetText(fmt.Sprintf("%d", timer.GlobalGameTimer.CurrentTime.Year()-1))
 	yearaccountN := GlobalLedger.GetYearAccount(timer.GlobalGameTimer.CurrentTime.Year())
-	yearaccountN1 := GlobalLedger.GetYearAccount(timer.GlobalGameTimer.CurrentTime.Year()-1)
+	yearaccountN1 := GlobalLedger.GetYearAccount(timer.GlobalGameTimer.CurrentTime.Year() - 1)
 	// forecast account 44
 	_, taxN := computeYearlyTaxes(yearaccountN, ledger.taxrate)
 
-	self.lines["23"].N.SetText(fmt.Sprintf("%.2f $",yearaccountN["23"]+yearaccountN["28"]))
-	self.lines["23"].N1.SetText(fmt.Sprintf("%.2f $",yearaccountN1["23"]+yearaccountN1["28"]))
-	self.lines["37"].N.SetText(fmt.Sprintf("%.2f $",yearaccountN["37"]))
-	self.lines["37"].N1.SetText(fmt.Sprintf("%.2f $",yearaccountN1["37"]))
-	self.lines["28"].N.SetText(fmt.Sprintf("%.2f $",-yearaccountN["28"]))
-	self.lines["28"].N1.SetText(fmt.Sprintf("%.2f $",-yearaccountN1["28"]))
+	self.lines["23"].N.SetText(fmt.Sprintf("%.2f $", yearaccountN["23"]+yearaccountN["28"]))
+	self.lines["23"].N1.SetText(fmt.Sprintf("%.2f $", yearaccountN1["23"]+yearaccountN1["28"]))
+	self.lines["37"].N.SetText(fmt.Sprintf("%.2f $", yearaccountN["37"]))
+	self.lines["37"].N1.SetText(fmt.Sprintf("%.2f $", yearaccountN1["37"]))
+	self.lines["28"].N.SetText(fmt.Sprintf("%.2f $", -yearaccountN["28"]))
+	self.lines["28"].N1.SetText(fmt.Sprintf("%.2f $", -yearaccountN1["28"]))
 
-	self.lines["51"].N.SetText(fmt.Sprintf("%.2f $",yearaccountN["51"]-taxN))
-	self.lines["51"].N1.SetText(fmt.Sprintf("%.2f $",yearaccountN1["51"]))
-	
-	assetsN:=yearaccountN["23"]+yearaccountN["37"]+yearaccountN["51"]-taxN
-	assetsN1:=yearaccountN1["23"]+yearaccountN1["37"]+yearaccountN1["51"]
-	self.lines["assets"].N.SetText(fmt.Sprintf("%.2f $",assetsN))
-	self.lines["assets"].N1.SetText(fmt.Sprintf("%.2f $",assetsN1))
+	self.lines["51"].N.SetText(fmt.Sprintf("%.2f $", yearaccountN["51"]-taxN))
+	self.lines["51"].N1.SetText(fmt.Sprintf("%.2f $", yearaccountN1["51"]))
+
+	assetsN := yearaccountN["23"] + yearaccountN["37"] + yearaccountN["51"] - taxN
+	assetsN1 := yearaccountN1["23"] + yearaccountN1["37"] + yearaccountN1["51"]
+	self.lines["assets"].N.SetText(fmt.Sprintf("%.2f $", assetsN))
+	self.lines["assets"].N1.SetText(fmt.Sprintf("%.2f $", assetsN1))
 }
 
 func NewAssetsWidget() *AssetsWidget {
-	widget:=&AssetsWidget{
+	widget := &AssetsWidget{
 		FinanceWidget: *NewFinanceWidget(),
 	}
 	widget.addCategory("Immobilized Assets")
-	widget.addLine("23","Immobilization")
-	widget.addLine("37","Other immo")
-	widget.addLine("28","Amortization")
+	widget.addLine("23", "Immobilization")
+	widget.addLine("37", "Other immo")
+	widget.addLine("28", "Amortization")
 	widget.addSeparator()
 	widget.addCategory("Fluid Assets")
-	widget.addLine("51","Bank account")
+	widget.addLine("51", "Bank account")
 	widget.addSeparator()
-	widget.addLine("assets","Total")
+	widget.addLine("assets", "Total")
 
-	
 	GlobalLedger.AddSubscriber(widget)
 	return widget
 }

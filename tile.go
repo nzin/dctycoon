@@ -2,11 +2,11 @@ package dctycoon
 
 import (
 	"fmt"
-	"github.com/veandco/go-sdl2/sdl"
-	"github.com/veandco/go-sdl2/img"
 	"github.com/nzin/dctycoon/supplier"
-	"strconv"
+	"github.com/veandco/go-sdl2/img"
+	"github.com/veandco/go-sdl2/sdl"
 	"sort"
+	"strconv"
 )
 
 const (
@@ -25,8 +25,9 @@ type DcElement interface {
 }
 
 type ItemInventoryArray []*supplier.InventoryItem
-func (a ItemInventoryArray) Len() int { return len(a) }
-func (a ItemInventoryArray) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+
+func (a ItemInventoryArray) Len() int           { return len(a) }
+func (a ItemInventoryArray) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ItemInventoryArray) Less(i, j int) bool { return a[i].Zplaced > a[j].Zplaced }
 
 type RackElement struct {
@@ -36,16 +37,16 @@ type RackElement struct {
 }
 
 func (self *RackElement) AddItem(item *supplier.InventoryItem) {
-	self.items=append(self.items,item)
+	self.items = append(self.items, item)
 	sort.Sort(ItemInventoryArray(self.items))
-	self.surface=nil
+	self.surface = nil
 }
 
 func (self *RackElement) RemoveItem(item *supplier.InventoryItem) {
-	for p,i := range(self.items) {
-		if i==item {
-			self.items=append(self.items[:p],self.items[p+1:]...)
-			self.surface=nil
+	for p, i := range self.items {
+		if i == item {
+			self.items = append(self.items[:p], self.items[p+1:]...)
+			self.surface = nil
 		}
 	}
 }
@@ -66,7 +67,7 @@ func (self *RackElement) Draw(rotation uint32) *sdl.Surface {
 	if self.surface == nil {
 		var err error
 		bottom := getSprite("resources/rack.bottom" + strconv.Itoa(int(rotation)) + ".png")
-		self.surface,err = sdl.CreateRGBSurface(0, bottom.W, bottom.H, 32, 0x00ff0000,0x0000ff00, 0x000000ff, 0xff000000)
+		self.surface, err = sdl.CreateRGBSurface(0, bottom.W, bottom.H, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000)
 		if err != nil {
 			panic(err)
 		}
@@ -74,7 +75,7 @@ func (self *RackElement) Draw(rotation uint32) *sdl.Surface {
 		rectDst := sdl.Rect{0, 0, bottom.W, bottom.H}
 		bottom.Blit(&rectSrc, self.surface, &rectDst)
 
-		for _,item := range (self.items) {
+		for _, item := range self.items {
 			img := getSprite("resources/" + item.Serverconf.ConfType.ServerSprite + strconv.Itoa(int(rotation)) + ".png")
 			rectSrc := sdl.Rect{0, 0, img.W, img.H}
 			rectDst := sdl.Rect{0, TILE_HEIGHT - img.H - ((42-item.Zplaced)+item.Serverconf.ConfType.NbU+1)*4, img.W, img.H}
@@ -92,18 +93,18 @@ func (self *RackElement) Draw(rotation uint32) *sdl.Surface {
 
 func (self *RackElement) Power() float64 {
 	power := float64(0)
-/*
-	for _, e := range self.rackmount {
-		power += e.power
-	}
-*/
+	/*
+		for _, e := range self.rackmount {
+			power += e.power
+		}
+	*/
 	return power
 }
 
 func NewRackElement() *RackElement {
 	r := &RackElement{
-		surface:   nil,
-		items: make([]*supplier.InventoryItem,0),
+		surface: nil,
+		items:   make([]*supplier.InventoryItem, 0),
 	}
 	return r
 }
@@ -162,21 +163,21 @@ type Tile struct {
 }
 
 func (self *Tile) ItemInstalled(item *supplier.InventoryItem) {
-	if item.Typeitem==supplier.PRODUCT_SERVER && item.Serverconf.ConfType.NbU>0 {
-		if self.element!=nil && self.element.ElementType()=="rack" {
-			rack:=self.element.(*RackElement)
+	if item.Typeitem == supplier.PRODUCT_SERVER && item.Serverconf.ConfType.NbU > 0 {
+		if self.element != nil && self.element.ElementType() == "rack" {
+			rack := self.element.(*RackElement)
 			rack.AddItem(item)
-			self.surface=nil
+			self.surface = nil
 		}
 	}
 }
 
 func (self *Tile) ItemUninstalled(item *supplier.InventoryItem) {
-	if item.Typeitem==supplier.PRODUCT_SERVER && item.Serverconf.ConfType.NbU>0 {
-		if self.element!=nil && self.element.ElementType()=="rack" {
-			rack:=self.element.(*RackElement)
+	if item.Typeitem == supplier.PRODUCT_SERVER && item.Serverconf.ConfType.NbU > 0 {
+		if self.element != nil && self.element.ElementType() == "rack" {
+			rack := self.element.(*RackElement)
 			rack.RemoveItem(item)
-			self.surface=nil
+			self.surface = nil
 		}
 	}
 }
