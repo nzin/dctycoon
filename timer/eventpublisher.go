@@ -6,9 +6,9 @@ import(
 )
 
 type EventPublished struct{
-	sws.SWS_CoreWidget
+	sws.CoreWidget
 	eventpub    *EventPublisher
-	messagewidget *sws.SWS_MainWidget
+	messagewidget *sws.MainWidget
 	shortdesc   string
 	longdesc    string
 	fadeintime  int32 // remaining second before appearing
@@ -17,10 +17,10 @@ type EventPublished struct{
 	te          *sws.TimerEvent
 }
 
-func CreateEventPublished(shortdesc string, longdesc string, eventpub *EventPublisher, pos int32) *EventPublished{
-	corewidget := sws.CreateCoreWidget(300, 30)
+func NewEventPublished(shortdesc string, longdesc string, eventpub *EventPublisher, pos int32) *EventPublished{
+	corewidget := sws.NewCoreWidget(300, 30)
 	widget:=&EventPublished{
-		SWS_CoreWidget: *corewidget,
+		CoreWidget: *corewidget,
 		eventpub:    eventpub,
 		shortdesc:   shortdesc,
 		longdesc:    longdesc,
@@ -28,12 +28,12 @@ func CreateEventPublished(shortdesc string, longdesc string, eventpub *EventPubl
 		fadeouttime: 40,
 		te:          nil,
 	}
-	flat:=sws.CreateFlatButtonWidget(300,30,shortdesc)
+	flat:=sws.NewFlatButtonWidget(300,30,shortdesc)
 	widget.AddChild(flat)
 	
 	flat.SetClicked(func() {
 		if widget.messagewidget==nil {
-			widget.messagewidget=CreateEventMessageWidget(eventpub.root,longdesc)
+			widget.messagewidget=NewEventMessageWidget(eventpub.root,longdesc)
 		}
 	})
 	
@@ -59,7 +59,7 @@ func CreateEventPublished(shortdesc string, longdesc string, eventpub *EventPubl
 }
 
 type EventPublisher struct{
-	root *sws.SWS_RootWidget
+	root *sws.RootWidget
 	events map[*EventPublished]int32
 }
 
@@ -76,7 +76,7 @@ func (self *EventPublisher) Publish(shortdesc string, longdesc string) {
 		}
 	}
 	
-	ev:=CreateEventPublished(shortdesc,longdesc,self,pos)
+	ev:=NewEventPublished(shortdesc,longdesc,self,pos)
 	self.events[ev]=pos
 	self.root.AddChild(ev)
 	sws.PostUpdate()
@@ -88,7 +88,7 @@ func (self *EventPublisher) remove(event *EventPublished) {
 	delete(self.events,event)
 }
 
-func CreateEventPublisher(root *sws.SWS_RootWidget) *EventPublisher{
+func NewEventPublisher(root *sws.RootWidget) *EventPublisher{
 	return &EventPublisher{
 		root: root,
 		events: make(map[*EventPublished]int32),

@@ -6,9 +6,9 @@ import (
 )
 
 type Accounting struct {
-	rootwidget *sws.SWS_RootWidget
-	mainwidget *sws.SWS_MainWidget
-	tabwidget  *sws.SWS_TabWidget
+	rootwidget *sws.RootWidget
+	mainwidget *sws.MainWidget
+	tabwidget  *sws.TabWidget
 	bankwidget *BankWidget
 }
 
@@ -29,33 +29,33 @@ func (self *Accounting) SetBankinterestrate(rate float64) {
 	self.bankwidget.SetBankinterestrate(rate)
 }
 
-func CreateAccounting(root *sws.SWS_RootWidget) *Accounting {
-	mainwidget := sws.CreateMainWidget(650, 400, " Bank and Finance ", true, true)
-	tabwidget := sws.CreateTabWidget(650, 400)
+func NewAccounting(root *sws.RootWidget) *Accounting {
+	mainwidget := sws.NewMainWidget(650, 400, " Bank and Finance ", true, true)
+	tabwidget := sws.NewTabWidget(650, 400)
 	
 	ui := &Accounting{
 		rootwidget: root,
 		mainwidget: mainwidget,
 		tabwidget:  tabwidget,
 	}
-	ui.bankwidget=CreateBankWidget()
-	bankScroll:=sws.CreateScrollWidget(650,400)
+	ui.bankwidget=NewBankWidget()
+	bankScroll:=sws.NewScrollWidget(650,400)
 	bankScroll.SetInnerWidget(ui.bankwidget)
 	bankScroll.ShowHorizontalScrollbar(false)
 	tabwidget.AddTab("Bank",bankScroll)
 	
-	balanceScroll:=sws.CreateScrollWidget(650,400)
-	balanceScroll.SetInnerWidget(CreateBalanceWidget())
+	balanceScroll:=sws.NewScrollWidget(650,400)
+	balanceScroll.SetInnerWidget(NewBalanceWidget())
 	balanceScroll.ShowHorizontalScrollbar(false)
 	tabwidget.AddTab("Balance",balanceScroll)
 	
-	liabilitiesScroll:=sws.CreateScrollWidget(650,400)
-	liabilitiesScroll.SetInnerWidget(CreateLiabilitiesWidget())
+	liabilitiesScroll:=sws.NewScrollWidget(650,400)
+	liabilitiesScroll.SetInnerWidget(NewLiabilitiesWidget())
 	liabilitiesScroll.ShowHorizontalScrollbar(false)
 	tabwidget.AddTab("Liabilities",liabilitiesScroll)
 	
-	assetScroll:=sws.CreateScrollWidget(650,400)
-	assetScroll.SetInnerWidget(CreateAssetsWidget())
+	assetScroll:=sws.NewScrollWidget(650,400)
+	assetScroll.SetInnerWidget(NewAssetsWidget())
 	assetScroll.ShowHorizontalScrollbar(false)
 	tabwidget.AddTab("Assets",assetScroll)
 	

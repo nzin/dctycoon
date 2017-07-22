@@ -10,22 +10,22 @@ import(
 // ad widget
 //
 type BannerWidget struct {
-	sws.SWS_CoreWidget
-	banners       []*sws.SWS_Label
+	sws.CoreWidget
+	banners       []*sws.LabelWidget
 	currentBanner int32
 	te            *sws.TimerEvent
 }
 
-func CreateBannerWidget(width,height int32) *BannerWidget {
+func NewBannerWidget(width,height int32) *BannerWidget {
 	widget:=&BannerWidget{
-		SWS_CoreWidget: *sws.CreateCoreWidget(width,height),
-		banners:        []*sws.SWS_Label{},
+		CoreWidget: *sws.NewCoreWidget(width,height),
+		banners:        []*sws.LabelWidget{},
 		currentBanner:  0,
 	}
 	widget.SetColor(0xffffffff)
 
 	for i:=1;i<=3;i++ {
-		banner:=sws.CreateLabel(width,100,"")
+		banner:=sws.NewLabelWidget(width,100,"")
 		banner.SetImage("resources/banner"+strconv.Itoa(i)+".png")
 		banner.SetColor(0xffffffff)
 		banner.Move((width-400)/2,(height-100)/2)

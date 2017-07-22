@@ -75,7 +75,6 @@ func (self *RackElement) Draw(rotation uint32) *sdl.Surface {
 		bottom.Blit(&rectSrc, self.surface, &rectDst)
 
 		for _,item := range (self.items) {
-			fmt.Println("RackElement::Draw",self.items)
 			img := getSprite("resources/" + item.Serverconf.ConfType.ServerSprite + strconv.Itoa(int(rotation)) + ".png")
 			rectSrc := sdl.Rect{0, 0, img.W, img.H}
 			rectDst := sdl.Rect{0, TILE_HEIGHT - img.H - ((42-item.Zplaced)+item.Serverconf.ConfType.NbU+1)*4, img.W, img.H}
@@ -101,7 +100,7 @@ func (self *RackElement) Power() float64 {
 	return power
 }
 
-func CreateRackElement() *RackElement {
+func NewRackElement() *RackElement {
 	r := &RackElement{
 		surface:   nil,
 		items: make([]*supplier.InventoryItem,0),
@@ -141,7 +140,7 @@ func (self *ElectricalElement) Power() float64 {
 	return self.power
 }
 
-func CreateElectricalElement(dcelementtype string) *ElectricalElement {
+func NewElectricalElement(dcelementtype string) *ElectricalElement {
 	//power := payload["power"].(float64)
 	//capacity := int32(payload["capacity"].(float64))
 	ee := &ElectricalElement{
@@ -250,7 +249,7 @@ func (self *Tile) Power() float64 {
 	return self.element.Power()
 }
 
-func CreateGrassTile() *Tile {
+func NewGrassTile() *Tile {
 	tile := &Tile{
 		wall:     [2]string{"", ""},
 		rotation: 0,
@@ -260,15 +259,15 @@ func CreateGrassTile() *Tile {
 	return tile
 }
 
-func CreateElectricalTile(wall0, wall1, floor string, rotation uint32, dcelementtype string) *Tile {
+func NewElectricalTile(wall0, wall1, floor string, rotation uint32, dcelementtype string) *Tile {
 	if rotation > 3 {
 		rotation = 0
 	}
 	var element DcElement
 	if dcelementtype == "rack" {
-		element = CreateRackElement()
+		element = NewRackElement()
 	} else if dcelementtype != "" {
-		element = CreateElectricalElement(dcelementtype)
+		element = NewElectricalElement(dcelementtype)
 	}
 	tile := &Tile{
 		wall:     [2]string{wall0, wall1},

@@ -7,18 +7,18 @@ import(
 )
 
 type TrackPageItemUi struct {
-	sws.SWS_CoreWidget
-	icon     *sws.SWS_Label
-	desc     *sws.SWS_TextAreaWidget
-	delivery *sws.SWS_Label
+	sws.CoreWidget
+	icon     *sws.LabelWidget
+	desc     *sws.TextAreaWidget
+	delivery *sws.LabelWidget
 }
 
 func NewTrackPageItemUi(icon, desc string, deliveryDate time.Time) *TrackPageItemUi {
 	trackitem:=&TrackPageItemUi{
-		SWS_CoreWidget: *sws.CreateCoreWidget(600,100),
-		icon: sws.CreateLabel(100,100,""),
-		desc: sws.CreateTextAreaWidget(150,100,desc),
-		delivery: sws.CreateLabel(100,100,fmt.Sprintf("%d / %d / %d",deliveryDate.Day(),deliveryDate.Month(),deliveryDate.Year())),
+		CoreWidget: *sws.NewCoreWidget(600,100),
+		icon: sws.NewLabelWidget(100,100,""),
+		desc: sws.NewTextAreaWidget(150,100,desc),
+		delivery: sws.NewLabelWidget(100,100,fmt.Sprintf("%d / %d / %d",deliveryDate.Day(),deliveryDate.Month(),deliveryDate.Year())),
 	}
 
 	trackitem.SetColor(0xffffffff)
@@ -45,8 +45,8 @@ func NewTrackPageItemUi(icon, desc string, deliveryDate time.Time) *TrackPageIte
 // the track inventory is stored into the GlobalInventory object
 //
 type TrackPageWidget struct {
-	sws.SWS_CoreWidget
-	vbox        *sws.SWS_VBoxWidget
+	sws.CoreWidget
+	vbox        *sws.VBoxWidget
 	intransit   map[*InventoryItem]*TrackPageItemUi
 }
 
@@ -86,13 +86,13 @@ func (self *TrackPageWidget) ItemUninstalled(*InventoryItem) {
 
 func NewTrackPageWidget(width,height int32,inventory *Inventory) *TrackPageWidget {
 	trackpage:=&TrackPageWidget{
-		SWS_CoreWidget: *sws.CreateCoreWidget(width,height),
-		vbox: sws.CreateVBoxWidget(600,0),
+		CoreWidget: *sws.NewCoreWidget(width,height),
+		vbox: sws.NewVBoxWidget(600,0),
 		intransit: make(map[*InventoryItem]*TrackPageItemUi),
 	}
 	inventory.AddSubscriber(trackpage)
 	trackpage.SetColor(0xffffffff)
-	title:=sws.CreateLabel(200,30,"Product Tracking")
+	title:=sws.NewLabelWidget(200,30,"Product Tracking")
 	title.SetColor(0xffffffff)
 	title.SetFont(sws.LatoRegular20)
 	title.Move(20,0)
@@ -100,15 +100,15 @@ func NewTrackPageWidget(width,height int32,inventory *Inventory) *TrackPageWidge
 	trackpage.AddChild(title)
 
 	
-	hProduct:=sws.CreateLabel(250,25,"Product")
+	hProduct:=sws.NewLabelWidget(250,25,"Product")
 	hProduct.Move(0,55)
 	trackpage.AddChild(hProduct)
 
-	hDelivery:=sws.CreateLabel(100,25,"Delivery date")
+	hDelivery:=sws.NewLabelWidget(100,25,"Delivery date")
 	hDelivery.Move(250,55)
 	trackpage.AddChild(hDelivery)
 	
-	empty:=sws.CreateLabel(600,100,"You don't have anything to track")
+	empty:=sws.NewLabelWidget(600,100,"You don't have anything to track")
 	empty.SetColor(0xffffffff)
 	empty.SetCentered(true)
 	empty.Move(0,80)

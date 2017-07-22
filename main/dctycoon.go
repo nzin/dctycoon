@@ -17,15 +17,15 @@ func main() {
 	root := sws.Init(800, 600)
 	dctycoon.GlobalLocation="siliconvalley"
 
-	timer.GlobalEventPublisher=timer.CreateEventPublisher(root)
-	accounting.GlobalLedger=accounting.CreateLedger(dctycoon.AvailableLocation[dctycoon.GlobalLocation].Taxrate)
+	timer.GlobalEventPublisher=timer.NewEventPublisher(root)
+	accounting.GlobalLedger=accounting.NewLedger(dctycoon.AvailableLocation[dctycoon.GlobalLocation].Taxrate)
 	timer.GlobalGameTimer=timer.NewGameTimer()
 	supplier.GlobalInventory=supplier.NewInventory()
 
-	dc := dctycoon.CreateDcWidget(root.Width(), root.Height(),root,supplier.GlobalInventory)
-	supplierwidget := dctycoon.CreateSupplier(root)
+	dc := dctycoon.NewDcWidget(root.Width(), root.Height(),root,supplier.GlobalInventory)
+	supplierwidget := dctycoon.NewSupplier(root)
 	inventorywidget := dctycoon.NewInventoryWidget(root)
-	accountingui := accounting.CreateAccounting(root)
+	accountingui := accounting.NewAccounting(root)
 	gamefile, err := os.Open("example.map")
 	if err != nil {
 		fmt.Println(err.Error())
@@ -57,7 +57,7 @@ func main() {
 	root.SetFocus(dc)
 	
 	// dock 
-	dock:=dctycoon.CreateDockWidget(timer.GlobalGameTimer)
+	dock:=dctycoon.NewDockWidget(timer.GlobalGameTimer)
 	dock.Move(root.Width()-dock.Width(),0)
 	root.AddChild(dock)
 

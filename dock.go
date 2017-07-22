@@ -9,16 +9,16 @@ import(
 )
 
 type DockWidget struct {
-	sws.SWS_CoreWidget
-	currentDay    *sws.SWS_Label
+	sws.CoreWidget
+	currentDay    *sws.LabelWidget
 	timer         *timer.GameTimer
-	pause         *sws.SWS_FlatButtonWidget
-	play          *sws.SWS_FlatButtonWidget
-	forward       *sws.SWS_FlatButtonWidget
-	shop          *sws.SWS_FlatButtonWidget
-	inventory     *sws.SWS_FlatButtonWidget
-	quit          *sws.SWS_FlatButtonWidget
-	ledger        *sws.SWS_FlatButtonWidget
+	pause         *sws.FlatButtonWidget
+	play          *sws.FlatButtonWidget
+	forward       *sws.FlatButtonWidget
+	shop          *sws.FlatButtonWidget
+	inventory     *sws.FlatButtonWidget
+	quit          *sws.FlatButtonWidget
+	ledger        *sws.FlatButtonWidget
 	timerevent    *sws.TimerEvent
 }
 
@@ -43,23 +43,23 @@ func (self *DockWidget) LedgerChange(ledger *accounting.Ledger) {
 	self.ledger.SetText(fmt.Sprintf("%.2f $",accounts["51"]))
 }
 
-func CreateDockWidget(timer *timer.GameTimer) *DockWidget {
-	corewidget := sws.CreateCoreWidget(150, 125)
+func NewDockWidget(timer *timer.GameTimer) *DockWidget {
+	corewidget := sws.NewCoreWidget(150, 125)
 	today:=fmt.Sprintf("%d %s %d",timer.CurrentTime.Day(),timer.CurrentTime.Month().String(),timer.CurrentTime.Year())
 	widget := &DockWidget { 
-		SWS_CoreWidget: *corewidget,
-		currentDay: sws.CreateLabel(150,25,today),
+		CoreWidget: *corewidget,
+		currentDay: sws.NewLabelWidget(150,25,today),
 		timer: timer,
 		timerevent: nil,
 	}
-	title:=sws.CreateLabel(150,25,"DC Tycoon")
+	title:=sws.NewLabelWidget(150,25,"DC Tycoon")
 	title.SetCentered(true)
 	widget.AddChild(title)
 	
 	widget.currentDay.Move(5,25)
 	widget.AddChild(widget.currentDay)
 	
-	widget.pause=sws.CreateFlatButtonWidget(25,25,"")
+	widget.pause=sws.NewFlatButtonWidget(25,25,"")
 	widget.pause.SetColor(0xff8888ff)
 	widget.pause.Move(25,50)
 	widget.pause.SetImage("resources/icon-pause-symbol.png")
@@ -73,7 +73,7 @@ func CreateDockWidget(timer *timer.GameTimer) *DockWidget {
 	})
 	widget.AddChild(widget.pause)
 	
-	widget.play=sws.CreateFlatButtonWidget(25,25,"")
+	widget.play=sws.NewFlatButtonWidget(25,25,"")
 	widget.play.Move(50,50)
 	widget.play.SetImage("resources/icon-arrowhead-pointing-to-the-right.png")
 	widget.play.SetClicked(func() {
@@ -91,7 +91,7 @@ func CreateDockWidget(timer *timer.GameTimer) *DockWidget {
 	})
 	widget.AddChild(widget.play)
 	
-	widget.forward=sws.CreateFlatButtonWidget(25,25,"")
+	widget.forward=sws.NewFlatButtonWidget(25,25,"")
 	widget.forward.Move(75,50)
 	widget.forward.SetImage("resources/icon-forward-button.png")
 	widget.forward.SetClicked(func() {
@@ -109,27 +109,27 @@ func CreateDockWidget(timer *timer.GameTimer) *DockWidget {
 	})
 	widget.AddChild(widget.forward)
 	
-	widget.shop=sws.CreateFlatButtonWidget(25,25,"")
+	widget.shop=sws.NewFlatButtonWidget(25,25,"")
 	widget.shop.Move(25,75)
 	widget.shop.SetImage("resources/icon-shopping-cart-black-shape.png")
 	widget.AddChild(widget.shop)
 	
-	widget.inventory=sws.CreateFlatButtonWidget(25,25,"")
+	widget.inventory=sws.NewFlatButtonWidget(25,25,"")
 	widget.inventory.Move(50,75)
 	widget.inventory.SetImage("resources/icon-dropbox-logo.png")
 	widget.AddChild(widget.inventory)
 	
-	save:=sws.CreateFlatButtonWidget(25,25,"")
+	save:=sws.NewFlatButtonWidget(25,25,"")
 	save.Move(75,75)
 	save.SetImage("resources/icon-blank-file.png")
 	widget.AddChild(save)
 	
-	widget.quit=sws.CreateFlatButtonWidget(25,25,"")
+	widget.quit=sws.NewFlatButtonWidget(25,25,"")
 	widget.quit.Move(100,75)
 	widget.quit.SetImage("resources/icon-power-button-off.png")
 	widget.AddChild(widget.quit)
 	
-	widget.ledger=sws.CreateFlatButtonWidget(150,25,"")
+	widget.ledger=sws.NewFlatButtonWidget(150,25,"")
 	widget.ledger.Move(0,100)
 	widget.AddChild(widget.ledger)
 	accounting.GlobalLedger.AddSubscriber(widget)

@@ -8,33 +8,33 @@ import(
 )
 
 type CartPageItemUi struct {
-	sws.SWS_CoreWidget
-	icon   *sws.SWS_Label
-	desc   *sws.SWS_TextAreaWidget
+	sws.CoreWidget
+	icon   *sws.LabelWidget
+	desc   *sws.TextAreaWidget
 	price  float64
-	priceL *sws.SWS_Label
+	priceL *sws.LabelWidget
 	qty    int32
-	qtyD   *sws.SWS_DropdownWidget
-	delete *sws.SWS_ButtonWidget
-	total  *sws.SWS_Label
+	qtyD   *sws.DropdownWidget
+	delete *sws.ButtonWidget
+	total  *sws.LabelWidget
 	totalchanged func()
 }
 
-func CreateCartPageItemUi(icon, desc string, price float64, qty int32,totalcallback func()) *CartPageItemUi {
+func NewCartPageItemUi(icon, desc string, price float64, qty int32,totalcallback func()) *CartPageItemUi {
 	choices:=make([]string,10)
 	for i:=1; i<=10;i++ {
 		choices[i-1]=fmt.Sprintf("%d",i)
 	}
 	cartitem:=&CartPageItemUi{
-		SWS_CoreWidget: *sws.CreateCoreWidget(600,100),
-		icon: sws.CreateLabel(100,100,""),
-		desc: sws.CreateTextAreaWidget(150,100,desc),
+		CoreWidget: *sws.NewCoreWidget(600,100),
+		icon: sws.NewLabelWidget(100,100,""),
+		desc: sws.NewTextAreaWidget(150,100,desc),
 		price: price,
-		priceL: sws.CreateLabel(100,25,fmt.Sprintf("%.2f $",price)),
+		priceL: sws.NewLabelWidget(100,25,fmt.Sprintf("%.2f $",price)),
 		qty: qty,
-		qtyD: sws.CreateDropdownWidget(50,25,choices),
-		delete: sws.CreateButtonWidget(100,25,"remove"),
-		total: sws.CreateLabel(100,25,fmt.Sprintf("%.2f $",price*float64(qty))),
+		qtyD: sws.NewDropdownWidget(50,25,choices),
+		delete: sws.NewButtonWidget(100,25,"remove"),
+		total: sws.NewLabelWidget(100,25,fmt.Sprintf("%.2f $",price*float64(qty))),
 		totalchanged: totalcallback,
 	}
 	cartitem.qtyD.SetActiveChoice(qty-1)
@@ -82,12 +82,12 @@ func CreateCartPageItemUi(icon, desc string, price float64, qty int32,totalcallb
 // the cart inventory is stored into the GlobalInventory object
 //
 type CartPageWidget struct {
-	sws.SWS_CoreWidget
+	sws.CoreWidget
 	items       []*CartPageItemUi
-	vbox        *sws.SWS_VBoxWidget
-	grandTotalL *sws.SWS_Label
-	grandTotal  *sws.SWS_Label
-	buy         *sws.SWS_ButtonWidget
+	vbox        *sws.VBoxWidget
+	grandTotalL *sws.LabelWidget
+	grandTotal  *sws.LabelWidget
+	buy         *sws.ButtonWidget
 }
 
 func (self *CartPageWidget) SetBuyCallback(callback func()) {
@@ -118,7 +118,7 @@ func (self *CartPageWidget) AddItem(productitem int32, conf *ServerConf, unitpri
 			ramSizeText=fmt.Sprintf("%d Go",conf.NbSlotRam*conf.RamSize/1024)
 		}
 		
-		ui=CreateCartPageItemUi("resources/"+conf.ConfType.ServerSprite+"0.png",
+		ui=NewCartPageItemUi("resources/"+conf.ConfType.ServerSprite+"0.png",
 			fmt.Sprintf("%dx %d cores\n%s RAM\n%d disks",conf.NbProcessors,conf.NbCore,ramSizeText,conf.NbDisks),
 			unitprice,
 			nb,func() {
@@ -179,14 +179,14 @@ func (self *CartPageWidget) DeleteItem(cartitem *CartItem) {
 	sws.PostUpdate()
 }
 
-func CreateCartPageWidget(width,height int32) *CartPageWidget {
+func NewCartPageWidget(width,height int32) *CartPageWidget {
 	cartpage:=&CartPageWidget{
-		SWS_CoreWidget: *sws.CreateCoreWidget(width,height),
+		CoreWidget: *sws.NewCoreWidget(width,height),
 		items: make([]*CartPageItemUi,0),
-		vbox: sws.CreateVBoxWidget(600,0),
+		vbox: sws.NewVBoxWidget(600,0),
 	}
 	cartpage.SetColor(0xffffffff)
-	title:=sws.CreateLabel(200,30,"Shopping Cart")
+	title:=sws.NewLabelWidget(200,30,"Shopping Cart")
 	title.SetColor(0xffffffff)
 	title.SetFont(sws.LatoRegular20)
 	title.Move(20,0)
@@ -194,33 +194,33 @@ func CreateCartPageWidget(width,height int32) *CartPageWidget {
 	cartpage.AddChild(title)
 
 	
-	hProduct:=sws.CreateLabel(250,25,"Product")
+	hProduct:=sws.NewLabelWidget(250,25,"Product")
 	hProduct.Move(0,55)
 	cartpage.AddChild(hProduct)
 
-	hPrice:=sws.CreateLabel(100,25,"Unit price")
+	hPrice:=sws.NewLabelWidget(100,25,"Unit price")
 	hPrice.Move(250,55)
 	cartpage.AddChild(hPrice)
 	
-	hQty:=sws.CreateLabel(50,25,"Qty")
+	hQty:=sws.NewLabelWidget(50,25,"Qty")
 	hQty.Move(350,55)
 	cartpage.AddChild(hQty)
 	
-	hRemove:=sws.CreateLabel(100,25,"Remove")
+	hRemove:=sws.NewLabelWidget(100,25,"Remove")
 	hRemove.Move(400,55)
 	cartpage.AddChild(hRemove)
 	
-	hTotal:=sws.CreateLabel(100,25,"Total price")
+	hTotal:=sws.NewLabelWidget(100,25,"Total price")
 	hTotal.Move(500,55)
 	cartpage.AddChild(hTotal)
 	
-	buy:=sws.CreateButtonWidget(100,25,"Buy")
+	buy:=sws.NewButtonWidget(100,25,"Buy")
 	buy.SetColor(0xffffffff)
 	buy.Move(500,120)
 	cartpage.AddChild(buy)
 	cartpage.buy=buy
 
-	empty:=sws.CreateLabel(600,100,"Your shopping cart is empty")
+	empty:=sws.NewLabelWidget(600,100,"Your shopping cart is empty")
 	empty.SetColor(0xffffffff)
 	empty.SetCentered(true)
 	empty.Move(0,80)
@@ -229,13 +229,13 @@ func CreateCartPageWidget(width,height int32) *CartPageWidget {
 	cartpage.vbox.Move(0,80)
 	cartpage.AddChild(cartpage.vbox)
 	
-	grandTotalL:=sws.CreateLabel(50,25,"Total:")
+	grandTotalL:=sws.NewLabelWidget(50,25,"Total:")
 	grandTotalL.SetColor(0xffffffff)
 	grandTotalL.Move(450,180)
 	cartpage.AddChild(grandTotalL)
 	cartpage.grandTotalL=grandTotalL
 	
-	grandTotal:=sws.CreateLabel(100,25,"0 $")
+	grandTotal:=sws.NewLabelWidget(100,25,"0 $")
 	grandTotal.SetColor(0xffffffff)
 	grandTotal.SetCentered(true)
 	grandTotal.Move(500,180)

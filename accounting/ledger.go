@@ -257,7 +257,7 @@ func (self *Ledger) BuyProduct(desc string, t time.Time, price float64) {
 	}
 }
 
-func CreateLedger(taxrate float64) *Ledger {
+func NewLedger(taxrate float64) *Ledger {
 	ledger := &Ledger{
 		Movements:   btree.New(10),
 		accounts:    make(map[int]AccountYearly),

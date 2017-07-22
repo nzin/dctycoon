@@ -76,9 +76,9 @@ func (self *BalanceWidget) LedgerChange(ledger *Ledger) {
 	sws.PostUpdate()
 }
 
-func CreateBalanceWidget() *BalanceWidget {
+func NewBalanceWidget() *BalanceWidget {
 	widget:=&BalanceWidget{
-		FinanceWidget: *CreateFinanceWidget(),
+		FinanceWidget: *NewFinanceWidget(),
 	}
 	widget.addCategory("Revenue")
 	widget.addLine("70","Sales")

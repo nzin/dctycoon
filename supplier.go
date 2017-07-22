@@ -20,15 +20,15 @@ import(
 // cart currently in cart, not paid
 
 type Supplier struct {
-	rootwindow        *sws.SWS_RootWidget 
-	mainwidget        *sws.SWS_MainWidget
-	scrollwidgetshop  *sws.SWS_ScrollWidget
-	scrollwidgetcart  *sws.SWS_ScrollWidget
-	scrollwidgettrack *sws.SWS_ScrollWidget
+	rootwindow        *sws.RootWidget 
+	mainwidget        *sws.MainWidget
+	scrollwidgetshop  *sws.ScrollWidget
+	scrollwidgetcart  *sws.ScrollWidget
+	scrollwidgettrack *sws.ScrollWidget
 	serverpage        *supplier.ServerPageWidget
 	cartpage          *supplier.CartPageWidget
 	trackpage         *supplier.TrackPageWidget
-	content           sws.SWS_Widget
+	content           sws.Widget
 }
 
 func (self *Supplier) Show() {
@@ -44,13 +44,13 @@ func (self *Supplier) Hide() {
 	}
 }
 
-func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
-	mainwidget := sws.CreateMainWidget(650,400," Your DEAL supplier",true,true)
-	scrollwidgetshop := sws.CreateScrollWidget(600,550)
+func NewSupplier(root *sws.RootWidget) *Supplier {
+	mainwidget := sws.NewMainWidget(650,400," Your DEAL supplier",true,true)
+	scrollwidgetshop := sws.NewScrollWidget(600,550)
 	scrollwidgetshop.SetColor(0xffffffff)
-	scrollwidgetcart := sws.CreateScrollWidget(600,550)
+	scrollwidgetcart := sws.NewScrollWidget(600,550)
 	scrollwidgetcart.SetColor(0xffffffff)
-	scrollwidgettrack := sws.CreateScrollWidget(600,550)
+	scrollwidgettrack := sws.NewScrollWidget(600,550)
 	scrollwidgettrack.SetColor(0xffffffff)
 	widget := &Supplier{
 		rootwindow: root,
@@ -62,39 +62,39 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 	mainwidget.SetCloseCallback(func() {
 		widget.Hide()
 	})
-	sv := sws.CreateSplitviewWidget(200,200,false)
+	sv := sws.NewSplitviewWidget(200,200,false)
 	sv.PlaceSplitBar(50)
 	sv.SplitBarMovable(false)
 	mainwidget.SetInnerWidget(sv)
 	
 	// banner
-	banner:=sws.CreateCoreWidget(600,50)
+	banner:=sws.NewCoreWidget(600,50)
 	banner.SetColor(0xff0684dc)
 	sv.SetLeftWidget(banner)
-	widgeticon:=sws.CreateLabel(100,50,"")
+	widgeticon:=sws.NewLabelWidget(100,50,"")
 	widgeticon.SetColor(0xff0684dc)
 	widgeticon.SetImage("resources/deal.small2.png")
 	banner.AddChild(widgeticon)
 
-	shop:=sws.CreateFlatButtonWidget(100,50,"Shop")
+	shop:=sws.NewFlatButtonWidget(100,50,"Shop")
 	shop.SetColor(0xff0684dc)
 	shop.SetTextColor(sdl.Color{255,255,255,255})
 	shop.Move(100,0)
 	banner.AddChild(shop)
 	
-	track:=sws.CreateFlatButtonWidget(100,50,"Tracking")
+	track:=sws.NewFlatButtonWidget(100,50,"Tracking")
 	track.SetColor(0xff0684dc)
 	track.SetTextColor(sdl.Color{255,255,255,255})
 	track.Move(200,0)
 	banner.AddChild(track)
 	
-	support:=sws.CreateFlatButtonWidget(100,50,"Support")
+	support:=sws.NewFlatButtonWidget(100,50,"Support")
 	support.SetTextColor(sdl.Color{255,255,255,255})
 	support.SetColor(0xff0684dc)
 	support.Move(300,0)
 	banner.AddChild(support)
 	
-	cart:=sws.CreateFlatButtonWidget(100,50,"")
+	cart:=sws.NewFlatButtonWidget(100,50,"")
 	cart.SetColor(0xff0684dc)
 	cart.SetImage("resources/cart.small.png")
 	cart.Move(400,0)
@@ -103,31 +103,31 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 	sv.SetRightWidget(scrollwidgetshop)
 
 	// server page
-	serverpage:=supplier.CreateServerPageWidget(600,850)
+	serverpage:=supplier.NewServerPageWidget(600,850)
 	widget.serverpage=serverpage
 	scrollwidgetshop.SetInnerWidget(serverpage)
 	
 	// content
-	banners:=supplier.CreateBannerWidget(480,120)
+	banners:=supplier.NewBannerWidget(480,120)
 	banners.Move(120,40)
 	serverpage.AddChild(banners)
 	
-	explore:=supplier.CreateServerPageExploreWidget(480,700)
+	explore:=supplier.NewServerPageExploreWidget(480,700)
 	explore.Move(120,160)
 	serverpage.AddChild(explore)
 	widget.content=explore
 	
-	towerpage:=supplier.CreateServerPageTowerWidget(480,700)
+	towerpage:=supplier.NewServerPageTowerWidget(480,700)
 	towerpage.Move(120,160)
 	
-	rackpage:=supplier.CreateServerPageRackWidget(480,700)
+	rackpage:=supplier.NewServerPageRackWidget(480,700)
 	rackpage.Move(120,160)
 	
-	bladepage:=supplier.CreateServerPageBladeWidget(480,700)
+	bladepage:=supplier.NewServerPageBladeWidget(480,700)
 	bladepage.Move(120,160)
 	
 	// configure
-	configurepage:=supplier.CreateServerPageConfigureWidget(480,700)
+	configurepage:=supplier.NewServerPageConfigureWidget(480,700)
 	configurepage.Move(120,160)
 	
 	// buttons callback
@@ -287,7 +287,7 @@ func CreateSupplier(root *sws.SWS_RootWidget) *Supplier {
 		sws.PostUpdate()
 	})
 	
-	widget.cartpage=supplier.CreateCartPageWidget(600,850)
+	widget.cartpage=supplier.NewCartPageWidget(600,850)
 	scrollwidgetcart.SetInnerWidget(widget.cartpage)
 	
 	cart.SetClicked(func() {

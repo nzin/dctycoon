@@ -8,25 +8,25 @@ import(
 type SubInventory struct {
 	Icon            string
 	Title           string
-	ButtonPanel     *sws.SWS_CoreWidget
-	Widget          sws.SWS_Widget
+	ButtonPanel     *sws.CoreWidget
+	Widget          sws.Widget
 }
 
 func NewUnallocatedInventorySub(inventory *Inventory) *SubInventory{
 	sub:=&SubInventory{
 		Icon: "resources/icon-delivery-truck-silhouette.png",
 		Title: "Unallocated inventory",
-		ButtonPanel: sws.CreateCoreWidget(200,50),
-		Widget: sws.CreateScrollWidget(100, 100),
+		ButtonPanel: sws.NewCoreWidget(200,50),
+		Widget: sws.NewScrollWidget(100, 100),
 	}
 	return sub
 }
 
 type UnallocatedServerLineWidget struct {
-	sws.SWS_CoreWidget
-	Checkbox  *sws.SWS_CheckboxWidget
-	desc      *sws.SWS_Label
-	placement *sws.SWS_Label
+	sws.CoreWidget
+	Checkbox  *sws.CheckboxWidget
+	desc      *sws.LabelWidget
+	placement *sws.LabelWidget
 	item      *InventoryItem
 }
 
@@ -41,10 +41,10 @@ func NewUnallocatedServerLineWidget(item *InventoryItem) *UnallocatedServerLineW
 		placement=fmt.Sprintf("%d/%d",item.Xplaced,item.Yplaced)
 	}
 	line:=&UnallocatedServerLineWidget {
-		SWS_CoreWidget: *sws.CreateCoreWidget(625, 25),
-		Checkbox: sws.CreateCheckboxWidget(),
-		desc: sws.CreateLabel(200,25,text),
-		placement: sws.CreateLabel(100,25,placement),
+		CoreWidget: *sws.NewCoreWidget(625, 25),
+		Checkbox: sws.NewCheckboxWidget(),
+		desc: sws.NewLabelWidget(200,25,text),
+		placement: sws.NewLabelWidget(100,25,placement),
 		item: item,
 	}
 	line.Checkbox.SetColor(0xffffffff)
@@ -58,12 +58,12 @@ func NewUnallocatedServerLineWidget(item *InventoryItem) *UnallocatedServerLineW
 	line.placement.Move(225,0)
 	line.AddChild(line.placement)
 	
-	cores:=sws.CreateLabel(100,25,fmt.Sprintf("%d",item.Serverconf.NbProcessors*item.Serverconf.NbCore))
+	cores:=sws.NewLabelWidget(100,25,fmt.Sprintf("%d",item.Serverconf.NbProcessors*item.Serverconf.NbCore))
 	cores.SetColor(0xffffffff)
 	cores.Move(325,0)
 	line.AddChild(cores)
 	
-	ram:=sws.CreateLabel(100,25,ramSizeText)
+	ram:=sws.NewLabelWidget(100,25,ramSizeText)
 	ram.SetColor(0xffffffff)
 	ram.Move(425,0)
 	line.AddChild(ram)
@@ -75,7 +75,7 @@ func NewUnallocatedServerLineWidget(item *InventoryItem) *UnallocatedServerLineW
 	if item.Serverconf.NbDisks*item.Serverconf.DiskSize>4*1024*1024 {
 		diskText=fmt.Sprintf("%d To",item.Serverconf.NbDisks*item.Serverconf.DiskSize/(1024*1024))
 	}
-	disk:=sws.CreateLabel(100,25,diskText)
+	disk:=sws.NewLabelWidget(100,25,diskText)
 	disk.SetColor(0xffffffff)
 	disk.Move(525,0)
 	line.AddChild(disk)
@@ -84,14 +84,14 @@ func NewUnallocatedServerLineWidget(item *InventoryItem) *UnallocatedServerLineW
 }
 
 type UnallocatedServerWidget struct {
-	sws.SWS_CoreWidget
+	sws.CoreWidget
 	inventory   *Inventory
-	scroll      *sws.SWS_ScrollWidget
-	vbox        *sws.SWS_VBoxWidget
-	globalcheckbox *sws.SWS_CheckboxWidget
+	scroll      *sws.ScrollWidget
+	vbox        *sws.VBoxWidget
+	globalcheckbox *sws.CheckboxWidget
 	selected    map[*UnallocatedServerLineWidget]bool
-	buttonPanel *sws.SWS_CoreWidget
-	scrap       *sws.SWS_ButtonWidget
+	buttonPanel *sws.CoreWidget
+	scrap       *sws.ButtonWidget
 }
 
 func (self *UnallocatedServerWidget) SelectLine(line *UnallocatedServerLineWidget,selected bool) {
@@ -140,21 +140,21 @@ func (self *UnallocatedServerWidget) ItemUninstalled(*InventoryItem) {
 }
 
 func (self *UnallocatedServerWidget) Resize(w,h int32) {
-	self.SWS_CoreWidget.Resize(w,h)
+	self.CoreWidget.Resize(w,h)
 	h-=25
 	self.scroll.Resize(w,h)
 }
 
 func NewUnallocatedServerSub(inventory *Inventory) *SubInventory{
 	widget:=&UnallocatedServerWidget{
-		SWS_CoreWidget: *sws.CreateCoreWidget(100, 100),
+		CoreWidget: *sws.NewCoreWidget(100, 100),
 		inventory: inventory,
-		scroll: sws.CreateScrollWidget(100,100),
-		vbox: sws.CreateVBoxWidget(625,0),
-		globalcheckbox: sws.CreateCheckboxWidget(),
+		scroll: sws.NewScrollWidget(100,100),
+		vbox: sws.NewVBoxWidget(625,0),
+		globalcheckbox: sws.NewCheckboxWidget(),
 		selected: make(map[*UnallocatedServerLineWidget]bool),
-                buttonPanel: sws.CreateCoreWidget(200,50),
-		scrap: sws.CreateButtonWidget(100,25,"Scrap"),
+                buttonPanel: sws.NewCoreWidget(200,50),
+		scrap: sws.NewButtonWidget(100,25,"Scrap"),
 	}
 	inventory.AddSubscriber(widget)
 	
@@ -168,23 +168,23 @@ func NewUnallocatedServerSub(inventory *Inventory) *SubInventory{
 		sws.PostUpdate()
 	})
 	
-	globaldesc:=sws.CreateLabel(200,25,"Description")
+	globaldesc:=sws.NewLabelWidget(200,25,"Description")
 	globaldesc.Move(25,0)
 	widget.AddChild(globaldesc)
 	
-	globalplacement:=sws.CreateLabel(100,25,"Placement")
+	globalplacement:=sws.NewLabelWidget(100,25,"Placement")
 	globalplacement.Move(225,0)
 	widget.AddChild(globalplacement)
 	
-	globalnbcores:=sws.CreateLabel(100,25,"Nb cores")
+	globalnbcores:=sws.NewLabelWidget(100,25,"Nb cores")
 	globalnbcores.Move(325,0)
 	widget.AddChild(globalnbcores)
 	
-	globalram:=sws.CreateLabel(100,25,"RAM")
+	globalram:=sws.NewLabelWidget(100,25,"RAM")
 	globalram.Move(425,0)
 	widget.AddChild(globalram)
 	
-	globaldisk:=sws.CreateLabel(100,25,"Disk")
+	globaldisk:=sws.NewLabelWidget(100,25,"Disk")
 	globaldisk.Move(525,0)
 	widget.AddChild(globaldisk)
 	
@@ -206,8 +206,8 @@ func NewPoolSub(inventory *Inventory) *SubInventory{
 	sub:=&SubInventory{
 		Icon: "resources/icon-bucket.png",
 		Title: "Server pools",
-		ButtonPanel: sws.CreateCoreWidget(200,50),
-		Widget: sws.CreateScrollWidget(100, 100),
+		ButtonPanel: sws.NewCoreWidget(200,50),
+		Widget: sws.NewScrollWidget(100, 100),
 	}
 	return sub
 }
@@ -216,8 +216,8 @@ func NewOfferSub(inventory *Inventory) *SubInventory{
 	sub:=&SubInventory{
 		Icon: "resources/icon-paper-bill.png",
 		Title: "Server offers",
-		ButtonPanel: sws.CreateCoreWidget(200,50),
-		Widget: sws.CreateScrollWidget(100, 100),
+		ButtonPanel: sws.NewCoreWidget(200,50),
+		Widget: sws.NewScrollWidget(100, 100),
 	}
 	return sub
 }

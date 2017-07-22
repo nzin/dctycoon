@@ -39,7 +39,7 @@ func (self *ServerMovePayload) PayloadAccepted(accepted bool) {
 }
 
 type RackWidgetLine struct {
-	sws.SWS_Label
+	sws.LabelWidget
 	item *supplier.InventoryItem
 }
 
@@ -47,7 +47,7 @@ func (self *RackWidgetLine) MousePressDown(x, y int32, button uint8) {
 	payload:=&ServerDragPayload{
 		item: self.item,
 	}
-	var parent sws.SWS_Widget
+	var parent sws.Widget
 	parent=self
 	for (parent!=nil) {
 		x+=parent.X()
@@ -58,32 +58,32 @@ func (self *RackWidgetLine) MousePressDown(x, y int32, button uint8) {
 }
 
 func NewRackWidgetLine(item *supplier.InventoryItem) *RackWidgetLine{
-	label:=sws.CreateLabel(300,45,item.ShortDescription())
+	label:=sws.NewLabelWidget(300,45,item.ShortDescription())
 	label.SetImage("resources/"+item.Serverconf.ConfType.ServerSprite+"half.png")
 	label.AlignImageLeft(true)
 	label.SetColor(0xffffffff)
 
 	return &RackWidgetLine{
-		SWS_Label: *label,
+		LabelWidget: *label,
 		item: item,
 	}
 }
 
 type RackWidgetItems struct {
-	sws.SWS_CoreWidget
-	vbox   *sws.SWS_VBoxWidget
-	scroll *sws.SWS_ScrollWidget
+	sws.CoreWidget
+	vbox   *sws.VBoxWidget
+	scroll *sws.ScrollWidget
 }
 
 func NewRackWidgetItems(inventory *supplier.Inventory) *RackWidgetItems {
 	widgetitems:=&RackWidgetItems{
-		SWS_CoreWidget: *sws.CreateCoreWidget(300,100),
-		vbox: sws.CreateVBoxWidget(300,0),
-		scroll: sws.CreateScrollWidget(300,300),
+		CoreWidget: *sws.NewCoreWidget(300,100),
+		vbox: sws.NewVBoxWidget(300,0),
+		scroll: sws.NewScrollWidget(300,300),
 	}
 	inventory.AddSubscriber(widgetitems)
 	
-	label:=sws.CreateLabel(300,25,"Available server to place: ")
+	label:=sws.NewLabelWidget(300,25,"Available server to place: ")
 	widgetitems.AddChild(label)
 	
 	widgetitems.scroll.ShowHorizontalScrollbar(false)
@@ -95,7 +95,7 @@ func NewRackWidgetItems(inventory *supplier.Inventory) *RackWidgetItems {
 }
 
 func (self *RackWidgetItems) Resize(w,h int32) {
-	self.SWS_CoreWidget.Resize(w,h)
+	self.CoreWidget.Resize(w,h)
 	self.scroll.Resize(w,h-25)
 }
 
@@ -124,7 +124,7 @@ func (self *RackWidgetItems) ItemUninstalled(*supplier.InventoryItem) {
 }
 
 type RackChassisWidget struct {
-	sws.SWS_CoreWidget
+	sws.CoreWidget
 	inventory  *supplier.Inventory
 	xpos       int32
 	ypos       int32
@@ -213,7 +213,7 @@ func (self *RackChassisWidget) computeComingPos(zpos int32) int32 {
 }
 
 func (self *RackChassisWidget) Repaint() {
-	self.SWS_CoreWidget.Repaint()
+	self.CoreWidget.Repaint()
 	
 	var watts float64
 	for _,i := range(self.items) {
@@ -272,7 +272,7 @@ func (self *RackChassisWidget) MousePressDown(x, y int32, button uint8) {
 				item: item,
 				inventory: self.inventory,
 			}
-			var parent sws.SWS_Widget
+			var parent sws.Widget
 			parent=self
 			for (parent!=nil) {
 				x+=parent.X()
@@ -345,7 +345,7 @@ func (self *RackChassisWidget) DragDrop(x,y int32, payload sws.DragPayload) bool
 
 func NewRackChassisWidget(inventory *supplier.Inventory) *RackChassisWidget {
 	chassis:=&RackChassisWidget {
-		SWS_CoreWidget: *sws.CreateCoreWidget(420,42*RACK_SIZE+10+CHASSIS_OFFSET),
+		CoreWidget: *sws.NewCoreWidget(420,42*RACK_SIZE+10+CHASSIS_OFFSET),
 		inventory: inventory,
 		ydrag: -1,
 		xpos: -1,
@@ -363,20 +363,20 @@ func NewRackChassisWidget(inventory *supplier.Inventory) *RackChassisWidget {
 // - one on the right that receive dragevent AND create DragEvent (to move, and to trash?)
 //
 type RackWidget struct {
-	sws.SWS_CoreWidget
-	mainwidget     *sws.SWS_MainWidget
-	rootwindow     *sws.SWS_RootWidget
+	sws.CoreWidget
+	mainwidget     *sws.MainWidget
+	rootwindow     *sws.RootWidget
 	inventory      *supplier.Inventory
 	xactiveElement int32
 	yactiveElement int32
 	activeElement  DcElement
-	splitview      *sws.SWS_SplitviewWidget
+	splitview      *sws.SplitviewWidget
 	rackchassis    *RackChassisWidget
 }
 
-func NewRackWidget(rootwindow *sws.SWS_RootWidget,inventory *supplier.Inventory) *RackWidget {
-	mainwidget:=sws.CreateMainWidget(650,400," Rack info ",false,true)
-	svBottom:=sws.CreateSplitviewWidget(400,300,true)
+func NewRackWidget(rootwindow *sws.RootWidget,inventory *supplier.Inventory) *RackWidget {
+	mainwidget:=sws.NewMainWidget(650,400," Rack info ",false,true)
+	svBottom:=sws.NewSplitviewWidget(400,300,true)
 	
 	rack:=&RackWidget{
 		mainwidget: mainwidget,
@@ -389,21 +389,21 @@ func NewRackWidget(rootwindow *sws.SWS_RootWidget,inventory *supplier.Inventory)
 		rackchassis: NewRackChassisWidget(inventory),
 	}
 
-	sv := sws.CreateSplitviewWidget(200,200,false)
+	sv := sws.NewSplitviewWidget(200,200,false)
 	sv.PlaceSplitBar(50)
 	sv.SplitBarMovable(false)
 	mainwidget.SetInnerWidget(sv)
 
-	menu:=sws.CreateCoreWidget(500,50)
+	menu:=sws.NewCoreWidget(500,50)
 	menu.SetColor(0xffffffff)
 	sv.SetLeftWidget(menu)
 	
-	menuservers:=sws.CreateLabel(300,50,"Servers")
+	menuservers:=sws.NewLabelWidget(300,50,"Servers")
 	menuservers.SetColor(0xffffffff)
 	menuservers.SetCentered(true)
 	menu.AddChild(menuservers)
 	
-	menurack:=sws.CreateLabel(300,50,"Rack chassis")
+	menurack:=sws.NewLabelWidget(300,50,"Rack chassis")
 	menurack.SetColor(0xffffffff)
 	menurack.Move(300,0)
 	menu.AddChild(menurack)
@@ -412,7 +412,7 @@ func NewRackWidget(rootwindow *sws.SWS_RootWidget,inventory *supplier.Inventory)
 	svBottom.SplitBarMovable(false)
 	svBottom.SetLeftWidget(NewRackWidgetItems(inventory))
 
-	scrollright:=sws.CreateScrollWidget(320,300)
+	scrollright:=sws.NewScrollWidget(320,300)
 	scrollright.SetInnerWidget(rack.rackchassis)
 	svBottom.SetRightWidget(scrollright)
 	

@@ -46,9 +46,9 @@ func (self *AssetsWidget) LedgerChange(ledger *Ledger) {
 	self.lines["assets"].N1.SetText(fmt.Sprintf("%.2f $",assetsN1))
 }
 
-func CreateAssetsWidget() *AssetsWidget {
+func NewAssetsWidget() *AssetsWidget {
 	widget:=&AssetsWidget{
-		FinanceWidget: *CreateFinanceWidget(),
+		FinanceWidget: *NewFinanceWidget(),
 	}
 	widget.addCategory("Immobilized Assets")
 	widget.addLine("23","Immobilization")

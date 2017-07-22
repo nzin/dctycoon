@@ -19,15 +19,15 @@ import(
 // upper: title, + buttons
 //
 type InventoryWidget struct {
-	rootwindow        *sws.SWS_RootWidget 
-	mainwidget        *sws.SWS_MainWidget
+	rootwindow        *sws.RootWidget 
+	mainwidget        *sws.MainWidget
 	sub               []*supplier.SubInventory
 	currentsub        *supplier.SubInventory
-	buttonsub         map[*supplier.SubInventory]*sws.SWS_FlatButtonWidget
-	menu              *sws.SWS_CoreWidget
-	vbox              *sws.SWS_VBoxWidget
-	bottomsplitview   *sws.SWS_SplitviewWidget
-	title             *sws.SWS_Label
+	buttonsub         map[*supplier.SubInventory]*sws.FlatButtonWidget
+	menu              *sws.CoreWidget
+	vbox              *sws.VBoxWidget
+	bottomsplitview   *sws.SplitviewWidget
+	title             *sws.LabelWidget
 }
 
 func (self *InventoryWidget) Show() {
@@ -43,7 +43,7 @@ func (self *InventoryWidget) Hide() {
 	}
 }
 func (self *InventoryWidget) AddSubCategory(category *supplier.SubInventory) {
-	button:=sws.CreateFlatButtonWidget(220,40,category.Title)
+	button:=sws.NewFlatButtonWidget(220,40,category.Title)
 	button.SetClicked(func() {
 		self.SelectSubCategory(category)
 	})
@@ -71,22 +71,22 @@ func (self *InventoryWidget) SelectSubCategory(category *supplier.SubInventory) 
 	sws.PostUpdate()
 }
 
-func NewInventoryWidget(root *sws.SWS_RootWidget) *InventoryWidget {
-	mainwidget := sws.CreateMainWidget(650,400," Inventory Management ",true,true)
+func NewInventoryWidget(root *sws.RootWidget) *InventoryWidget {
+	mainwidget := sws.NewMainWidget(650,400," Inventory Management ",true,true)
 	widget := &InventoryWidget{
 		rootwindow: root,
 		mainwidget: mainwidget,
 		sub: make([]*supplier.SubInventory,0),
-		vbox: sws.CreateVBoxWidget(200,100),
-		menu: sws.CreateCoreWidget(500,50),
-		bottomsplitview: sws.CreateSplitviewWidget(200,200,true),
-		buttonsub: make(map[*supplier.SubInventory]*sws.SWS_FlatButtonWidget),
+		vbox: sws.NewVBoxWidget(200,100),
+		menu: sws.NewCoreWidget(500,50),
+		bottomsplitview: sws.NewSplitviewWidget(200,200,true),
+		buttonsub: make(map[*supplier.SubInventory]*sws.FlatButtonWidget),
 	}
 	mainwidget.SetCloseCallback(func() {
 		widget.Hide()
 	})
 	
-	sv := sws.CreateSplitviewWidget(200,200,false)
+	sv := sws.NewSplitviewWidget(200,200,false)
 	sv.PlaceSplitBar(50)
 	sv.SplitBarMovable(false)
 	mainwidget.SetInnerWidget(sv)
@@ -100,12 +100,12 @@ func NewInventoryWidget(root *sws.SWS_RootWidget) *InventoryWidget {
 	
 	widget.bottomsplitview.SetLeftWidget(widget.vbox)
 	
-	category:= sws.CreateLabel(220,50,"Category")
+	category:= sws.NewLabelWidget(220,50,"Category")
 	category.SetColor(0xffffffff)
 	category.SetCentered(true)
 	widget.menu.AddChild(category)
 	
-	title:= sws.CreateLabel(220,50,"Title")
+	title:= sws.NewLabelWidget(220,50,"Title")
 	title.SetColor(0xffffffff)
 	title.Move(240,0)
 	widget.menu.AddChild(title)

@@ -12,7 +12,7 @@ import (
 // This widget allow to display a Datacenter map (and more)
 //
 type DcWidget struct {
-	sws.SWS_CoreWidget
+	sws.CoreWidget
 	rackwidget    *RackWidget
 	tiles         [][]*Tile
 	xRoot, yRoot  int32
@@ -235,7 +235,7 @@ func (self *DcWidget) LoadMap(dc map[string]interface{}) {
 	for y := range self.tiles {
 		self.tiles[y] = make([]*Tile, width)
 		for x := range self.tiles[y] {
-			self.tiles[y][x] = CreateGrassTile()
+			self.tiles[y][x] = NewGrassTile()
 		}
 	}
 	tiles := dc["tiles"].([]interface{})
@@ -253,7 +253,7 @@ func (self *DcWidget) LoadMap(dc map[string]interface{}) {
 		}
 		if dcelementtype == "" || dcelementtype == "rack" {
 			// basic floor
-			self.tiles[y][x] = CreateElectricalTile(wall0, wall1, floor, rotation, dcelementtype)
+			self.tiles[y][x] = NewElectricalTile(wall0, wall1, floor, rotation, dcelementtype)
 		}
 	}
 }
@@ -300,10 +300,10 @@ func (self *DcWidget) SaveMap() string {
 	return s
 }
 
-func CreateDcWidget(w, h int32,rootwindow *sws.SWS_RootWidget,inventory *supplier.Inventory) *DcWidget {
-	corewidget := sws.CreateCoreWidget(w, h)
+func NewDcWidget(w, h int32,rootwindow *sws.RootWidget,inventory *supplier.Inventory) *DcWidget {
+	corewidget := sws.NewCoreWidget(w, h)
 	rackwidget:=NewRackWidget(rootwindow,inventory)
-	widget := &DcWidget{SWS_CoreWidget: *corewidget,
+	widget := &DcWidget{CoreWidget: *corewidget,
 		rackwidget: rackwidget,
 		tiles:      [][]*Tile{{}},
 		xRoot:      0,
