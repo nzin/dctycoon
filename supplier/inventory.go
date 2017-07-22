@@ -3,6 +3,8 @@ package supplier
 import (
 	"fmt"
 	"time"
+	"strings"
+	"strconv"
 	//	"github.com/nzin/dctycoon/accounting"
 	"github.com/nzin/dctycoon/timer"
 )
@@ -55,6 +57,52 @@ type InventoryItem struct {
 	Coresallocated int32
 	Ramallocated   int32 // in Mo
 	Diskallocated  int32 // in Mo
+}
+
+func (self *InventoryItem) Save() string {
+	str := "{"
+	switch self.Typeitem {
+		case PRODUCT_SERVER:
+			str+=fmt.Sprintf(`"Id": %d, "Typeitem": "SERVER", "Buydate": "%d-%d-%d", "Deliverydate": "%d-%d-%d", "Xplaced":%d, "Yplaced":%d, "Zplaced":%d, "Coresallocated": %d, "Ramallocated": %d, "Diskallocated":%d, "NbProcessors":%d, "NbCore":%d, "VtSupport": "%t", "NbDisks":%d, "NbSlotRam":%d, "DiskSize":%d, "RamSize":%d, "ConfType": "%s"`,
+				self.Id,
+				self.Buydate.Year(),self.Buydate.Month(),self.Buydate.Day(),
+				self.Deliverydate.Year(),self.Deliverydate.Month(),self.Deliverydate.Day(),
+				self.Xplaced,self.Yplaced,self.Zplaced,
+				self.Coresallocated,
+				self.Ramallocated,
+				self.Diskallocated,
+				self.Serverconf.NbProcessors,
+				self.Serverconf.NbCore,
+				self.Serverconf.VtSupport,
+				self.Serverconf.NbDisks,
+				self.Serverconf.NbSlotRam,
+				self.Serverconf.DiskSize,
+				self.Serverconf.RamSize,
+				self.Serverconf.ConfType.ServerName,
+			)
+ 		case PRODUCT_RACK:
+			str+=fmt.Sprintf(`"Id": %d, "Typeitem": "RACK", "Buydate": "%d-%d-%d", "Deliverydate": "%d-%d-%d", "Xplaced":%d, "Yplaced":%d`,
+				self.Id,
+				self.Buydate.Year(),self.Buydate.Month(),self.Buydate.Day(),
+				self.Deliverydate.Year(),self.Deliverydate.Month(),self.Deliverydate.Day(),
+				self.Xplaced,self.Yplaced,
+			)
+ 		case PRODUCT_AC:
+			str+=fmt.Sprintf(`"Id": %d, "Typeitem": "AC", "Buydate": "%d-%d-%d", "Deliverydate": "%d-%d-%d", "Xplaced":%d, "Yplaced":%d`,
+				self.Id,
+				self.Buydate.Year(),self.Buydate.Month(),self.Buydate.Day(),
+				self.Deliverydate.Year(),self.Deliverydate.Month(),self.Deliverydate.Day(),
+				self.Xplaced,self.Yplaced,
+			)
+ 		case PRODUCT_GENERATOR:
+			str+=fmt.Sprintf(`"Id": %d, "Typeitem": "GENERATOR", "Buydate": "%d-%d-%d", "Deliverydate": "%d-%d-%d", "Xplaced":%d, "Yplaced":%d`,
+				self.Id,
+				self.Buydate.Year(),self.Buydate.Month(),self.Buydate.Day(),
+				self.Deliverydate.Year(),self.Deliverydate.Month(),self.Deliverydate.Day(),
+				self.Xplaced,self.Yplaced,
+			)
+	}
+	return str + "}"
 }
 
 func (self *InventoryItem) ShortDescription() string {
@@ -162,16 +210,129 @@ func (self *Inventory) DiscardItem(item *InventoryItem) bool {
 	return false
 }
 
+func (self *Inventory) LoadItem(product map[string]interface{}) {
+	typeitem := product["Typeitem"].(string)
+	buydate := strings.Split(product["Buydate"].(string),"-")
+	buydateY, _ := strconv.Atoi(buydate[0])
+	buydateM, _ := strconv.Atoi(buydate[1])
+	buydateD, _ := strconv.Atoi(buydate[2])
+	deliverydate := strings.Split(product["Deliverydate"].(string),"-")
+	deliverydateY,_ := strconv.Atoi(deliverydate[0])
+	deliverydateM,_ := strconv.Atoi(deliverydate[1])
+	deliverydateD,_ := strconv.Atoi(deliverydate[2])
+	item:=&InventoryItem{
+		Id: int32(product["Id"].(float64)),
+		Buydate: time.Date(buydateY,time.Month(buydateM),buydateD, 0, 0, 0, 0, time.UTC),
+		Deliverydate: time.Date(deliverydateY,time.Month(deliverydateM),deliverydateD, 0, 0, 0, 0, time.UTC),
+		Xplaced: int32(product["Xplaced"].(float64)),
+		Yplaced: int32(product["Yplaced"].(float64)),
+	}
+	
+	switch typeitem {
+		case "SERVER":
+			item.Typeitem = PRODUCT_SERVER
+			item.Zplaced = int32(product["Zplaced"].(float64))
+			item.Coresallocated = int32(product["Coresallocated"].(float64))
+			item.Ramallocated = int32(product["Ramallocated"].(float64))
+			item.Diskallocated = int32(product["Diskallocated"].(float64))
+			item.Serverconf = &ServerConf {
+				NbProcessors: int32(product["NbProcessors"].(float64)),
+				NbCore: int32(product["NbCore"].(float64)),
+				VtSupport: product["VtSupport"].(string)=="true",
+				NbDisks: int32(product["NbDisks"].(float64)),
+				NbSlotRam: int32(product["NbSlotRam"].(float64)),
+				DiskSize: int32(product["DiskSize"].(float64)),
+				RamSize: int32(product["RamSize"].(float64)),
+				ConfType: GetServerConfTypeByName(product["ConfType"].(string)),
+			}
+
+		case "RACK":
+			item.Typeitem = PRODUCT_RACK
+		case "AC":
+			item.Typeitem = PRODUCT_AC
+		case "GENERATOR":
+			item.Typeitem = PRODUCT_GENERATOR
+	}
+	
+	// now we store it
+	self.Items[item.Id]=item
+}
+
+func (self *Inventory) LoadPublishItems() {
+	// placed first RACK, AC, GENERATOR
+	for _,item := range self.Items {
+		if item.Typeitem == PRODUCT_RACK || item.Typeitem == PRODUCT_AC || item.Typeitem == PRODUCT_GENERATOR {
+			if (item.Xplaced!=-1) {
+				for _, sub := range self.subscribers {
+					sub.ItemInstalled(item)
+				}
+			} else {
+				if (timer.GlobalGameTimer.CurrentTime.Before(item.Deliverydate)) {
+					for _, sub := range self.subscribers {
+						instocksub:=sub
+						sub.ItemInTransit(item)
+						timer.GlobalGameTimer.AddEvent(item.Deliverydate, func() {
+							instocksub.ItemInStock(item)
+						})
+					}
+				} else {
+					for _, sub := range self.subscribers {
+						sub.ItemInStock(item)
+					}
+				}
+			}
+		}
+	}
+	// placed second SERVERS (especially rack servers!)
+	for _,item := range self.Items {
+		if item.Typeitem == PRODUCT_SERVER {
+			if (item.Xplaced!=-1) {
+				for _, sub := range self.subscribers {
+					sub.ItemInstalled(item)
+				}
+			} else {
+				if (timer.GlobalGameTimer.CurrentTime.Before(item.Deliverydate)) {
+					for _, sub := range self.subscribers {
+						instocksub:=sub
+						sub.ItemInTransit(item)
+						timer.GlobalGameTimer.AddEvent(item.Deliverydate, func() {
+							instocksub.ItemInStock(item)
+						})
+					}
+				} else {
+					for _, sub := range self.subscribers {
+						sub.ItemInStock(item)
+					}
+				}
+			}
+		}
+	}
+}
+
 func (self *Inventory) Load(conf map[string]interface{}) {
-	//self.increment=int32(conf["increment"].(float64))
+	self.increment = int32(conf["increment"].(float64))
+	self.Items = make(map[int32]*InventoryItem)
+	items := conf["items"].([]interface{})
+	for _,item := range(items) {
+		self.LoadItem(item.(map[string]interface{}))
+	}
+	self.LoadPublishItems()
 }
 
 func (self *Inventory) Save() string {
-	str := ""
-	//str+=fmt.Sprintf(`"increment":%d`,self.increment)
+	str := "{"
+	str+=fmt.Sprintf(`"increment":%d,`,self.increment)
 	str += `"items":[`
-
-	str += "]"
+	firstitem:=true
+	for _,item := range self.Items {
+		if (firstitem == true) {
+			firstitem = false
+		} else {
+			str += ",\n"
+		}
+		str += item.Save()
+	}
+	str += "]}"
 	return str
 }
 

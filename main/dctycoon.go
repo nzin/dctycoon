@@ -49,10 +49,11 @@ func main() {
 	accounting.GlobalLedger.Load(v["ledger"].(map[string]interface{}), dctycoon.AvailableLocation[dctycoon.GlobalLocation].Taxrate)
 	accountingui.SetBankinterestrate(dctycoon.AvailableLocation[dctycoon.GlobalLocation].Bankinterestrate)
 
-	supplier.GlobalInventory.Load(v["inventory"].(map[string]interface{}))
-
 	gamemap := v["map"].(map[string]interface{})
 	dc.LoadMap(gamemap)
+	
+	supplier.GlobalInventory.Load(v["inventory"].(map[string]interface{}))
+
 	root.AddChild(dc)
 	root.SetFocus(dc)
 
@@ -92,8 +93,8 @@ func main() {
 	gamefile.WriteString(fmt.Sprintf(`"location": "%s",`, dctycoon.GlobalLocation) + "\n")
 	gamefile.WriteString(fmt.Sprintf(`"map": %s,`, data) + "\n")
 	gamefile.WriteString(fmt.Sprintf(`"trends": %s,`, supplier.TrendSave(supplier.Trends)) + "\n")
-	gamefile.WriteString(fmt.Sprintf(`"clock": %s`, timer.GlobalGameTimer.Save()+"\n"))
-	gamefile.WriteString(fmt.Sprintf(`"inventory": %s`, supplier.GlobalInventory.Save()+"\n"))
+	gamefile.WriteString(fmt.Sprintf(`"clock": %s,`, timer.GlobalGameTimer.Save()+"\n"))
+	gamefile.WriteString(fmt.Sprintf(`"inventory": %s,`, supplier.GlobalInventory.Save()+"\n"))
 	gamefile.WriteString(fmt.Sprintf(`"ledger": %s`, accounting.GlobalLedger.Save()+"\n"))
 	gamefile.WriteString("}\n")
 

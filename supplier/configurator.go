@@ -96,6 +96,15 @@ var AvailableConfs = []ServerConfType{
 	},
 }
 
+func GetServerConfTypeByName(name string) *ServerConfType{
+	for _,conftype := range AvailableConfs {
+		if conftype.ServerName==name {
+			return &conftype
+		}
+	}
+	return nil
+}
+
 //
 // based on the different type of chassis available
 // and the vendor(s) options, the final server conf
