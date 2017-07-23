@@ -16,10 +16,9 @@ const (
 )
 
 // base "class" for all tiles
-type DcElement interface {
+type TileElement interface {
 	// should be passive, rack, ...
-	ElementType() string               // to know which type to save
-	Save() string                      // json
+	ElementType() int32                // which type sit on: PRODUCT_RACK, PRODUCT_AC, ...
 	Draw(rotation uint32) *sdl.Surface // face can be 0,1,2,3 (i.e. 0, 90, 180, 270)
 	Power() float64                    // ampere
 }
@@ -51,12 +50,8 @@ func (self *RackElement) RemoveItem(item *supplier.InventoryItem) {
 	}
 }
 
-func (self *RackElement) ElementType() string {
-	return "rack"
-}
-
-func (self *RackElement) Save() string {
-	return ""
+func (self *RackElement) ElementType() int32 {
+	return supplier.PRODUCT_RACK
 }
 
 func (self *RackElement) Draw(rotation uint32) *sdl.Surface {
@@ -109,43 +104,39 @@ func NewRackElement() *RackElement {
 	return r
 }
 
-type ElectricalElement struct {
-	flavor           string  // ac, battery, generatorA,generatorB
+type SimpleElement struct {
+	inventoryitem    *supplier.InventoryItem // ac, battery, generator
 	power            float64 // negative if it is a generator
 	capacity         int32   // kWh if it is a battery
 	surface          *sdl.Surface
 	previousrotation uint32
 }
 
-func (self *ElectricalElement) ElementType() string {
-	return self.flavor
+func (self *SimpleElement) ElementType() int32 {
+	return self.inventoryitem.Typeitem
 }
 
-func (self *ElectricalElement) Save() string {
-	return ""
-}
-
-func (self *ElectricalElement) Draw(rotation uint32) *sdl.Surface {
+func (self *SimpleElement) Draw(rotation uint32) *sdl.Surface {
 	if rotation != self.previousrotation && self.surface != nil {
-		self.surface.Free()
+		//self.surface.Free()
 		self.surface = nil
 	}
 	if self.surface == nil {
-		self.surface = getSprite("resources/" + self.flavor + strconv.Itoa(int(rotation)) + ".png")
+		self.surface = getSprite("resources/" + self.inventoryitem.GetSprite() + strconv.Itoa(int(rotation)) + ".png")
 		self.previousrotation = rotation
 	}
 	return self.surface
 }
 
-func (self *ElectricalElement) Power() float64 {
+func (self *SimpleElement) Power() float64 {
 	return self.power
 }
 
-func NewElectricalElement(dcelementtype string) *ElectricalElement {
-	//power := payload["power"].(float64)
-	//capacity := int32(payload["capacity"].(float64))
-	ee := &ElectricalElement{
-		flavor:           dcelementtype,
+func NewSimpleElement(item *supplier.InventoryItem) *SimpleElement {
+	//power := payload["power"].(float64) // will depend on "flavor"
+	//capacity := int32(payload["capacity"].(float64)) // will depend on "flavor"
+	ee := &SimpleElement{
+		inventoryitem:    item,
 		power:            0,
 		capacity:         0,
 		surface:          nil,
@@ -157,37 +148,53 @@ func NewElectricalElement(dcelementtype string) *ElectricalElement {
 type Tile struct {
 	wall     [2]string // "" when nothing
 	floor    string
-	element  DcElement
+	element  TileElement // either RackElement or SimpleElement
 	surface  *sdl.Surface
 	rotation uint32 // rotation of the inner element: floor+element (not the walls)
 }
 
 func (self *Tile) ItemInstalled(item *supplier.InventoryItem) {
 	if item.Typeitem == supplier.PRODUCT_SERVER && item.Serverconf.ConfType.NbU > 0 {
-		if self.element != nil && self.element.ElementType() == "rack" {
+		if self.element != nil && self.element.ElementType() == supplier.PRODUCT_RACK {
 			rack := self.element.(*RackElement)
 			rack.AddItem(item)
 			self.surface = nil
 		}
 	}
+	if item.Typeitem == supplier.PRODUCT_RACK && self.element == nil {
+		self.element = NewRackElement()
+	}
+	if item.Typeitem != supplier.PRODUCT_RACK && item.Typeitem != supplier.PRODUCT_SERVER {
+		self.element = NewSimpleElement(item)
+	}
 }
 
 func (self *Tile) ItemUninstalled(item *supplier.InventoryItem) {
 	if item.Typeitem == supplier.PRODUCT_SERVER && item.Serverconf.ConfType.NbU > 0 {
-		if self.element != nil && self.element.ElementType() == "rack" {
+		if self.element != nil && self.element.ElementType() == supplier.PRODUCT_RACK {
 			rack := self.element.(*RackElement)
 			rack.RemoveItem(item)
 			self.surface = nil
 		}
 	}
+	// TODO: we should make some checks here
+	if item.Typeitem == supplier.PRODUCT_RACK && self.element == nil {
+		self.element = nil
+	}
+	if item.Typeitem != supplier.PRODUCT_RACK && item.Typeitem != supplier.PRODUCT_SERVER {
+		self.element = nil
+	}
 }
 
-func (self *Tile) DcElement() DcElement {
+func (self *Tile) TileElement() TileElement {
 	return self.element
 }
 
 func (self *Tile) IsElementAt(x, y int32) bool {
 	if self.element == nil {
+		return false
+	}
+	if self.element.ElementType() != supplier.PRODUCT_RACK {
 		return false
 	}
 	elt := self.element.Draw(self.rotation)
@@ -247,6 +254,7 @@ func (self *Tile) Rotate(rotation uint32) {
 }
 
 func (self *Tile) Power() float64 {
+	if self.element == nil { return 0 }
 	return self.element.Power()
 }
 
@@ -260,21 +268,15 @@ func NewGrassTile() *Tile {
 	return tile
 }
 
-func NewElectricalTile(wall0, wall1, floor string, rotation uint32, dcelementtype string) *Tile {
+func NewTile(wall0, wall1, floor string, rotation uint32) *Tile {
 	if rotation > 3 {
 		rotation = 0
-	}
-	var element DcElement
-	if dcelementtype == "rack" {
-		element = NewRackElement()
-	} else if dcelementtype != "" {
-		element = NewElectricalElement(dcelementtype)
 	}
 	tile := &Tile{
 		wall:     [2]string{wall0, wall1},
 		rotation: rotation,
 		floor:    floor,
-		element:  element,
+		element:  nil,
 	}
 	return tile
 }

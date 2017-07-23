@@ -86,7 +86,7 @@ func (self *DcWidget) MousePressDown(x, y int32, button uint8) {
 					// now, do we have an active item inside the tile
 					if tile.IsElementAt(x-xShift, y-yShift) {
 						//fmt.Println("active element!!!")
-						self.rackwidget.activeElement = tile.DcElement()
+						self.rackwidget.activeElement = tile.TileElement()
 						self.rackwidget.xactiveElement = int32(tx)
 						self.rackwidget.yactiveElement = int32(ty)
 					}
@@ -101,8 +101,14 @@ func (self *DcWidget) MousePressDown(x, y int32, button uint8) {
 }
 
 func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
-	if self.rackwidget.activeElement != nil {
-		self.rackwidget.Show(self.rackwidget.xactiveElement, self.rackwidget.yactiveElement)
+	if button == sdl.BUTTON_LEFT {
+		if self.rackwidget.activeElement != nil {
+			self.rackwidget.Show(self.rackwidget.xactiveElement, self.rackwidget.yactiveElement)
+		}
+	}
+	if button == sdl.BUTTON_RIGHT {
+		self.activeTile.Rotate((self.activeTile.rotation+1)%4)
+		sws.PostUpdate()
 	}
 }
 
@@ -205,7 +211,9 @@ func (self *DcWidget) ItemInstalled(item *supplier.InventoryItem) {
 	mapheight := len(self.tiles)
 	mapwidth := len(self.tiles[0])
 	if item.Xplaced <= int32(mapwidth) && item.Yplaced <= int32(mapheight) && item.Xplaced >= 0 && item.Yplaced >= 0 {
-		self.tiles[item.Yplaced][item.Xplaced].ItemInstalled(item)
+		//if item.Typeitem==supplier.PRODUCT_SERVER {
+			self.tiles[item.Yplaced][item.Xplaced].ItemInstalled(item)
+		//}
 	}
 }
 
@@ -213,7 +221,9 @@ func (self *DcWidget) ItemUninstalled(item *supplier.InventoryItem) {
 	mapheight := len(self.tiles)
 	mapwidth := len(self.tiles[0])
 	if item.Xplaced <= int32(mapwidth) && item.Yplaced <= int32(mapheight) && item.Xplaced >= 0 && item.Yplaced >= 0 {
-		self.tiles[item.Yplaced][item.Xplaced].ItemUninstalled(item)
+		//if item.Typeitem==supplier.PRODUCT_SERVER {
+			self.tiles[item.Yplaced][item.Xplaced].ItemUninstalled(item)
+		//}
 	}
 }
 
@@ -247,14 +257,7 @@ func (self *DcWidget) LoadMap(dc map[string]interface{}) {
 		wall1 := tile["wall1"].(string)
 		floor := tile["floor"].(string)
 		rotation := uint32(tile["rotation"].(float64))
-		var dcelementtype string
-		if tile["dcelementtype"] != nil {
-			dcelementtype = tile["dcelementtype"].(string)
-		}
-		if dcelementtype == "" || dcelementtype == "rack" {
-			// basic floor
-			self.tiles[y][x] = NewElectricalTile(wall0, wall1, floor, rotation, dcelementtype)
-		}
+		self.tiles[y][x] = NewTile(wall0, wall1, floor, rotation)
 	}
 }
 
@@ -265,26 +268,14 @@ func (self *DcWidget) SaveMap() string {
 		for x, _ := range self.tiles[y] {
 			t := self.tiles[y][x]
 			value := ""
-			if t.element == nil {
-				if t.wall[0] != "" || t.wall[1] != "" || t.floor != "green" {
-					value = fmt.Sprintf(`{"x":%d, "y":%d, "wall0":"%s", "wall1":"%s", "floor":"%s","rotation":%d}`,
-						x,
-						y,
-						t.wall[0],
-						t.wall[1],
-						t.floor,
-						t.rotation,
-					)
-				}
-			} else {
-				value = fmt.Sprintf(`{"x":%d, "y":%d, "wall0":"%s", "wall1":"%s", "floor":"%s", "rotation":%d, "dcelementtype":"%s"}`,
+			if t.wall[0] != "" || t.wall[1] != "" || t.floor != "green" {
+				value = fmt.Sprintf(`{"x":%d, "y":%d, "wall0":"%s", "wall1":"%s", "floor":"%s","rotation":%d}`,
 					x,
 					y,
 					t.wall[0],
 					t.wall[1],
 					t.floor,
 					t.rotation,
-					t.element.ElementType(),
 				)
 			}
 			if value != "" {

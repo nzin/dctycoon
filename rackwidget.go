@@ -144,7 +144,7 @@ func (self *RackChassisWidget) ItemRemoveFromStock(*supplier.InventoryItem) {
 }
 
 func (self *RackChassisWidget) ItemInstalled(item *supplier.InventoryItem) {
-	if item.Xplaced == self.xpos && item.Yplaced == self.ypos {
+	if item.Xplaced == self.xpos && item.Yplaced == self.ypos && item.Typeitem == supplier.PRODUCT_SERVER {
 		self.items = append(self.items, item)
 		sws.PostUpdate()
 	}
@@ -166,7 +166,7 @@ func (self *RackChassisWidget) SetLocation(x, y int32) {
 	self.ypos = y
 	self.items = make([]*supplier.InventoryItem, 0)
 	for _, item := range self.inventory.Items {
-		if item.Xplaced == x && item.Yplaced == y {
+		if item.Xplaced == x && item.Yplaced == y && item.Typeitem == supplier.PRODUCT_SERVER {
 			self.items = append(self.items, item)
 		}
 	}
@@ -379,7 +379,7 @@ type RackWidget struct {
 	inventory      *supplier.Inventory
 	xactiveElement int32
 	yactiveElement int32
-	activeElement  DcElement
+	activeElement  TileElement
 	splitview      *sws.SplitviewWidget
 	rackchassis    *RackChassisWidget
 }

@@ -59,6 +59,20 @@ type InventoryItem struct {
 	Diskallocated  int32 // in Mo
 }
 
+func (self *InventoryItem) GetSprite() string {
+	switch self.Typeitem {
+		case PRODUCT_SERVER:
+			return self.Serverconf.ConfType.ServerSprite
+		case PRODUCT_RACK:
+			return "rack"
+		case PRODUCT_AC:
+			return "ac"
+		case PRODUCT_GENERATOR:
+			return "generator"
+	}
+	return ""
+}
+
 func (self *InventoryItem) Save() string {
 	str := "{"
 	switch self.Typeitem {
