@@ -179,8 +179,8 @@ func (self *DcWidget) MouseMove(x, y, xrel, yrel int32) {
 		// compute the x-y where the mouse is
 		mapheight := len(self.tiles)
 		mapwidth := len(self.tiles[0])
-		tilex := ( (x-(self.Surface().W/2)-TILE_WIDTH_STEP/2-10)/2 + y-TILE_HEIGHT+TILE_HEIGHT_STEP+8)/TILE_HEIGHT_STEP
-		tiley := (y-TILE_HEIGHT+TILE_HEIGHT_STEP+8 - (x-(self.Surface().W/2)-TILE_WIDTH_STEP/2-10)/2 ) / TILE_HEIGHT_STEP
+		tilex := ( (x-self.xRoot-(self.Surface().W/2)-TILE_WIDTH_STEP/2-10)/2 + y-self.yRoot-TILE_HEIGHT+TILE_HEIGHT_STEP+8)/TILE_HEIGHT_STEP
+		tiley := (y-self.yRoot-TILE_HEIGHT+TILE_HEIGHT_STEP+8 - (x-self.xRoot-(self.Surface().W/2)-TILE_WIDTH_STEP/2-10)/2 ) / TILE_HEIGHT_STEP
 		
 		//fmt.Println("DcWidget::MouveMove",tilex,tiley)
 		if (tilex<0) { tilex = 0 }
