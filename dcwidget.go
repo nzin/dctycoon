@@ -125,8 +125,9 @@ func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 			sws.ShowMenu(m)
 		} else if activeElement != nil {
 			m := sws.NewMenuWidget()
+			activeTile := self.activeTile
 			m.AddItem(sws.NewMenuItemLabel("Rotate", func() {
-				self.activeTile.Rotate((self.activeTile.rotation+1)%4)
+				activeTile.Rotate((activeTile.rotation+1)%4)
 			}))
 			m.Move(x,y)
 			sws.ShowMenu(m)
