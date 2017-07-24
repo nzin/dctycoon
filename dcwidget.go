@@ -13,12 +13,14 @@ import (
 //
 type DcWidget struct {
 	sws.CoreWidget
-	rackwidget   *RackWidget
-	tiles        [][]*Tile
-	xRoot, yRoot int32
-	activeTile   *Tile
-	te           *sws.TimerEvent
-	inventory    *supplier.Inventory
+	rackwidget    *RackWidget
+	tiles         [][]*Tile
+	xRoot, yRoot  int32 // offset of the whole map
+	activeTile    *Tile
+	te            *sws.TimerEvent
+	inventory     *supplier.Inventory
+	activeX       int32
+	activeY       int32
 }
 
 func (self *DcWidget) Repaint() {
@@ -86,9 +88,9 @@ func (self *DcWidget) MousePressDown(x, y int32, button uint8) {
 					// now, do we have an active item inside the tile
 					if tile.IsElementAt(x-xShift, y-yShift) {
 						//fmt.Println("active element!!!")
-						self.rackwidget.activeElement = tile.TileElement()
-						self.rackwidget.xactiveElement = int32(tx)
-						self.rackwidget.yactiveElement = int32(ty)
+						self.activeX = int32(tx)
+						self.activeY = int32(ty)
+						
 					}
 					break
 				}
@@ -102,13 +104,32 @@ func (self *DcWidget) MousePressDown(x, y int32, button uint8) {
 
 func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 	if button == sdl.BUTTON_LEFT {
-		if self.rackwidget.activeElement != nil {
-			self.rackwidget.Show(self.rackwidget.xactiveElement, self.rackwidget.yactiveElement)
-		}
 	}
-	if button == sdl.BUTTON_RIGHT {
-		self.activeTile.Rotate((self.activeTile.rotation+1)%4)
-		sws.PostUpdate()
+	if button == sdl.BUTTON_RIGHT && self.activeTile != nil {
+		// if we are on a rack
+		activeElement := self.activeTile.TileElement()
+		if activeElement != nil && activeElement.ElementType() == supplier.PRODUCT_RACK {
+			m := sws.NewMenuWidget()
+			m.AddItem(sws.NewMenuItemLabel("Rotate", func() {
+				self.activeTile.Rotate((self.activeTile.rotation+1)%4)
+			}))
+			// prepare rackwidget
+			self.rackwidget.activeElement = self.activeTile.TileElement()
+			self.rackwidget.xactiveElement = self.activeX
+			self.rackwidget.yactiveElement = self.activeY
+			m.AddItem(sws.NewMenuItemLabel("Details", func() {
+				self.rackwidget.Show(self.rackwidget.xactiveElement, self.rackwidget.yactiveElement)
+			}))
+			m.Move(x,y)
+			sws.ShowMenu(m)
+		} else if activeElement != nil {
+			m := sws.NewMenuWidget()
+			m.AddItem(sws.NewMenuItemLabel("Rotate", func() {
+				self.activeTile.Rotate((self.activeTile.rotation+1)%4)
+			}))
+			m.Move(x,y)
+			sws.ShowMenu(m)
+		}
 	}
 }
 
@@ -147,6 +168,12 @@ func (self *DcWidget) MouseMove(x, y, xrel, yrel int32) {
 			self.MoveDown()
 		})
 		return
+	}
+	
+	// if we are moving an element's tile
+	if self.activeTile != nil && self.activeTile.TileElement() != nil {
+		
+		// compute the x-y where the mouse is
 	}
 }
 

@@ -194,9 +194,9 @@ func (self *Tile) IsElementAt(x, y int32) bool {
 	if self.element == nil {
 		return false
 	}
-	if self.element.ElementType() != supplier.PRODUCT_RACK {
-		return false
-	}
+	//if self.element.ElementType() != supplier.PRODUCT_RACK {
+	//	return false
+	//}
 	elt := self.element.Draw(self.rotation)
 	y -= TILE_HEIGHT - elt.H
 	if (x < 0) || (y < 0) || (x >= elt.W) || (y > elt.H) {
