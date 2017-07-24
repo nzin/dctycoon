@@ -110,8 +110,9 @@ func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 		activeElement := self.activeTile.TileElement()
 		if activeElement != nil && activeElement.ElementType() == supplier.PRODUCT_RACK {
 			m := sws.NewMenuWidget()
+			activeTile := self.activeTile
 			m.AddItem(sws.NewMenuItemLabel("Rotate", func() {
-				self.activeTile.Rotate((self.activeTile.rotation+1)%4)
+				activeTile.Rotate((activeTile.rotation+1)%4)
 			}))
 			// prepare rackwidget
 			self.rackwidget.activeElement = self.activeTile.TileElement()
@@ -131,6 +132,7 @@ func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 			sws.ShowMenu(m)
 		}
 	}
+	self.activeTile = nil
 }
 
 func (self *DcWidget) HasFocus(focus bool) {
@@ -174,6 +176,40 @@ func (self *DcWidget) MouseMove(x, y, xrel, yrel int32) {
 	if self.activeTile != nil && self.activeTile.TileElement() != nil {
 		
 		// compute the x-y where the mouse is
+		mapheight := len(self.tiles)
+		mapwidth := len(self.tiles[0])
+		tilex := ( (x-(self.Surface().W/2)-TILE_WIDTH_STEP/2-10)/2 + y-TILE_HEIGHT+TILE_HEIGHT_STEP+8)/TILE_HEIGHT_STEP
+		tiley := (y-TILE_HEIGHT+TILE_HEIGHT_STEP+8 - (x-(self.Surface().W/2)-TILE_WIDTH_STEP/2-10)/2 ) / TILE_HEIGHT_STEP
+		
+		//fmt.Println("DcWidget::MouveMove",tilex,tiley)
+		if (tilex<0) { tilex = 0 }
+		if (tiley<0) { tiley = 0 }
+		if (tilex>=int32(mapwidth)) { tilex = int32(mapwidth)-1 }
+		if (tiley>=int32(mapheight)) { tiley = int32(mapheight)-1 }
+		
+		if (tilex != self.activeX || tiley != self.activeY) && self.tiles[tiley][tilex].element == nil {
+			element := self.activeTile.element
+			rotation := self.activeTile.rotation
+			self.activeTile.element = nil
+			self.activeTile.surface = nil
+			
+			self.activeX = tilex
+			self.activeY = tiley
+			self.activeTile = self.tiles[tiley][tilex]
+			self.activeTile.element = element
+			self.activeTile.rotation = rotation
+			self.activeTile.surface = nil
+			
+			if element.ElementType() == supplier.PRODUCT_RACK {
+				rack := element.(*RackElement)	
+				for _,i := range rack.items {
+					i.Xplaced = tilex
+					i.Yplaced = tiley
+				}
+			}
+			
+			sws.PostUpdate()
+		}
 	}
 }
 
