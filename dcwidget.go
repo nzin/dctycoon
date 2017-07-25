@@ -65,9 +65,7 @@ func GetSurfacePixel(surface *sdl.Surface, x, y int32) (red, green, blue, alpha 
 	return
 }
 
-func (self *DcWidget) MousePressDown(x, y int32, button uint8) {
-	self.activeTile = nil
-	self.rackwidget.activeElement = nil
+func (self *DcWidget) findTile(x,y int32) (*Tile,int32,int32,bool) {
 	mapheight := len(self.tiles)
 	mapwidth := len(self.tiles[0])
 	for ty := mapheight - 1; ty >= 0; ty-- {
@@ -83,21 +81,37 @@ func (self *DcWidget) MousePressDown(x, y int32, button uint8) {
 				(y < yShift+surface.H) {
 				_, _, _, alpha := GetSurfacePixel(surface, x-xShift, y-yShift)
 				if alpha > 0 {
-					//fmt.Println("activeTile: "+tile.floor,tx,ty)
-					self.activeTile = tile
-					// now, do we have an active item inside the tile
-					if tile.IsElementAt(x-xShift, y-yShift) {
-						//fmt.Println("active element!!!")
-						self.activeX = int32(tx)
-						self.activeY = int32(ty)
-						
-					}
-					break
+					return tile, int32(tx), int32(ty), tile.IsElementAt(x-xShift, y-yShift)
 				}
 			}
 		}
-		if self.activeTile != nil {
-			break
+	}
+	return nil, -1, -1, false
+}
+
+func (self *DcWidget) MousePressDown(x, y int32, button uint8) {
+	self.rackwidget.activeElement = nil
+	activeTile,xtile,ytile,isElement := self.findTile(x,y)
+	self.activeTile = activeTile
+
+	// now, do we have an active item inside the tile
+	if activeTile != nil && isElement {
+		//fmt.Println("active element!!!")
+		self.activeX = xtile
+		self.activeY = ytile
+		
+	}
+}
+
+func (self *DcWidget) MouseDoubleClick(x,y int32) {
+	activeTile,xtile,ytile,isElement := self.findTile(x,y)
+	if activeTile != nil && isElement {
+		activeElement := activeTile.TileElement()
+		if activeElement != nil && activeElement.ElementType() == supplier.PRODUCT_RACK {
+			self.rackwidget.activeElement = activeTile.TileElement()
+			self.rackwidget.xactiveElement = xtile
+			self.rackwidget.yactiveElement = ytile
+			self.rackwidget.Show(self.rackwidget.xactiveElement, self.rackwidget.yactiveElement)
 		}
 	}
 }
