@@ -21,6 +21,7 @@ type DcWidget struct {
 	inventory     *supplier.Inventory
 	activeX       int32
 	activeY       int32
+	hc            *HardwareChoice
 }
 
 func (self *DcWidget) Repaint() {
@@ -38,6 +39,11 @@ func (self *DcWidget) Repaint() {
 			}
 		}
 	}
+	self.hc.Repaint()
+	rectSrc := sdl.Rect{0, 0, self.hc.Width(), self.hc.Height()}
+        rectDst := sdl.Rect{self.hc.X(), self.hc.Y(), self.hc.Width(), self.hc.Height()}
+        self.hc.Surface().Blit(&rectSrc, self.Surface(), &rectDst)
+
 	sws.PostUpdate()
 }
 
@@ -378,7 +384,12 @@ func NewDcWidget(w, h int32, rootwindow *sws.RootWidget, inventory *supplier.Inv
 		xRoot:      0,
 		yRoot:      0,
 		inventory:  inventory,
+		hc:         NewHardwareChoice(inventory),
 	}
 	inventory.AddSubscriber(widget)
+	
+	//widget.hc.Move(0,h/2-100)
+	widget.hc.Move(0,0)
+	widget.AddChild(widget.hc)
 	return widget
 }
