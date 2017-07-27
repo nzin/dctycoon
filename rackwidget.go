@@ -130,8 +130,8 @@ type RackChassisWidget struct {
 	ypos       int32
 	ydrag      int32
 	items      []*supplier.InventoryItem
-	inmove     *supplier.InventoryItem
-	comingitem *supplier.InventoryItem
+	inmove     *supplier.InventoryItem // when we drag/drop from the same rack
+	comingitem *supplier.InventoryItem // when we drag from the item list
 }
 
 func (self *RackChassisWidget) ItemInTransit(*supplier.InventoryItem) {
@@ -174,7 +174,12 @@ func (self *RackChassisWidget) SetLocation(x, y int32) {
 
 func (self *RackChassisWidget) computeComingPos(zpos int32) int32 {
 	zpos = (zpos - CHASSIS_OFFSET) / RACK_SIZE
-	nbu := self.comingitem.Serverconf.ConfType.NbU
+	var nbu int32
+	if self.comingitem!=nil {
+		nbu = self.comingitem.Serverconf.ConfType.NbU
+	} else {
+		nbu = self.inmove.Serverconf.ConfType.NbU
+	}
 	var busy [42]bool
 
 	// first create the map of what is filled
@@ -248,7 +253,12 @@ func (self *RackChassisWidget) Repaint() {
 	if self.ydrag != -1 {
 		zpos := self.computeComingPos(self.ydrag)
 		if zpos != -1 {
-			nbu := self.comingitem.Serverconf.ConfType.NbU
+			var nbu int32
+			if self.comingitem!=nil {
+				nbu = self.comingitem.Serverconf.ConfType.NbU
+			} else {
+				nbu = self.inmove.Serverconf.ConfType.NbU
+			}
 			self.SetDrawColor(255, 0, 0, 255)
 			self.DrawLine(10, CHASSIS_OFFSET+zpos*RACK_SIZE, 19, CHASSIS_OFFSET+zpos*RACK_SIZE)
 			self.DrawLine(10, CHASSIS_OFFSET+zpos*RACK_SIZE, 10, CHASSIS_OFFSET+9+zpos*RACK_SIZE)
@@ -331,6 +341,7 @@ func (self *RackChassisWidget) DragDrop(x, y int32, payload sws.DragPayload) boo
 		}
 
 		self.ydrag = -1
+		self.comingitem = nil
 		sws.PostUpdate()
 	}
 	if payload.GetType() == 2 {
@@ -347,6 +358,7 @@ func (self *RackChassisWidget) DragDrop(x, y int32, payload sws.DragPayload) boo
 		self.inventory.UninstallItem(item)
 		self.inventory.InstallItem(item, xpos, ypos, zpos)
 		self.ydrag = -1
+		self.inmove = nil
 		sws.PostUpdate()
 		return true
 	}

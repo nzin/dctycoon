@@ -3,6 +3,7 @@ package dctycoon
 import (
 	"fmt"
 	"github.com/veandco/go-sdl2/sdl"
+	"github.com/veandco/go-sdl2/img"
 	"github.com/nzin/sws"
 	"github.com/nzin/dctycoon/supplier"
 )
@@ -16,6 +17,18 @@ const (
 	CATEGORY_AC = 3
 	CATEGORY_GENERATOR = 4
 )
+
+type ElementDragPayload struct {
+	item *supplier.InventoryItem
+	imageheight int32
+}
+
+func (self *ElementDragPayload) GetType() int32 {
+	return 3
+}
+
+func (self *ElementDragPayload) PayloadAccepted(bool) {
+}
 
 type HardwareChoiceItem struct {
 	sws.LabelWidget
@@ -31,6 +44,39 @@ func NewHardwareChoiceItem(item *supplier.InventoryItem) *HardwareChoiceItem{
 	i.SetImage("resources/icon."+item.GetSprite()+".png")
 	return i
 }
+
+func (self *HardwareChoiceItem) MousePressDown(x, y int32, button uint8) {
+	// if we are dealing with a rack server
+	if (self.item.Serverconf.ConfType.NbU>0) {
+		payload := &ServerDragPayload{
+			item: self.item,
+		}
+		var parent sws.Widget
+		parent = self
+		for parent != nil {
+			x += parent.X()
+ 			y += parent.Y()
+			parent = parent.Parent()
+		}
+		sws.NewDragEvent(x, y, "resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", payload)
+	} else { // tower
+		payload := &ElementDragPayload{
+			item: self.item,
+		}
+		if img, err := img.Load("resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png"); err == nil {
+			payload.imageheight = img.H
+		}
+		var parent sws.Widget
+		parent = self
+		for parent != nil {
+			x += parent.X()
+ 			y += parent.Y()
+			parent = parent.Parent()
+		}
+		sws.NewDragEvent(x, y, "resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", payload)
+	}
+}
+
 
 type HardwareChoiceCategory struct {
 	sws.LabelWidget
@@ -72,13 +118,14 @@ func NewHardwareChoiceCategory(category int32, main *HardwareChoice) * HardwareC
 }
 
 func (self *HardwareChoiceCategory) addItem(item *supplier.InventoryItem) {
+	fmt.Println("HardwareChoiceCategory::addItem")
 	self.items[item.Id]=item
 	self.SetText(fmt.Sprintf("%dx",len(self.items)))
 	
 	if (self.Category == CATEGORY_SERVER_TOWER || self.Category == CATEGORY_SERVER_RACK) {
+		self.vbox.AddChild(NewHardwareChoiceItem(item))
 		if (len(self.items)<=10) {
 			self.subpanel.Resize(200,int32(50*len(self.items)))
-			self.vbox.AddChild(NewHardwareChoiceItem(item))
 		}
 	}
 }
@@ -103,6 +150,30 @@ func (self *HardwareChoiceCategory) removeItem(item *supplier.InventoryItem) {
 }
 
 func (self *HardwareChoiceCategory) MousePressDown(x, y int32, button uint8) {
+	if  (self.Category == CATEGORY_RACK || self.Category == CATEGORY_AC || self.Category == CATEGORY_GENERATOR) &&
+	    button == sdl.BUTTON_LEFT && len(self.items)>0 {
+		
+		// ugly way to get one of the item
+		var item *supplier.InventoryItem
+		for _,v := range self.items {
+			item = v
+			break
+		}
+		payload := &ElementDragPayload{
+			item: item,
+		}
+		if img, err := img.Load("resources/"+item.GetSprite()+"0.png"); err == nil {
+			payload.imageheight = img.H
+		}
+		var parent sws.Widget
+		parent = self
+		for parent != nil {
+			x += parent.X()
+ 			y += parent.Y()
+			parent = parent.Parent()
+		}
+		sws.NewDragEvent(x, y, "resources/"+item.GetSprite()+"0.png", payload)
+	}
 }
 
 func (self *HardwareChoiceCategory) MousePressUp(x, y int32, button uint8) {
@@ -172,11 +243,9 @@ func (self *HardwareChoice) ItemRemoveFromStock(item *supplier.InventoryItem) {
 }
 
 func (self *HardwareChoice) ItemInstalled(item *supplier.InventoryItem) {
-	self.removeItem(item)
 }
 
 func (self *HardwareChoice) ItemUninstalled(item *supplier.InventoryItem) {
-	self.addItem(item)
 }
 
 func (self *HardwareChoice) switchItemPanel(category int32, widget sws.Widget) {

@@ -24,6 +24,58 @@ type DcWidget struct {
 	hc            *HardwareChoice
 }
 
+func (self *DcWidget) DragDrop(x, y int32, payload sws.DragPayload) bool {
+	// rack server
+	if payload.GetType() == 1 {
+		item := payload.(*ServerDragPayload).item
+		tile,tx,ty,_ := self.findTile(x,y)
+		if tile == nil || tile.element == nil || tile.element.ElementType()!=supplier.PRODUCT_RACK { return false }
+		nbu := item.Serverconf.ConfType.NbU
+		var busy [42]bool
+
+		// first create the map of what is filled
+		for _, i := range self.inventory.Items {
+			if i.Xplaced == tx && i.Yplaced == ty && i.Typeitem == supplier.PRODUCT_SERVER {
+				iNbU := i.Serverconf.ConfType.NbU
+				for j := 0; j < int(iNbU); j++ {
+					if j+int(i.Zplaced) < 42 {
+						busy[j+int(i.Zplaced)] = true
+					}
+				}
+			}
+		}
+		
+		// try to find a place
+		for i:=0; i< int(42-nbu); i++ {
+			found := true
+			for j:=0;j<int(nbu);j++ {
+				if busy[i+j] == true {
+					found = false
+					break
+				}
+			}
+			if found == true {
+				self.inventory.InstallItem(item,tx,ty,int32(i))
+				return true
+			}
+		}
+		return false
+	}
+	
+	// other: tower, ac, generator, rack
+	if payload.GetType() == 3 {
+		item := payload.(*ElementDragPayload).item
+		height := payload.(*ElementDragPayload).imageheight
+		tile,tx,ty,_ := self.findTile(x,y+height/2-24)
+		if tile == nil || tile.element!=nil { return false }
+		
+		self.inventory.InstallItem(item,tx,ty,-1)
+		return true
+	}
+	return false
+}
+
+
 func (self *DcWidget) Repaint() {
 	mapheight := len(self.tiles)
 	mapwidth := len(self.tiles[0])

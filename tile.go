@@ -163,9 +163,11 @@ func (self *Tile) ItemInstalled(item *supplier.InventoryItem) {
 	}
 	if item.Typeitem == supplier.PRODUCT_RACK && self.element == nil {
 		self.element = NewRackElement()
+		self.surface = nil
 	}
 	if item.Typeitem != supplier.PRODUCT_RACK && item.Typeitem != supplier.PRODUCT_SERVER {
 		self.element = NewSimpleElement(item)
+		self.surface = nil
 	}
 }
 

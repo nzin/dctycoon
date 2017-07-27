@@ -33,7 +33,10 @@
     "items": [
       {"Id": 0, "Typeitem": "AC", "Buydate": "1996-11-15", "Deliverydate": "1996-11-19", "Xplaced":0, "Yplaced":4},
       {"Id": 1, "Typeitem": "GENERATOR", "Buydate": "1996-11-15", "Deliverydate": "1996-11-19", "Xplaced":1, "Yplaced":4},
-      {"Id": 2, "Typeitem": "RACK", "Buydate": "1996-11-15", "Deliverydate": "1996-11-19", "Xplaced":4, "Yplaced":4}
+      {"Id": 2, "Typeitem": "RACK", "Buydate": "1996-11-15", "Deliverydate": "1996-11-19", "Xplaced":4, "Yplaced":4},
+      {"Id": 3, "Typeitem": "AC", "Buydate": "1996-11-15", "Deliverydate": "1996-11-19", "Xplaced":-1, "Yplaced":-1},
+      {"Id": 4, "Typeitem": "GENERATOR", "Buydate": "1996-11-15", "Deliverydate": "1996-11-19", "Xplaced":-1, "Yplaced":-1},
+      {"Id": 5, "Typeitem": "RACK", "Buydate": "1996-11-15", "Deliverydate": "1996-11-19", "Xplaced":-1, "Yplaced":-1}
     ]
   },
   "clock": {
