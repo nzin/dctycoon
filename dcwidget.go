@@ -13,23 +13,25 @@ import (
 //
 type DcWidget struct {
 	sws.CoreWidget
-	rackwidget    *RackWidget
-	tiles         [][]*Tile
-	xRoot, yRoot  int32 // offset of the whole map
-	activeTile    *Tile
-	te            *sws.TimerEvent
-	inventory     *supplier.Inventory
-	activeX       int32
-	activeY       int32
-	hc            *HardwareChoice
+	rackwidget   *RackWidget
+	tiles        [][]*Tile
+	xRoot, yRoot int32 // offset of the whole map
+	activeTile   *Tile
+	te           *sws.TimerEvent
+	inventory    *supplier.Inventory
+	activeX      int32
+	activeY      int32
+	hc           *HardwareChoice
 }
 
 func (self *DcWidget) DragDrop(x, y int32, payload sws.DragPayload) bool {
 	// rack server
 	if payload.GetType() == 1 {
 		item := payload.(*ServerDragPayload).item
-		tile,tx,ty,_ := self.findTile(x,y)
-		if tile == nil || tile.element == nil || tile.element.ElementType()!=supplier.PRODUCT_RACK { return false }
+		tile, tx, ty, _ := self.findTile(x, y)
+		if tile == nil || tile.element == nil || tile.element.ElementType() != supplier.PRODUCT_RACK {
+			return false
+		}
 		nbu := item.Serverconf.ConfType.NbU
 		var busy [42]bool
 
@@ -44,37 +46,38 @@ func (self *DcWidget) DragDrop(x, y int32, payload sws.DragPayload) bool {
 				}
 			}
 		}
-		
+
 		// try to find a place
-		for i:=0; i< int(42-nbu); i++ {
+		for i := 0; i < int(42-nbu); i++ {
 			found := true
-			for j:=0;j<int(nbu);j++ {
+			for j := 0; j < int(nbu); j++ {
 				if busy[i+j] == true {
 					found = false
 					break
 				}
 			}
 			if found == true {
-				self.inventory.InstallItem(item,tx,ty,int32(i))
+				self.inventory.InstallItem(item, tx, ty, int32(i))
 				return true
 			}
 		}
 		return false
 	}
-	
+
 	// other: tower, ac, generator, rack
 	if payload.GetType() == 3 {
 		item := payload.(*ElementDragPayload).item
 		height := payload.(*ElementDragPayload).imageheight
-		tile,tx,ty,_ := self.findTile(x,y+height/2-24)
-		if tile == nil || tile.element!=nil { return false }
-		
-		self.inventory.InstallItem(item,tx,ty,-1)
+		tile, tx, ty, _ := self.findTile(x, y+height/2-24)
+		if tile == nil || tile.element != nil {
+			return false
+		}
+
+		self.inventory.InstallItem(item, tx, ty, -1)
 		return true
 	}
 	return false
 }
-
 
 func (self *DcWidget) Repaint() {
 	mapheight := len(self.tiles)
@@ -93,8 +96,8 @@ func (self *DcWidget) Repaint() {
 	}
 	self.hc.Repaint()
 	rectSrc := sdl.Rect{0, 0, self.hc.Width(), self.hc.Height()}
-        rectDst := sdl.Rect{self.hc.X(), self.hc.Y(), self.hc.Width(), self.hc.Height()}
-        self.hc.Surface().Blit(&rectSrc, self.Surface(), &rectDst)
+	rectDst := sdl.Rect{self.hc.X(), self.hc.Y(), self.hc.Width(), self.hc.Height()}
+	self.hc.Surface().Blit(&rectSrc, self.Surface(), &rectDst)
 
 	sws.PostUpdate()
 }
@@ -123,7 +126,7 @@ func GetSurfacePixel(surface *sdl.Surface, x, y int32) (red, green, blue, alpha 
 	return
 }
 
-func (self *DcWidget) findTile(x,y int32) (*Tile,int32,int32,bool) {
+func (self *DcWidget) findTile(x, y int32) (*Tile, int32, int32, bool) {
 	mapheight := len(self.tiles)
 	mapwidth := len(self.tiles[0])
 	for ty := mapheight - 1; ty >= 0; ty-- {
@@ -149,7 +152,7 @@ func (self *DcWidget) findTile(x,y int32) (*Tile,int32,int32,bool) {
 
 func (self *DcWidget) MousePressDown(x, y int32, button uint8) {
 	self.rackwidget.activeElement = nil
-	activeTile,xtile,ytile,isElement := self.findTile(x,y)
+	activeTile, xtile, ytile, isElement := self.findTile(x, y)
 	self.activeTile = activeTile
 
 	// now, do we have an active item inside the tile
@@ -157,12 +160,12 @@ func (self *DcWidget) MousePressDown(x, y int32, button uint8) {
 		//fmt.Println("active element!!!")
 		self.activeX = xtile
 		self.activeY = ytile
-		
+
 	}
 }
 
-func (self *DcWidget) MouseDoubleClick(x,y int32) {
-	activeTile,xtile,ytile,isElement := self.findTile(x,y)
+func (self *DcWidget) MouseDoubleClick(x, y int32) {
+	activeTile, xtile, ytile, isElement := self.findTile(x, y)
 	if activeTile != nil && isElement {
 		activeElement := activeTile.TileElement()
 		if activeElement != nil && activeElement.ElementType() == supplier.PRODUCT_RACK {
@@ -184,7 +187,7 @@ func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 			m := sws.NewMenuWidget()
 			activeTile := self.activeTile
 			m.AddItem(sws.NewMenuItemLabel("Rotate", func() {
-				activeTile.Rotate((activeTile.rotation+1)%4)
+				activeTile.Rotate((activeTile.rotation + 1) % 4)
 			}))
 			// prepare rackwidget
 			self.rackwidget.activeElement = self.activeTile.TileElement()
@@ -193,15 +196,15 @@ func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 			m.AddItem(sws.NewMenuItemLabel("Details", func() {
 				self.rackwidget.Show(self.rackwidget.xactiveElement, self.rackwidget.yactiveElement)
 			}))
-			m.Move(x,y)
+			m.Move(x, y)
 			sws.ShowMenu(m)
 		} else if activeElement != nil {
 			m := sws.NewMenuWidget()
 			activeTile := self.activeTile
 			m.AddItem(sws.NewMenuItemLabel("Rotate", func() {
-				activeTile.Rotate((activeTile.rotation+1)%4)
+				activeTile.Rotate((activeTile.rotation + 1) % 4)
 			}))
-			m.Move(x,y)
+			m.Move(x, y)
 			sws.ShowMenu(m)
 		}
 	}
@@ -244,43 +247,51 @@ func (self *DcWidget) MouseMove(x, y, xrel, yrel int32) {
 		})
 		return
 	}
-	
+
 	// if we are moving an element's tile
 	if self.activeTile != nil && self.activeTile.TileElement() != nil {
-		
+
 		// compute the x-y where the mouse is
 		mapheight := len(self.tiles)
 		mapwidth := len(self.tiles[0])
-		tilex := ( (x-self.xRoot-(self.Surface().W/2)-TILE_WIDTH_STEP/2-10)/2 + y-self.yRoot-TILE_HEIGHT+TILE_HEIGHT_STEP+8)/TILE_HEIGHT_STEP
-		tiley := (y-self.yRoot-TILE_HEIGHT+TILE_HEIGHT_STEP+8 - (x-self.xRoot-(self.Surface().W/2)-TILE_WIDTH_STEP/2-10)/2 ) / TILE_HEIGHT_STEP
-		
+		tilex := ((x-self.xRoot-(self.Surface().W/2)-TILE_WIDTH_STEP/2-10)/2 + y - self.yRoot - TILE_HEIGHT + TILE_HEIGHT_STEP + 8) / TILE_HEIGHT_STEP
+		tiley := (y - self.yRoot - TILE_HEIGHT + TILE_HEIGHT_STEP + 8 - (x-self.xRoot-(self.Surface().W/2)-TILE_WIDTH_STEP/2-10)/2) / TILE_HEIGHT_STEP
+
 		//fmt.Println("DcWidget::MouveMove",tilex,tiley)
-		if (tilex<0) { tilex = 0 }
-		if (tiley<0) { tiley = 0 }
-		if (tilex>=int32(mapwidth)) { tilex = int32(mapwidth)-1 }
-		if (tiley>=int32(mapheight)) { tiley = int32(mapheight)-1 }
-		
+		if tilex < 0 {
+			tilex = 0
+		}
+		if tiley < 0 {
+			tiley = 0
+		}
+		if tilex >= int32(mapwidth) {
+			tilex = int32(mapwidth) - 1
+		}
+		if tiley >= int32(mapheight) {
+			tiley = int32(mapheight) - 1
+		}
+
 		if (tilex != self.activeX || tiley != self.activeY) && self.tiles[tiley][tilex].element == nil {
 			element := self.activeTile.element
 			rotation := self.activeTile.rotation
 			self.activeTile.element = nil
 			self.activeTile.surface = nil
-			
+
 			self.activeX = tilex
 			self.activeY = tiley
 			self.activeTile = self.tiles[tiley][tilex]
 			self.activeTile.element = element
 			self.activeTile.rotation = rotation
 			self.activeTile.surface = nil
-			
+
 			if element.ElementType() == supplier.PRODUCT_RACK {
-				rack := element.(*RackElement)	
-				for _,i := range rack.items {
+				rack := element.(*RackElement)
+				for _, i := range rack.items {
 					i.Xplaced = tilex
 					i.Yplaced = tiley
 				}
 			}
-			
+
 			sws.PostUpdate()
 		}
 	}
@@ -348,7 +359,7 @@ func (self *DcWidget) ItemInstalled(item *supplier.InventoryItem) {
 	mapwidth := len(self.tiles[0])
 	if item.Xplaced <= int32(mapwidth) && item.Yplaced <= int32(mapheight) && item.Xplaced >= 0 && item.Yplaced >= 0 {
 		//if item.Typeitem==supplier.PRODUCT_SERVER {
-			self.tiles[item.Yplaced][item.Xplaced].ItemInstalled(item)
+		self.tiles[item.Yplaced][item.Xplaced].ItemInstalled(item)
 		//}
 	}
 }
@@ -358,7 +369,7 @@ func (self *DcWidget) ItemUninstalled(item *supplier.InventoryItem) {
 	mapwidth := len(self.tiles[0])
 	if item.Xplaced <= int32(mapwidth) && item.Yplaced <= int32(mapheight) && item.Xplaced >= 0 && item.Yplaced >= 0 {
 		//if item.Typeitem==supplier.PRODUCT_SERVER {
-			self.tiles[item.Yplaced][item.Xplaced].ItemUninstalled(item)
+		self.tiles[item.Yplaced][item.Xplaced].ItemUninstalled(item)
 		//}
 	}
 }
@@ -439,9 +450,9 @@ func NewDcWidget(w, h int32, rootwindow *sws.RootWidget, inventory *supplier.Inv
 		hc:         NewHardwareChoice(inventory),
 	}
 	inventory.AddSubscriber(widget)
-	
+
 	//widget.hc.Move(0,h/2-100)
-	widget.hc.Move(0,0)
+	widget.hc.Move(0, 0)
 	widget.AddChild(widget.hc)
 	return widget
 }

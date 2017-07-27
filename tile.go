@@ -106,8 +106,8 @@ func NewRackElement() *RackElement {
 
 type SimpleElement struct {
 	inventoryitem    *supplier.InventoryItem // ac, battery, generator
-	power            float64 // negative if it is a generator
-	capacity         int32   // kWh if it is a battery
+	power            float64                 // negative if it is a generator
+	capacity         int32                   // kWh if it is a battery
 	surface          *sdl.Surface
 	previousrotation uint32
 }
@@ -256,7 +256,9 @@ func (self *Tile) Rotate(rotation uint32) {
 }
 
 func (self *Tile) Power() float64 {
-	if self.element == nil { return 0 }
+	if self.element == nil {
+		return 0
+	}
 	return self.element.Power()
 }
 

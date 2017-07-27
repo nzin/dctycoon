@@ -175,7 +175,7 @@ func (self *RackChassisWidget) SetLocation(x, y int32) {
 func (self *RackChassisWidget) computeComingPos(zpos int32) int32 {
 	zpos = (zpos - CHASSIS_OFFSET) / RACK_SIZE
 	var nbu int32
-	if self.comingitem!=nil {
+	if self.comingitem != nil {
 		nbu = self.comingitem.Serverconf.ConfType.NbU
 	} else {
 		nbu = self.inmove.Serverconf.ConfType.NbU
@@ -254,7 +254,7 @@ func (self *RackChassisWidget) Repaint() {
 		zpos := self.computeComingPos(self.ydrag)
 		if zpos != -1 {
 			var nbu int32
-			if self.comingitem!=nil {
+			if self.comingitem != nil {
 				nbu = self.comingitem.Serverconf.ConfType.NbU
 			} else {
 				nbu = self.inmove.Serverconf.ConfType.NbU
