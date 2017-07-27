@@ -117,7 +117,6 @@ func NewHardwareChoiceCategory(category int32, main *HardwareChoice) *HardwareCh
 }
 
 func (self *HardwareChoiceCategory) addItem(item *supplier.InventoryItem) {
-	fmt.Println("HardwareChoiceCategory::addItem")
 	self.items[item.Id] = item
 	self.SetText(fmt.Sprintf("%dx", len(self.items)))
 
@@ -249,7 +248,7 @@ func (self *HardwareChoice) ItemUninstalled(item *supplier.InventoryItem) {
 
 func (self *HardwareChoice) switchItemPanel(category int32, widget sws.Widget) {
 	if self.currentPanel != nil {
-		self.RemoveChild(self.currentPanel)
+		self.Parent().RemoveChild(self.currentPanel)
 		for _, w := range self.categories {
 			w.SetColor(0)
 		}
@@ -264,23 +263,17 @@ func (self *HardwareChoice) switchItemPanel(category int32, widget sws.Widget) {
 	self.currentPanel = widget
 	self.currentPanel.Move(50, 75*category)
 
-	self.AddChild(self.currentPanel)
+	self.Parent().AddChild(self.currentPanel)
 	self.categories[category].SetColor(0xdddddddd)
 
-	height := self.Height()
-	if (self.currentPanel.Y() + self.currentPanel.Height()) > height {
-		height = self.currentPanel.Y() + self.currentPanel.Height()
-	}
-	self.Resize(50+self.currentPanel.Width(), height)
 	sws.PostUpdate()
 }
 
 func (self *HardwareChoice) closeItemPanel() {
-	self.RemoveChild(self.currentPanel)
+	self.Parent().RemoveChild(self.currentPanel)
 	for _, w := range self.categories {
 		w.SetColor(0)
 	}
-	self.Resize(50, 375)
 	self.currentPanel = nil
 	self.currentPanelCategory = -1
 	sws.PostUpdate()

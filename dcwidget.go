@@ -94,12 +94,13 @@ func (self *DcWidget) Repaint() {
 			}
 		}
 	}
-	self.hc.Repaint()
-	rectSrc := sdl.Rect{0, 0, self.hc.Width(), self.hc.Height()}
-	rectDst := sdl.Rect{self.hc.X(), self.hc.Y(), self.hc.Width(), self.hc.Height()}
-	self.hc.Surface().Blit(&rectSrc, self.Surface(), &rectDst)
-
-	sws.PostUpdate()
+	for _, child := range self.GetChildren() {
+		// adjust the clipping to the current child
+		child.Repaint()
+		rectSrc := sdl.Rect{0, 0, child.Width(), child.Height()}
+		rectDst := sdl.Rect{child.X(), child.Y(), child.Width(), child.Height()}
+		child.Surface().Blit(&rectSrc, self.Surface(), &rectDst)
+	}
 }
 
 //
