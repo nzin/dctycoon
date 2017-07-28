@@ -29,7 +29,7 @@
     ]
   },
   "inventory": {
-    "increment":3,
+    "increment":6,
     "items": [
       {"Id": 0, "Typeitem": "AC", "Buydate": "1996-11-15", "Deliverydate": "1996-11-19", "Xplaced":0, "Yplaced":4},
       {"Id": 1, "Typeitem": "GENERATOR", "Buydate": "1996-11-15", "Deliverydate": "1996-11-19", "Xplaced":1, "Yplaced":4},
