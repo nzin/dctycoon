@@ -112,7 +112,8 @@ func (self *CartPageWidget) AddItem(productitem int32, conf *ServerConf, unitpri
 	}
 	GlobalInventory.Cart = append(GlobalInventory.Cart, item)
 	var ui *CartPageItemUi
-	if productitem == PRODUCT_SERVER {
+	switch productitem {
+	    case PRODUCT_SERVER:
 		ramSizeText := fmt.Sprintf("%d Mo", conf.NbSlotRam*conf.RamSize)
 		if conf.NbSlotRam*conf.RamSize >= 2048 {
 			ramSizeText = fmt.Sprintf("%d Go", conf.NbSlotRam*conf.RamSize/1024)
@@ -129,6 +130,42 @@ func (self *CartPageWidget) AddItem(productitem int32, conf *ServerConf, unitpri
 				}
 				self.grandTotal.SetText(fmt.Sprintf("%.2f $", totalprice))
 			})
+	    case PRODUCT_RACK:
+		ui = NewCartPageItemUi("resources/rack0.100.png",
+			"Rack",
+			unitprice,
+			nb,func() {
+				var totalprice float64
+				item.Nb = ui.qty
+				for _, itemui := range self.items {
+					totalprice += itemui.price * float64(itemui.qty)
+				}
+				self.grandTotal.SetText(fmt.Sprintf("%.2f $", totalprice))
+		})
+	    case PRODUCT_AC:
+		ui = NewCartPageItemUi("resources/ac0.100.png",
+			"Air Climatizer",
+			unitprice,
+			nb,func() {
+				var totalprice float64
+				item.Nb = ui.qty
+				for _, itemui := range self.items {
+					totalprice += itemui.price * float64(itemui.qty)
+				}
+				self.grandTotal.SetText(fmt.Sprintf("%.2f $", totalprice))
+		})
+	    case PRODUCT_GENERATOR:
+		ui = NewCartPageItemUi("resources/generator0.100.png",
+			"Generator",
+			unitprice,
+			nb,func() {
+				var totalprice float64
+				item.Nb = ui.qty
+				for _, itemui := range self.items {
+					totalprice += itemui.price * float64(itemui.qty)
+				}
+				self.grandTotal.SetText(fmt.Sprintf("%.2f $", totalprice))
+		})
 	}
 
 	self.items = append(self.items, ui)

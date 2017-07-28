@@ -12,10 +12,16 @@ type ServerPageExploreWidget struct {
 	sws.CoreWidget
 	towerbutton *sws.ButtonWidget
 	towerflat   *sws.FlatButtonWidget
-	rackbutton  *sws.ButtonWidget
-	rackflat    *sws.FlatButtonWidget
+	rackserverbutton  *sws.ButtonWidget
+	rackserverflat    *sws.FlatButtonWidget
 	bladebutton *sws.ButtonWidget
 	bladeflat   *sws.FlatButtonWidget
+	acbutton *sws.ButtonWidget
+	acflat   *sws.FlatButtonWidget
+	rackbutton  *sws.ButtonWidget
+	rackflat    *sws.FlatButtonWidget
+	generatorbutton *sws.ButtonWidget
+	generatorflat   *sws.FlatButtonWidget
 }
 
 func (self *ServerPageExploreWidget) SetTowerCallback(callback func()) {
@@ -23,14 +29,29 @@ func (self *ServerPageExploreWidget) SetTowerCallback(callback func()) {
 	self.towerflat.SetClicked(callback)
 }
 
-func (self *ServerPageExploreWidget) SetRackCallback(callback func()) {
-	self.rackbutton.SetClicked(callback)
-	self.rackflat.SetClicked(callback)
+func (self *ServerPageExploreWidget) SetRackServerCallback(callback func()) {
+	self.rackserverbutton.SetClicked(callback)
+	self.rackserverflat.SetClicked(callback)
 }
 
 func (self *ServerPageExploreWidget) SetBladeCallback(callback func()) {
 	self.bladebutton.SetClicked(callback)
 	self.bladeflat.SetClicked(callback)
+}
+
+func (self *ServerPageExploreWidget) SetAcCallback(callback func()) {
+	self.acbutton.SetClicked(callback)
+	self.acflat.SetClicked(callback)
+}
+
+func (self *ServerPageExploreWidget) SetRackCallback(callback func()) {
+	self.rackbutton.SetClicked(callback)
+	self.rackflat.SetClicked(callback)
+}
+
+func (self *ServerPageExploreWidget) SetGeneratorCallback(callback func()) {
+	self.generatorbutton.SetClicked(callback)
+	self.generatorflat.SetClicked(callback)
 }
 
 func NewServerPageExploreWidget(width, height int32) *ServerPageExploreWidget {
@@ -73,32 +94,32 @@ func NewServerPageExploreWidget(width, height int32) *ServerPageExploreWidget {
 	serverpageexplore.towerbutton = towerButton
 	serverpageexplore.AddChild(towerButton)
 
-	rackIcon := sws.NewFlatButtonWidget(150, 100, "")
-	rackIcon.SetImage("resources/server.2u0.png")
-	rackIcon.SetColor(0xffeeeeee)
-	rackIcon.SetCentered(true)
-	rackIcon.Move(150, 20)
-	serverpageexplore.AddChild(rackIcon)
-	serverpageexplore.rackflat = rackIcon
+	rackserverIcon := sws.NewFlatButtonWidget(150, 100, "")
+	rackserverIcon.SetImage("resources/server.2u0.png")
+	rackserverIcon.SetColor(0xffeeeeee)
+	rackserverIcon.SetCentered(true)
+	rackserverIcon.Move(150, 20)
+	serverpageexplore.AddChild(rackserverIcon)
+	serverpageexplore.rackserverflat = rackserverIcon
 
-	rackTitle := sws.NewLabelWidget(150, 20, "Rack servers")
-	rackTitle.SetColor(0xffeeeeee)
-	rackTitle.SetTextColor(sdl.Color{0x06, 0x84, 0xdc, 0xff})
-	rackTitle.Move(150, 120)
-	serverpageexplore.AddChild(rackTitle)
+	rackserverTitle := sws.NewLabelWidget(150, 20, "Rack servers")
+	rackserverTitle.SetColor(0xffeeeeee)
+	rackserverTitle.SetTextColor(sdl.Color{0x06, 0x84, 0xdc, 0xff})
+	rackserverTitle.Move(150, 120)
+	serverpageexplore.AddChild(rackserverTitle)
 
-	rackDesc := sws.NewTextAreaWidget(150, 160, "Discover our large choice of rack server, from 1U to 4U, to tackle all your datacenter needs")
-	rackDesc.SetReadonly(true)
-	rackDesc.SetFont(sws.LatoRegular14)
-	rackDesc.SetColor(0xffeeeeee)
-	rackDesc.Move(150, 160)
-	serverpageexplore.AddChild(rackDesc)
+	rackserverDesc := sws.NewTextAreaWidget(150, 160, "Discover our large choice of rackserver server, from 1U to 4U, to tackle all your datacenter needs")
+	rackserverDesc.SetReadonly(true)
+	rackserverDesc.SetFont(sws.LatoRegular14)
+	rackserverDesc.SetColor(0xffeeeeee)
+	rackserverDesc.Move(150, 160)
+	serverpageexplore.AddChild(rackserverDesc)
 
-	rackButton := sws.NewButtonWidget(100, 25, "Know more >")
-	rackButton.SetColor(0xffeeeeee)
-	rackButton.Move(150, 320)
-	serverpageexplore.rackbutton = rackButton
-	serverpageexplore.AddChild(rackButton)
+	rackserverButton := sws.NewButtonWidget(100, 25, "Know more >")
+	rackserverButton.SetColor(0xffeeeeee)
+	rackserverButton.Move(150, 320)
+	serverpageexplore.rackserverbutton = rackserverButton
+	serverpageexplore.AddChild(rackserverButton)
 
 	bladeIcon := sws.NewFlatButtonWidget(150, 100, "")
 	bladeIcon.SetImage("resources/server.blade.8u0.png")
@@ -114,7 +135,7 @@ func NewServerPageExploreWidget(width, height int32) *ServerPageExploreWidget {
 	bladeTitle.Move(300, 120)
 	serverpageexplore.AddChild(bladeTitle)
 
-	bladeDesc := sws.NewTextAreaWidget(150, 160, "For maximum rack density we propose our best in the class 8U blade server offers, with 8 blades (max 2 CPU per blade)")
+	bladeDesc := sws.NewTextAreaWidget(150, 160, "For maximum rackserver density we propose our best in the class 8U blade server offers, with 8 blades (max 2 CPU per blade)")
 	bladeDesc.SetReadonly(true)
 	bladeDesc.SetFont(sws.LatoRegular14)
 	bladeDesc.SetColor(0xffeeeeee)
@@ -126,6 +147,89 @@ func NewServerPageExploreWidget(width, height int32) *ServerPageExploreWidget {
 	bladeButton.Move(300, 320)
 	serverpageexplore.bladebutton = bladeButton
 	serverpageexplore.AddChild(bladeButton)
+
+	// next stage + 340
+
+	acIcon := sws.NewFlatButtonWidget(150, 100, "")
+	acIcon.SetImage("resources/ac0.100.png")
+	acIcon.SetColor(0xffeeeeee)
+	acIcon.SetCentered(true)
+	acIcon.Move(0, 360)
+	serverpageexplore.AddChild(acIcon)
+	serverpageexplore.acflat = acIcon
+	
+	acTitle := sws.NewLabelWidget(150, 20, "Air Climatiser")
+	acTitle.SetColor(0xffeeeeee)
+	acTitle.SetTextColor(sdl.Color{0x06, 0x84, 0xdc, 0xff})
+	acTitle.Move(0, 460)
+	serverpageexplore.AddChild(acTitle)
+
+	acDesc := sws.NewTextAreaWidget(150, 160, "Our next generation efficient Data Center Air Climatiser")
+	acDesc.SetReadonly(true)
+	acDesc.SetFont(sws.LatoRegular14)
+	acDesc.SetColor(0xffeeeeee)
+	acDesc.Move(0, 500)
+	serverpageexplore.AddChild(acDesc)
+
+	acButton := sws.NewButtonWidget(100, 25, "Buy now >")
+	acButton.SetColor(0xffeeeeee)
+	acButton.Move(0, 660)
+	serverpageexplore.acbutton = acButton
+	serverpageexplore.AddChild(acButton)
+
+	rackIcon := sws.NewFlatButtonWidget(150, 100, "")
+	rackIcon.SetImage("resources/rack0.100.png")
+	rackIcon.SetColor(0xffeeeeee)
+	rackIcon.SetCentered(true)
+	rackIcon.Move(150, 360)
+	serverpageexplore.AddChild(rackIcon)
+	serverpageexplore.rackflat = rackIcon
+
+	rackTitle := sws.NewLabelWidget(150, 20, "Rack")
+	rackTitle.SetColor(0xffeeeeee)
+	rackTitle.SetTextColor(sdl.Color{0x06, 0x84, 0xdc, 0xff})
+	rackTitle.Move(150, 460)
+	serverpageexplore.AddChild(rackTitle)
+
+	rackDesc := sws.NewTextAreaWidget(150, 160, "Classic 42U Rack chassis. Up to 64A")
+	rackDesc.SetReadonly(true)
+	rackDesc.SetFont(sws.LatoRegular14)
+	rackDesc.SetColor(0xffeeeeee)
+	rackDesc.Move(150, 500)
+	serverpageexplore.AddChild(rackDesc)
+
+	rackButton := sws.NewButtonWidget(100, 25, "Buy now >")
+	rackButton.SetColor(0xffeeeeee)
+	rackButton.Move(150, 660)
+	serverpageexplore.rackbutton = rackButton
+	serverpageexplore.AddChild(rackButton)
+
+	generatorIcon := sws.NewFlatButtonWidget(150, 100, "")
+	generatorIcon.SetImage("resources/generator0.100.png")
+	generatorIcon.SetColor(0xffeeeeee)
+	generatorIcon.SetCentered(true)
+	generatorIcon.Move(300, 360)
+	serverpageexplore.AddChild(generatorIcon)
+	serverpageexplore.generatorflat = generatorIcon
+
+	generatorTitle := sws.NewLabelWidget(150, 20, "Generator")
+	generatorTitle.SetColor(0xffeeeeee)
+	generatorTitle.SetTextColor(sdl.Color{0x06, 0x84, 0xdc, 0xff})
+	generatorTitle.Move(300, 460)
+	serverpageexplore.AddChild(generatorTitle)
+
+	generatorDesc := sws.NewTextAreaWidget(150, 160, "Prevent electriciy outage with this powerfull yet compact diesel generator. ")
+	generatorDesc.SetReadonly(true)
+	generatorDesc.SetFont(sws.LatoRegular14)
+	generatorDesc.SetColor(0xffeeeeee)
+	generatorDesc.Move(300, 500)
+	serverpageexplore.AddChild(generatorDesc)
+
+	generatorButton := sws.NewButtonWidget(100, 25, "Buy now >")
+	generatorButton.SetColor(0xffeeeeee)
+	generatorButton.Move(300, 660)
+	serverpageexplore.generatorbutton = generatorButton
+	serverpageexplore.AddChild(generatorButton)
 
 	return serverpageexplore
 }

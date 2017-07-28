@@ -153,7 +153,7 @@ func NewSupplier(root *sws.RootWidget) *Supplier {
 		sws.PostUpdate()
 	})
 
-	serverpage.SetRackCallback(func() {
+	serverpage.SetRackServerCallback(func() {
 		serverpage.RemoveChild(widget.content)
 		serverpage.AddChild(banners)
 		widget.content = rackpage
@@ -173,6 +173,27 @@ func NewSupplier(root *sws.RootWidget) *Supplier {
 		sws.PostUpdate()
 	})
 
+	serverpage.SetAcCallback(func() {
+		sv.SetRightWidget(scrollwidgetcart)
+		widget.cartpage.AddItem(supplier.PRODUCT_AC, nil, 2000, 1)
+		scrollwidgetcart.Resize(scrollwidgetcart.Width(), scrollwidgetcart.Height())
+		sws.PostUpdate()
+	})
+
+	serverpage.SetRackCallback(func() {
+		sv.SetRightWidget(scrollwidgetcart)
+		widget.cartpage.AddItem(supplier.PRODUCT_RACK, nil, 500, 1)
+		scrollwidgetcart.Resize(scrollwidgetcart.Width(), scrollwidgetcart.Height())
+		sws.PostUpdate()
+	})
+
+	serverpage.SetGeneratorCallback(func() {
+		sv.SetRightWidget(scrollwidgetcart)
+		widget.cartpage.AddItem(supplier.PRODUCT_GENERATOR, nil, 3000, 1)
+		scrollwidgetcart.Resize(scrollwidgetcart.Width(), scrollwidgetcart.Height())
+		sws.PostUpdate()
+	})
+
 	explore.SetTowerCallback(func() {
 		serverpage.RemoveChild(widget.content)
 		serverpage.AddChild(banners)
@@ -183,7 +204,7 @@ func NewSupplier(root *sws.RootWidget) *Supplier {
 		sws.PostUpdate()
 	})
 
-	explore.SetRackCallback(func() {
+	explore.SetRackServerCallback(func() {
 		serverpage.RemoveChild(widget.content)
 		serverpage.AddChild(banners)
 		widget.content = rackpage
@@ -200,6 +221,27 @@ func NewSupplier(root *sws.RootWidget) *Supplier {
 		serverpage.AddChild(bladepage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
+		sws.PostUpdate()
+	})
+	
+	explore.SetAcCallback(func() {
+		sv.SetRightWidget(scrollwidgetcart)
+		widget.cartpage.AddItem(supplier.PRODUCT_AC, nil, 2000, 1)
+		scrollwidgetcart.Resize(scrollwidgetcart.Width(), scrollwidgetcart.Height())
+		sws.PostUpdate()
+	})
+
+	explore.SetRackCallback(func() {
+		sv.SetRightWidget(scrollwidgetcart)
+		widget.cartpage.AddItem(supplier.PRODUCT_RACK, nil, 500, 1)
+		scrollwidgetcart.Resize(scrollwidgetcart.Width(), scrollwidgetcart.Height())
+		sws.PostUpdate()
+	})
+
+	explore.SetGeneratorCallback(func() {
+		sv.SetRightWidget(scrollwidgetcart)
+		widget.cartpage.AddItem(supplier.PRODUCT_GENERATOR, nil, 3000, 1)
+		scrollwidgetcart.Resize(scrollwidgetcart.Width(), scrollwidgetcart.Height())
 		sws.PostUpdate()
 	})
 

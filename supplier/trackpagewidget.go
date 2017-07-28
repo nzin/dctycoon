@@ -53,13 +53,23 @@ type TrackPageWidget struct {
 func (self *TrackPageWidget) ItemInTransit(item *InventoryItem) {
 	desc := ""
 	icon := ""
-	if item.Typeitem == PRODUCT_SERVER {
+	switch item.Typeitem {
+	    case PRODUCT_SERVER:
 		ramSizeText := fmt.Sprintf("%d Mo", item.Serverconf.NbSlotRam*item.Serverconf.RamSize)
 		if item.Serverconf.NbSlotRam*item.Serverconf.RamSize >= 2048 {
 			ramSizeText = fmt.Sprintf("%d Go", item.Serverconf.NbSlotRam*item.Serverconf.RamSize/1024)
 		}
 		icon = "resources/" + item.Serverconf.ConfType.ServerSprite + "0.png"
 		desc = fmt.Sprintf("%dx %d cores\n%s RAM\n%d disks", item.Serverconf.NbProcessors, item.Serverconf.NbCore, ramSizeText, item.Serverconf.NbDisks)
+	    case PRODUCT_AC:
+		icon = "resources/ac0.100.png"
+		desc = "Air climatiser"
+	    case PRODUCT_RACK:
+		icon = "resources/rack0.100.png"
+		desc = "Rack chassis"
+	    case PRODUCT_GENERATOR:
+		icon = "resources/generator0.100.png"
+		desc = "Generator"
 	}
 	self.intransit[item] = NewTrackPageItemUi(icon, desc, item.Deliverydate)
 	self.vbox.AddChild(self.intransit[item])
