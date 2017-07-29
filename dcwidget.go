@@ -68,7 +68,7 @@ func (self *DcWidget) DragDrop(x, y int32, payload sws.DragPayload) bool {
 	if payload.GetType() == 3 {
 		item := payload.(*ElementDragPayload).item
 		height := payload.(*ElementDragPayload).imageheight
-		tile, tx, ty, _ := self.findTile(x, y+height/2-24)
+		tile, tx, ty := self.findFloorTile(x, y+height/2-24)
 		if tile == nil || tile.element != nil {
 			return false
 		}
@@ -127,6 +127,10 @@ func GetSurfacePixel(surface *sdl.Surface, x, y int32) (red, green, blue, alpha 
 	return
 }
 
+//
+// this method will return the tile where the cusor point to
+// ie if the cursor point to the floor or an element on the tile
+//
 func (self *DcWidget) findTile(x, y int32) (*Tile, int32, int32, bool) {
 	mapheight := len(self.tiles)
 	mapwidth := len(self.tiles[0])
@@ -149,6 +153,30 @@ func (self *DcWidget) findTile(x, y int32) (*Tile, int32, int32, bool) {
 		}
 	}
 	return nil, -1, -1, false
+}
+
+func (self *DcWidget) findFloorTile(x, y int32) (*Tile, int32, int32) {
+	mapheight := len(self.tiles)
+	mapwidth := len(self.tiles[0])
+	// compute the x-y where the mouse is
+	tilex := ((x-self.xRoot-(self.Surface().W/2)-TILE_WIDTH_STEP/2-10)/2 + y - self.yRoot - TILE_HEIGHT + TILE_HEIGHT_STEP + 8) / TILE_HEIGHT_STEP
+	tiley := (y - self.yRoot - TILE_HEIGHT + TILE_HEIGHT_STEP + 8 - (x-self.xRoot-(self.Surface().W/2)-TILE_WIDTH_STEP/2-10)/2) / TILE_HEIGHT_STEP
+
+	//fmt.Println("DcWidget::MouveMove",tilex,tiley)
+	if tilex < 0 {
+		return nil, -1, -1
+	}
+	if tiley < 0 {
+		return nil, -1, -1
+	}
+	if tilex >= int32(mapwidth) {
+		return nil, -1, -1
+	}
+	if tiley >= int32(mapheight) {
+		return nil, -1, -1
+	}
+
+	return self.tiles[tiley][tilex], tilex, tiley
 }
 
 func (self *DcWidget) MousePressDown(x, y int32, button uint8) {
