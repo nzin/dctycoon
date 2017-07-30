@@ -318,6 +318,7 @@ func (self *DcWidget) MouseMove(x, y, xrel, yrel int32) {
 			self.activeTile.element = nil
 			self.activeTile.surface = nil
 
+			// update the tiles
 			self.activeX = tilex
 			self.activeY = tiley
 			self.activeTile = self.tiles[tiley][tilex]
@@ -325,6 +326,11 @@ func (self *DcWidget) MouseMove(x, y, xrel, yrel int32) {
 			self.activeTile.rotation = rotation
 			self.activeTile.surface = nil
 
+			// update the InventoryItem
+			if element != nil {
+				element.InventoryItem().Xplaced = tilex
+				element.InventoryItem().Yplaced = tiley
+			}
 			if element.ElementType() == supplier.PRODUCT_RACK {
 				rack := element.(*RackElement)
 				for _, i := range rack.items {
