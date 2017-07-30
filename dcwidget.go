@@ -14,6 +14,7 @@ import (
 type DcWidget struct {
 	sws.CoreWidget
 	rackwidget   *RackWidget
+	rootwindow   *sws.RootWidget
 	tiles        [][]*Tile
 	xRoot, yRoot int32 // offset of the whole map
 	activeTile   *Tile
@@ -225,6 +226,14 @@ func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 			m.AddItem(sws.NewMenuItemLabel("Details", func() {
 				self.rackwidget.Show(self.rackwidget.xactiveElement, self.rackwidget.yactiveElement)
 			}))
+			m.AddItem(sws.NewMenuItemLabel("Uninstall", func() {
+				rackelement := activeTile.TileElement().(*RackElement)
+				if len(rackelement.items) > 0 {
+					ShowModalError(self.rootwindow,"Uninstall action","It is not possible to uninstall a rack unless it is empty",nil)
+				} else {
+					self.inventory.UninstallItem(rackelement.InventoryItem())
+				}
+			}))
 			m.Move(x, y)
 			sws.ShowMenu(m)
 		} else if activeElement != nil {
@@ -232,6 +241,9 @@ func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 			activeTile := self.activeTile
 			m.AddItem(sws.NewMenuItemLabel("Rotate", func() {
 				activeTile.Rotate((activeTile.rotation + 1) % 4)
+			}))
+			m.AddItem(sws.NewMenuItemLabel("Uninstall", func() {
+				self.inventory.UninstallItem(activeTile.TileElement().InventoryItem())
 			}))
 			m.Move(x, y)
 			sws.ShowMenu(m)
@@ -472,6 +484,7 @@ func NewDcWidget(w, h int32, rootwindow *sws.RootWidget, inventory *supplier.Inv
 	rackwidget := NewRackWidget(rootwindow, inventory)
 	widget := &DcWidget{CoreWidget: *corewidget,
 		rackwidget: rackwidget,
+		rootwindow: rootwindow,
 		tiles:      [][]*Tile{{}},
 		xRoot:      0,
 		yRoot:      0,

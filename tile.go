@@ -19,6 +19,7 @@ const (
 type TileElement interface {
 	// should be passive, rack, ...
 	ElementType() int32                // which type sit on: PRODUCT_RACK, PRODUCT_AC, ...
+	InventoryItem() *supplier.InventoryItem // if there is one
 	Draw(rotation uint32) *sdl.Surface // face can be 0,1,2,3 (i.e. 0, 90, 180, 270)
 	Power() float64                    // ampere
 }
@@ -31,8 +32,13 @@ func (a ItemInventoryArray) Less(i, j int) bool { return a[i].Zplaced > a[j].Zpl
 
 type RackElement struct {
 	surface          *sdl.Surface
+	item             *supplier.InventoryItem
 	items            []*supplier.InventoryItem
 	previousrotation uint32
+}
+
+func (self *RackElement) InventoryItem() *supplier.InventoryItem {
+	return self.item
 }
 
 func (self *RackElement) AddItem(item *supplier.InventoryItem) {
@@ -96,9 +102,10 @@ func (self *RackElement) Power() float64 {
 	return power
 }
 
-func NewRackElement() *RackElement {
+func NewRackElement(item *supplier.InventoryItem) *RackElement {
 	r := &RackElement{
 		surface: nil,
+		item: item,
 		items:   make([]*supplier.InventoryItem, 0),
 	}
 	return r
@@ -110,6 +117,10 @@ type SimpleElement struct {
 	capacity         int32                   // kWh if it is a battery
 	surface          *sdl.Surface
 	previousrotation uint32
+}
+
+func (self *SimpleElement) InventoryItem() *supplier.InventoryItem {
+	return self.inventoryitem
 }
 
 func (self *SimpleElement) ElementType() int32 {
@@ -162,7 +173,7 @@ func (self *Tile) ItemInstalled(item *supplier.InventoryItem) {
 		}
 	}
 	if item.Typeitem == supplier.PRODUCT_RACK && self.element == nil {
-		self.element = NewRackElement()
+		self.element = NewRackElement(item)
 		self.surface = nil
 	}
 	if item.Typeitem != supplier.PRODUCT_RACK && item.Typeitem != supplier.PRODUCT_SERVER {
@@ -179,12 +190,14 @@ func (self *Tile) ItemUninstalled(item *supplier.InventoryItem) {
 			self.surface = nil
 		}
 	}
-	// TODO: we should make some checks here
-	if item.Typeitem == supplier.PRODUCT_RACK && self.element == nil {
+	// the rack here is supposed to be empty
+	if item.Typeitem == supplier.PRODUCT_RACK && self.element != nil {
 		self.element = nil
+		self.surface = nil
 	}
 	if item.Typeitem != supplier.PRODUCT_RACK && item.Typeitem != supplier.PRODUCT_SERVER {
 		self.element = nil
+		self.surface = nil
 	}
 }
 

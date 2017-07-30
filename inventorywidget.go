@@ -23,9 +23,8 @@ type InventoryWidget struct {
 	mainwidget      *sws.MainWidget
 	sub             []*supplier.SubInventory
 	currentsub      *supplier.SubInventory
-	buttonsub       map[*supplier.SubInventory]*sws.FlatButtonWidget
 	menu            *sws.CoreWidget
-	vbox            *sws.VBoxWidget
+	treeview        *sws.TreeViewWidget
 	bottomsplitview *sws.SplitviewWidget
 	title           *sws.LabelWidget
 }
@@ -43,22 +42,16 @@ func (self *InventoryWidget) Hide() {
 	}
 }
 func (self *InventoryWidget) AddSubCategory(category *supplier.SubInventory) {
-	button := sws.NewFlatButtonWidget(220, 40, category.Title)
-	button.SetClicked(func() {
+	item := sws.NewTreeViewItem(category.Title,category.Icon,func() {
 		self.SelectSubCategory(category)
 	})
-	self.buttonsub[category] = button
-	button.SetImage(category.Icon)
-	button.AlignImageLeft(true)
-	button.SetCentered(false)
 
-	self.vbox.AddChild(button)
+	self.treeview.AddItem(item)
 	self.sub = append(self.sub, category)
 }
 
 func (self *InventoryWidget) SelectSubCategory(category *supplier.SubInventory) {
 	if self.currentsub != nil {
-		self.buttonsub[self.currentsub].SetColor(0xffdddddd)
 		self.menu.RemoveChild(self.currentsub.ButtonPanel)
 	}
 	self.title.SetText(category.Title)
@@ -67,7 +60,6 @@ func (self *InventoryWidget) SelectSubCategory(category *supplier.SubInventory) 
 	self.menu.AddChild(category.ButtonPanel)
 	self.bottomsplitview.SetRightWidget(category.Widget)
 	self.currentsub = category
-	self.buttonsub[self.currentsub].SetColor(0xffcccccc)
 	sws.PostUpdate()
 }
 
@@ -77,10 +69,9 @@ func NewInventoryWidget(root *sws.RootWidget) *InventoryWidget {
 		rootwindow:      root,
 		mainwidget:      mainwidget,
 		sub:             make([]*supplier.SubInventory, 0),
-		vbox:            sws.NewVBoxWidget(200, 100),
+		treeview:        sws.NewTreeViewWidget(),
 		menu:            sws.NewCoreWidget(500, 50),
 		bottomsplitview: sws.NewSplitviewWidget(200, 200, true),
-		buttonsub:       make(map[*supplier.SubInventory]*sws.FlatButtonWidget),
 	}
 	mainwidget.SetCloseCallback(func() {
 		widget.Hide()
@@ -98,7 +89,7 @@ func NewInventoryWidget(root *sws.RootWidget) *InventoryWidget {
 	widget.bottomsplitview.SplitBarMovable(false)
 	sv.SetRightWidget(widget.bottomsplitview)
 
-	widget.bottomsplitview.SetLeftWidget(widget.vbox)
+	widget.bottomsplitview.SetLeftWidget(widget.treeview)
 
 	category := sws.NewLabelWidget(220, 50, "Category")
 	category.SetColor(0xffffffff)
