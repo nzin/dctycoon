@@ -16,7 +16,7 @@ func NewUnallocatedInventorySub(inventory *Inventory) *SubInventory {
 	sub := &SubInventory{
 		Icon:        "resources/icon-delivery-truck-silhouette.png",
 		Title:       "Unallocated inventory",
-		ButtonPanel: sws.NewCoreWidget(200, 50),
+		ButtonPanel: sws.NewCoreWidget(200, 30),
 		Widget:      sws.NewScrollWidget(100, 100),
 	}
 	return sub
@@ -97,7 +97,7 @@ type UnallocatedServerWidget struct {
 func (self *UnallocatedServerWidget) SelectLine(line *UnallocatedServerLineWidget, selected bool) {
 	if selected {
 		if len(self.selected) == 0 {
-			self.scrap.Move(0, 12)
+			self.scrap.Move(0, 2)
 			self.buttonPanel.AddChild(self.scrap)
 		}
 		self.selected[line] = true
@@ -153,7 +153,7 @@ func NewUnallocatedServerSub(inventory *Inventory) *SubInventory {
 		vbox:           sws.NewVBoxWidget(625, 0),
 		globalcheckbox: sws.NewCheckboxWidget(),
 		selected:       make(map[*UnallocatedServerLineWidget]bool),
-		buttonPanel:    sws.NewCoreWidget(200, 50),
+		buttonPanel:    sws.NewCoreWidget(200, 30),
 		scrap:          sws.NewButtonWidget(100, 25, "Scrap"),
 	}
 	inventory.AddSubscriber(widget)
@@ -206,7 +206,7 @@ func NewPoolSub(inventory *Inventory) *SubInventory {
 	sub := &SubInventory{
 		Icon:        "resources/icon-bucket.png",
 		Title:       "Server pools",
-		ButtonPanel: sws.NewCoreWidget(200, 50),
+		ButtonPanel: sws.NewCoreWidget(200, 30),
 		Widget:      sws.NewScrollWidget(100, 100),
 	}
 	return sub
@@ -216,7 +216,7 @@ func NewOfferSub(inventory *Inventory) *SubInventory {
 	sub := &SubInventory{
 		Icon:        "resources/icon-paper-bill.png",
 		Title:       "Server offers",
-		ButtonPanel: sws.NewCoreWidget(200, 50),
+		ButtonPanel: sws.NewCoreWidget(200, 30),
 		Widget:      sws.NewScrollWidget(100, 100),
 	}
 	return sub
