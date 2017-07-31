@@ -112,7 +112,7 @@ func NewRackElement(item *supplier.InventoryItem) *RackElement {
 }
 
 type SimpleElement struct {
-	inventoryitem    *supplier.InventoryItem // ac, battery, generator
+	inventoryitem    *supplier.InventoryItem // ac, battery, generator, tower
 	power            float64                 // negative if it is a generator
 	capacity         int32                   // kWh if it is a battery
 	surface          *sdl.Surface
@@ -172,6 +172,12 @@ func (self *Tile) ItemInstalled(item *supplier.InventoryItem) {
 			self.surface = nil
 		}
 	}
+	// tower
+	if item.Typeitem == supplier.PRODUCT_SERVER && item.Serverconf.ConfType.NbU <= 0 {
+		self.element = NewSimpleElement(item)
+		self.surface = nil
+	}
+
 	if item.Typeitem == supplier.PRODUCT_RACK && self.element == nil {
 		self.element = NewRackElement(item)
 		self.surface = nil
