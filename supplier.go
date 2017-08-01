@@ -355,7 +355,7 @@ func NewSupplier(root *sws.RootWidget) *Supplier {
 		bankAccount := accounts["51"]
 		if bankAccount < totalprice {
 			// show modal window
-			ShowModalError(widget.rootwindow, "Not enough funds", fmt.Sprintf("You cannot buy for %.2f $ of goods: your bank account is currently credited of %.2f $!", totalprice, bankAccount), nil)
+			sws.ShowModalError(widget.rootwindow, "Not enough funds","resources/icon-triangular-big.png", fmt.Sprintf("You cannot buy for %.2f $ of goods: your bank account is currently credited of %.2f $!", totalprice, bankAccount), nil)
 		} else {
 			// we buy
 			for _, item := range supplier.GlobalInventory.Cart {

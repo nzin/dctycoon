@@ -126,9 +126,9 @@ func NewInventoryWidget(root *sws.RootWidget) *InventoryWidget {
 	widget.menu.AddChild(title)
 	widget.title = title
 
-	unallocated := supplier.NewUnallocatedInventorySub(supplier.GlobalInventory)
+	unallocated := supplier.NewUnallocatedInventorySub(root,supplier.GlobalInventory)
 	widget.AddSubCategory(unallocated,true)
-	widget.AddSubCategory(supplier.NewUnallocatedServerSub(supplier.GlobalInventory),false)
+	widget.AddSubCategory(supplier.NewUnallocatedServerSub(root,supplier.GlobalInventory),false)
 	widget.AddSubCategory(supplier.NewPoolSub(supplier.GlobalInventory),false)
 	widget.AddSubCategory(supplier.NewOfferSub(supplier.GlobalInventory),false)
 

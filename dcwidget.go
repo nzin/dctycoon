@@ -229,7 +229,7 @@ func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 			m.AddItem(sws.NewMenuItemLabel("Uninstall", func() {
 				rackelement := activeTile.TileElement().(*RackElement)
 				if len(rackelement.items) > 0 {
-					ShowModalError(self.rootwindow,"Uninstall action","It is not possible to uninstall a rack unless it is empty",nil)
+					sws.ShowModalError(self.rootwindow,"Uninstall action","resources/icon-triangular-big.png","It is not possible to uninstall a rack unless it is empty",nil)
 				} else {
 					self.inventory.UninstallItem(rackelement.InventoryItem())
 				}
