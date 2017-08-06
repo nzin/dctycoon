@@ -18,7 +18,7 @@ func main() {
 	dctycoon.GlobalLocation = "siliconvalley"
 
 	timer.GlobalEventPublisher = timer.NewEventPublisher(root)
-	accounting.GlobalLedger = accounting.NewLedger(dctycoon.AvailableLocation[dctycoon.GlobalLocation].Taxrate)
+	accounting.GlobalLedger = accounting.NewLedger(dctycoon.AvailableLocation[dctycoon.GlobalLocation].Taxrate,dctycoon.AvailableLocation[dctycoon.GlobalLocation].Bankinterestrate)
 	timer.GlobalGameTimer = timer.NewGameTimer()
 	supplier.GlobalInventory = supplier.NewInventory()
 
@@ -46,8 +46,8 @@ func main() {
 	timer.GlobalGameTimer.Load(v["clock"].(map[string]interface{}))
 
 	// initiate the ledger
-	accounting.GlobalLedger.Load(v["ledger"].(map[string]interface{}), dctycoon.AvailableLocation[dctycoon.GlobalLocation].Taxrate)
-	accountingui.SetBankinterestrate(dctycoon.AvailableLocation[dctycoon.GlobalLocation].Bankinterestrate)
+	accounting.GlobalLedger.Load(v["ledger"].(map[string]interface{}), dctycoon.AvailableLocation[dctycoon.GlobalLocation].Taxrate,dctycoon.AvailableLocation[dctycoon.GlobalLocation].Bankinterestrate)
+	//accountingui.SetBankinterestrate(dctycoon.AvailableLocation[dctycoon.GlobalLocation].Bankinterestrate)
 
 	gamemap := v["map"].(map[string]interface{})
 	dc.LoadMap(gamemap)

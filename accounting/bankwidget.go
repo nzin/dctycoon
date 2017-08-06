@@ -21,17 +21,19 @@ type BankWidget struct {
 	currentInterest *sws.LabelWidget
 }
 
-func (self *BankWidget) SetBankinterestrate(rate float64) {
-	self.interestRate = rate
-	self.interestRateL.SetText(fmt.Sprintf("%.2f %%/y", rate*12*100))
-	sws.PostUpdate()
-}
+//func (self *BankWidget) SetBankinterestrate(rate float64) {
+//	self.interestRate = rate
+//	self.interestRateL.SetText(fmt.Sprintf("%.2f %%/y", rate*100))
+//	sws.PostUpdate()
+//}
 
 func (self *BankWidget) LedgerChange(ledger *Ledger) {
 	yearaccount := GlobalLedger.GetYearAccount(timer.GlobalGameTimer.CurrentTime.Year())
+	self.interestRate = ledger.loanrate
+	self.interestRateL.SetText(fmt.Sprintf("%.2f %%/y", ledger.loanrate*100))
 	self.accountPosition.SetText(fmt.Sprintf("%.2f $", yearaccount["51"]))
-	self.accountDebt.SetText(fmt.Sprintf("%.2f $", yearaccount["16"]))
-	self.currentInterest.SetText(fmt.Sprintf("%.2f $/y", yearaccount["16"]*self.interestRate*12))
+	self.accountDebt.SetText(fmt.Sprintf("%.2f $", -yearaccount["16"]))
+	self.currentInterest.SetText(fmt.Sprintf("%.2f $/y", -yearaccount["16"]*self.interestRate))
 	sws.PostUpdate()
 }
 

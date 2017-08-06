@@ -151,6 +151,7 @@ type Ledger struct {
 	subscribers []LedgerSubscriber
 	accounts    map[int]AccountYearly
 	taxrate     float64
+	loanrate    float64
 	computeYear func()
 }
 
@@ -257,19 +258,45 @@ func (self *Ledger) BuyProduct(desc string, t time.Time, price float64) {
 	}
 }
 
-func NewLedger(taxrate float64) *Ledger {
+//
+// 161 (capital/debt) -> 5121 (current bank account)
+// every year (every month?) interest rate: 5121 -> 46 (fictious bank account for interest)
+//
+func (self *Ledger) AskLoan(desc string, t time.Time, amount float64) {
+	loan := &LedgerMovement{
+		Id:          self.autoinc,
+		Description: desc,
+		Amount:      amount,
+		AccountFrom: "161",
+		AccountTo:   "5121",
+		Date:        t,
+	}
+	self.autoinc++
+	self.Movements.ReplaceOrInsert(loan)
+	
+	// compute the ledger
+
+	self.accounts = self.RunLedger()
+	for _, s := range self.subscribers {
+		s.LedgerChange(self)
+	}
+}
+
+func NewLedger(taxrate,loanrate float64) *Ledger {
 	ledger := &Ledger{
 		Movements:   btree.New(10),
 		accounts:    make(map[int]AccountYearly),
 		subscribers: make([]LedgerSubscriber, 0),
 		taxrate:     taxrate,
+		loanrate:    loanrate*12,
 	}
 	return ledger
 }
 
-func (self *Ledger) Load(game map[string]interface{}, taxrate float64) {
+func (self *Ledger) Load(game map[string]interface{}, taxrate,loanrate float64) {
 	self.Movements = btree.New(10)
 	self.taxrate = taxrate
+	self.loanrate = 12*loanrate
 
 	for _, event := range game["movements"].([]interface{}) {
 		e := event.(map[string]interface{})
@@ -341,12 +368,18 @@ func (self *Ledger) RunLedger() (accounts map[int]AccountYearly) {
 			accounts[currentyear] = make(AccountYearly)
 		}
 		if currentyear != ev.Date.Year() { // we must close the year and prepare the new year
-			fmt.Println("compute taxes for ", currentyear)
 			previousYear := currentyear
 			currentyear = ev.Date.Year()
+			
+			//fmt.Println("compute loan rate")
+			accounts[previousYear]["51"] += accounts[previousYear]["16"]*self.loanrate
+			accounts[previousYear]["66"] = -accounts[previousYear]["16"]*self.loanrate
+			
+			//fmt.Println("compute taxes for ", currentyear)
 			profitlost, taxes := computeYearlyTaxes(accounts[previousYear], self.taxrate)
 			accounts[previousYear]["44"] = taxes
 
+			// 51: current balance, 44: taxes
 			accounts[previousYear]["51"] -= accounts[previousYear]["44"]
 			accounts[currentyear] = make(AccountYearly)
 			// copy from previous year, accounts 1 to 5 (except 44 => 0)
@@ -357,6 +390,7 @@ func (self *Ledger) RunLedger() (accounts map[int]AccountYearly) {
 			}
 			accounts[currentyear]["44"] = 0
 			accounts[currentyear]["45"] -= profitlost
+			accounts[currentyear]["46"] += accounts[previousYear]["66"]
 			//accounts[currentyear]["23"] -= accounts[previousYear]["28"]
 			accounts[currentyear]["28"] = 0
 		}

@@ -25,9 +25,9 @@ func (self *Accounting) Hide() {
 	}
 }
 
-func (self *Accounting) SetBankinterestrate(rate float64) {
-	self.bankwidget.SetBankinterestrate(rate)
-}
+//func (self *Accounting) SetBankinterestrate(rate float64) {
+//	self.bankwidget.SetBankinterestrate(rate)
+//}
 
 func NewAccounting(root *sws.RootWidget) *Accounting {
 	mainwidget := sws.NewMainWidget(650, 400, " Bank and Finance ", true, true)
