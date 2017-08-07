@@ -36,64 +36,64 @@ func (self *BankWidget) LedgerChange(ledger *Ledger) {
 
 func NewBankWidget(root *sws.RootWidget) *BankWidget {
 	bankwidget := &BankWidget{
-		CoreWidget: *sws.NewCoreWidget(350, 280),
+		CoreWidget: *sws.NewCoreWidget(420, 280),
 	}
 
 	title := sws.NewLabelWidget(190, 25, "Your Bank account")
-	title.Move(10, 10)
+	title.Move(80, 10)
 	bankwidget.AddChild(title)
 
 	accountPositionTitle := sws.NewLabelWidget(190, 25, "Your current position")
-	accountPositionTitle.Move(10, 40)
+	accountPositionTitle.Move(80, 40)
 	bankwidget.AddChild(accountPositionTitle)
 
 	accountPosition := sws.NewLabelWidget(100, 25, "0 $")
-	accountPosition.Move(200, 40)
+	accountPosition.Move(270, 40)
 	bankwidget.AddChild(accountPosition)
 	bankwidget.accountPosition = accountPosition
 
 	accountDebtTitle := sws.NewLabelWidget(190, 25, "Your current debt")
-	accountDebtTitle.Move(10, 65)
+	accountDebtTitle.Move(80, 65)
 	bankwidget.AddChild(accountDebtTitle)
 
 	accountDebt := sws.NewLabelWidget(100, 25, "0 $")
-	accountDebt.Move(200, 65)
+	accountDebt.Move(270, 65)
 	bankwidget.AddChild(accountDebt)
 	bankwidget.accountDebt = accountDebt
 
 	interestRate := sws.NewLabelWidget(100, 25, "0 %/y")
-	interestRate.Move(200, 90)
+	interestRate.Move(270, 90)
 	bankwidget.AddChild(interestRate)
 	bankwidget.interestRateL = interestRate
 
 	currentInterestL := sws.NewLabelWidget(190, 25, "Current interest/y")
-	currentInterestL.Move(10, 115)
+	currentInterestL.Move(80, 115)
 	bankwidget.AddChild(currentInterestL)
 
 	currentInterest := sws.NewLabelWidget(100, 25, "0 $")
-	currentInterest.Move(200, 115)
+	currentInterest.Move(270, 115)
 	bankwidget.AddChild(currentInterest)
 	bankwidget.currentInterest = currentInterest
 	
-	hr1 := sws.NewHr(390)
+	hr1 := sws.NewHr(460)
 	hr1.Move(10,145)
 	bankwidget.AddChild(hr1)
 
 	askLabel := sws.NewLabelWidget(100,25,"Ask for a loan")
-	askLabel.Move(10,150)
+	askLabel.Move(80,150)
 	bankwidget.AddChild(askLabel)
 	
 	askAmountLabel := sws.NewLabelWidget(100,25,"Amount")
-	askAmountLabel.Move(10,180)
+	askAmountLabel.Move(80,180)
 	bankwidget.AddChild(askAmountLabel)
 	
 	askInput := sws.NewInputWidget(100,25,"")
-	askInput.Move(110,180)
+	askInput.Move(180,180)
 	bankwidget.askInput = askInput
 	bankwidget.AddChild(askInput)
 	
 	bankwidget.askloanbutton = sws.NewButtonWidget(100, 25, "Ask")
-	bankwidget.askloanbutton.Move(220, 180)
+	bankwidget.askloanbutton.Move(290, 180)
 	bankwidget.AddChild(bankwidget.askloanbutton)
 	bankwidget.askloanbutton.SetClicked(func() {
 		value := bankwidget.askInput.GetText()
@@ -117,24 +117,24 @@ func NewBankWidget(root *sws.RootWidget) *BankWidget {
 	})
 
 	hr2 := sws.NewHr(390)
-	hr2.Move(10,215)
+	hr2.Move(80,215)
 	bankwidget.AddChild(hr2)
 
 	paybackLabel := sws.NewLabelWidget(100,25,"Refund loan")
-	paybackLabel.Move(10,220)
+	paybackLabel.Move(80,220)
 	bankwidget.AddChild(paybackLabel)
 	
 	paybackAmountLabel := sws.NewLabelWidget(100,25,"Amount")
-	paybackAmountLabel.Move(10,250)
+	paybackAmountLabel.Move(80,250)
 	bankwidget.AddChild(paybackAmountLabel)
 	
 	paybackInput := sws.NewInputWidget(100,25,"")
-	paybackInput.Move(110,250)
+	paybackInput.Move(180,250)
 	bankwidget.paybackInput = paybackInput
 	bankwidget.AddChild(paybackInput)
 	
 	bankwidget.paybackbutton = sws.NewButtonWidget(100, 25, "Payback")
-	bankwidget.paybackbutton.Move(220, 250)
+	bankwidget.paybackbutton.Move(290, 250)
 	bankwidget.AddChild(bankwidget.paybackbutton)
 	bankwidget.paybackbutton.SetClicked(func() {
 		value := bankwidget.paybackInput.GetText()
@@ -155,6 +155,16 @@ func NewBankWidget(root *sws.RootWidget) *BankWidget {
 			bankwidget.paybackInput.SetText("")
 		}
 	})
+	
+	bankicon := sws.NewLabelWidget(64,64,"")
+	bankicon.SetImage("resources/icon-bank.big.png")
+	bankicon.Move(4,40)
+	bankwidget.AddChild(bankicon)
+
+	loanicon := sws.NewLabelWidget(64,64,"")
+	loanicon.SetImage("resources/icon-loan.big.png")
+	loanicon.Move(4,183)
+	bankwidget.AddChild(loanicon)
 
 	GlobalLedger.AddSubscriber(bankwidget)
 
