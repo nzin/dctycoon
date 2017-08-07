@@ -282,6 +282,30 @@ func (self *Ledger) AskLoan(desc string, t time.Time, amount float64) {
 	}
 }
 
+//
+// 5121 (current bank account) -> 161 (capital/debt)
+//
+func (self *Ledger) RefundLoan(desc string, t time.Time, amount float64) {
+	fmt.Println("Refund: ",amount)
+	loan := &LedgerMovement{
+		Id:          self.autoinc,
+		Description: desc,
+		Amount:      amount,
+		AccountFrom: "5121",
+		AccountTo:   "161",
+		Date:        t,
+	}
+	self.autoinc++
+	self.Movements.ReplaceOrInsert(loan)
+	
+	// compute the ledger
+
+	self.accounts = self.RunLedger()
+	for _, s := range self.subscribers {
+		s.LedgerChange(self)
+	}
+}
+
 func NewLedger(taxrate,loanrate float64) *Ledger {
 	ledger := &Ledger{
 		Movements:   btree.New(10),

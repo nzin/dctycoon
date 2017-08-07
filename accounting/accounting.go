@@ -38,7 +38,7 @@ func NewAccounting(root *sws.RootWidget) *Accounting {
 		mainwidget: mainwidget,
 		tabwidget:  tabwidget,
 	}
-	ui.bankwidget = NewBankWidget()
+	ui.bankwidget = NewBankWidget(root)
 	bankScroll := sws.NewScrollWidget(650, 400)
 	bankScroll.SetInnerWidget(ui.bankwidget)
 	bankScroll.ShowHorizontalScrollbar(false)
