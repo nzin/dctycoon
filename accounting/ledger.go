@@ -415,13 +415,9 @@ func (self *Ledger) RunLedger() (accounts map[int]AccountYearly) {
 			currentyear = ev.Date.Year()
 			accounts[currentyear] = make(AccountYearly)
 		}
-		if currentyear != ev.Date.Year() { // we must close the year and prepare the new year
+		for currentyear != ev.Date.Year() { // we must close the year and prepare the new year
 			previousYear := currentyear
-			currentyear = ev.Date.Year()
-			
-			//fmt.Println("compute loan rate")
-			//accounts[previousYear]["51"] += accounts[previousYear]["16"]*self.loanrate
-			//accounts[previousYear]["66"] = -accounts[previousYear]["16"]*self.loanrate
+			currentyear++
 			
 			//fmt.Println("compute taxes for ", currentyear)
 			profitlost, taxes := computeYearlyTaxes(accounts[previousYear], self.taxrate)
@@ -449,6 +445,33 @@ func (self *Ledger) RunLedger() (accounts map[int]AccountYearly) {
 
 		return true
 	})
+	
+	//
+	// in case of we have no movement from "current year" until today
+	//
+	for currentyear != timer.GlobalGameTimer.CurrentTime.Year() { // we must close the year and prepare the new year
+		previousYear := currentyear
+		currentyear++
+			
+		//fmt.Println("compute taxes for ", currentyear)
+		profitlost, taxes := computeYearlyTaxes(accounts[previousYear], self.taxrate)
+		accounts[previousYear]["44"] = taxes
+
+		// 51: current balance, 44: taxes
+		accounts[previousYear]["51"] -= accounts[previousYear]["44"]
+		accounts[currentyear] = make(AccountYearly)
+		// copy from previous year, accounts 1 to 5 (except 44 => 0)
+		for k, v := range accounts[previousYear] {
+			if k[0] == '1' || k[0] == '2' || k[0] == '3' || k[0] == '4' || k[0] == '5' {
+				accounts[currentyear][k] = v
+			}
+		}
+		accounts[currentyear]["44"] = 0
+		accounts[currentyear]["45"] -= profitlost
+		accounts[currentyear]["46"] += accounts[previousYear]["66"]
+		//accounts[currentyear]["23"] -= accounts[previousYear]["28"]
+		accounts[currentyear]["28"] = 0
+	}
 
 	return accounts
 }
