@@ -18,8 +18,8 @@ func main() {
 	dctycoon.GlobalLocation = "siliconvalley"
 
 	timer.GlobalEventPublisher = timer.NewEventPublisher(root)
-	accounting.GlobalLedger = accounting.NewLedger(dctycoon.AvailableLocation[dctycoon.GlobalLocation].Taxrate,dctycoon.AvailableLocation[dctycoon.GlobalLocation].Bankinterestrate)
 	timer.GlobalGameTimer = timer.NewGameTimer()
+	accounting.GlobalLedger = accounting.NewLedger(dctycoon.AvailableLocation[dctycoon.GlobalLocation].Taxrate,dctycoon.AvailableLocation[dctycoon.GlobalLocation].Bankinterestrate)
 	supplier.GlobalInventory = supplier.NewInventory()
 
 	dc := dctycoon.NewDcWidget(root.Width(), root.Height(), root, supplier.GlobalInventory)

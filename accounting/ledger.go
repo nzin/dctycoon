@@ -153,6 +153,7 @@ type Ledger struct {
 	taxrate     float64
 	loanrate    float64
 	computeYear func()
+	computeLoanInterest func()
 }
 
 var GlobalLedger *Ledger
@@ -312,15 +313,48 @@ func NewLedger(taxrate,loanrate float64) *Ledger {
 		accounts:    make(map[int]AccountYearly),
 		subscribers: make([]LedgerSubscriber, 0),
 		taxrate:     taxrate,
-		loanrate:    loanrate*12,
+		loanrate:    loanrate,
 	}
+	// compute fiscal year
+	ledger.computeYear = func() {
+		l:= ledger
+		l.accounts = l.RunLedger()
+		for _, s := range l.subscribers {
+			s.LedgerChange(l)
+		}
+	}
+	ledger.computeLoanInterest = func() {
+		l := ledger
+		if _,ok := l.accounts[timer.GlobalGameTimer.CurrentTime.Year()]; ok == false {
+			l.accounts = l.RunLedger()
+		}
+		if l.accounts[timer.GlobalGameTimer.CurrentTime.Year()]["16"]!=0.0 {
+			interest := &LedgerMovement{
+				Id:          l.autoinc,
+				Description: "debt interest",
+				Amount:      -l.accounts[timer.GlobalGameTimer.CurrentTime.Year()]["16"]*l.loanrate/12,
+				AccountFrom: "5121",
+				AccountTo:   "66",
+				Date:        timer.GlobalGameTimer.CurrentTime,
+			}
+			l.autoinc++
+			l.Movements.ReplaceOrInsert(interest)
+			l.accounts = l.RunLedger()
+			for _, s := range l.subscribers {
+				s.LedgerChange(l)
+			}
+		}
+	}
+	timer.GlobalGameTimer.AddCron(1,-1,-1,ledger.computeLoanInterest)
+	timer.GlobalGameTimer.AddCron(1,1,-1,ledger.computeYear)
+
 	return ledger
 }
 
 func (self *Ledger) Load(game map[string]interface{}, taxrate,loanrate float64) {
 	self.Movements = btree.New(10)
 	self.taxrate = taxrate
-	self.loanrate = 12*loanrate
+	self.loanrate = loanrate
 
 	for _, event := range game["movements"].([]interface{}) {
 		e := event.(map[string]interface{})
@@ -340,16 +374,6 @@ func (self *Ledger) Load(game map[string]interface{}, taxrate,loanrate float64) 
 		s.LedgerChange(self)
 	}
 
-	// compute fiscal year
-	self.computeYear = func() {
-		ledger := self
-		ledger.accounts = ledger.RunLedger()
-		for _, s := range ledger.subscribers {
-			s.LedgerChange(self)
-		}
-		timer.GlobalGameTimer.AddEvent(time.Date(timer.GlobalGameTimer.CurrentTime.Year()+1, time.Month(1), 1, 0, 0, 0, 0, time.UTC), ledger.computeYear)
-	}
-	timer.GlobalGameTimer.AddEvent(time.Date(timer.GlobalGameTimer.CurrentTime.Year()+1, time.Month(1), 1, 0, 0, 0, 0, time.UTC), self.computeYear)
 }
 
 //   Comptes de produits (70)
@@ -396,8 +420,8 @@ func (self *Ledger) RunLedger() (accounts map[int]AccountYearly) {
 			currentyear = ev.Date.Year()
 			
 			//fmt.Println("compute loan rate")
-			accounts[previousYear]["51"] += accounts[previousYear]["16"]*self.loanrate
-			accounts[previousYear]["66"] = -accounts[previousYear]["16"]*self.loanrate
+			//accounts[previousYear]["51"] += accounts[previousYear]["16"]*self.loanrate
+			//accounts[previousYear]["66"] = -accounts[previousYear]["16"]*self.loanrate
 			
 			//fmt.Println("compute taxes for ", currentyear)
 			profitlost, taxes := computeYearlyTaxes(accounts[previousYear], self.taxrate)

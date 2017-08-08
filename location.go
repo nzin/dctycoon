@@ -7,7 +7,7 @@ type LocationType struct {
 	Temperatureaverage  float64 // in may?
 	Electricitycost     float64 // per kwh
 	Taxrate             float64
-	Bankinterestrate    float64 // per month
+	Bankinterestrate    float64 // per year
 }
 
 var GlobalLocation string
@@ -20,6 +20,6 @@ var AvailableLocation = map[string]LocationType{
 		Temperatureaverage:  16.11, //http://www.usclimatedata.com/climate/california/united-states/3174
 		Electricitycost:     0.1534,
 		Taxrate:             0.15,
-		Bankinterestrate:    0.0025,
+		Bankinterestrate:    0.03,
 	},
 }

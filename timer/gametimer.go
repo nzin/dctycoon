@@ -20,11 +20,19 @@ func (self *GamerTimerEvent) Less(b btree.Item) bool {
 	return self.Date.Before(bevt.Date)
 }
 
+type GameCronEvent struct {
+	day   int32 // -1 = '*'
+	month int32 // -1 = '*'
+	year  int32 // -1 = '*'
+	Trigger func()
+}
+
 type GameTimer struct {
 	autoinc     int32
 	CurrentTime time.Time // current day
 	TimerClock  func()    // method to call when we switch to a new day
 	events      *btree.BTree
+	cron        []*GameCronEvent
 }
 
 var GlobalGameTimer *GameTimer
@@ -34,6 +42,7 @@ func NewGameTimer() *GameTimer {
 		autoinc:     0,
 		CurrentTime: time.Date(1990, time.Month(01), 01, 0, 0, 0, 0, time.UTC),
 		events:      btree.New(10),
+		cron:        make([]*GameCronEvent,0),
 	}
 	timer.TimerClock = func() {
 		timer.CurrentTime = timer.CurrentTime.Add(24 * time.Hour)
@@ -47,8 +56,16 @@ func NewGameTimer() *GameTimer {
 				timer.events.DeleteMin()
 			}
 		}
-		// test of GlobalEventPublisher.Publish
-		//GlobalEventPublisher.Publish(fmt.Sprintf("%d-%d-%d",timer.CurrentTime.Year(),timer.CurrentTime.Month(),timer.CurrentTime.Day()),"long title")
+		// check for cron
+		for _,c := range timer.cron {
+			if c.day == -1 || timer.CurrentTime.Day() == int(c.day) {
+				if c.month == -1 || timer.CurrentTime.Month() == time.Month(c.month) {
+					if c.year == -1 || timer.CurrentTime.Year() == int(c.year) {
+						c.Trigger()
+					}
+				}
+			}
+		}
 	}
 	return timer
 }
@@ -70,6 +87,26 @@ func (self *GameTimer) AddEvent(evdate time.Time, callback func()) {
 		Trigger: callback,
 	})
 	self.autoinc++
+}
+
+func (self *GameTimer) AddCron(day,month,year int32, callback func()) *GameCronEvent{
+	cronevent:=&GameCronEvent{
+		day: day,
+		month: month,
+		year: year,
+		Trigger: callback,
+	}
+	self.cron = append(self.cron,cronevent)
+	return cronevent
+}
+
+func (self *GameTimer) RemoveCron(evt *GameCronEvent) {
+	for i,c := range self.cron {
+		if c == evt {
+			self.cron = append(self.cron[:i],self.cron[i+1:]...)
+			return
+		}
+	}
 }
 
 func (self *GameTimer) Save() string {
