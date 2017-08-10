@@ -7,16 +7,27 @@ import (
 )
 
 type ServerPool interface {
+	GetName() string
 	AddInventoryItem(item *InventoryItem)
 	IsInside(item *InventoryItem) bool
 	RemoveInventoryItem(item *InventoryItem)
 	Allocate(nbcores, ramsize, disksize int32, vt bool) *InventoryItem
 	IsAllocated(item *InventoryItem) bool
 	Release(item *InventoryItem, nbcores, ramsize, disksize int32)
+	IsVps() bool
 }
 
 type HardwareServerPool struct {
+	Name string
 	pool map[int32]*InventoryItem
+}
+
+func (self *HardwareServerPool) GetName() string {
+	return self.Name
+}
+
+func (self *HardwareServerPool) IsVps() bool {
+	return false
 }
 
 func (self *HardwareServerPool) AddInventoryItem(item *InventoryItem) {
@@ -78,9 +89,20 @@ func (self *HardwareServerPool) Release(item *InventoryItem, nbcores, ramsize, d
 }
 
 type VpsServerPool struct {
+	Name              string
 	pool              map[int32]*InventoryItem
+	// by default cpuoverallocation is 1.0 (and can go till 2.0)
 	cpuoverallocation float64
+	// by default ramoverallocation is 1.0 (and can go till 1.5)
 	ramoverallocation float64
+}
+
+func (self *VpsServerPool) GetName() string {
+	return self.Name
+}
+
+func (self *VpsServerPool) IsVps() bool {
+	return true
 }
 
 func (self *VpsServerPool) AddInventoryItem(item *InventoryItem) {

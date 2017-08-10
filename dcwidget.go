@@ -497,7 +497,7 @@ func NewDcWidget(w, h int32, rootwindow *sws.RootWidget, inventory *supplier.Inv
 		inventory:  inventory,
 		hc:         NewHardwareChoice(inventory),
 	}
-	inventory.AddSubscriber(widget)
+	inventory.AddInventorySubscriber(widget)
 
 	//widget.hc.Move(0,h/2-100)
 	widget.hc.Move(0, 0)

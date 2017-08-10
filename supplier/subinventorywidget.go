@@ -124,7 +124,7 @@ func NewUnallocatedInventorySub(root *sws.RootWidget, inventory *Inventory) *Sub
 		buttonPanel:    sws.NewCoreWidget(200, 30),
 		scrap:          sws.NewButtonWidget(100, 25, "Scrap"),
 	}
-	inventory.AddSubscriber(widget)
+	inventory.AddInventorySubscriber(widget)
 
 	widget.AddChild(widget.globalcheckbox)
 	widget.globalcheckbox.SetClicked(func() {
@@ -304,7 +304,7 @@ func NewUnallocatedServerSub(root *sws.RootWidget, inventory *Inventory) *SubInv
 		buttonPanel:    sws.NewCoreWidget(200, 30),
 		scrap:          sws.NewButtonWidget(100, 25, "Scrap"),
 	}
-	inventory.AddSubscriber(widget)
+	inventory.AddInventorySubscriber(widget)
 
 	widget.AddChild(widget.globalcheckbox)
 	widget.globalcheckbox.SetClicked(func() {
@@ -362,13 +362,156 @@ func NewUnallocatedServerSub(root *sws.RootWidget, inventory *Inventory) *SubInv
 	return sub
 }
 
-func NewPoolSub(inventory *Inventory) *SubInventory {
+type PoolCreateWidget struct {
+	rootwindow *sws.RootWidget
+	mainwidget *sws.MainWidget
+	nameL      *sws.LabelWidget
+	name       *sws.InputWidget
+	vps        *sws.CheckboxWidget
+	vpsL       *sws.LabelWidget
+	vpsNote    *sws.LabelWidget
+	cpuOverL   *sws.LabelWidget
+	cpuOver    *sws.DropdownWidget
+	ramOverL   *sws.LabelWidget
+	ramOver    *sws.DropdownWidget
+	create     *sws.ButtonWidget
+	cancel     *sws.ButtonWidget
+}
+
+func (self *PoolCreateWidget) Show() {
+        self.rootwindow.AddChild(self.mainwidget)
+        self.rootwindow.SetFocus(self.mainwidget)
+}
+
+func (self *PoolCreateWidget) Hide() {
+        self.rootwindow.RemoveChild(self.mainwidget)
+        children := self.rootwindow.GetChildren()
+        if len(children) > 0 {
+                self.rootwindow.SetFocus(children[0])
+        }
+}
+
+func NewPoolCreateWidget(root *sws.RootWidget,inventory *Inventory) *PoolCreateWidget {
+	mainwidget := sws.NewMainWidget(400, 220, " Create new pool ", false, false)
+	mainwidget.Move(root.Width()/2-200,root.Height()/2-100)
+	widget := &PoolCreateWidget {
+		rootwindow:  root,
+		mainwidget: mainwidget,
+		nameL:   sws.NewLabelWidget(100,25,"Pool name:"),
+		name:    sws.NewInputWidget(100,25,""),
+		vps:     sws.NewCheckboxWidget(),
+		vpsL:    sws.NewLabelWidget(100,25,"VPS pool (*)"),
+		vpsNote: sws.NewLabelWidget(200,25,"(*) only if you can have VT processors"),
+		cpuOverL:sws.NewLabelWidget(100,25,"Cpu overcommit"),
+		cpuOver: sws.NewDropdownWidget(80,25,[]string{"0%","10%","20%","30%","40%","50%"}),
+		ramOverL:sws.NewLabelWidget(100,25,"RAM overcommit"),
+		ramOver: sws.NewDropdownWidget(80,25,[]string{"0%","10%","20%","30%","40%","50%"}),
+		create:  sws.NewButtonWidget(100,25,"Create"),
+		cancel:  sws.NewButtonWidget(100,25,"Cancel"),
+	}
+	
+	widget.nameL.Move(40,20)
+	mainwidget.AddChild(widget.nameL)
+	
+	widget.name.Move(150,20)
+	mainwidget.AddChild(widget.name)
+	
+	widget.vpsL.Move(40,45)
+	mainwidget.AddChild(widget.vpsL)
+	
+	widget.vps.Move(150,45)
+	mainwidget.AddChild(widget.vps)
+	widget.vps.SetClicked(func() {
+		if widget.vps.Selected {
+			mainwidget.AddChild(widget.cpuOverL)
+			mainwidget.AddChild(widget.cpuOver)
+			mainwidget.AddChild(widget.ramOverL)
+			mainwidget.AddChild(widget.ramOver)
+		} else {
+			mainwidget.RemoveChild(widget.cpuOverL)
+			mainwidget.RemoveChild(widget.cpuOver)
+			mainwidget.RemoveChild(widget.ramOverL)
+			mainwidget.RemoveChild(widget.ramOver)
+		}
+	})
+	
+	widget.vpsNote.Move(40,70)
+	widget.vpsNote.SetFont(sws.LatoRegular12)
+	mainwidget.AddChild(widget.vpsNote)
+	
+	widget.cpuOverL.Move(40,95)
+	widget.cpuOver.Move(150,95)
+	widget.ramOverL.Move(40,120)
+	widget.ramOver.Move(150,120)
+	
+	widget.create.Move(150,150)
+	mainwidget.AddChild(widget.create)
+	
+	widget.cancel.Move(260,150)
+	mainwidget.AddChild(widget.cancel)
+	
+	widget.create.SetClicked(func() {
+		if widget.vps.Selected {
+			pool := &VpsServerPool{
+				Name: widget.name.GetText(),
+				pool: make(map[int32]*InventoryItem),
+				cpuoverallocation: 1.0+0.1*float64(widget.cpuOver.ActiveChoice),
+				ramoverallocation: 1.0+0.1*float64(widget.ramOver.ActiveChoice),
+			}
+			inventory.AddPool(pool)
+		} else {
+			pool := &HardwareServerPool{
+				Name: widget.name.GetText(),
+				pool: make(map[int32]*InventoryItem),
+			}
+			inventory.AddPool(pool)
+		}
+		widget.Hide()
+	})
+	widget.cancel.SetClicked(func() {
+		widget.Hide()
+	})
+	mainwidget.SetCloseCallback(func() {
+		widget.Hide()
+ 	})
+
+	return widget
+}
+
+type PoolWidget struct {
+	sws.CoreWidget
+	inventory      *Inventory
+	//scroll         *sws.ScrollWidget
+	//vbox           *sws.VBoxWidget
+	//globalcheckbox *sws.CheckboxWidget
+	//selected       map[*UnallocatedServerLineWidget]bool
+	buttonPanel    *sws.CoreWidget
+	create         *sws.ButtonWidget
+	poolCreateWidget *PoolCreateWidget
+}
+
+func NewPoolSub(root *sws.RootWidget, inventory *Inventory) *SubInventory {
+	widget := &PoolWidget{
+		CoreWidget:  *sws.NewCoreWidget(100, 100),
+		inventory:   inventory,
+		buttonPanel: sws.NewCoreWidget(200, 30),
+		create:      sws.NewButtonWidget(100,25,"New Pool"),
+		poolCreateWidget: NewPoolCreateWidget(root,inventory),
+	}
+	
+	widget.create.Move(0,2)
+	widget.create.SetClicked(func() {
+		widget.poolCreateWidget.Show()
+	})
+	widget.buttonPanel.AddChild(widget.create)
+	
 	sub := &SubInventory{
 		Icon:        "resources/icon-bucket.png",
 		Title:       "Server pools",
-		ButtonPanel: sws.NewCoreWidget(200, 30),
-		Widget:      sws.NewScrollWidget(100, 100),
+		ButtonPanel: widget.buttonPanel,
+		Widget:      widget,
 	}
+	
 	return sub
 }
 

@@ -41,6 +41,7 @@ func (self *InventoryWidget) Hide() {
 		self.rootwindow.SetFocus(children[0])
 	}
 }
+
 func (self *InventoryWidget) AddSubCategory(category *supplier.SubInventory,focus bool) {
 	item := sws.NewTreeViewItem(category.Title,category.Icon,func() {
 		self.SelectSubCategory(category)
@@ -129,7 +130,7 @@ func NewInventoryWidget(root *sws.RootWidget) *InventoryWidget {
 	unallocated := supplier.NewUnallocatedInventorySub(root,supplier.GlobalInventory)
 	widget.AddSubCategory(unallocated,true)
 	widget.AddSubCategory(supplier.NewUnallocatedServerSub(root,supplier.GlobalInventory),false)
-	widget.AddSubCategory(supplier.NewPoolSub(supplier.GlobalInventory),false)
+	widget.AddSubCategory(supplier.NewPoolSub(root,supplier.GlobalInventory),false)
 	widget.AddSubCategory(supplier.NewOfferSub(supplier.GlobalInventory),false)
 
 	widget.SelectSubCategory(unallocated)

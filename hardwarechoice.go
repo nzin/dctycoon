@@ -301,7 +301,7 @@ func NewHardwareChoice(inventory *supplier.Inventory) *HardwareChoice {
 	hc.categories[CATEGORY_GENERATOR].Move(0, 300)
 	hc.AddChild(hc.categories[CATEGORY_GENERATOR])
 
-	inventory.AddSubscriber(hc)
+	inventory.AddInventorySubscriber(hc)
 
 	return hc
 }

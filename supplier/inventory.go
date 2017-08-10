@@ -23,6 +23,11 @@ type CartItem struct {
 	Nb         int32
 }
 
+type PoolSubscriber interface {
+	PoolCreate(ServerPool)
+	PoolRemove(ServerPool)
+}
+
 //
 // The lifecycle of an InventoryItem is
 // item is created -> ItemInTransit
@@ -181,9 +186,10 @@ type Inventory struct {
 	increment   int32
 	Cart        []*CartItem
 	Items       map[int32]*InventoryItem
-	pools       []*ServerPool
+	pools       []ServerPool
 	offers      []*ServerOffer
-	subscribers []InventorySubscriber
+	inventorysubscribers []InventorySubscriber
+	poolsubscribers      []PoolSubscriber
 }
 
 var GlobalInventory *Inventory
@@ -203,7 +209,7 @@ func (self *Inventory) BuyCart(buydate time.Time) {
 			}
 			self.increment++
 			self.Items[inventory.Id] = inventory
-			for _, sub := range self.subscribers {
+			for _, sub := range self.inventorysubscribers {
 				instocksub := sub
 				sub.ItemInTransit(inventory)
 				timer.GlobalGameTimer.AddEvent(inventory.Deliverydate, func() {
@@ -220,13 +226,13 @@ func (self *Inventory) InstallItem(item *InventoryItem, x, y, z int32) bool {
 		return false
 	}
 	if _, ok := self.Items[item.Id]; ok {
-		for _, sub := range self.subscribers {
+		for _, sub := range self.inventorysubscribers {
 			sub.ItemRemoveFromStock(item)
 		}
 		item.Xplaced = x
 		item.Yplaced = y
 		item.Zplaced = z
-		for _, sub := range self.subscribers {
+		for _, sub := range self.inventorysubscribers {
 			sub.ItemInstalled(item)
 		}
 		return true
@@ -235,13 +241,13 @@ func (self *Inventory) InstallItem(item *InventoryItem, x, y, z int32) bool {
 }
 
 func (self *Inventory) UninstallItem(item *InventoryItem) {
-	for _, sub := range self.subscribers {
+	for _, sub := range self.inventorysubscribers {
 		sub.ItemUninstalled(item)
 	}
 	item.Xplaced = -1
 	item.Yplaced = -1
 	item.Zplaced = -1
-	for _, sub := range self.subscribers {
+	for _, sub := range self.inventorysubscribers {
 		sub.ItemInStock(item)
 	}
 }
@@ -254,7 +260,7 @@ func (self *Inventory) DiscardItem(item *InventoryItem) bool {
 		return false
 	}
 	if _, ok := self.Items[item.Id]; ok {
-		for _, sub := range self.subscribers {
+		for _, sub := range self.inventorysubscribers {
 			sub.ItemRemoveFromStock(item)
 		}
 		delete(self.Items, item.Id)
@@ -316,12 +322,12 @@ func (self *Inventory) LoadPublishItems() {
 	for _,item := range self.Items {
 		if item.Typeitem == PRODUCT_RACK || item.Typeitem == PRODUCT_AC || item.Typeitem == PRODUCT_GENERATOR {
 			if (item.Xplaced!=-1) {
-				for _, sub := range self.subscribers {
+				for _, sub := range self.inventorysubscribers {
 					sub.ItemInstalled(item)
 				}
 			} else {
 				if (timer.GlobalGameTimer.CurrentTime.Before(item.Deliverydate)) {
-					for _, sub := range self.subscribers {
+					for _, sub := range self.inventorysubscribers {
 						instocksub:=sub
 						sub.ItemInTransit(item)
 						timer.GlobalGameTimer.AddEvent(item.Deliverydate, func() {
@@ -329,7 +335,7 @@ func (self *Inventory) LoadPublishItems() {
 						})
 					}
 				} else {
-					for _, sub := range self.subscribers {
+					for _, sub := range self.inventorysubscribers {
 						sub.ItemInStock(item)
 					}
 				}
@@ -340,12 +346,12 @@ func (self *Inventory) LoadPublishItems() {
 	for _,item := range self.Items {
 		if item.Typeitem == PRODUCT_SERVER {
 			if (item.Xplaced!=-1) {
-				for _, sub := range self.subscribers {
+				for _, sub := range self.inventorysubscribers {
 					sub.ItemInstalled(item)
 				}
 			} else {
 				if (timer.GlobalGameTimer.CurrentTime.Before(item.Deliverydate)) {
-					for _, sub := range self.subscribers {
+					for _, sub := range self.inventorysubscribers {
 						instocksub:=sub
 						sub.ItemInTransit(item)
 						timer.GlobalGameTimer.AddEvent(item.Deliverydate, func() {
@@ -353,7 +359,7 @@ func (self *Inventory) LoadPublishItems() {
 						})
 					}
 				} else {
-					for _, sub := range self.subscribers {
+					for _, sub := range self.inventorysubscribers {
 						sub.ItemInStock(item)
 					}
 				}
@@ -389,8 +395,31 @@ func (self *Inventory) Save() string {
 	return str
 }
 
-func (self *Inventory) AddSubscriber(subscriber InventorySubscriber) {
-	self.subscribers = append(self.subscribers, subscriber)
+func (self *Inventory) AddInventorySubscriber(subscriber InventorySubscriber) {
+	self.inventorysubscribers = append(self.inventorysubscribers, subscriber)
+}
+
+func (self *Inventory) AddPool(pool ServerPool) {
+	self.pools=append(self.pools,pool)
+	for _,s := range self.poolsubscribers {
+		s.PoolCreate(pool)
+	}
+}
+
+func (self *Inventory) RemovePool(pool ServerPool) {
+	for i,p := range self.pools {
+		if p == pool {
+			self.pools=append(self.pools[:i],self.pools[i+1:]...)
+			break
+		}
+	}
+	for _,s := range self.poolsubscribers {
+		s.PoolRemove(pool)
+	}
+}
+
+func (self *Inventory) AddPoolSubscriber(subscriber PoolSubscriber) {
+	self.poolsubscribers = append(self.poolsubscribers, subscriber)
 }
 
 func NewInventory() *Inventory {
@@ -399,9 +428,9 @@ func NewInventory() *Inventory {
 		Cart:      make([]*CartItem, 0),
 		Items:     make(map[int32]*InventoryItem),
 		//Items: make([]*InventoryItem,0),
-		pools:       make([]*ServerPool, 0),
+		pools:       make([]ServerPool, 0),
 		offers:      make([]*ServerOffer, 0),
-		subscribers: make([]InventorySubscriber, 0),
+		inventorysubscribers: make([]InventorySubscriber, 0),
 	}
 	return inventory
 }

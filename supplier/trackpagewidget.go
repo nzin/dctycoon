@@ -99,7 +99,7 @@ func NewTrackPageWidget(width, height int32, inventory *Inventory) *TrackPageWid
 		vbox:       sws.NewVBoxWidget(600, 0),
 		intransit:  make(map[*InventoryItem]*TrackPageItemUi),
 	}
-	inventory.AddSubscriber(trackpage)
+	inventory.AddInventorySubscriber(trackpage)
 	trackpage.SetColor(0xffffffff)
 	title := sws.NewLabelWidget(200, 30, "Product Tracking")
 	title.SetColor(0xffffffff)

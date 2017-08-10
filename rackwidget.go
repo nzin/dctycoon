@@ -81,7 +81,7 @@ func NewRackWidgetItems(inventory *supplier.Inventory) *RackWidgetItems {
 		vbox:       sws.NewVBoxWidget(300, 0),
 		scroll:     sws.NewScrollWidget(300, 300),
 	}
-	inventory.AddSubscriber(widgetitems)
+	inventory.AddInventorySubscriber(widgetitems)
 
 	label := sws.NewLabelWidget(300, 25, "Available server to place: ")
 	widgetitems.AddChild(label)
@@ -374,7 +374,7 @@ func NewRackChassisWidget(inventory *supplier.Inventory) *RackChassisWidget {
 		ypos:       -1,
 		items:      make([]*supplier.InventoryItem, 0),
 	}
-	inventory.AddSubscriber(chassis)
+	inventory.AddInventorySubscriber(chassis)
 	return chassis
 }
 
