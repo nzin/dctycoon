@@ -266,7 +266,7 @@ func (self *HardwareChoice) switchItemPanel(category int32, widget sws.Widget) {
 	self.Parent().AddChild(self.currentPanel)
 	self.categories[category].SetColor(0xdddddddd)
 
-	sws.PostUpdate()
+	self.PostUpdate()
 }
 
 func (self *HardwareChoice) closeItemPanel() {
@@ -276,7 +276,7 @@ func (self *HardwareChoice) closeItemPanel() {
 	}
 	self.currentPanel = nil
 	self.currentPanelCategory = -1
-	sws.PostUpdate()
+	self.PostUpdate()
 }
 
 func NewHardwareChoice(inventory *supplier.Inventory) *HardwareChoice {

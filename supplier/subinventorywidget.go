@@ -88,7 +88,6 @@ func (self *UnallocatedInventoryWidget) ItemInStock(item *InventoryItem) {
 			self.globalcheckbox.SetSelected(false)
 		})
 		self.vbox.AddChild(line)
-		sws.PostUpdate()
 	}
 }
 
@@ -133,7 +132,6 @@ func NewUnallocatedInventorySub(root *sws.RootWidget, inventory *Inventory) *Sub
 			line.Checkbox.SetSelected(widget.globalcheckbox.Selected)
 			widget.SelectLine(line, line.Checkbox.Selected)
 		}
-		sws.PostUpdate()
 	})
 
 	globaldesc := sws.NewLabelWidget(200, 25, "Description")
@@ -268,7 +266,6 @@ func (self *UnallocatedServerWidget) ItemInStock(item *InventoryItem) {
 			self.globalcheckbox.SetSelected(false)
 		})
 		self.vbox.AddChild(line)
-		sws.PostUpdate()
 	}
 }
 
@@ -313,7 +310,6 @@ func NewUnallocatedServerSub(root *sws.RootWidget, inventory *Inventory) *SubInv
 			line.Checkbox.SetSelected(widget.globalcheckbox.Selected)
 			widget.SelectLine(line, line.Checkbox.Selected)
 		}
-		sws.PostUpdate()
 	})
 
 	globaldesc := sws.NewLabelWidget(200, 25, "Description")
@@ -379,6 +375,12 @@ type PoolCreateWidget struct {
 }
 
 func (self *PoolCreateWidget) Show() {
+	self.mainwidget.RemoveChild(self.cpuOverL)
+	self.mainwidget.RemoveChild(self.cpuOver)
+	self.mainwidget.RemoveChild(self.ramOverL)
+	self.mainwidget.RemoveChild(self.ramOver)
+	self.vps.Selected = false
+	self.name.SetText("noname")
         self.rootwindow.AddChild(self.mainwidget)
         self.rootwindow.SetFocus(self.mainwidget)
 }
@@ -402,9 +404,9 @@ func NewPoolCreateWidget(root *sws.RootWidget,inventory *Inventory) *PoolCreateW
 		vps:     sws.NewCheckboxWidget(),
 		vpsL:    sws.NewLabelWidget(100,25,"VPS pool (*)"),
 		vpsNote: sws.NewLabelWidget(200,25,"(*) only if you can have VT processors"),
-		cpuOverL:sws.NewLabelWidget(100,25,"Cpu overcommit"),
+		cpuOverL:sws.NewLabelWidget(150,25,"Cpu overcommit:"),
 		cpuOver: sws.NewDropdownWidget(80,25,[]string{"0%","10%","20%","30%","40%","50%"}),
-		ramOverL:sws.NewLabelWidget(100,25,"RAM overcommit"),
+		ramOverL:sws.NewLabelWidget(150,25,"RAM overcommit:"),
 		ramOver: sws.NewDropdownWidget(80,25,[]string{"0%","10%","20%","30%","40%","50%"}),
 		create:  sws.NewButtonWidget(100,25,"Create"),
 		cancel:  sws.NewButtonWidget(100,25,"Cancel"),
@@ -440,9 +442,9 @@ func NewPoolCreateWidget(root *sws.RootWidget,inventory *Inventory) *PoolCreateW
 	mainwidget.AddChild(widget.vpsNote)
 	
 	widget.cpuOverL.Move(40,95)
-	widget.cpuOver.Move(150,95)
+	widget.cpuOver.Move(200,95)
 	widget.ramOverL.Move(40,120)
-	widget.ramOver.Move(150,120)
+	widget.ramOver.Move(200,120)
 	
 	widget.create.Move(150,150)
 	mainwidget.AddChild(widget.create)
@@ -512,6 +514,16 @@ func NewPoolSub(root *sws.RootWidget, inventory *Inventory) *SubInventory {
 		Widget:      widget,
 	}
 	
+	return sub
+}
+
+func NewServerPoolSub(pool ServerPool) *SubInventory {
+	sub := &SubInventory{
+		Icon:        "resources/icon-bucket.png",
+		Title:       pool.GetName(),
+		ButtonPanel: sws.NewCoreWidget(200, 30),
+		Widget:      sws.NewScrollWidget(100, 100),
+	}
 	return sub
 }
 

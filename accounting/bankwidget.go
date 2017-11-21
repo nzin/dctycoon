@@ -31,7 +31,7 @@ func (self *BankWidget) LedgerChange(ledger *Ledger) {
 	self.accountPosition.SetText(fmt.Sprintf("%.2f $", yearaccount["51"]))
 	self.accountDebt.SetText(fmt.Sprintf("%.2f $", -yearaccount["16"]))
 	self.currentInterest.SetText(fmt.Sprintf("%.2f $/y", -yearaccount["16"]*self.interestRate))
-	sws.PostUpdate()
+	self.PostUpdate()
 }
 
 func NewBankWidget(root *sws.RootWidget) *BankWidget {

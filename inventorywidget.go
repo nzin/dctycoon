@@ -27,6 +27,7 @@ type InventoryWidget struct {
 	treeview        *sws.TreeViewWidget
 	bottomsplitview *sws.SplitviewWidget
 	title           *sws.LabelWidget
+	pooltreeview    *sws.TreeViewItem
 }
 
 func (self *InventoryWidget) Show() {
@@ -42,7 +43,7 @@ func (self *InventoryWidget) Hide() {
 	}
 }
 
-func (self *InventoryWidget) AddSubCategory(category *supplier.SubInventory,focus bool) {
+func (self *InventoryWidget) AddSubCategory(category *supplier.SubInventory,focus bool) *sws.TreeViewItem {
 	item := sws.NewTreeViewItem(category.Title,category.Icon,func() {
 		self.SelectSubCategory(category)
 	})
@@ -52,6 +53,7 @@ func (self *InventoryWidget) AddSubCategory(category *supplier.SubInventory,focu
 		self.treeview.SetFocusOn(item)
 	}
 	self.sub = append(self.sub, category)
+	return item
 }
 
 func (self *InventoryWidget) SelectSubCategory(category *supplier.SubInventory) {
@@ -64,7 +66,7 @@ func (self *InventoryWidget) SelectSubCategory(category *supplier.SubInventory) 
 	self.menu.AddChild(category.ButtonPanel)
 	self.bottomsplitview.SetRightWidget(category.Widget)
 	self.currentsub = category
-	sws.PostUpdate()
+//	self.PostUpdate()
 }
 
 type MenuInventoryWidget struct {
@@ -88,6 +90,19 @@ func NewMenuInventoryWidget(width,height int32) *MenuInventoryWidget{
 	return menu
 }
 
+func (self *InventoryWidget) PoolCreate(pool supplier.ServerPool) {
+	category := supplier.NewServerPoolSub(pool)
+	item := sws.NewTreeViewItem(category.Title,category.Icon,func() {
+		self.SelectSubCategory(category)
+	})
+
+	self.pooltreeview.AddSubItem(item)
+	self.treeview.SetFocusOn(item)
+}
+
+func (self *InventoryWidget) PoolRemove(pool supplier.ServerPool) {
+}
+
 func NewInventoryWidget(root *sws.RootWidget) *InventoryWidget {
 	mainwidget := sws.NewMainWidget(650, 400, " Inventory Management ", true, true)
 	widget := &InventoryWidget{
@@ -98,6 +113,8 @@ func NewInventoryWidget(root *sws.RootWidget) *InventoryWidget {
 		menu:            NewMenuInventoryWidget(500,30),
 		bottomsplitview: sws.NewSplitviewWidget(200, 200, true),
 	}
+	supplier.GlobalInventory.AddPoolSubscriber(widget)
+	
 	mainwidget.SetCloseCallback(func() {
 		widget.Hide()
 	})
@@ -130,7 +147,7 @@ func NewInventoryWidget(root *sws.RootWidget) *InventoryWidget {
 	unallocated := supplier.NewUnallocatedInventorySub(root,supplier.GlobalInventory)
 	widget.AddSubCategory(unallocated,true)
 	widget.AddSubCategory(supplier.NewUnallocatedServerSub(root,supplier.GlobalInventory),false)
-	widget.AddSubCategory(supplier.NewPoolSub(root,supplier.GlobalInventory),false)
+	widget.pooltreeview = widget.AddSubCategory(supplier.NewPoolSub(root,supplier.GlobalInventory),false)
 	widget.AddSubCategory(supplier.NewOfferSub(supplier.GlobalInventory),false)
 
 	widget.SelectSubCategory(unallocated)

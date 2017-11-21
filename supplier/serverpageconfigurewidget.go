@@ -164,7 +164,7 @@ func (self *ServerPageConfigureWidget) SetConfType(conftypename string, today ti
 	// price total
 	self.pricetotal.SetText(strconv.FormatFloat(self.unitprice*float64(self.nbunits), 'f', 0, 64))
 	//////// configuration
-	sws.PostUpdate()
+	self.PostUpdate()
 }
 
 func (self *ServerPageConfigureWidget) GetProductType() int32 {

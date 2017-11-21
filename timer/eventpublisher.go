@@ -48,7 +48,7 @@ func NewEventPublished(shortdesc string, longdesc string, eventpub *EventPublish
 		} else if widget.fadeouttime > 0 {
 			widget.fadeouttime--
 			widget.Surface().SetAlphaMod(uint8(255 * widget.fadeouttime / 40))
-			sws.PostUpdate()
+			widget.PostUpdate()
 		} else {
 			widget.te.StopRepeat()
 			eventpub.remove(widget)
@@ -79,12 +79,10 @@ func (self *EventPublisher) Publish(shortdesc string, longdesc string) {
 	ev := NewEventPublished(shortdesc, longdesc, self, pos)
 	self.events[ev] = pos
 	self.root.AddChild(ev)
-	sws.PostUpdate()
 }
 
 func (self *EventPublisher) remove(event *EventPublished) {
 	self.root.RemoveChild(event)
-	sws.PostUpdate()
 	delete(self.events, event)
 }
 

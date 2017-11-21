@@ -339,7 +339,7 @@ func (self *DcWidget) MouseMove(x, y, xrel, yrel int32) {
 				}
 			}
 
-			sws.PostUpdate()
+			self.PostUpdate()
 		}
 	}
 }
@@ -348,7 +348,7 @@ func (self *DcWidget) MoveLeft() {
 	width := int32(len(self.tiles[0])+len(self.tiles)+1) * TILE_WIDTH_STEP / 2
 	if self.xRoot-width/2+self.Width()/2 < 0 {
 		self.xRoot += 20
-		sws.PostUpdate()
+		self.PostUpdate()
 	}
 }
 
@@ -356,7 +356,7 @@ func (self *DcWidget) MoveUp() {
 	height := int32(len(self.tiles[0])+len(self.tiles))*TILE_HEIGHT_STEP/2 + TILE_HEIGHT
 	if self.yRoot-height/2+self.Height()/2 < 0 {
 		self.yRoot += 20
-		sws.PostUpdate()
+		self.PostUpdate()
 	}
 }
 
@@ -364,7 +364,7 @@ func (self *DcWidget) MoveRight() {
 	width := int32(len(self.tiles[0])+len(self.tiles)+1) * TILE_WIDTH_STEP / 2
 	if self.xRoot+width > self.Width() {
 		self.xRoot -= 20
-		sws.PostUpdate()
+		self.PostUpdate()
 	}
 }
 
@@ -372,7 +372,7 @@ func (self *DcWidget) MoveDown() {
 	height := int32(len(self.tiles[0])+len(self.tiles))*TILE_HEIGHT_STEP/2 + TILE_HEIGHT
 	if self.yRoot+height > self.Height() {
 		self.yRoot -= 20
-		sws.PostUpdate()
+		self.PostUpdate()
 	}
 }
 

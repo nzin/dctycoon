@@ -40,7 +40,6 @@ func NewBannerWidget(width, height int32) *BannerWidget {
 			widget.currentBanner = 0
 		}
 		widget.AddChild(widget.banners[widget.currentBanner])
-		sws.PostUpdate()
 	})
 
 	return widget

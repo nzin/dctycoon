@@ -146,7 +146,7 @@ func (self *RackChassisWidget) ItemRemoveFromStock(*supplier.InventoryItem) {
 func (self *RackChassisWidget) ItemInstalled(item *supplier.InventoryItem) {
 	if item.Xplaced == self.xpos && item.Yplaced == self.ypos && item.Typeitem == supplier.PRODUCT_SERVER {
 		self.items = append(self.items, item)
-		sws.PostUpdate()
+		self.PostUpdate()
 	}
 }
 
@@ -157,7 +157,7 @@ func (self *RackChassisWidget) ItemUninstalled(item *supplier.InventoryItem) {
 				self.items = append(self.items[:p], self.items[p+1:]...)
 			}
 		}
-		sws.PostUpdate()
+		self.PostUpdate()
 	}
 }
 
@@ -309,7 +309,7 @@ func (self *RackChassisWidget) MousePressUp(x, y int32, button uint8) {
 func (self *RackChassisWidget) DragMove(x, y int32, payload sws.DragPayload) {
 	if payload.GetType() == 1 || payload.GetType() == 2 {
 		self.ydrag = y
-		sws.PostUpdate()
+		self.PostUpdate()
 	}
 }
 
@@ -319,14 +319,14 @@ func (self *RackChassisWidget) DragEnter(x, y int32, payload sws.DragPayload) {
 	}
 	if payload.GetType() == 1 || payload.GetType() == 2 {
 		self.ydrag = y
-		sws.PostUpdate()
+		self.PostUpdate()
 	}
 }
 
 func (self *RackChassisWidget) DragLeave(payload sws.DragPayload) {
 	if payload.GetType() == 1 || payload.GetType() == 2 {
 		self.ydrag = -1
-		sws.PostUpdate()
+		self.PostUpdate()
 	}
 }
 
@@ -336,13 +336,13 @@ func (self *RackChassisWidget) DragDrop(x, y int32, payload sws.DragPayload) boo
 		if zpos != -1 {
 			self.inventory.InstallItem(self.comingitem, self.xpos, self.ypos, zpos)
 			self.ydrag = -1
-			sws.PostUpdate()
+			self.PostUpdate()
 			return true
 		}
 
 		self.ydrag = -1
 		self.comingitem = nil
-		sws.PostUpdate()
+		self.PostUpdate()
 	}
 	if payload.GetType() == 2 {
 		// we reset sel.inmove because MousePressUp disabled it
@@ -359,7 +359,7 @@ func (self *RackChassisWidget) DragDrop(x, y int32, payload sws.DragPayload) boo
 		self.inventory.InstallItem(item, xpos, ypos, zpos)
 		self.ydrag = -1
 		self.inmove = nil
-		sws.PostUpdate()
+		self.PostUpdate()
 		return true
 	}
 	return false
