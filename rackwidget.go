@@ -304,6 +304,7 @@ func (self *RackChassisWidget) MousePressDown(x, y int32, button uint8) {
 
 func (self *RackChassisWidget) MousePressUp(x, y int32, button uint8) {
 	self.inmove = nil
+	self.comingitem = nil
 }
 
 func (self *RackChassisWidget) DragMove(x, y int32, payload sws.DragPayload) {
@@ -336,6 +337,7 @@ func (self *RackChassisWidget) DragDrop(x, y int32, payload sws.DragPayload) boo
 		if zpos != -1 {
 			self.inventory.InstallItem(self.comingitem, self.xpos, self.ypos, zpos)
 			self.ydrag = -1
+			self.comingitem = nil
 			self.PostUpdate()
 			return true
 		}
