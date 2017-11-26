@@ -2,6 +2,7 @@ package dctycoon
 
 import (
 	"fmt"
+
 	"github.com/nzin/dctycoon/accounting"
 	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/dctycoon/timer"
@@ -12,7 +13,7 @@ import (
 //
 // top 'menu': [Deal] <shop>  <in transit> <support> <cart>
 //
-// shop: a gauche: tower, rack server, blade, a droite: | tower | rack server | blade (+pub au dessus)
+// shop: to the left: tower, rack server, blade, to the right: | tower | rack server | blade (+pub au dessus)
 //
 // in transit: orders in transit (list)
 //
@@ -141,7 +142,7 @@ func NewSupplier(root *sws.RootWidget) *Supplier {
 		serverpage.AddChild(explore)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
-//		sws.PostUpdate()
+		//		sws.PostUpdate()
 	})
 
 	serverpage.SetTowerCallback(func() {
@@ -150,7 +151,7 @@ func NewSupplier(root *sws.RootWidget) *Supplier {
 		serverpage.AddChild(towerpage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
-//		sws.PostUpdate()
+		//		sws.PostUpdate()
 	})
 
 	serverpage.SetRackServerCallback(func() {
@@ -160,7 +161,7 @@ func NewSupplier(root *sws.RootWidget) *Supplier {
 		serverpage.AddChild(rackpage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
-//		sws.PostUpdate()
+		//		sws.PostUpdate()
 	})
 
 	serverpage.SetBladeCallback(func() {
@@ -170,28 +171,28 @@ func NewSupplier(root *sws.RootWidget) *Supplier {
 		serverpage.AddChild(bladepage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
-//		sws.PostUpdate()
+		//		sws.PostUpdate()
 	})
 
 	serverpage.SetAcCallback(func() {
 		sv.SetRightWidget(scrollwidgetcart)
 		widget.cartpage.AddItem(supplier.PRODUCT_AC, nil, 2000, 1)
 		scrollwidgetcart.Resize(scrollwidgetcart.Width(), scrollwidgetcart.Height())
-//		sws.PostUpdate()
+		//		sws.PostUpdate()
 	})
 
 	serverpage.SetRackCallback(func() {
 		sv.SetRightWidget(scrollwidgetcart)
 		widget.cartpage.AddItem(supplier.PRODUCT_RACK, nil, 500, 1)
 		scrollwidgetcart.Resize(scrollwidgetcart.Width(), scrollwidgetcart.Height())
-//		sws.PostUpdate()
+		//		sws.PostUpdate()
 	})
 
 	serverpage.SetGeneratorCallback(func() {
 		sv.SetRightWidget(scrollwidgetcart)
 		widget.cartpage.AddItem(supplier.PRODUCT_GENERATOR, nil, 3000, 1)
 		scrollwidgetcart.Resize(scrollwidgetcart.Width(), scrollwidgetcart.Height())
-//		sws.PostUpdate()
+		//		sws.PostUpdate()
 	})
 
 	explore.SetTowerCallback(func() {
@@ -201,7 +202,7 @@ func NewSupplier(root *sws.RootWidget) *Supplier {
 		serverpage.AddChild(towerpage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
-//		sws.PostUpdate()
+		//		sws.PostUpdate()
 	})
 
 	explore.SetRackServerCallback(func() {
@@ -211,7 +212,7 @@ func NewSupplier(root *sws.RootWidget) *Supplier {
 		serverpage.AddChild(rackpage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
-//		sws.PostUpdate()
+		//		sws.PostUpdate()
 	})
 
 	explore.SetBladeCallback(func() {
@@ -221,28 +222,28 @@ func NewSupplier(root *sws.RootWidget) *Supplier {
 		serverpage.AddChild(bladepage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
-//		sws.PostUpdate()
+		//		sws.PostUpdate()
 	})
-	
+
 	explore.SetAcCallback(func() {
 		sv.SetRightWidget(scrollwidgetcart)
 		widget.cartpage.AddItem(supplier.PRODUCT_AC, nil, 2000, 1)
 		scrollwidgetcart.Resize(scrollwidgetcart.Width(), scrollwidgetcart.Height())
-//		sws.PostUpdate()
+		//		sws.PostUpdate()
 	})
 
 	explore.SetRackCallback(func() {
 		sv.SetRightWidget(scrollwidgetcart)
 		widget.cartpage.AddItem(supplier.PRODUCT_RACK, nil, 500, 1)
 		scrollwidgetcart.Resize(scrollwidgetcart.Width(), scrollwidgetcart.Height())
-//		sws.PostUpdate()
+		//		sws.PostUpdate()
 	})
 
 	explore.SetGeneratorCallback(func() {
 		sv.SetRightWidget(scrollwidgetcart)
 		widget.cartpage.AddItem(supplier.PRODUCT_GENERATOR, nil, 3000, 1)
 		scrollwidgetcart.Resize(scrollwidgetcart.Width(), scrollwidgetcart.Height())
-//		sws.PostUpdate()
+		//		sws.PostUpdate()
 	})
 
 	// callback configure
@@ -255,7 +256,7 @@ func NewSupplier(root *sws.RootWidget) *Supplier {
 		serverpage.AddChild(configurepage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
-//		sws.PostUpdate()
+		//		sws.PostUpdate()
 	})
 
 	rackpage.SetConfigureRack1Callback(func() {
@@ -267,7 +268,7 @@ func NewSupplier(root *sws.RootWidget) *Supplier {
 		serverpage.AddChild(configurepage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
-//		sws.PostUpdate()
+		//		sws.PostUpdate()
 	})
 
 	rackpage.SetConfigureRack2Callback(func() {
@@ -279,7 +280,7 @@ func NewSupplier(root *sws.RootWidget) *Supplier {
 		serverpage.AddChild(configurepage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
-//		sws.PostUpdate()
+		//		sws.PostUpdate()
 	})
 
 	rackpage.SetConfigureRack4Callback(func() {
@@ -291,7 +292,7 @@ func NewSupplier(root *sws.RootWidget) *Supplier {
 		serverpage.AddChild(configurepage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
-//		sws.PostUpdate()
+		//		sws.PostUpdate()
 	})
 
 	rackpage.SetConfigureRack6Callback(func() {
@@ -303,7 +304,7 @@ func NewSupplier(root *sws.RootWidget) *Supplier {
 		serverpage.AddChild(configurepage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
-//		sws.PostUpdate()
+		//		sws.PostUpdate()
 	})
 
 	bladepage.SetConfigureBlade1Callback(func() {
@@ -315,7 +316,7 @@ func NewSupplier(root *sws.RootWidget) *Supplier {
 		serverpage.AddChild(configurepage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
-//		sws.PostUpdate()
+		//		sws.PostUpdate()
 	})
 
 	bladepage.SetConfigureBlade2Callback(func() {
@@ -327,7 +328,7 @@ func NewSupplier(root *sws.RootWidget) *Supplier {
 		serverpage.AddChild(configurepage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
-//		sws.PostUpdate()
+		//		sws.PostUpdate()
 	})
 
 	widget.cartpage = supplier.NewCartPageWidget(600, 850)
@@ -337,13 +338,13 @@ func NewSupplier(root *sws.RootWidget) *Supplier {
 		sv.SetRightWidget(scrollwidgetcart)
 		scrollwidgetcart.SetHorizontalPosition(0)
 		scrollwidgetcart.SetVerticalPosition(0)
-//		sws.PostUpdate()
+		//		sws.PostUpdate()
 	})
 	configurepage.SetAddCartCallback(func() {
 		sv.SetRightWidget(scrollwidgetcart)
 		widget.cartpage.AddItem(configurepage.GetProductType(), configurepage.GetConf(), configurepage.GetUnitPrice(), configurepage.GetNbUnit())
 		scrollwidgetcart.Resize(scrollwidgetcart.Width(), scrollwidgetcart.Height())
-//		sws.PostUpdate()
+		//		sws.PostUpdate()
 	})
 
 	widget.cartpage.SetBuyCallback(func() {
@@ -355,7 +356,7 @@ func NewSupplier(root *sws.RootWidget) *Supplier {
 		bankAccount := accounts["51"]
 		if bankAccount < totalprice {
 			// show modal window
-			sws.ShowModalError(widget.rootwindow, "Not enough funds","resources/icon-triangular-big.png", fmt.Sprintf("You cannot buy for %.2f $ of goods: your bank account is currently credited of %.2f $!", totalprice, bankAccount), nil)
+			sws.ShowModalError(widget.rootwindow, "Not enough funds", "resources/icon-triangular-big.png", fmt.Sprintf("You cannot buy for %.2f $ of goods: your bank account is currently credited of %.2f $!", totalprice, bankAccount), nil)
 		} else {
 			// we buy
 			for _, item := range supplier.GlobalInventory.Cart {
