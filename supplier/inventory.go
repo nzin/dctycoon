@@ -57,6 +57,7 @@ type InventoryItem struct {
 	Deliverydate     time.Time   // to know when to show it
 	Xplaced, Yplaced int32       // -1 if not placed (yet)
 	Zplaced          int32       //only for racking servers
+	pool             ServerPool
 
 	//allocation
 	Coresallocated int32
@@ -430,7 +431,7 @@ func (self *Inventory) AddPoolSubscriber(subscriber PoolSubscriber) {
 
 func NewInventory() *Inventory {
 	inventory := &Inventory{
-		increment: 0,
+		increment:            0,
 		Cart:                 make([]*CartItem, 0),
 		Items:                make(map[int32]*InventoryItem),
 		pools:                make([]ServerPool, 0),
