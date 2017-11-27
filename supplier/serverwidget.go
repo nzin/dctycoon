@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/nzin/sws"
-	//	"github.com/veandco/go-sdl2/sdl"
 )
 
 type InventoryLineWidget struct {
@@ -33,24 +32,32 @@ func NewInventoryLineWidget(item *InventoryItem) *InventoryLineWidget {
 		placement:  sws.NewLabelWidget(100, 25, placement),
 		item:       item,
 	}
-	line.Checkbox.SetColor(0xffffffff)
+	bgcolor := uint32(0xffffffff)
+	if item.pool != nil {
+		if item.pool.IsVps() {
+			bgcolor = 0xbbbbffff
+		} else {
+			bgcolor = 0xbbffbbff
+		}
+	}
+	line.Checkbox.SetColor(bgcolor)
 	line.AddChild(line.Checkbox)
 
-	line.desc.SetColor(0xffffffff)
+	line.desc.SetColor(bgcolor)
 	line.desc.Move(25, 0)
 	line.AddChild(line.desc)
 
-	line.placement.SetColor(0xffffffff)
+	line.placement.SetColor(bgcolor)
 	line.placement.Move(225, 0)
 	line.AddChild(line.placement)
 
 	cores := sws.NewLabelWidget(100, 25, fmt.Sprintf("%d", item.Serverconf.NbProcessors*item.Serverconf.NbCore))
-	cores.SetColor(0xffffffff)
+	cores.SetColor(bgcolor)
 	cores.Move(325, 0)
 	line.AddChild(cores)
 
 	ram := sws.NewLabelWidget(100, 25, ramSizeText)
-	ram.SetColor(0xffffffff)
+	ram.SetColor(bgcolor)
 	ram.Move(425, 0)
 	line.AddChild(ram)
 
@@ -62,11 +69,24 @@ func NewInventoryLineWidget(item *InventoryItem) *InventoryLineWidget {
 		diskText = fmt.Sprintf("%d To", item.Serverconf.NbDisks*item.Serverconf.DiskSize/(1024*1024))
 	}
 	disk := sws.NewLabelWidget(100, 25, diskText)
-	disk.SetColor(0xffffffff)
+	disk.SetColor(bgcolor)
 	disk.Move(525, 0)
 	line.AddChild(disk)
 
 	return line
+}
+
+func (self *InventoryLineWidget) AddChild(child sws.Widget) {
+	self.CoreWidget.AddChild(child)
+	child.SetParent(self)
+}
+
+func (self *InventoryLineWidget) MousePressDown(x, y int32, button uint8) {
+	self.Checkbox.MousePressDown(1, 1, button)
+}
+
+func (self *InventoryLineWidget) MousePressUp(x, y int32, button uint8) {
+	self.Checkbox.MousePressUp(1, 1, button)
 }
 
 const (
@@ -76,9 +96,9 @@ const (
 )
 
 type ServerFilter struct {
-	assigned *int32
-	racked   *bool
-	inuse    *bool
+	assigned  *int32
+	installed *bool
+	inuse     *bool
 }
 
 type ServerWidget struct {
@@ -136,7 +156,7 @@ func (self *ServerWidget) ItemInStock(item *InventoryItem) {
 		line := NewInventoryLineWidget(item)
 		line.Checkbox.SetClicked(func() {
 			self.SelectLine(line, line.Checkbox.Selected)
-			self.selectallButton.SetSelected(self.selectallButton.Selected)
+			self.selectallButton.SetSelected(false) //self.selectallButton.Selected)
 		})
 		self.listing.AddChild(line)
 	}
@@ -150,6 +170,7 @@ func (self *ServerWidget) ItemRemoveFromStock(item *InventoryItem) {
 	for _, l := range self.listing.GetChildren() {
 		line := l.(*InventoryLineWidget)
 		if line.item == item {
+			self.SelectLine(line, false)
 			self.listing.RemoveChild(line)
 		}
 	}
@@ -166,10 +187,12 @@ func (self *ServerWidget) ItemRemoveFromStock(item *InventoryItem) {
 	}
 }
 
-func (self *ServerWidget) ItemInstalled(*InventoryItem) {
+func (self *ServerWidget) ItemInstalled(item *InventoryItem) {
+	self.ItemInStock(item)
 }
 
-func (self *ServerWidget) ItemUninstalled(*InventoryItem) {
+func (self *ServerWidget) ItemUninstalled(item *InventoryItem) {
+	self.ItemRemoveFromStock(item)
 }
 
 func (self *ServerWidget) searchFilter(item *InventoryItem) bool {
@@ -191,15 +214,15 @@ func (self *ServerWidget) searchFilter(item *InventoryItem) bool {
 		}
 	}
 
-	// racked = [true|false]
-	if self.currentFilter.racked != nil {
-		switch *self.currentFilter.racked {
+	// installed = [true|false]
+	if self.currentFilter.installed != nil {
+		switch *self.currentFilter.installed {
 		case true:
-			if item.Xplaced != -1 {
+			if item.Xplaced == -1 {
 				return false
 			}
 		case false:
-			if item.Xplaced == -1 {
+			if item.Xplaced != -1 {
 				return false
 			}
 		}
@@ -235,14 +258,14 @@ func (self *ServerWidget) Search(search string) {
 				default:
 					error = true
 				}
-			case "racked":
+			case "installed":
 				switch value {
 				case "true":
-					var racked bool = true
-					filter.racked = &racked
+					var installed bool = true
+					filter.installed = &installed
 				case "false":
-					var racked bool = false
-					filter.racked = &racked
+					var installed bool = false
+					filter.installed = &installed
 				default:
 					error = true
 				}
@@ -344,6 +367,14 @@ func NewServerWidget(inventory *Inventory) *ServerWidget {
 	// description line
 	widget.selectallButton.Move(0, 100)
 	widget.AddChild(widget.selectallButton)
+	widget.selectallButton.SetClicked(func() {
+		state := widget.selectallButton.Selected
+		for _, l := range widget.listing.GetChildren() {
+			line := l.(*InventoryLineWidget)
+			line.Checkbox.SetSelected(state)
+			widget.SelectLine(line, state)
+		}
+	})
 
 	globaldesc := sws.NewLabelWidget(200, 25, "Description")
 	globaldesc.Move(25, 100)
