@@ -2,8 +2,9 @@ package supplier
 
 import (
 	"fmt"
-	"github.com/nzin/sws"
 	"time"
+
+	"github.com/nzin/sws"
 )
 
 type TrackPageItemUi struct {
@@ -54,34 +55,32 @@ func (self *TrackPageWidget) ItemInTransit(item *InventoryItem) {
 	desc := ""
 	icon := ""
 	switch item.Typeitem {
-	    case PRODUCT_SERVER:
+	case PRODUCT_SERVER:
 		ramSizeText := fmt.Sprintf("%d Mo", item.Serverconf.NbSlotRam*item.Serverconf.RamSize)
 		if item.Serverconf.NbSlotRam*item.Serverconf.RamSize >= 2048 {
 			ramSizeText = fmt.Sprintf("%d Go", item.Serverconf.NbSlotRam*item.Serverconf.RamSize/1024)
 		}
 		icon = "resources/" + item.Serverconf.ConfType.ServerSprite + "0.png"
 		desc = fmt.Sprintf("%dx %d cores\n%s RAM\n%d disks", item.Serverconf.NbProcessors, item.Serverconf.NbCore, ramSizeText, item.Serverconf.NbDisks)
-	    case PRODUCT_AC:
+	case PRODUCT_AC:
 		icon = "resources/ac0.100.png"
 		desc = "Air climatiser"
-	    case PRODUCT_RACK:
+	case PRODUCT_RACK:
 		icon = "resources/rack0.100.png"
 		desc = "Rack chassis"
-	    case PRODUCT_GENERATOR:
+	case PRODUCT_GENERATOR:
 		icon = "resources/generator0.100.png"
 		desc = "Generator"
 	}
 	self.intransit[item] = NewTrackPageItemUi(icon, desc, item.Deliverydate)
 	self.vbox.AddChild(self.intransit[item])
 	self.Resize(600, 80+self.vbox.Height())
-	sws.PostUpdate()
 }
 
 func (self *TrackPageWidget) ItemInStock(item *InventoryItem) {
 	self.vbox.RemoveChild(self.intransit[item])
 	self.Resize(600, 80+self.vbox.Height())
 	delete(self.intransit, item)
-	sws.PostUpdate()
 }
 
 func (self *TrackPageWidget) ItemRemoveFromStock(*InventoryItem) {
@@ -93,13 +92,16 @@ func (self *TrackPageWidget) ItemInstalled(*InventoryItem) {
 func (self *TrackPageWidget) ItemUninstalled(*InventoryItem) {
 }
 
+func (self *TrackPageWidget) ItemChangedPool(*InventoryItem) {
+}
+
 func NewTrackPageWidget(width, height int32, inventory *Inventory) *TrackPageWidget {
 	trackpage := &TrackPageWidget{
 		CoreWidget: *sws.NewCoreWidget(width, height),
 		vbox:       sws.NewVBoxWidget(600, 0),
 		intransit:  make(map[*InventoryItem]*TrackPageItemUi),
 	}
-	inventory.AddSubscriber(trackpage)
+	inventory.AddInventorySubscriber(trackpage)
 	trackpage.SetColor(0xffffffff)
 	title := sws.NewLabelWidget(200, 30, "Product Tracking")
 	title.SetColor(0xffffffff)

@@ -2,6 +2,8 @@ package dctycoon
 
 import (
 	"fmt"
+
+	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/sws"
 	"github.com/veandco/go-sdl2/img"
@@ -24,7 +26,7 @@ type ElementDragPayload struct {
 }
 
 func (self *ElementDragPayload) GetType() int32 {
-	return 3
+	return global.DRAG_ELEMENT_PAYLOAD
 }
 
 func (self *ElementDragPayload) PayloadAccepted(bool) {
@@ -35,16 +37,31 @@ type HardwareChoiceItem struct {
 	item *supplier.InventoryItem
 }
 
+func (self *HardwareChoiceItem) UpdateSprite() {
+	if self.item.Pool != nil {
+		color := uint32(global.VPS_COLOR)
+		if self.item.Pool.IsVps() == false {
+			color = global.PHYSICAL_COLOR
+		}
+		self.LabelWidget.SetImageSurface(global.GlowImage("resources/icon."+self.item.GetSprite()+".png", color))
+	} else {
+		self.LabelWidget.SetImage("resources/icon." + self.item.GetSprite() + ".png")
+	}
+}
+
 func NewHardwareChoiceItem(item *supplier.InventoryItem) *HardwareChoiceItem {
 	i := &HardwareChoiceItem{
 		LabelWidget: *sws.NewLabelWidget(200, 50, item.UltraShortDescription()),
 		item:        item,
 	}
 	i.AlignImageLeft(true)
-	i.SetImage("resources/icon." + item.GetSprite() + ".png")
+	i.UpdateSprite()
 	return i
 }
 
+//
+// if we are selecting from an hardware subcategory, i.e. rack or towers
+//
 func (self *HardwareChoiceItem) MousePressDown(x, y int32, button uint8) {
 	// if we are dealing with a rack server
 	if self.item.Serverconf.ConfType.NbU > 0 {
@@ -58,7 +75,15 @@ func (self *HardwareChoiceItem) MousePressDown(x, y int32, button uint8) {
 			y += parent.Y()
 			parent = parent.Parent()
 		}
-		sws.NewDragEvent(x, y, "resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", payload)
+		if self.item.Pool != nil {
+			color := uint32(global.VPS_COLOR)
+			if self.item.Pool.IsVps() == false {
+				color = global.PHYSICAL_COLOR
+			}
+			sws.NewDragEventSprite(x, y, global.GlowImage("resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", color), payload)
+		} else {
+			sws.NewDragEvent(x, y, "resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", payload)
+		}
 	} else { // tower
 		payload := &ElementDragPayload{
 			item: self.item,
@@ -73,7 +98,15 @@ func (self *HardwareChoiceItem) MousePressDown(x, y int32, button uint8) {
 			y += parent.Y()
 			parent = parent.Parent()
 		}
-		sws.NewDragEvent(x, y, "resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", payload)
+		if self.item.Pool != nil {
+			color := uint32(global.VPS_COLOR)
+			if self.item.Pool.IsVps() == false {
+				color = global.PHYSICAL_COLOR
+			}
+			sws.NewDragEventSprite(x, y, global.GlowImage("resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", color), payload)
+		} else {
+			sws.NewDragEvent(x, y, "resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", payload)
+		}
 	}
 }
 
@@ -246,6 +279,20 @@ func (self *HardwareChoice) ItemInstalled(item *supplier.InventoryItem) {
 func (self *HardwareChoice) ItemUninstalled(item *supplier.InventoryItem) {
 }
 
+func (self *HardwareChoice) ItemChangedPool(item *supplier.InventoryItem) {
+	if item.Typeitem == supplier.PRODUCT_SERVER {
+		category := CATEGORY_SERVER_RACK
+		if item.Serverconf.ConfType.NbU < 0 {
+			category = CATEGORY_SERVER_TOWER
+		}
+
+		for _, l := range self.categories[category].vbox.GetChildren() {
+			line := l.(*HardwareChoiceItem)
+			line.UpdateSprite()
+		}
+	}
+}
+
 func (self *HardwareChoice) switchItemPanel(category int32, widget sws.Widget) {
 	if self.currentPanel != nil {
 		self.Parent().RemoveChild(self.currentPanel)
@@ -266,7 +313,7 @@ func (self *HardwareChoice) switchItemPanel(category int32, widget sws.Widget) {
 	self.Parent().AddChild(self.currentPanel)
 	self.categories[category].SetColor(0xdddddddd)
 
-	sws.PostUpdate()
+	self.PostUpdate()
 }
 
 func (self *HardwareChoice) closeItemPanel() {
@@ -276,7 +323,7 @@ func (self *HardwareChoice) closeItemPanel() {
 	}
 	self.currentPanel = nil
 	self.currentPanelCategory = -1
-	sws.PostUpdate()
+	self.PostUpdate()
 }
 
 func NewHardwareChoice(inventory *supplier.Inventory) *HardwareChoice {
@@ -301,7 +348,7 @@ func NewHardwareChoice(inventory *supplier.Inventory) *HardwareChoice {
 	hc.categories[CATEGORY_GENERATOR].Move(0, 300)
 	hc.AddChild(hc.categories[CATEGORY_GENERATOR])
 
-	inventory.AddSubscriber(hc)
+	inventory.AddInventorySubscriber(hc)
 
 	return hc
 }

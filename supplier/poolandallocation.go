@@ -7,19 +7,30 @@ import (
 )
 
 type ServerPool interface {
-	AddInventoryItem(item *InventoryItem)
+	GetName() string
+	addInventoryItem(item *InventoryItem)
 	IsInside(item *InventoryItem) bool
-	RemoveInventoryItem(item *InventoryItem)
+	removeInventoryItem(item *InventoryItem)
 	Allocate(nbcores, ramsize, disksize int32, vt bool) *InventoryItem
 	IsAllocated(item *InventoryItem) bool
 	Release(item *InventoryItem, nbcores, ramsize, disksize int32)
+	IsVps() bool
 }
 
 type HardwareServerPool struct {
+	Name string
 	pool map[int32]*InventoryItem
 }
 
-func (self *HardwareServerPool) AddInventoryItem(item *InventoryItem) {
+func (self *HardwareServerPool) GetName() string {
+	return self.Name
+}
+
+func (self *HardwareServerPool) IsVps() bool {
+	return false
+}
+
+func (self *HardwareServerPool) addInventoryItem(item *InventoryItem) {
 	self.pool[item.Id] = item
 }
 
@@ -31,8 +42,9 @@ func (self *HardwareServerPool) IsInside(item *InventoryItem) bool {
 //
 // we suppose that this server is not allocated
 //
-func (self *HardwareServerPool) RemoveInventoryItem(item *InventoryItem) {
+func (self *HardwareServerPool) removeInventoryItem(item *InventoryItem) {
 	delete(self.pool, item.Id)
+	item.Pool = nil
 }
 
 func (self *HardwareServerPool) Allocate(nbcores, ramsize, disksize int32, vt bool) *InventoryItem {
@@ -77,14 +89,33 @@ func (self *HardwareServerPool) Release(item *InventoryItem, nbcores, ramsize, d
 	item.Diskallocated = 0
 }
 
+func NewHardwareServerPool(name string) *HardwareServerPool {
+	return &HardwareServerPool{
+		Name: name,
+		pool: make(map[int32]*InventoryItem),
+	}
+}
+
 type VpsServerPool struct {
-	pool              map[int32]*InventoryItem
+	Name string
+	pool map[int32]*InventoryItem
+	// by default cpuoverallocation is 1.0 (and can go till 2.0)
 	cpuoverallocation float64
+	// by default ramoverallocation is 1.0 (and can go till 1.5)
 	ramoverallocation float64
 }
 
-func (self *VpsServerPool) AddInventoryItem(item *InventoryItem) {
+func (self *VpsServerPool) GetName() string {
+	return self.Name
+}
+
+func (self *VpsServerPool) IsVps() bool {
+	return true
+}
+
+func (self *VpsServerPool) addInventoryItem(item *InventoryItem) {
 	self.pool[item.Id] = item
+	item.Pool = self
 }
 
 func (self *VpsServerPool) IsInside(item *InventoryItem) bool {
@@ -95,7 +126,7 @@ func (self *VpsServerPool) IsInside(item *InventoryItem) bool {
 //
 // we suppose that this server is not allocated
 //
-func (self *VpsServerPool) RemoveInventoryItem(item *InventoryItem) {
+func (self *VpsServerPool) removeInventoryItem(item *InventoryItem) {
 	delete(self.pool, item.Id)
 }
 
@@ -138,6 +169,15 @@ func (self *VpsServerPool) Release(item *InventoryItem, nbcores, ramsize, disksi
 	item.Coresallocated -= nbcores
 	item.Ramallocated -= ramsize
 	item.Diskallocated -= disksize
+}
+
+func NewVpsServerPool(name string, cpuoverallocation, ramoverallocation float64) *VpsServerPool {
+	return &VpsServerPool{
+		Name:              name,
+		pool:              make(map[int32]*InventoryItem),
+		cpuoverallocation: cpuoverallocation,
+		ramoverallocation: ramoverallocation,
+	}
 }
 
 type ServerOffer struct {

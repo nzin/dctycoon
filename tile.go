@@ -79,7 +79,7 @@ func (self *RackElement) Draw(rotation uint32) *sdl.Surface {
 		for _, item := range self.items {
 			img := getSprite("resources/" + item.Serverconf.ConfType.ServerSprite + strconv.Itoa(int(rotation)) + ".png")
 			rectSrc := sdl.Rect{0, 0, img.W, img.H}
-			rectDst := sdl.Rect{0, TILE_HEIGHT - img.H - ((42-item.Zplaced)+item.Serverconf.ConfType.NbU+1)*4, img.W, img.H}
+			rectDst := sdl.Rect{0, TILE_HEIGHT - img.H - ((42-item.Zplaced)-item.Serverconf.ConfType.NbU+2)*4, img.W, img.H}
 			img.Blit(&rectSrc, self.surface, &rectDst)
 		}
 

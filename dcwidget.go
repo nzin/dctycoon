@@ -2,10 +2,12 @@ package dctycoon
 
 import (
 	"fmt"
+	"time"
+
+	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/sws"
 	"github.com/veandco/go-sdl2/sdl"
-	"time"
 )
 
 //
@@ -26,8 +28,8 @@ type DcWidget struct {
 }
 
 func (self *DcWidget) DragDrop(x, y int32, payload sws.DragPayload) bool {
-	// rack server
-	if payload.GetType() == 1 {
+	// rack server (-> to install into a rack tower)
+	if payload.GetType() == global.DRAG_RACK_SERVER {
 		item := payload.(*ServerDragPayload).item
 		tile, tx, ty, _ := self.findTile(x, y)
 		if tile == nil || tile.element == nil || tile.element.ElementType() != supplier.PRODUCT_RACK {
@@ -66,7 +68,7 @@ func (self *DcWidget) DragDrop(x, y int32, payload sws.DragPayload) bool {
 	}
 
 	// other: tower, ac, generator, rack
-	if payload.GetType() == 3 {
+	if payload.GetType() == global.DRAG_ELEMENT_PAYLOAD {
 		item := payload.(*ElementDragPayload).item
 		height := payload.(*ElementDragPayload).imageheight
 		tile, tx, ty := self.findFloorTile(x, y+height/2-24)
@@ -229,7 +231,7 @@ func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 			m.AddItem(sws.NewMenuItemLabel("Uninstall", func() {
 				rackelement := activeTile.TileElement().(*RackElement)
 				if len(rackelement.items) > 0 {
-					sws.ShowModalError(self.rootwindow,"Uninstall action","resources/icon-triangular-big.png","It is not possible to uninstall a rack unless it is empty",nil)
+					sws.ShowModalError(self.rootwindow, "Uninstall action", "resources/icon-triangular-big.png", "It is not possible to uninstall a rack unless it is empty", nil)
 				} else {
 					self.inventory.UninstallItem(rackelement.InventoryItem())
 				}
@@ -339,7 +341,7 @@ func (self *DcWidget) MouseMove(x, y, xrel, yrel int32) {
 				}
 			}
 
-			sws.PostUpdate()
+			self.PostUpdate()
 		}
 	}
 }
@@ -348,7 +350,7 @@ func (self *DcWidget) MoveLeft() {
 	width := int32(len(self.tiles[0])+len(self.tiles)+1) * TILE_WIDTH_STEP / 2
 	if self.xRoot-width/2+self.Width()/2 < 0 {
 		self.xRoot += 20
-		sws.PostUpdate()
+		self.PostUpdate()
 	}
 }
 
@@ -356,7 +358,7 @@ func (self *DcWidget) MoveUp() {
 	height := int32(len(self.tiles[0])+len(self.tiles))*TILE_HEIGHT_STEP/2 + TILE_HEIGHT
 	if self.yRoot-height/2+self.Height()/2 < 0 {
 		self.yRoot += 20
-		sws.PostUpdate()
+		self.PostUpdate()
 	}
 }
 
@@ -364,7 +366,7 @@ func (self *DcWidget) MoveRight() {
 	width := int32(len(self.tiles[0])+len(self.tiles)+1) * TILE_WIDTH_STEP / 2
 	if self.xRoot+width > self.Width() {
 		self.xRoot -= 20
-		sws.PostUpdate()
+		self.PostUpdate()
 	}
 }
 
@@ -372,7 +374,7 @@ func (self *DcWidget) MoveDown() {
 	height := int32(len(self.tiles[0])+len(self.tiles))*TILE_HEIGHT_STEP/2 + TILE_HEIGHT
 	if self.yRoot+height > self.Height() {
 		self.yRoot -= 20
-		sws.PostUpdate()
+		self.PostUpdate()
 	}
 }
 
@@ -399,6 +401,9 @@ func (self *DcWidget) ItemInStock(*supplier.InventoryItem) {
 }
 
 func (self *DcWidget) ItemRemoveFromStock(*supplier.InventoryItem) {
+}
+
+func (self *DcWidget) ItemChangedPool(*supplier.InventoryItem) {
 }
 
 func (self *DcWidget) ItemInstalled(item *supplier.InventoryItem) {
@@ -497,7 +502,7 @@ func NewDcWidget(w, h int32, rootwindow *sws.RootWidget, inventory *supplier.Inv
 		inventory:  inventory,
 		hc:         NewHardwareChoice(inventory),
 	}
-	inventory.AddSubscriber(widget)
+	inventory.AddInventorySubscriber(widget)
 
 	//widget.hc.Move(0,h/2-100)
 	widget.hc.Move(0, 0)

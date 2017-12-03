@@ -445,11 +445,10 @@ func (self *Ledger) RunLedger() (accounts map[int]AccountYearly) {
 
 		return true
 	})
-	
 	//
 	// in case of we have no movement from "current year" until today
 	//
-	for currentyear != timer.GlobalGameTimer.CurrentTime.Year() { // we must close the year and prepare the new year
+	for currentyear < timer.GlobalGameTimer.CurrentTime.Year() { // we must close the year and prepare the new year
 		previousYear := currentyear
 		currentyear++
 			

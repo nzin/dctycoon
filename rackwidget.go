@@ -2,6 +2,8 @@ package dctycoon
 
 import (
 	"fmt"
+
+	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/sws"
 	"github.com/veandco/go-sdl2/sdl"
@@ -17,7 +19,7 @@ type ServerDragPayload struct {
 }
 
 func (self *ServerDragPayload) GetType() int32 {
-	return 1
+	return global.DRAG_RACK_SERVER
 }
 
 func (self *ServerDragPayload) PayloadAccepted(bool) {
@@ -29,7 +31,7 @@ type ServerMovePayload struct {
 }
 
 func (self *ServerMovePayload) GetType() int32 {
-	return 2
+	return global.DRAG_RACK_SERVER_FROM_TOWER
 }
 
 func (self *ServerMovePayload) PayloadAccepted(accepted bool) {
@@ -54,19 +56,41 @@ func (self *RackWidgetLine) MousePressDown(x, y int32, button uint8) {
 		y += parent.Y()
 		parent = parent.Parent()
 	}
-	sws.NewDragEvent(x, y, "resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", payload)
+	if self.item.Pool != nil {
+		color := uint32(global.VPS_COLOR)
+		if self.item.Pool.IsVps() == false {
+			color = global.PHYSICAL_COLOR
+		}
+		sws.NewDragEventSprite(x, y, global.GlowImage("resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", color), payload)
+	} else {
+		sws.NewDragEvent(x, y, "resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", payload)
+	}
+}
+
+func (self *RackWidgetLine) UpdateSprite() {
+	if self.item.Pool != nil {
+		color := uint32(global.VPS_COLOR)
+		if self.item.Pool.IsVps() == false {
+			color = global.PHYSICAL_COLOR
+		}
+		self.LabelWidget.SetImageSurface(global.GlowImage("resources/"+self.item.Serverconf.ConfType.ServerSprite+"half.png", color))
+	} else {
+		self.LabelWidget.SetImage("resources/" + self.item.Serverconf.ConfType.ServerSprite + "half.png")
+	}
 }
 
 func NewRackWidgetLine(item *supplier.InventoryItem) *RackWidgetLine {
 	label := sws.NewLabelWidget(300, 45, item.ShortDescription())
-	label.SetImage("resources/" + item.Serverconf.ConfType.ServerSprite + "half.png")
+	//	label.SetImage("resources/" + item.Serverconf.ConfType.ServerSprite + "half.png")
 	label.AlignImageLeft(true)
 	label.SetColor(0xffffffff)
 
-	return &RackWidgetLine{
+	line := &RackWidgetLine{
 		LabelWidget: *label,
 		item:        item,
 	}
+	line.UpdateSprite()
+	return line
 }
 
 type RackWidgetItems struct {
@@ -81,7 +105,7 @@ func NewRackWidgetItems(inventory *supplier.Inventory) *RackWidgetItems {
 		vbox:       sws.NewVBoxWidget(300, 0),
 		scroll:     sws.NewScrollWidget(300, 300),
 	}
-	inventory.AddSubscriber(widgetitems)
+	inventory.AddInventorySubscriber(widgetitems)
 
 	label := sws.NewLabelWidget(300, 25, "Available server to place: ")
 	widgetitems.AddChild(label)
@@ -123,6 +147,15 @@ func (self *RackWidgetItems) ItemInstalled(*supplier.InventoryItem) {
 func (self *RackWidgetItems) ItemUninstalled(*supplier.InventoryItem) {
 }
 
+func (self *RackWidgetItems) ItemChangedPool(item *supplier.InventoryItem) {
+	for _, elt := range self.vbox.GetChildren() {
+		line := elt.(*RackWidgetLine)
+		if line.item == item {
+			elt.(*RackWidgetLine).UpdateSprite()
+		}
+	}
+}
+
 type RackChassisWidget struct {
 	sws.CoreWidget
 	inventory  *supplier.Inventory
@@ -146,7 +179,7 @@ func (self *RackChassisWidget) ItemRemoveFromStock(*supplier.InventoryItem) {
 func (self *RackChassisWidget) ItemInstalled(item *supplier.InventoryItem) {
 	if item.Xplaced == self.xpos && item.Yplaced == self.ypos && item.Typeitem == supplier.PRODUCT_SERVER {
 		self.items = append(self.items, item)
-		sws.PostUpdate()
+		self.PostUpdate()
 	}
 }
 
@@ -157,8 +190,12 @@ func (self *RackChassisWidget) ItemUninstalled(item *supplier.InventoryItem) {
 				self.items = append(self.items[:p], self.items[p+1:]...)
 			}
 		}
-		sws.PostUpdate()
+		self.PostUpdate()
 	}
+}
+
+func (self *RackChassisWidget) ItemChangedPool(*supplier.InventoryItem) {
+	self.PostUpdate()
 }
 
 func (self *RackChassisWidget) SetLocation(x, y int32) {
@@ -246,7 +283,27 @@ func (self *RackChassisWidget) Repaint() {
 			continue
 		}
 		nbu := i.Serverconf.ConfType.NbU
+		servercolor := uint32(0xff888888)
+		if i.Pool != nil {
+			servercolor = uint32(global.VPS_COLOR)
+			if i.Pool.IsVps() == false {
+				servercolor = global.PHYSICAL_COLOR
+			}
+		}
+
 		self.FillRect(10, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE, 100, nbu*RACK_SIZE, 0xff000000)
+		self.SetDrawColor(byte((servercolor&0xff0000)>>16), byte((servercolor&0xff00)>>8), byte(servercolor&0xff), 255)
+
+		self.DrawLine(10, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE, 109, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE)
+		self.DrawLine(109, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE, 109, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE+nbu*RACK_SIZE-1)
+		self.DrawLine(109, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE+nbu*RACK_SIZE-1, 10, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE+nbu*RACK_SIZE-1)
+		self.DrawLine(10, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE+nbu*RACK_SIZE-1, 10, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE)
+		for r := int32(0); r < nbu; r++ {
+			self.FillRect(14, CHASSIS_OFFSET+(i.Zplaced+r)*RACK_SIZE+5, 40, 5, servercolor)
+		}
+		self.FillRect(80, CHASSIS_OFFSET+(i.Zplaced+nbu-1)*RACK_SIZE+5, 5, 5, servercolor)
+		self.FillRect(90, CHASSIS_OFFSET+(i.Zplaced+nbu-1)*RACK_SIZE+5, 5, 5, servercolor)
+
 		self.WriteText(120, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE, i.ShortDescription(), sdl.Color{0, 0, 0, 255})
 	}
 
@@ -297,54 +354,64 @@ func (self *RackChassisWidget) MousePressDown(x, y int32, button uint8) {
 				y += parent.Y()
 				parent = parent.Parent()
 			}
-			sws.NewDragEvent(x, y, "resources/"+item.Serverconf.ConfType.ServerSprite+"0.png", payload)
+			if item.Pool != nil {
+				color := uint32(global.VPS_COLOR)
+				if item.Pool.IsVps() == false {
+					color = global.PHYSICAL_COLOR
+				}
+				sws.NewDragEventSprite(x, y, global.GlowImage("resources/"+item.Serverconf.ConfType.ServerSprite+"0.png", color), payload)
+			} else {
+				sws.NewDragEvent(x, y, "resources/"+item.Serverconf.ConfType.ServerSprite+"0.png", payload)
+			}
 		}
 	}
 }
 
 func (self *RackChassisWidget) MousePressUp(x, y int32, button uint8) {
 	self.inmove = nil
+	self.comingitem = nil
 }
 
 func (self *RackChassisWidget) DragMove(x, y int32, payload sws.DragPayload) {
 	if payload.GetType() == 1 || payload.GetType() == 2 {
 		self.ydrag = y
-		sws.PostUpdate()
+		self.PostUpdate()
 	}
 }
 
 func (self *RackChassisWidget) DragEnter(x, y int32, payload sws.DragPayload) {
-	if payload.GetType() == 1 {
+	if payload.GetType() == global.DRAG_RACK_SERVER {
 		self.comingitem = payload.(*ServerDragPayload).item
 	}
-	if payload.GetType() == 1 || payload.GetType() == 2 {
+	if payload.GetType() == global.DRAG_RACK_SERVER || payload.GetType() == global.DRAG_RACK_SERVER_FROM_TOWER {
 		self.ydrag = y
-		sws.PostUpdate()
+		self.PostUpdate()
 	}
 }
 
 func (self *RackChassisWidget) DragLeave(payload sws.DragPayload) {
-	if payload.GetType() == 1 || payload.GetType() == 2 {
+	if payload.GetType() == global.DRAG_RACK_SERVER || payload.GetType() == global.DRAG_RACK_SERVER_FROM_TOWER {
 		self.ydrag = -1
-		sws.PostUpdate()
+		self.PostUpdate()
 	}
 }
 
 func (self *RackChassisWidget) DragDrop(x, y int32, payload sws.DragPayload) bool {
-	if payload.GetType() == 1 {
+	if payload.GetType() == global.DRAG_RACK_SERVER {
 		zpos := self.computeComingPos(self.ydrag)
 		if zpos != -1 {
 			self.inventory.InstallItem(self.comingitem, self.xpos, self.ypos, zpos)
 			self.ydrag = -1
-			sws.PostUpdate()
+			self.comingitem = nil
+			self.PostUpdate()
 			return true
 		}
 
 		self.ydrag = -1
 		self.comingitem = nil
-		sws.PostUpdate()
+		self.PostUpdate()
 	}
-	if payload.GetType() == 2 {
+	if payload.GetType() == global.DRAG_RACK_SERVER_FROM_TOWER {
 		// we reset sel.inmove because MousePressUp disabled it
 		item := payload.(*ServerMovePayload).item
 		self.inmove = item
@@ -359,7 +426,7 @@ func (self *RackChassisWidget) DragDrop(x, y int32, payload sws.DragPayload) boo
 		self.inventory.InstallItem(item, xpos, ypos, zpos)
 		self.ydrag = -1
 		self.inmove = nil
-		sws.PostUpdate()
+		self.PostUpdate()
 		return true
 	}
 	return false
@@ -374,7 +441,7 @@ func NewRackChassisWidget(inventory *supplier.Inventory) *RackChassisWidget {
 		ypos:       -1,
 		items:      make([]*supplier.InventoryItem, 0),
 	}
-	inventory.AddSubscriber(chassis)
+	inventory.AddInventorySubscriber(chassis)
 	return chassis
 }
 

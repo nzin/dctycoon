@@ -3,7 +3,6 @@ package accounting
 import (
 	"fmt"
 	"github.com/nzin/dctycoon/timer"
-	"github.com/nzin/sws"
 	//"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -73,7 +72,7 @@ func (self *BalanceWidget) LedgerChange(ledger *Ledger) {
 
 	self.lines["income"].N.SetText(fmt.Sprintf("%.2f $", incomeN))
 	self.lines["income"].N1.SetText(fmt.Sprintf("%.2f $", incomeN1))
-	sws.PostUpdate()
+	self.PostUpdate()
 }
 
 func NewBalanceWidget() *BalanceWidget {

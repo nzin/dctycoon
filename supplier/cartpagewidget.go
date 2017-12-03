@@ -69,7 +69,7 @@ func NewCartPageItemUi(icon, desc string, price float64, qty int32, totalcallbac
 			cartitem.qty = int32(choice)
 			cartitem.total.SetText(fmt.Sprintf("%.2f $", price*float64(choice)))
 			cartitem.totalchanged()
-			sws.PostUpdate()
+			cartitem.PostUpdate()
 		}
 	})
 
@@ -182,7 +182,6 @@ func (self *CartPageWidget) AddItem(productitem int32, conf *ServerConf, unitpri
 	}
 	self.grandTotal.SetText(fmt.Sprintf("%.2f $", totalprice))
 	self.Resize(600, 150+100*int32(len(self.items)))
-	sws.PostUpdate()
 }
 
 func (self *CartPageWidget) DeleteItem(cartitem *CartItem) {
@@ -213,7 +212,6 @@ func (self *CartPageWidget) DeleteItem(cartitem *CartItem) {
 		self.buy.Move(500, 120+100*int32(len(self.items)))
 		self.Resize(600, 150+100*int32(len(self.items)))
 	}
-	sws.PostUpdate()
 }
 
 func NewCartPageWidget(width, height int32) *CartPageWidget {
