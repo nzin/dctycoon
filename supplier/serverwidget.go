@@ -1,5 +1,9 @@
 package supplier
 
+/*
+ * Pool server widget (gmail style) to be able to attribute servers to Physical(s)/VPS(s) pools.
+ * see InventoryWiget
+ */
 import (
 	"fmt"
 	"strings"

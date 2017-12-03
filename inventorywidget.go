@@ -1,23 +1,21 @@
 package dctycoon
 
-import (
-	"github.com/nzin/dctycoon/supplier"
-	"github.com/nzin/sws"
-	//	"github.com/veandco/go-sdl2/sdl"
-)
-
+// Pool / offer / contract management page.
 //
 // We have to:
 // - list all categories (ac, generator, rack, servers)
 // - servers: list non attributed servers (or be able to filter? attribute, type, subtype, ...)
-//    -> a la gmail? (faire des checkboxwidget)
+//    -> a la gmail? (with some checkboxwidget)
 // - see/build pools (Hardware / VPS)
 // - see/build offers
 // - see/build contract?
 //
-// tabwidget?
-// upper: title, + buttons
-//
+
+import (
+	"github.com/nzin/dctycoon/supplier"
+	"github.com/nzin/sws"
+)
+
 type InventoryWidget struct {
 	rootwindow *sws.RootWidget
 	mainwidget *sws.MainWidget
@@ -39,6 +37,7 @@ func (self *InventoryWidget) Hide() {
 	}
 }
 
+// NewInventoryWidget presents the pool and offer management window
 func NewInventoryWidget(root *sws.RootWidget) *InventoryWidget {
 	mainwidget := sws.NewMainWidget(850, 400, " Inventory Management ", true, true)
 	widget := &InventoryWidget{
