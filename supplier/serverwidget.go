@@ -205,13 +205,7 @@ func (self *ServerWidget) callbackToPhysical() {
 	if pool != nil {
 		for l, lSelected := range self.selected {
 			if lSelected {
-				if l.item.Pool != nil {
-					l.item.Pool.RemoveInventoryItem(l.item)
-				}
-
-				if l.item.Pool == nil {
-					pool.AddInventoryItem(l.item)
-				}
+				self.inventory.AssignPool(l.item, pool)
 
 				l.UpdateBgColor()
 				self.updateLineInSearch(l.item)
@@ -232,13 +226,7 @@ func (self *ServerWidget) callbackToVps() {
 	if pool != nil {
 		for l, lSelected := range self.selected {
 			if lSelected {
-				if l.item.Pool != nil {
-					l.item.Pool.RemoveInventoryItem(l.item)
-				}
-
-				if l.item.Pool == nil {
-					pool.AddInventoryItem(l.item)
-				}
+				self.inventory.AssignPool(l.item, pool)
 
 				l.UpdateBgColor()
 				self.updateLineInSearch(l.item)
@@ -252,9 +240,7 @@ func (self *ServerWidget) callbackToVps() {
 func (self *ServerWidget) callbackToUnallocated() {
 	for l, lSelected := range self.selected {
 		if lSelected {
-			if l.item.Pool != nil {
-				l.item.Pool.RemoveInventoryItem(l.item)
-			}
+			self.inventory.AssignPool(l.item, nil)
 
 			l.UpdateBgColor()
 			self.updateLineInSearch(l.item)
@@ -312,6 +298,9 @@ func (self *ServerWidget) ItemInstalled(item *InventoryItem) {
 
 func (self *ServerWidget) ItemUninstalled(item *InventoryItem) {
 	self.ItemRemoveFromStock(item)
+}
+
+func (self *ServerWidget) ItemChangedPool(*InventoryItem) {
 }
 
 //

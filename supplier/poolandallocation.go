@@ -8,9 +8,9 @@ import (
 
 type ServerPool interface {
 	GetName() string
-	AddInventoryItem(item *InventoryItem)
+	addInventoryItem(item *InventoryItem)
 	IsInside(item *InventoryItem) bool
-	RemoveInventoryItem(item *InventoryItem)
+	removeInventoryItem(item *InventoryItem)
 	Allocate(nbcores, ramsize, disksize int32, vt bool) *InventoryItem
 	IsAllocated(item *InventoryItem) bool
 	Release(item *InventoryItem, nbcores, ramsize, disksize int32)
@@ -30,9 +30,8 @@ func (self *HardwareServerPool) IsVps() bool {
 	return false
 }
 
-func (self *HardwareServerPool) AddInventoryItem(item *InventoryItem) {
+func (self *HardwareServerPool) addInventoryItem(item *InventoryItem) {
 	self.pool[item.Id] = item
-	item.Pool = self
 }
 
 func (self *HardwareServerPool) IsInside(item *InventoryItem) bool {
@@ -43,7 +42,7 @@ func (self *HardwareServerPool) IsInside(item *InventoryItem) bool {
 //
 // we suppose that this server is not allocated
 //
-func (self *HardwareServerPool) RemoveInventoryItem(item *InventoryItem) {
+func (self *HardwareServerPool) removeInventoryItem(item *InventoryItem) {
 	delete(self.pool, item.Id)
 	item.Pool = nil
 }
@@ -114,7 +113,7 @@ func (self *VpsServerPool) IsVps() bool {
 	return true
 }
 
-func (self *VpsServerPool) AddInventoryItem(item *InventoryItem) {
+func (self *VpsServerPool) addInventoryItem(item *InventoryItem) {
 	self.pool[item.Id] = item
 	item.Pool = self
 }
@@ -127,9 +126,8 @@ func (self *VpsServerPool) IsInside(item *InventoryItem) bool {
 //
 // we suppose that this server is not allocated
 //
-func (self *VpsServerPool) RemoveInventoryItem(item *InventoryItem) {
+func (self *VpsServerPool) removeInventoryItem(item *InventoryItem) {
 	delete(self.pool, item.Id)
-	item.Pool = nil
 }
 
 func (self *VpsServerPool) Allocate(nbcores, ramsize, disksize int32, vt bool) *InventoryItem {

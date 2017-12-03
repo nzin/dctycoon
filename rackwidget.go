@@ -67,16 +67,30 @@ func (self *RackWidgetLine) MousePressDown(x, y int32, button uint8) {
 	}
 }
 
+func (self *RackWidgetLine) UpdateSprite() {
+	if self.item.Pool != nil {
+		color := uint32(global.VPS_COLOR)
+		if self.item.Pool.IsVps() == false {
+			color = global.PHYSICAL_COLOR
+		}
+		self.LabelWidget.SetImageSurface(global.GlowImage("resources/"+self.item.Serverconf.ConfType.ServerSprite+"half.png", color))
+	} else {
+		self.LabelWidget.SetImage("resources/" + self.item.Serverconf.ConfType.ServerSprite + "half.png")
+	}
+}
+
 func NewRackWidgetLine(item *supplier.InventoryItem) *RackWidgetLine {
 	label := sws.NewLabelWidget(300, 45, item.ShortDescription())
-	label.SetImage("resources/" + item.Serverconf.ConfType.ServerSprite + "half.png")
+	//	label.SetImage("resources/" + item.Serverconf.ConfType.ServerSprite + "half.png")
 	label.AlignImageLeft(true)
 	label.SetColor(0xffffffff)
 
-	return &RackWidgetLine{
+	line := &RackWidgetLine{
 		LabelWidget: *label,
 		item:        item,
 	}
+	line.UpdateSprite()
+	return line
 }
 
 type RackWidgetItems struct {
@@ -133,6 +147,15 @@ func (self *RackWidgetItems) ItemInstalled(*supplier.InventoryItem) {
 func (self *RackWidgetItems) ItemUninstalled(*supplier.InventoryItem) {
 }
 
+func (self *RackWidgetItems) ItemChangedPool(item *supplier.InventoryItem) {
+	for _, elt := range self.vbox.GetChildren() {
+		line := elt.(*RackWidgetLine)
+		if line.item == item {
+			elt.(*RackWidgetLine).UpdateSprite()
+		}
+	}
+}
+
 type RackChassisWidget struct {
 	sws.CoreWidget
 	inventory  *supplier.Inventory
@@ -169,6 +192,10 @@ func (self *RackChassisWidget) ItemUninstalled(item *supplier.InventoryItem) {
 		}
 		self.PostUpdate()
 	}
+}
+
+func (self *RackChassisWidget) ItemChangedPool(*supplier.InventoryItem) {
+	self.PostUpdate()
 }
 
 func (self *RackChassisWidget) SetLocation(x, y int32) {

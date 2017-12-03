@@ -403,6 +403,9 @@ func (self *DcWidget) ItemInStock(*supplier.InventoryItem) {
 func (self *DcWidget) ItemRemoveFromStock(*supplier.InventoryItem) {
 }
 
+func (self *DcWidget) ItemChangedPool(*supplier.InventoryItem) {
+}
+
 func (self *DcWidget) ItemInstalled(item *supplier.InventoryItem) {
 	mapheight := len(self.tiles)
 	mapwidth := len(self.tiles[0])

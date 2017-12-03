@@ -41,6 +41,7 @@ type InventorySubscriber interface {
 	ItemRemoveFromStock(*InventoryItem)
 	ItemInstalled(*InventoryItem)
 	ItemUninstalled(*InventoryItem)
+	ItemChangedPool(*InventoryItem)
 }
 
 //
@@ -266,6 +267,9 @@ func (self *Inventory) DiscardItem(item *InventoryItem) bool {
 	if item.Xplaced != -1 {
 		return false
 	}
+	// remove from pool first
+	self.AssignPool(item, nil)
+	// remove from inventory
 	if _, ok := self.Items[item.Id]; ok {
 		for _, sub := range self.inventorysubscribers {
 			sub.ItemRemoveFromStock(item)
@@ -274,6 +278,21 @@ func (self *Inventory) DiscardItem(item *InventoryItem) bool {
 		return true
 	}
 	return false
+}
+
+func (self *Inventory) AssignPool(item *InventoryItem, pool ServerPool) {
+	if item.Pool != pool {
+		if item.Pool != nil {
+			item.Pool.removeInventoryItem(item)
+		}
+		item.Pool = pool
+		if pool != nil {
+			pool.addInventoryItem(item)
+		}
+		for _, sub := range self.inventorysubscribers {
+			sub.ItemChangedPool(item)
+		}
+	}
 }
 
 func (self *Inventory) LoadItem(product map[string]interface{}) {

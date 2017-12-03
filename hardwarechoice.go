@@ -37,13 +37,25 @@ type HardwareChoiceItem struct {
 	item *supplier.InventoryItem
 }
 
+func (self *HardwareChoiceItem) UpdateSprite() {
+	if self.item.Pool != nil {
+		color := uint32(global.VPS_COLOR)
+		if self.item.Pool.IsVps() == false {
+			color = global.PHYSICAL_COLOR
+		}
+		self.LabelWidget.SetImageSurface(global.GlowImage("resources/icon."+self.item.GetSprite()+".png", color))
+	} else {
+		self.LabelWidget.SetImage("resources/icon." + self.item.GetSprite() + ".png")
+	}
+}
+
 func NewHardwareChoiceItem(item *supplier.InventoryItem) *HardwareChoiceItem {
 	i := &HardwareChoiceItem{
 		LabelWidget: *sws.NewLabelWidget(200, 50, item.UltraShortDescription()),
 		item:        item,
 	}
 	i.AlignImageLeft(true)
-	i.SetImage("resources/icon." + item.GetSprite() + ".png")
+	i.UpdateSprite()
 	return i
 }
 
@@ -265,6 +277,20 @@ func (self *HardwareChoice) ItemInstalled(item *supplier.InventoryItem) {
 }
 
 func (self *HardwareChoice) ItemUninstalled(item *supplier.InventoryItem) {
+}
+
+func (self *HardwareChoice) ItemChangedPool(item *supplier.InventoryItem) {
+	if item.Typeitem == supplier.PRODUCT_SERVER {
+		category := CATEGORY_SERVER_RACK
+		if item.Serverconf.ConfType.NbU < 0 {
+			category = CATEGORY_SERVER_TOWER
+		}
+
+		for _, l := range self.categories[category].vbox.GetChildren() {
+			line := l.(*HardwareChoiceItem)
+			line.UpdateSprite()
+		}
+	}
 }
 
 func (self *HardwareChoice) switchItemPanel(category int32, widget sws.Widget) {
