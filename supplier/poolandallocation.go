@@ -90,6 +90,13 @@ func (self *HardwareServerPool) Release(item *InventoryItem, nbcores, ramsize, d
 	item.Diskallocated = 0
 }
 
+func NewHardwareServerPool(name string) *HardwareServerPool {
+	return &HardwareServerPool{
+		Name: name,
+		pool: make(map[int32]*InventoryItem),
+	}
+}
+
 type VpsServerPool struct {
 	Name string
 	pool map[int32]*InventoryItem
@@ -164,6 +171,15 @@ func (self *VpsServerPool) Release(item *InventoryItem, nbcores, ramsize, disksi
 	item.Coresallocated -= nbcores
 	item.Ramallocated -= ramsize
 	item.Diskallocated -= disksize
+}
+
+func NewVpsServerPool(name string, cpuoverallocation, ramoverallocation float64) *VpsServerPool {
+	return &VpsServerPool{
+		Name:              name,
+		pool:              make(map[int32]*InventoryItem),
+		cpuoverallocation: cpuoverallocation,
+		ramoverallocation: ramoverallocation,
+	}
 }
 
 type ServerOffer struct {

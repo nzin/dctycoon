@@ -12,6 +12,9 @@ type InventoryLineWidget struct {
 	Checkbox  *sws.CheckboxWidget
 	desc      *sws.LabelWidget
 	placement *sws.LabelWidget
+	cores     *sws.LabelWidget
+	ram       *sws.LabelWidget
+	disk      *sws.LabelWidget
 	item      *InventoryItem
 }
 
@@ -25,42 +28,6 @@ func NewInventoryLineWidget(item *InventoryItem) *InventoryLineWidget {
 	if item.Xplaced != -1 {
 		placement = fmt.Sprintf("%d/%d", item.Xplaced, item.Yplaced)
 	}
-	line := &InventoryLineWidget{
-		CoreWidget: *sws.NewCoreWidget(625, 25),
-		Checkbox:   sws.NewCheckboxWidget(),
-		desc:       sws.NewLabelWidget(200, 25, text),
-		placement:  sws.NewLabelWidget(100, 25, placement),
-		item:       item,
-	}
-	bgcolor := uint32(0xffffffff)
-	if item.pool != nil {
-		if item.pool.IsVps() {
-			bgcolor = 0xbbbbffff
-		} else {
-			bgcolor = 0xbbffbbff
-		}
-	}
-	line.Checkbox.SetColor(bgcolor)
-	line.AddChild(line.Checkbox)
-
-	line.desc.SetColor(bgcolor)
-	line.desc.Move(25, 0)
-	line.AddChild(line.desc)
-
-	line.placement.SetColor(bgcolor)
-	line.placement.Move(225, 0)
-	line.AddChild(line.placement)
-
-	cores := sws.NewLabelWidget(100, 25, fmt.Sprintf("%d", item.Serverconf.NbProcessors*item.Serverconf.NbCore))
-	cores.SetColor(bgcolor)
-	cores.Move(325, 0)
-	line.AddChild(cores)
-
-	ram := sws.NewLabelWidget(100, 25, ramSizeText)
-	ram.SetColor(bgcolor)
-	ram.Move(425, 0)
-	line.AddChild(ram)
-
 	diskText := fmt.Sprintf("%d Mo", item.Serverconf.NbDisks*item.Serverconf.DiskSize)
 	if item.Serverconf.NbDisks*item.Serverconf.DiskSize > 4096 {
 		diskText = fmt.Sprintf("%d Go", item.Serverconf.NbDisks*item.Serverconf.DiskSize/1024)
@@ -68,12 +35,55 @@ func NewInventoryLineWidget(item *InventoryItem) *InventoryLineWidget {
 	if item.Serverconf.NbDisks*item.Serverconf.DiskSize > 4*1024*1024 {
 		diskText = fmt.Sprintf("%d To", item.Serverconf.NbDisks*item.Serverconf.DiskSize/(1024*1024))
 	}
-	disk := sws.NewLabelWidget(100, 25, diskText)
-	disk.SetColor(bgcolor)
-	disk.Move(525, 0)
-	line.AddChild(disk)
+
+	line := &InventoryLineWidget{
+		CoreWidget: *sws.NewCoreWidget(625, 25),
+		Checkbox:   sws.NewCheckboxWidget(),
+		desc:       sws.NewLabelWidget(200, 25, text),
+		placement:  sws.NewLabelWidget(100, 25, placement),
+		cores:      sws.NewLabelWidget(100, 25, fmt.Sprintf("%d", item.Serverconf.NbProcessors*item.Serverconf.NbCore)),
+		ram:        sws.NewLabelWidget(100, 25, ramSizeText),
+		disk:       sws.NewLabelWidget(100, 25, diskText),
+		item:       item,
+	}
+	line.AddChild(line.Checkbox)
+
+	line.desc.Move(25, 0)
+	line.AddChild(line.desc)
+
+	line.placement.Move(225, 0)
+	line.AddChild(line.placement)
+
+	line.cores.Move(325, 0)
+	line.AddChild(line.cores)
+
+	line.ram.Move(425, 0)
+	line.AddChild(line.ram)
+
+	line.disk.Move(525, 0)
+	line.AddChild(line.disk)
+
+	line.UpdateBgColor()
 
 	return line
+}
+
+func (self *InventoryLineWidget) UpdateBgColor() {
+	bgcolor := uint32(0xffffffff)
+	if self.item.pool != nil {
+		if self.item.pool.IsVps() {
+			bgcolor = 0xbbbbffff
+		} else {
+			bgcolor = 0xbbffbbff
+		}
+	}
+	self.Checkbox.SetColor(bgcolor)
+	self.desc.SetColor(bgcolor)
+	self.placement.SetColor(bgcolor)
+	self.cores.SetColor(bgcolor)
+	self.ram.SetColor(bgcolor)
+	self.disk.SetColor(bgcolor)
+
 }
 
 func (self *InventoryLineWidget) AddChild(child sws.Widget) {
@@ -104,6 +114,7 @@ type ServerFilter struct {
 type ServerWidget struct {
 	sws.CoreWidget
 	inventory              *Inventory
+	root                   *sws.RootWidget
 	instock                []*InventoryItem
 	searchUnassignedButton *sws.ButtonWidget
 	searchPhysicalButton   *sws.ButtonWidget
@@ -114,18 +125,108 @@ type ServerWidget struct {
 	listing                *sws.VBoxWidget
 	scrolllisting          *sws.ScrollWidget
 	currentFilter          ServerFilter
+	addToPhysical          *sws.ButtonWidget
+	addToVps               *sws.ButtonWidget
+	addToUnallocated       *sws.ButtonWidget
 }
 
 func (self *ServerWidget) SelectLine(line *InventoryLineWidget, selected bool) {
 	if selected {
+		line.Checkbox.SetSelected(true)
 		if len(self.selected) == 0 {
 			// show items related action button
 		}
 		self.selected[line] = true
 	} else {
+		line.Checkbox.SetSelected(false)
 		delete(self.selected, line)
 		if len(self.selected) == 0 {
 			// remove items related action button
+		}
+	}
+
+	// check which action is possible
+	var showPhysical, showVps, showUnallocated bool
+	for l, lSelected := range self.selected {
+		if lSelected {
+			if l.item.pool == nil {
+				showPhysical = true
+				showVps = true
+			} else {
+				if l.item.Coresallocated == 0 {
+					showUnallocated = true
+				}
+			}
+		}
+	}
+	if showPhysical {
+		self.AddChild(self.addToPhysical)
+	} else {
+		self.RemoveChild(self.addToPhysical)
+	}
+	if showVps {
+		self.AddChild(self.addToVps)
+	} else {
+		self.RemoveChild(self.addToVps)
+	}
+	if showUnallocated {
+		self.AddChild(self.addToUnallocated)
+	} else {
+		self.RemoveChild(self.addToUnallocated)
+	}
+}
+
+func (self *ServerWidget) callbackToPhysical() {
+	var pool ServerPool
+	for _, p := range self.inventory.GetPools() {
+		if p.GetName() == "default" && p.IsVps() == false {
+			pool = p
+		}
+	}
+	if pool != nil {
+		for l, lSelected := range self.selected {
+			if lSelected {
+				if l.item.pool == nil {
+					pool.AddInventoryItem(l.item)
+					l.UpdateBgColor()
+					self.updateLineInSearch(l.item)
+					self.SelectLine(l, false)
+				}
+			}
+		}
+	}
+}
+
+func (self *ServerWidget) callbackToVps() {
+	var pool ServerPool
+	for _, p := range self.inventory.GetPools() {
+		if p.GetName() == "default" && p.IsVps() == true {
+			pool = p
+		}
+	}
+	if pool != nil {
+		for l, lSelected := range self.selected {
+			if lSelected {
+				if l.item.pool == nil {
+					pool.AddInventoryItem(l.item)
+					l.UpdateBgColor()
+					self.updateLineInSearch(l.item)
+					self.SelectLine(l, false)
+				}
+			}
+		}
+	}
+}
+
+func (self *ServerWidget) callbackToUnallocated() {
+	for l, lSelected := range self.selected {
+		if lSelected {
+			if l.item.pool != nil {
+				l.item.pool.RemoveInventoryItem(l.item)
+				l.UpdateBgColor()
+				self.updateLineInSearch(l.item)
+				self.SelectLine(l, false)
+			}
 		}
 	}
 }
@@ -151,29 +252,34 @@ func (self *ServerWidget) ItemInStock(item *InventoryItem) {
 		}
 	}
 	self.instock = append(self.instock, item)
-	// add to the listing
-	if self.searchFilter(item) {
-		line := NewInventoryLineWidget(item)
-		line.Checkbox.SetClicked(func() {
-			self.SelectLine(line, line.Checkbox.Selected)
-			self.selectallButton.SetSelected(false) //self.selectallButton.Selected)
-		})
-		self.listing.AddChild(line)
-	}
+	self.updateLineInSearch(item)
+
+	/*
+		// add to the listing
+		if self.searchFilter(item) {
+			line := NewInventoryLineWidget(item)
+			line.Checkbox.SetClicked(func() {
+				self.SelectLine(line, line.Checkbox.Selected)
+				self.selectallButton.SetSelected(false) //self.selectallButton.Selected)
+			})
+			self.listing.AddChild(line)
+		}
+	*/
 }
 
 func (self *ServerWidget) ItemRemoveFromStock(item *InventoryItem) {
 	if item.Typeitem != PRODUCT_SERVER {
 		return
 	}
-	// remove from the listing
-	for _, l := range self.listing.GetChildren() {
-		line := l.(*InventoryLineWidget)
-		if line.item == item {
-			self.SelectLine(line, false)
-			self.listing.RemoveChild(line)
-		}
-	}
+	/*
+		// remove from the listing
+		for _, l := range self.listing.GetChildren() {
+			line := l.(*InventoryLineWidget)
+			if line.item == item {
+				self.SelectLine(line, false)
+				self.listing.RemoveChild(line)
+			}
+		}*/
 
 	for i, c := range self.instock {
 		if c == item {
@@ -185,6 +291,7 @@ func (self *ServerWidget) ItemRemoveFromStock(item *InventoryItem) {
 			return
 		}
 	}
+	self.updateLineInSearch(item)
 }
 
 func (self *ServerWidget) ItemInstalled(item *InventoryItem) {
@@ -193,6 +300,35 @@ func (self *ServerWidget) ItemInstalled(item *InventoryItem) {
 
 func (self *ServerWidget) ItemUninstalled(item *InventoryItem) {
 	self.ItemRemoveFromStock(item)
+}
+
+//
+// this function will add/remove the item from the listing
+// if the item still correspond (or not) to the search filter
+func (self *ServerWidget) updateLineInSearch(item *InventoryItem) {
+	var foundLine *InventoryLineWidget
+	for _, l := range self.listing.GetChildren() {
+		line := l.(*InventoryLineWidget)
+		if line.item == item {
+			foundLine = line
+		}
+	}
+	// include in the search filter?
+	if self.searchFilter(item) {
+		if foundLine == nil {
+			line := NewInventoryLineWidget(item)
+			line.Checkbox.SetClicked(func() {
+				self.SelectLine(line, line.Checkbox.Selected)
+				self.selectallButton.SetSelected(false) //self.selectallButton.Selected)
+			})
+			self.listing.AddChild(line)
+		}
+	} else {
+		if foundLine != nil {
+			self.SelectLine(foundLine, false)
+			self.listing.RemoveChild(foundLine)
+		}
+	}
 }
 
 func (self *ServerWidget) searchFilter(item *InventoryItem) bool {
@@ -297,6 +433,9 @@ func (self *ServerWidget) Search(search string) {
 
 	self.listing.RemoveAllChildren()
 	self.selected = make(map[*InventoryLineWidget]bool)
+	self.RemoveChild(self.addToPhysical)
+	self.RemoveChild(self.addToVps)
+	self.RemoveChild(self.addToUnallocated)
 
 	for _, c := range self.instock {
 		if self.searchFilter(c) == true {
@@ -315,24 +454,34 @@ func (self *ServerWidget) Search(search string) {
 func (self *ServerWidget) Resize(width, height int32) {
 	self.CoreWidget.Resize(width, height)
 	if height > 150 {
+		if width > 625 {
+			width = 625
+		}
+		if width < 20 {
+			width = 20
+		}
 		self.scrolllisting.Resize(width, height-125)
 	}
 }
 
-func NewServerWidget(inventory *Inventory) *ServerWidget {
-	corewidget := sws.NewCoreWidget(600, 400)
+func NewServerWidget(root *sws.RootWidget, inventory *Inventory) *ServerWidget {
+	corewidget := sws.NewCoreWidget(800, 400)
 	widget := &ServerWidget{
 		CoreWidget:             *corewidget,
 		inventory:              inventory,
+		root:                   root,
 		instock:                make([]*InventoryItem, 0, 0),
 		searchUnassignedButton: sws.NewButtonWidget(150, 50, "Arrival"),
 		searchPhysicalButton:   sws.NewButtonWidget(150, 50, "Physical pool"),
 		searchVpsButton:        sws.NewButtonWidget(150, 50, "Vps pool"),
-		searchbar:              sws.NewInputWidget(500, 25, "assigned:unassigned"),
+		searchbar:              sws.NewInputWidget(605, 25, "assigned:unassigned"),
 		selected:               make(map[*InventoryLineWidget]bool),
 		selectallButton:        sws.NewCheckboxWidget(),
 		listing:                sws.NewVBoxWidget(600, 10),
 		scrolllisting:          sws.NewScrollWidget(600, 400),
+		addToPhysical:          sws.NewButtonWidget(150, 25, "> Physical pool"),
+		addToVps:               sws.NewButtonWidget(150, 25, "> Vps pool"),
+		addToUnallocated:       sws.NewButtonWidget(150, 25, "> Back to unallocated"),
 	}
 	var assigned int32 = ASSIGNED_UNASSIGNED
 	widget.currentFilter.assigned = &assigned
@@ -400,6 +549,24 @@ func NewServerWidget(inventory *Inventory) *ServerWidget {
 	widget.scrolllisting.ShowHorizontalScrollbar(false)
 	widget.scrolllisting.SetInnerWidget(widget.listing)
 	widget.AddChild(widget.scrolllisting)
+
+	widget.addToPhysical.Move(660, 100)
+	widget.addToPhysical.SetCentered(false)
+	widget.addToPhysical.SetClicked(func() {
+		widget.callbackToPhysical()
+	})
+
+	widget.addToVps.Move(660, 130)
+	widget.addToVps.SetCentered(false)
+	widget.addToVps.SetClicked(func() {
+		widget.callbackToVps()
+	})
+
+	widget.addToUnallocated.Move(660, 160)
+	widget.addToUnallocated.SetCentered(false)
+	widget.addToUnallocated.SetClicked(func() {
+		widget.callbackToUnallocated()
+	})
 
 	return widget
 }

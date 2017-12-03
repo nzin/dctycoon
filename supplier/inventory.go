@@ -425,6 +425,10 @@ func (self *Inventory) RemovePool(pool ServerPool) {
 	}
 }
 
+func (self *Inventory) GetPools() []ServerPool {
+	return self.pools
+}
+
 func (self *Inventory) AddPoolSubscriber(subscriber PoolSubscriber) {
 	self.poolsubscribers = append(self.poolsubscribers, subscriber)
 }
@@ -438,5 +442,9 @@ func NewInventory() *Inventory {
 		offers:               make([]*ServerOffer, 0),
 		inventorysubscribers: make([]InventorySubscriber, 0),
 	}
+
+	inventory.AddPool(NewHardwareServerPool("default"))
+	inventory.AddPool(NewVpsServerPool("default", 1.0, 1.0))
+
 	return inventory
 }

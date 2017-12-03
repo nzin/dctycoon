@@ -40,12 +40,12 @@ func (self *InventoryWidget) Hide() {
 }
 
 func NewInventoryWidget(root *sws.RootWidget) *InventoryWidget {
-	mainwidget := sws.NewMainWidget(650, 400, " Inventory Management ", true, true)
+	mainwidget := sws.NewMainWidget(850, 400, " Inventory Management ", true, true)
 	widget := &InventoryWidget{
 		rootwindow: root,
 		mainwidget: mainwidget,
 		tabwidget:  sws.NewTabWidget(200, 200),
-		servers:    supplier.NewServerWidget(supplier.GlobalInventory),
+		servers:    supplier.NewServerWidget(root, supplier.GlobalInventory),
 	}
 	widget.tabwidget.AddTab("servers", widget.servers)
 
