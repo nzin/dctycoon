@@ -93,6 +93,14 @@ func (self *InventoryLineWidget) UpdateBgColor() {
 	self.disk.SetColor(bgcolor)
 }
 
+func (self *InventoryLineWidget) UpdatePlacement() {
+	placement := " - "
+	if self.item.Xplaced != -1 {
+		placement = fmt.Sprintf("%d/%d", self.item.Xplaced, self.item.Yplaced)
+	}
+	self.placement.SetText(placement)
+}
+
 func (self *InventoryLineWidget) AddChild(child sws.Widget) {
 	self.CoreWidget.AddChild(child)
 	child.SetParent(self)
@@ -165,6 +173,11 @@ func (self *ServerWidget) SelectLine(line *InventoryLineWidget, selected bool) {
 			} else {
 				if l.item.Coresallocated == 0 {
 					showUnallocated = true
+					if l.item.pool.IsVps() {
+						showPhysical = true
+					} else {
+						showVps = true
+					}
 				}
 			}
 		}
@@ -263,33 +276,12 @@ func (self *ServerWidget) ItemInStock(item *InventoryItem) {
 	}
 	self.instock = append(self.instock, item)
 	self.updateLineInSearch(item)
-
-	/*
-		// add to the listing
-		if self.searchFilter(item) {
-			line := NewInventoryLineWidget(item)
-			line.Checkbox.SetClicked(func() {
-				self.SelectLine(line, line.Checkbox.Selected)
-				self.selectallButton.SetSelected(false) //self.selectallButton.Selected)
-			})
-			self.listing.AddChild(line)
-		}
-	*/
 }
 
 func (self *ServerWidget) ItemRemoveFromStock(item *InventoryItem) {
 	if item.Typeitem != PRODUCT_SERVER {
 		return
 	}
-	/*
-		// remove from the listing
-		for _, l := range self.listing.GetChildren() {
-			line := l.(*InventoryLineWidget)
-			if line.item == item {
-				self.SelectLine(line, false)
-				self.listing.RemoveChild(line)
-			}
-		}*/
 
 	for i, c := range self.instock {
 		if c == item {
@@ -332,6 +324,9 @@ func (self *ServerWidget) updateLineInSearch(item *InventoryItem) {
 				self.selectallButton.SetSelected(false) //self.selectallButton.Selected)
 			})
 			self.listing.AddChild(line)
+		} else {
+			// in case updateLineInSearch() was called because of an item installed/uninstalled
+			foundLine.UpdatePlacement()
 		}
 	} else {
 		if foundLine != nil {
