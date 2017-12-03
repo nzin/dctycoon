@@ -32,7 +32,7 @@ func (self *HardwareServerPool) IsVps() bool {
 
 func (self *HardwareServerPool) AddInventoryItem(item *InventoryItem) {
 	self.pool[item.Id] = item
-	item.pool = self
+	item.Pool = self
 }
 
 func (self *HardwareServerPool) IsInside(item *InventoryItem) bool {
@@ -45,7 +45,7 @@ func (self *HardwareServerPool) IsInside(item *InventoryItem) bool {
 //
 func (self *HardwareServerPool) RemoveInventoryItem(item *InventoryItem) {
 	delete(self.pool, item.Id)
-	item.pool = nil
+	item.Pool = nil
 }
 
 func (self *HardwareServerPool) Allocate(nbcores, ramsize, disksize int32, vt bool) *InventoryItem {
@@ -116,7 +116,7 @@ func (self *VpsServerPool) IsVps() bool {
 
 func (self *VpsServerPool) AddInventoryItem(item *InventoryItem) {
 	self.pool[item.Id] = item
-	item.pool = self
+	item.Pool = self
 }
 
 func (self *VpsServerPool) IsInside(item *InventoryItem) bool {
@@ -129,7 +129,7 @@ func (self *VpsServerPool) IsInside(item *InventoryItem) bool {
 //
 func (self *VpsServerPool) RemoveInventoryItem(item *InventoryItem) {
 	delete(self.pool, item.Id)
-	item.pool = nil
+	item.Pool = nil
 }
 
 func (self *VpsServerPool) Allocate(nbcores, ramsize, disksize int32, vt bool) *InventoryItem {

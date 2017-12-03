@@ -57,7 +57,7 @@ type InventoryItem struct {
 	Deliverydate     time.Time   // to know when to show it
 	Xplaced, Yplaced int32       // -1 if not placed (yet)
 	Zplaced          int32       //only for racking servers
-	pool             ServerPool
+	Pool             ServerPool
 
 	//allocation
 	Coresallocated int32

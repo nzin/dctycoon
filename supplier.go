@@ -24,6 +24,7 @@ import (
 type Supplier struct {
 	rootwindow        *sws.RootWidget
 	mainwidget        *sws.MainWidget
+	splitviewwidget   *sws.SplitviewWidget
 	scrollwidgetshop  *sws.ScrollWidget
 	scrollwidgetcart  *sws.ScrollWidget
 	scrollwidgettrack *sws.ScrollWidget
@@ -31,11 +32,20 @@ type Supplier struct {
 	cartpage          *supplier.CartPageWidget
 	trackpage         *supplier.TrackPageWidget
 	content           sws.Widget
+	bannerwidget      *supplier.BannerWidget
+	explorewidget     *supplier.ServerPageExploreWidget
 }
 
 func (self *Supplier) Show() {
 	self.rootwindow.AddChild(self.mainwidget)
 	self.rootwindow.SetFocus(self.mainwidget)
+	self.splitviewwidget.SetRightWidget(self.scrollwidgetshop)
+	self.serverpage.RemoveChild(self.content)
+	self.serverpage.AddChild(self.bannerwidget)
+	self.content = self.explorewidget
+	self.serverpage.AddChild(self.explorewidget)
+	self.scrollwidgetshop.SetHorizontalPosition(0)
+	self.scrollwidgetshop.SetVerticalPosition(0)
 }
 
 func (self *Supplier) Hide() {
@@ -54,19 +64,21 @@ func NewSupplier(root *sws.RootWidget) *Supplier {
 	scrollwidgetcart.SetColor(0xffffffff)
 	scrollwidgettrack := sws.NewScrollWidget(600, 550)
 	scrollwidgettrack.SetColor(0xffffffff)
+	sv := sws.NewSplitviewWidget(200, 200, false)
+	sv.PlaceSplitBar(50)
+	sv.SplitBarMovable(false)
+
 	widget := &Supplier{
 		rootwindow:        root,
 		mainwidget:        mainwidget,
 		scrollwidgetshop:  scrollwidgetshop,
 		scrollwidgetcart:  scrollwidgetcart,
 		scrollwidgettrack: scrollwidgettrack,
+		splitviewwidget:   sv,
 	}
 	mainwidget.SetCloseCallback(func() {
 		widget.Hide()
 	})
-	sv := sws.NewSplitviewWidget(200, 200, false)
-	sv.PlaceSplitBar(50)
-	sv.SplitBarMovable(false)
 	mainwidget.SetInnerWidget(sv)
 
 	// banner
@@ -113,11 +125,13 @@ func NewSupplier(root *sws.RootWidget) *Supplier {
 	banners := supplier.NewBannerWidget(480, 120)
 	banners.Move(120, 40)
 	serverpage.AddChild(banners)
+	widget.bannerwidget = banners
 
 	explore := supplier.NewServerPageExploreWidget(480, 700)
 	explore.Move(120, 160)
 	serverpage.AddChild(explore)
 	widget.content = explore
+	widget.explorewidget = explore
 
 	towerpage := supplier.NewServerPageTowerWidget(480, 700)
 	towerpage.Move(120, 160)
@@ -376,6 +390,7 @@ func NewSupplier(root *sws.RootWidget) *Supplier {
 			supplier.GlobalInventory.BuyCart(timer.GlobalGameTimer.CurrentTime)
 			// we reset the cart
 			widget.cartpage.Reset()
+			sv.SetRightWidget(scrollwidgettrack)
 		}
 	})
 

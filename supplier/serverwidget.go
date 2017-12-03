@@ -78,8 +78,8 @@ func NewInventoryLineWidget(item *InventoryItem) *InventoryLineWidget {
 //
 func (self *InventoryLineWidget) UpdateBgColor() {
 	bgcolor := uint32(0xffffffff)
-	if self.item.pool != nil {
-		if self.item.pool.IsVps() {
+	if self.item.Pool != nil {
+		if self.item.Pool.IsVps() {
 			bgcolor = VPS_COLOR
 		} else {
 			bgcolor = PHYSICAL_COLOR
@@ -167,13 +167,13 @@ func (self *ServerWidget) SelectLine(line *InventoryLineWidget, selected bool) {
 	var showPhysical, showVps, showUnallocated bool
 	for l, lSelected := range self.selected {
 		if lSelected {
-			if l.item.pool == nil {
+			if l.item.Pool == nil {
 				showPhysical = true
 				showVps = true
 			} else {
 				if l.item.Coresallocated == 0 {
 					showUnallocated = true
-					if l.item.pool.IsVps() {
+					if l.item.Pool.IsVps() {
 						showPhysical = true
 					} else {
 						showVps = true
@@ -209,7 +209,11 @@ func (self *ServerWidget) callbackToPhysical() {
 	if pool != nil {
 		for l, lSelected := range self.selected {
 			if lSelected {
-				if l.item.pool == nil {
+				if l.item.Pool != nil {
+					l.item.Pool.RemoveInventoryItem(l.item)
+				}
+
+				if l.item.Pool == nil {
 					pool.AddInventoryItem(l.item)
 					l.UpdateBgColor()
 					self.updateLineInSearch(l.item)
@@ -230,7 +234,11 @@ func (self *ServerWidget) callbackToVps() {
 	if pool != nil {
 		for l, lSelected := range self.selected {
 			if lSelected {
-				if l.item.pool == nil {
+				if l.item.Pool != nil {
+					l.item.Pool.RemoveInventoryItem(l.item)
+				}
+
+				if l.item.Pool == nil {
 					pool.AddInventoryItem(l.item)
 					l.UpdateBgColor()
 					self.updateLineInSearch(l.item)
@@ -244,8 +252,11 @@ func (self *ServerWidget) callbackToVps() {
 func (self *ServerWidget) callbackToUnallocated() {
 	for l, lSelected := range self.selected {
 		if lSelected {
-			if l.item.pool != nil {
-				l.item.pool.RemoveInventoryItem(l.item)
+			if l.item.Pool != nil {
+				l.item.Pool.RemoveInventoryItem(l.item)
+			}
+
+			if l.item.Pool != nil {
 				l.UpdateBgColor()
 				self.updateLineInSearch(l.item)
 				self.SelectLine(l, false)
@@ -341,15 +352,15 @@ func (self *ServerWidget) searchFilter(item *InventoryItem) bool {
 	if self.currentFilter.assigned != nil {
 		switch *self.currentFilter.assigned {
 		case ASSIGNED_UNASSIGNED:
-			if item.pool != nil {
+			if item.Pool != nil {
 				return false
 			}
 		case ASSIGNED_PHYSICAL:
-			if item.pool == nil || item.pool.IsVps() == true {
+			if item.Pool == nil || item.Pool.IsVps() == true {
 				return false
 			}
 		case ASSIGNED_VPS:
-			if item.pool == nil || item.pool.IsVps() == false {
+			if item.Pool == nil || item.Pool.IsVps() == false {
 				return false
 			}
 		}

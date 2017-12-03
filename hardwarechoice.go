@@ -2,6 +2,7 @@ package dctycoon
 
 import (
 	"fmt"
+
 	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/sws"
 	"github.com/veandco/go-sdl2/img"
@@ -35,6 +36,41 @@ type HardwareChoiceItem struct {
 	item *supplier.InventoryItem
 }
 
+func GlowImage(spritepath string, color uint32) *sdl.Surface {
+	fmt.Println("HardwareChoiceItem::SetGlowImage")
+	red := byte((color & 0xff0000) >> 16)
+	green := byte((color & 0x00ff00) >> 8)
+	blue := byte(color & 0x0000ff)
+
+	if image, err := img.Load(spritepath); err == nil {
+		if image2, err := img.Load(spritepath); err == nil {
+			if image2.Format.BytesPerPixel == 4 {
+				fmt.Println("debug1")
+				pixels := image.Pixels()
+				pixels2 := image2.Pixels()
+				image2.Lock()
+				for x := int32(1); x < image2.W-1; x++ {
+					for y := int32(1); y < image2.H-1; y++ {
+						if (pixels[(y*image2.W+x)*4] == 0 && pixels[(y*image2.W+x)*4+1] == 0 && pixels[(y*image2.W+x)*4+2] == 0 && pixels[(y*image2.W+x)*4+3] == 0) &&
+							((pixels[((y+1)*image2.W+x)*4+3] != 0) ||
+								(pixels[((y-1)*image2.W+x)*4+3] != 0) ||
+								(pixels[(y*image2.W+(x+1))*4+3] != 0) ||
+								(pixels[(y*image2.W+(x-1))*4+3] != 0)) {
+							pixels2[(y*image2.W+x)*4+3] = 0xff
+							pixels2[(y*image2.W+x)*4+0] = red
+							pixels2[(y*image2.W+x)*4+1] = green
+							pixels2[(y*image2.W+x)*4+2] = blue
+						}
+					}
+				}
+				image2.Unlock()
+			}
+			return image2
+		}
+	}
+	return nil
+}
+
 func NewHardwareChoiceItem(item *supplier.InventoryItem) *HardwareChoiceItem {
 	i := &HardwareChoiceItem{
 		LabelWidget: *sws.NewLabelWidget(200, 50, item.UltraShortDescription()),
@@ -58,7 +94,15 @@ func (self *HardwareChoiceItem) MousePressDown(x, y int32, button uint8) {
 			y += parent.Y()
 			parent = parent.Parent()
 		}
-		sws.NewDragEvent(x, y, "resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", payload)
+		if self.item.Pool != nil {
+			color := uint32(supplier.VPS_COLOR)
+			if self.item.Pool.IsVps() == false {
+				color = supplier.PHYSICAL_COLOR
+			}
+			sws.NewDragEventSprite(x, y, GlowImage("resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", color), payload)
+		} else {
+			sws.NewDragEvent(x, y, "resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", payload)
+		}
 	} else { // tower
 		payload := &ElementDragPayload{
 			item: self.item,
@@ -73,7 +117,15 @@ func (self *HardwareChoiceItem) MousePressDown(x, y int32, button uint8) {
 			y += parent.Y()
 			parent = parent.Parent()
 		}
-		sws.NewDragEvent(x, y, "resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", payload)
+		if self.item.Pool != nil {
+			color := uint32(supplier.VPS_COLOR)
+			if self.item.Pool.IsVps() == false {
+				color = supplier.PHYSICAL_COLOR
+			}
+			sws.NewDragEventSprite(x, y, GlowImage("resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", color), payload)
+		} else {
+			sws.NewDragEvent(x, y, "resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", payload)
+		}
 	}
 }
 
