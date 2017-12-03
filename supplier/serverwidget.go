@@ -508,14 +508,14 @@ func NewServerWidget(root *sws.RootWidget, inventory *Inventory) *ServerWidget {
 		widget.Search("assigned:physical")
 	})
 	widget.searchPhysicalButton.Move(170, 5)
-	widget.searchPhysicalButton.SetColor(PHYSICAL_COLOR)
+	widget.searchPhysicalButton.SetButtonColor(PHYSICAL_COLOR)
 	widget.AddChild(widget.searchPhysicalButton)
 
 	widget.searchVpsButton.SetClicked(func() {
 		widget.Search("assigned:vps")
 	})
 	widget.searchVpsButton.Move(330, 5)
-	widget.searchVpsButton.SetColor(VPS_COLOR)
+	widget.searchVpsButton.SetButtonColor(VPS_COLOR)
 	widget.AddChild(widget.searchVpsButton)
 
 	widget.searchbar.SetEnterCallback(func() {
