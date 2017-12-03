@@ -3,6 +3,7 @@ package dctycoon
 import (
 	"fmt"
 
+	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/sws"
 	"github.com/veandco/go-sdl2/img"
@@ -25,7 +26,7 @@ type ElementDragPayload struct {
 }
 
 func (self *ElementDragPayload) GetType() int32 {
-	return 3
+	return global.DRAG_ELEMENT_PAYLOAD
 }
 
 func (self *ElementDragPayload) PayloadAccepted(bool) {
@@ -34,41 +35,6 @@ func (self *ElementDragPayload) PayloadAccepted(bool) {
 type HardwareChoiceItem struct {
 	sws.LabelWidget
 	item *supplier.InventoryItem
-}
-
-func GlowImage(spritepath string, color uint32) *sdl.Surface {
-	fmt.Println("HardwareChoiceItem::SetGlowImage")
-	red := byte((color & 0xff0000) >> 16)
-	green := byte((color & 0x00ff00) >> 8)
-	blue := byte(color & 0x0000ff)
-
-	if image, err := img.Load(spritepath); err == nil {
-		if image2, err := img.Load(spritepath); err == nil {
-			if image2.Format.BytesPerPixel == 4 {
-				fmt.Println("debug1")
-				pixels := image.Pixels()
-				pixels2 := image2.Pixels()
-				image2.Lock()
-				for x := int32(1); x < image2.W-1; x++ {
-					for y := int32(1); y < image2.H-1; y++ {
-						if (pixels[(y*image2.W+x)*4] == 0 && pixels[(y*image2.W+x)*4+1] == 0 && pixels[(y*image2.W+x)*4+2] == 0 && pixels[(y*image2.W+x)*4+3] == 0) &&
-							((pixels[((y+1)*image2.W+x)*4+3] != 0) ||
-								(pixels[((y-1)*image2.W+x)*4+3] != 0) ||
-								(pixels[(y*image2.W+(x+1))*4+3] != 0) ||
-								(pixels[(y*image2.W+(x-1))*4+3] != 0)) {
-							pixels2[(y*image2.W+x)*4+3] = 0xff
-							pixels2[(y*image2.W+x)*4+0] = red
-							pixels2[(y*image2.W+x)*4+1] = green
-							pixels2[(y*image2.W+x)*4+2] = blue
-						}
-					}
-				}
-				image2.Unlock()
-			}
-			return image2
-		}
-	}
-	return nil
 }
 
 func NewHardwareChoiceItem(item *supplier.InventoryItem) *HardwareChoiceItem {
@@ -81,6 +47,9 @@ func NewHardwareChoiceItem(item *supplier.InventoryItem) *HardwareChoiceItem {
 	return i
 }
 
+//
+// if we are selecting from an hardware subcategory, i.e. rack or towers
+//
 func (self *HardwareChoiceItem) MousePressDown(x, y int32, button uint8) {
 	// if we are dealing with a rack server
 	if self.item.Serverconf.ConfType.NbU > 0 {
@@ -95,11 +64,11 @@ func (self *HardwareChoiceItem) MousePressDown(x, y int32, button uint8) {
 			parent = parent.Parent()
 		}
 		if self.item.Pool != nil {
-			color := uint32(supplier.VPS_COLOR)
+			color := uint32(global.VPS_COLOR)
 			if self.item.Pool.IsVps() == false {
-				color = supplier.PHYSICAL_COLOR
+				color = global.PHYSICAL_COLOR
 			}
-			sws.NewDragEventSprite(x, y, GlowImage("resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", color), payload)
+			sws.NewDragEventSprite(x, y, global.GlowImage("resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", color), payload)
 		} else {
 			sws.NewDragEvent(x, y, "resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", payload)
 		}
@@ -118,11 +87,11 @@ func (self *HardwareChoiceItem) MousePressDown(x, y int32, button uint8) {
 			parent = parent.Parent()
 		}
 		if self.item.Pool != nil {
-			color := uint32(supplier.VPS_COLOR)
+			color := uint32(global.VPS_COLOR)
 			if self.item.Pool.IsVps() == false {
-				color = supplier.PHYSICAL_COLOR
+				color = global.PHYSICAL_COLOR
 			}
-			sws.NewDragEventSprite(x, y, GlowImage("resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", color), payload)
+			sws.NewDragEventSprite(x, y, global.GlowImage("resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", color), payload)
 		} else {
 			sws.NewDragEvent(x, y, "resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", payload)
 		}

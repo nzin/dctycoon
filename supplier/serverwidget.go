@@ -4,12 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/sws"
-)
-
-const (
-	VPS_COLOR      = 0xff8888ff
-	PHYSICAL_COLOR = 0xffff8888
 )
 
 type InventoryLineWidget struct {
@@ -80,9 +76,9 @@ func (self *InventoryLineWidget) UpdateBgColor() {
 	bgcolor := uint32(0xffffffff)
 	if self.item.Pool != nil {
 		if self.item.Pool.IsVps() {
-			bgcolor = VPS_COLOR
+			bgcolor = global.VPS_COLOR
 		} else {
-			bgcolor = PHYSICAL_COLOR
+			bgcolor = global.PHYSICAL_COLOR
 		}
 	}
 	self.Checkbox.SetColor(bgcolor)
@@ -514,14 +510,14 @@ func NewServerWidget(root *sws.RootWidget, inventory *Inventory) *ServerWidget {
 		widget.Search("assigned:physical")
 	})
 	widget.searchPhysicalButton.Move(170, 5)
-	widget.searchPhysicalButton.SetButtonColor(PHYSICAL_COLOR)
+	widget.searchPhysicalButton.SetButtonColor(global.PHYSICAL_COLOR)
 	widget.AddChild(widget.searchPhysicalButton)
 
 	widget.searchVpsButton.SetClicked(func() {
 		widget.Search("assigned:vps")
 	})
 	widget.searchVpsButton.Move(330, 5)
-	widget.searchVpsButton.SetButtonColor(VPS_COLOR)
+	widget.searchVpsButton.SetButtonColor(global.VPS_COLOR)
 	widget.AddChild(widget.searchVpsButton)
 
 	widget.searchbar.SetEnterCallback(func() {

@@ -2,6 +2,8 @@ package dctycoon
 
 import (
 	"fmt"
+
+	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/sws"
 	"github.com/veandco/go-sdl2/sdl"
@@ -17,7 +19,7 @@ type ServerDragPayload struct {
 }
 
 func (self *ServerDragPayload) GetType() int32 {
-	return 1
+	return global.DRAG_RACK_SERVER
 }
 
 func (self *ServerDragPayload) PayloadAccepted(bool) {
@@ -29,7 +31,7 @@ type ServerMovePayload struct {
 }
 
 func (self *ServerMovePayload) GetType() int32 {
-	return 2
+	return global.DRAG_RACK_SERVER_FROM_TOWER
 }
 
 func (self *ServerMovePayload) PayloadAccepted(accepted bool) {
@@ -54,7 +56,15 @@ func (self *RackWidgetLine) MousePressDown(x, y int32, button uint8) {
 		y += parent.Y()
 		parent = parent.Parent()
 	}
-	sws.NewDragEvent(x, y, "resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", payload)
+	if self.item.Pool != nil {
+		color := uint32(global.VPS_COLOR)
+		if self.item.Pool.IsVps() == false {
+			color = global.PHYSICAL_COLOR
+		}
+		sws.NewDragEventSprite(x, y, global.GlowImage("resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", color), payload)
+	} else {
+		sws.NewDragEvent(x, y, "resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", payload)
+	}
 }
 
 func NewRackWidgetLine(item *supplier.InventoryItem) *RackWidgetLine {
@@ -297,7 +307,15 @@ func (self *RackChassisWidget) MousePressDown(x, y int32, button uint8) {
 				y += parent.Y()
 				parent = parent.Parent()
 			}
-			sws.NewDragEvent(x, y, "resources/"+item.Serverconf.ConfType.ServerSprite+"0.png", payload)
+			if item.Pool != nil {
+				color := uint32(global.VPS_COLOR)
+				if item.Pool.IsVps() == false {
+					color = global.PHYSICAL_COLOR
+				}
+				sws.NewDragEventSprite(x, y, global.GlowImage("resources/"+item.Serverconf.ConfType.ServerSprite+"0.png", color), payload)
+			} else {
+				sws.NewDragEvent(x, y, "resources/"+item.Serverconf.ConfType.ServerSprite+"0.png", payload)
+			}
 		}
 	}
 }
@@ -315,24 +333,24 @@ func (self *RackChassisWidget) DragMove(x, y int32, payload sws.DragPayload) {
 }
 
 func (self *RackChassisWidget) DragEnter(x, y int32, payload sws.DragPayload) {
-	if payload.GetType() == 1 {
+	if payload.GetType() == global.DRAG_RACK_SERVER {
 		self.comingitem = payload.(*ServerDragPayload).item
 	}
-	if payload.GetType() == 1 || payload.GetType() == 2 {
+	if payload.GetType() == global.DRAG_RACK_SERVER || payload.GetType() == global.DRAG_RACK_SERVER_FROM_TOWER {
 		self.ydrag = y
 		self.PostUpdate()
 	}
 }
 
 func (self *RackChassisWidget) DragLeave(payload sws.DragPayload) {
-	if payload.GetType() == 1 || payload.GetType() == 2 {
+	if payload.GetType() == global.DRAG_RACK_SERVER || payload.GetType() == global.DRAG_RACK_SERVER_FROM_TOWER {
 		self.ydrag = -1
 		self.PostUpdate()
 	}
 }
 
 func (self *RackChassisWidget) DragDrop(x, y int32, payload sws.DragPayload) bool {
-	if payload.GetType() == 1 {
+	if payload.GetType() == global.DRAG_RACK_SERVER {
 		zpos := self.computeComingPos(self.ydrag)
 		if zpos != -1 {
 			self.inventory.InstallItem(self.comingitem, self.xpos, self.ypos, zpos)
@@ -346,7 +364,7 @@ func (self *RackChassisWidget) DragDrop(x, y int32, payload sws.DragPayload) boo
 		self.comingitem = nil
 		self.PostUpdate()
 	}
-	if payload.GetType() == 2 {
+	if payload.GetType() == global.DRAG_RACK_SERVER_FROM_TOWER {
 		// we reset sel.inmove because MousePressUp disabled it
 		item := payload.(*ServerMovePayload).item
 		self.inmove = item

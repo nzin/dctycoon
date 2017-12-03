@@ -2,10 +2,12 @@ package dctycoon
 
 import (
 	"fmt"
+	"time"
+
+	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/sws"
 	"github.com/veandco/go-sdl2/sdl"
-	"time"
 )
 
 //
@@ -26,8 +28,8 @@ type DcWidget struct {
 }
 
 func (self *DcWidget) DragDrop(x, y int32, payload sws.DragPayload) bool {
-	// rack server
-	if payload.GetType() == 1 {
+	// rack server (-> to install into a rack tower)
+	if payload.GetType() == global.DRAG_RACK_SERVER {
 		item := payload.(*ServerDragPayload).item
 		tile, tx, ty, _ := self.findTile(x, y)
 		if tile == nil || tile.element == nil || tile.element.ElementType() != supplier.PRODUCT_RACK {
@@ -66,7 +68,7 @@ func (self *DcWidget) DragDrop(x, y int32, payload sws.DragPayload) bool {
 	}
 
 	// other: tower, ac, generator, rack
-	if payload.GetType() == 3 {
+	if payload.GetType() == global.DRAG_ELEMENT_PAYLOAD {
 		item := payload.(*ElementDragPayload).item
 		height := payload.(*ElementDragPayload).imageheight
 		tile, tx, ty := self.findFloorTile(x, y+height/2-24)
@@ -229,7 +231,7 @@ func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 			m.AddItem(sws.NewMenuItemLabel("Uninstall", func() {
 				rackelement := activeTile.TileElement().(*RackElement)
 				if len(rackelement.items) > 0 {
-					sws.ShowModalError(self.rootwindow,"Uninstall action","resources/icon-triangular-big.png","It is not possible to uninstall a rack unless it is empty",nil)
+					sws.ShowModalError(self.rootwindow, "Uninstall action", "resources/icon-triangular-big.png", "It is not possible to uninstall a rack unless it is empty", nil)
 				} else {
 					self.inventory.UninstallItem(rackelement.InventoryItem())
 				}
