@@ -12,7 +12,7 @@ import (
 	"github.com/nzin/sws"
 )
 
-type InventoryLineWidget struct {
+type PoolManagementLineWidget struct {
 	sws.CoreWidget
 	Checkbox  *sws.CheckboxWidget
 	desc      *sws.LabelWidget
@@ -23,7 +23,7 @@ type InventoryLineWidget struct {
 	item      *InventoryItem
 }
 
-func NewInventoryLineWidget(item *InventoryItem) *InventoryLineWidget {
+func NewPoolManagementLineWidget(item *InventoryItem) *PoolManagementLineWidget {
 	ramSizeText := fmt.Sprintf("%d Mo", item.Serverconf.NbSlotRam*item.Serverconf.RamSize)
 	if item.Serverconf.NbSlotRam*item.Serverconf.RamSize >= 2048 {
 		ramSizeText = fmt.Sprintf("%d Go", item.Serverconf.NbSlotRam*item.Serverconf.RamSize/1024)
@@ -41,7 +41,7 @@ func NewInventoryLineWidget(item *InventoryItem) *InventoryLineWidget {
 		diskText = fmt.Sprintf("%d To", item.Serverconf.NbDisks*item.Serverconf.DiskSize/(1024*1024))
 	}
 
-	line := &InventoryLineWidget{
+	line := &PoolManagementLineWidget{
 		CoreWidget: *sws.NewCoreWidget(625, 25),
 		Checkbox:   sws.NewCheckboxWidget(),
 		desc:       sws.NewLabelWidget(200, 25, text),
@@ -76,7 +76,7 @@ func NewInventoryLineWidget(item *InventoryItem) *InventoryLineWidget {
 //
 // Update the bg color depending on the pool the item belongs to
 //
-func (self *InventoryLineWidget) UpdateBgColor() {
+func (self *PoolManagementLineWidget) UpdateBgColor() {
 	bgcolor := uint32(0xffffffff)
 	if self.item.Pool != nil {
 		if self.item.Pool.IsVps() {
@@ -93,7 +93,7 @@ func (self *InventoryLineWidget) UpdateBgColor() {
 	self.disk.SetColor(bgcolor)
 }
 
-func (self *InventoryLineWidget) UpdatePlacement() {
+func (self *PoolManagementLineWidget) UpdatePlacement() {
 	placement := " - "
 	if self.item.Xplaced != -1 {
 		placement = fmt.Sprintf("%d/%d", self.item.Xplaced, self.item.Yplaced)
@@ -101,16 +101,16 @@ func (self *InventoryLineWidget) UpdatePlacement() {
 	self.placement.SetText(placement)
 }
 
-func (self *InventoryLineWidget) AddChild(child sws.Widget) {
+func (self *PoolManagementLineWidget) AddChild(child sws.Widget) {
 	self.CoreWidget.AddChild(child)
 	child.SetParent(self)
 }
 
-func (self *InventoryLineWidget) MousePressDown(x, y int32, button uint8) {
+func (self *PoolManagementLineWidget) MousePressDown(x, y int32, button uint8) {
 	self.Checkbox.MousePressDown(1, 1, button)
 }
 
-func (self *InventoryLineWidget) MousePressUp(x, y int32, button uint8) {
+func (self *PoolManagementLineWidget) MousePressUp(x, y int32, button uint8) {
 	self.Checkbox.MousePressUp(1, 1, button)
 }
 
@@ -120,13 +120,13 @@ const (
 	ASSIGNED_VPS        = 2
 )
 
-type ServerFilter struct {
+type PoolManagementFilter struct {
 	assigned  *int32
 	installed *bool
 	inuse     *bool
 }
 
-type ServerWidget struct {
+type PoolManagementWidget struct {
 	sws.CoreWidget
 	inventory              *Inventory
 	root                   *sws.RootWidget
@@ -135,11 +135,11 @@ type ServerWidget struct {
 	searchPhysicalButton   *sws.ButtonWidget
 	searchVpsButton        *sws.ButtonWidget
 	searchbar              *sws.InputWidget
-	selected               map[*InventoryLineWidget]bool
+	selected               map[*PoolManagementLineWidget]bool
 	selectallButton        *sws.CheckboxWidget
 	listing                *sws.VBoxWidget
 	scrolllisting          *sws.ScrollWidget
-	currentFilter          ServerFilter
+	currentFilter          PoolManagementFilter
 	addToPhysical          *sws.ButtonWidget
 	addToVps               *sws.ButtonWidget
 	addToUnallocated       *sws.ButtonWidget
@@ -148,7 +148,7 @@ type ServerWidget struct {
 //
 // select the line, update action buttons to show
 //
-func (self *ServerWidget) SelectLine(line *InventoryLineWidget, selected bool) {
+func (self *PoolManagementWidget) SelectLine(line *PoolManagementLineWidget, selected bool) {
 	if selected {
 		line.Checkbox.SetSelected(true)
 		if len(self.selected) == 0 {
@@ -199,7 +199,7 @@ func (self *ServerWidget) SelectLine(line *InventoryLineWidget, selected bool) {
 	}
 }
 
-func (self *ServerWidget) callbackToPhysical() {
+func (self *PoolManagementWidget) callbackToPhysical() {
 	var pool ServerPool
 	for _, p := range self.inventory.GetPools() {
 		if p.GetName() == "default" && p.IsVps() == false {
@@ -220,7 +220,7 @@ func (self *ServerWidget) callbackToPhysical() {
 	}
 }
 
-func (self *ServerWidget) callbackToVps() {
+func (self *PoolManagementWidget) callbackToVps() {
 	var pool ServerPool
 	for _, p := range self.inventory.GetPools() {
 		if p.GetName() == "default" && p.IsVps() == true {
@@ -241,7 +241,7 @@ func (self *ServerWidget) callbackToVps() {
 	}
 }
 
-func (self *ServerWidget) callbackToUnallocated() {
+func (self *PoolManagementWidget) callbackToUnallocated() {
 	for l, lSelected := range self.selected {
 		if lSelected {
 			self.inventory.AssignPool(l.item, nil)
@@ -257,10 +257,10 @@ func (self *ServerWidget) callbackToUnallocated() {
 //
 // InventorySubscriber interface
 //
-func (self *ServerWidget) ItemInTransit(*InventoryItem) {
+func (self *PoolManagementWidget) ItemInTransit(*InventoryItem) {
 }
 
-func (self *ServerWidget) ItemInStock(item *InventoryItem) {
+func (self *PoolManagementWidget) ItemInStock(item *InventoryItem) {
 	if item.Typeitem != PRODUCT_SERVER {
 		return
 	}
@@ -278,7 +278,7 @@ func (self *ServerWidget) ItemInStock(item *InventoryItem) {
 	self.updateLineInSearch(item)
 }
 
-func (self *ServerWidget) ItemRemoveFromStock(item *InventoryItem) {
+func (self *PoolManagementWidget) ItemRemoveFromStock(item *InventoryItem) {
 	if item.Typeitem != PRODUCT_SERVER {
 		return
 	}
@@ -296,24 +296,24 @@ func (self *ServerWidget) ItemRemoveFromStock(item *InventoryItem) {
 	self.updateLineInSearch(item)
 }
 
-func (self *ServerWidget) ItemInstalled(item *InventoryItem) {
+func (self *PoolManagementWidget) ItemInstalled(item *InventoryItem) {
 	self.ItemInStock(item)
 }
 
-func (self *ServerWidget) ItemUninstalled(item *InventoryItem) {
+func (self *PoolManagementWidget) ItemUninstalled(item *InventoryItem) {
 	self.ItemRemoveFromStock(item)
 }
 
-func (self *ServerWidget) ItemChangedPool(*InventoryItem) {
+func (self *PoolManagementWidget) ItemChangedPool(*InventoryItem) {
 }
 
 //
 // this function will add/remove the item from the listing
 // if the item still correspond (or not) to the search filter
-func (self *ServerWidget) updateLineInSearch(item *InventoryItem) {
-	var foundLine *InventoryLineWidget
+func (self *PoolManagementWidget) updateLineInSearch(item *InventoryItem) {
+	var foundLine *PoolManagementLineWidget
 	for _, l := range self.listing.GetChildren() {
-		line := l.(*InventoryLineWidget)
+		line := l.(*PoolManagementLineWidget)
 		if line.item == item {
 			foundLine = line
 		}
@@ -321,7 +321,7 @@ func (self *ServerWidget) updateLineInSearch(item *InventoryItem) {
 	// include in the search filter?
 	if self.searchFilter(item) {
 		if foundLine == nil {
-			line := NewInventoryLineWidget(item)
+			line := NewPoolManagementLineWidget(item)
 			line.Checkbox.SetClicked(func() {
 				self.SelectLine(line, line.Checkbox.Selected)
 				self.selectallButton.SetSelected(false) //self.selectallButton.Selected)
@@ -339,7 +339,7 @@ func (self *ServerWidget) updateLineInSearch(item *InventoryItem) {
 	}
 }
 
-func (self *ServerWidget) searchFilter(item *InventoryItem) bool {
+func (self *PoolManagementWidget) searchFilter(item *InventoryItem) bool {
 	// assigned = [unassigned|physical|vps]
 	if self.currentFilter.assigned != nil {
 		switch *self.currentFilter.assigned {
@@ -375,11 +375,11 @@ func (self *ServerWidget) searchFilter(item *InventoryItem) bool {
 	return true
 }
 
-func (self *ServerWidget) Search(search string) {
+func (self *PoolManagementWidget) Search(search string) {
 	self.searchbar.SetText(search)
 
 	tokens := strings.Fields(search)
-	var filter ServerFilter
+	var filter PoolManagementFilter
 	error := false
 	for _, token := range tokens {
 		if strings.Contains(token, ":") {
@@ -440,14 +440,14 @@ func (self *ServerWidget) Search(search string) {
 	self.searchbar.SetColor(0xffffffff)
 
 	self.listing.RemoveAllChildren()
-	self.selected = make(map[*InventoryLineWidget]bool)
+	self.selected = make(map[*PoolManagementLineWidget]bool)
 	self.RemoveChild(self.addToPhysical)
 	self.RemoveChild(self.addToVps)
 	self.RemoveChild(self.addToUnallocated)
 
 	for _, c := range self.instock {
 		if self.searchFilter(c) == true {
-			line := NewInventoryLineWidget(c)
+			line := NewPoolManagementLineWidget(c)
 			line.Checkbox.SetClicked(func() {
 				self.SelectLine(line, line.Checkbox.Selected)
 				self.selectallButton.SetSelected(false)
@@ -459,7 +459,7 @@ func (self *ServerWidget) Search(search string) {
 	self.PostUpdate()
 }
 
-func (self *ServerWidget) Resize(width, height int32) {
+func (self *PoolManagementWidget) Resize(width, height int32) {
 	self.CoreWidget.Resize(width, height)
 	if height > 150 {
 		if width > 625 {
@@ -472,9 +472,9 @@ func (self *ServerWidget) Resize(width, height int32) {
 	}
 }
 
-func NewServerWidget(root *sws.RootWidget, inventory *Inventory) *ServerWidget {
+func NewPoolManagementWidget(root *sws.RootWidget, inventory *Inventory) *PoolManagementWidget {
 	corewidget := sws.NewCoreWidget(800, 400)
-	widget := &ServerWidget{
+	widget := &PoolManagementWidget{
 		CoreWidget:             *corewidget,
 		inventory:              inventory,
 		root:                   root,
@@ -483,7 +483,7 @@ func NewServerWidget(root *sws.RootWidget, inventory *Inventory) *ServerWidget {
 		searchPhysicalButton:   sws.NewButtonWidget(150, 50, "Physical pool"),
 		searchVpsButton:        sws.NewButtonWidget(150, 50, "Vps pool"),
 		searchbar:              sws.NewInputWidget(605, 25, "assigned:unassigned"),
-		selected:               make(map[*InventoryLineWidget]bool),
+		selected:               make(map[*PoolManagementLineWidget]bool),
 		selectallButton:        sws.NewCheckboxWidget(),
 		listing:                sws.NewVBoxWidget(600, 10),
 		scrolllisting:          sws.NewScrollWidget(600, 400),
@@ -529,7 +529,7 @@ func NewServerWidget(root *sws.RootWidget, inventory *Inventory) *ServerWidget {
 	widget.selectallButton.SetClicked(func() {
 		state := widget.selectallButton.Selected
 		for _, l := range widget.listing.GetChildren() {
-			line := l.(*InventoryLineWidget)
+			line := l.(*PoolManagementLineWidget)
 			line.Checkbox.SetSelected(state)
 			widget.SelectLine(line, state)
 		}

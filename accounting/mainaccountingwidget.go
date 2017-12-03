@@ -5,19 +5,19 @@ import (
 	//"github.com/veandco/go-sdl2/sdl"
 )
 
-type Accounting struct {
+type MainAccountingWidget struct {
 	rootwidget *sws.RootWidget
 	mainwidget *sws.MainWidget
 	tabwidget  *sws.TabWidget
 	bankwidget *BankWidget
 }
 
-func (self *Accounting) Show() {
+func (self *MainAccountingWidget) Show() {
 	self.rootwidget.AddChild(self.mainwidget)
 	self.rootwidget.SetFocus(self.mainwidget)
 }
 
-func (self *Accounting) Hide() {
+func (self *MainAccountingWidget) Hide() {
 	self.rootwidget.RemoveChild(self.mainwidget)
 	children := self.rootwidget.GetChildren()
 	if len(children) > 0 {
@@ -29,11 +29,11 @@ func (self *Accounting) Hide() {
 //	self.bankwidget.SetBankinterestrate(rate)
 //}
 
-func NewAccounting(root *sws.RootWidget) *Accounting {
+func NewMainAccountingWidget(root *sws.RootWidget) *MainAccountingWidget {
 	mainwidget := sws.NewMainWidget(650, 400, " Bank and Finance ", true, true)
 	tabwidget := sws.NewTabWidget(650, 400)
 
-	ui := &Accounting{
+	ui := &MainAccountingWidget{
 		rootwidget: root,
 		mainwidget: mainwidget,
 		tabwidget:  tabwidget,

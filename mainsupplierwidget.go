@@ -21,7 +21,7 @@ import (
 //
 // cart currently in cart, not paid
 
-type Supplier struct {
+type MainSupplierWidget struct {
 	rootwindow        *sws.RootWidget
 	mainwidget        *sws.MainWidget
 	splitviewwidget   *sws.SplitviewWidget
@@ -36,7 +36,7 @@ type Supplier struct {
 	explorewidget     *supplier.ServerPageExploreWidget
 }
 
-func (self *Supplier) Show() {
+func (self *MainSupplierWidget) Show() {
 	self.rootwindow.AddChild(self.mainwidget)
 	self.rootwindow.SetFocus(self.mainwidget)
 	self.splitviewwidget.SetRightWidget(self.scrollwidgetshop)
@@ -48,7 +48,7 @@ func (self *Supplier) Show() {
 	self.scrollwidgetshop.SetVerticalPosition(0)
 }
 
-func (self *Supplier) Hide() {
+func (self *MainSupplierWidget) Hide() {
 	self.rootwindow.RemoveChild(self.mainwidget)
 	children := self.rootwindow.GetChildren()
 	if len(children) > 0 {
@@ -56,7 +56,7 @@ func (self *Supplier) Hide() {
 	}
 }
 
-func NewSupplier(root *sws.RootWidget) *Supplier {
+func NewMainSupplierWidget(root *sws.RootWidget) *MainSupplierWidget {
 	mainwidget := sws.NewMainWidget(650, 400, " Your DEAL supplier", true, true)
 	scrollwidgetshop := sws.NewScrollWidget(600, 550)
 	scrollwidgetshop.SetColor(0xffffffff)
@@ -68,7 +68,7 @@ func NewSupplier(root *sws.RootWidget) *Supplier {
 	sv.PlaceSplitBar(50)
 	sv.SplitBarMovable(false)
 
-	widget := &Supplier{
+	widget := &MainSupplierWidget{
 		rootwindow:        root,
 		mainwidget:        mainwidget,
 		scrollwidgetshop:  scrollwidgetshop,

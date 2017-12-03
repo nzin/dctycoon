@@ -16,20 +16,20 @@ import (
 	"github.com/nzin/sws"
 )
 
-type InventoryWidget struct {
+type MainInventoryWidget struct {
 	rootwindow *sws.RootWidget
 	mainwidget *sws.MainWidget
 	tabwidget  *sws.TabWidget
-	servers    *supplier.ServerWidget
+	servers    *supplier.PoolManagementWidget
 }
 
-func (self *InventoryWidget) Show() {
+func (self *MainInventoryWidget) Show() {
 	self.rootwindow.AddChild(self.mainwidget)
 	self.rootwindow.SetFocus(self.mainwidget)
 	self.tabwidget.SelectTab(0)
 }
 
-func (self *InventoryWidget) Hide() {
+func (self *MainInventoryWidget) Hide() {
 	self.rootwindow.RemoveChild(self.mainwidget)
 	children := self.rootwindow.GetChildren()
 	if len(children) > 0 {
@@ -37,14 +37,14 @@ func (self *InventoryWidget) Hide() {
 	}
 }
 
-// NewInventoryWidget presents the pool and offer management window
-func NewInventoryWidget(root *sws.RootWidget) *InventoryWidget {
+// NewMainInventoryWidget presents the pool and offer management window
+func NewMainInventoryWidget(root *sws.RootWidget) *MainInventoryWidget {
 	mainwidget := sws.NewMainWidget(850, 400, " Inventory Management ", true, true)
-	widget := &InventoryWidget{
+	widget := &MainInventoryWidget{
 		rootwindow: root,
 		mainwidget: mainwidget,
 		tabwidget:  sws.NewTabWidget(200, 200),
-		servers:    supplier.NewServerWidget(root, supplier.GlobalInventory),
+		servers:    supplier.NewPoolManagementWidget(root, supplier.GlobalInventory),
 	}
 	widget.tabwidget.AddTab("servers", widget.servers)
 
