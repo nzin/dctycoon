@@ -7,6 +7,11 @@ import (
 	"github.com/nzin/sws"
 )
 
+const (
+	VPS_COLOR      = 0xff8888ff
+	PHYSICAL_COLOR = 0xffff8888
+)
+
 type InventoryLineWidget struct {
 	sws.CoreWidget
 	Checkbox  *sws.CheckboxWidget
@@ -68,13 +73,16 @@ func NewInventoryLineWidget(item *InventoryItem) *InventoryLineWidget {
 	return line
 }
 
+//
+// Update the bg color depending on the pool the item belongs to
+//
 func (self *InventoryLineWidget) UpdateBgColor() {
 	bgcolor := uint32(0xffffffff)
 	if self.item.pool != nil {
 		if self.item.pool.IsVps() {
-			bgcolor = 0xbbbbffff
+			bgcolor = VPS_COLOR
 		} else {
-			bgcolor = 0xbbffbbff
+			bgcolor = PHYSICAL_COLOR
 		}
 	}
 	self.Checkbox.SetColor(bgcolor)
@@ -83,7 +91,6 @@ func (self *InventoryLineWidget) UpdateBgColor() {
 	self.cores.SetColor(bgcolor)
 	self.ram.SetColor(bgcolor)
 	self.disk.SetColor(bgcolor)
-
 }
 
 func (self *InventoryLineWidget) AddChild(child sws.Widget) {
@@ -130,6 +137,9 @@ type ServerWidget struct {
 	addToUnallocated       *sws.ButtonWidget
 }
 
+//
+// select the line, update action buttons to show
+//
 func (self *ServerWidget) SelectLine(line *InventoryLineWidget, selected bool) {
 	if selected {
 		line.Checkbox.SetSelected(true)
@@ -479,9 +489,9 @@ func NewServerWidget(root *sws.RootWidget, inventory *Inventory) *ServerWidget {
 		selectallButton:        sws.NewCheckboxWidget(),
 		listing:                sws.NewVBoxWidget(600, 10),
 		scrolllisting:          sws.NewScrollWidget(600, 400),
-		addToPhysical:          sws.NewButtonWidget(150, 25, "> Physical pool"),
-		addToVps:               sws.NewButtonWidget(150, 25, "> Vps pool"),
-		addToUnallocated:       sws.NewButtonWidget(150, 25, "> Back to unallocated"),
+		addToPhysical:          sws.NewButtonWidget(170, 25, "> Physical pool"),
+		addToVps:               sws.NewButtonWidget(170, 25, "> Vps pool"),
+		addToUnallocated:       sws.NewButtonWidget(170, 25, "> Back to unallocated"),
 	}
 	var assigned int32 = ASSIGNED_UNASSIGNED
 	widget.currentFilter.assigned = &assigned
@@ -498,12 +508,14 @@ func NewServerWidget(root *sws.RootWidget, inventory *Inventory) *ServerWidget {
 		widget.Search("assigned:physical")
 	})
 	widget.searchPhysicalButton.Move(170, 5)
+	widget.searchPhysicalButton.SetColor(PHYSICAL_COLOR)
 	widget.AddChild(widget.searchPhysicalButton)
 
 	widget.searchVpsButton.SetClicked(func() {
 		widget.Search("assigned:vps")
 	})
 	widget.searchVpsButton.Move(330, 5)
+	widget.searchVpsButton.SetColor(VPS_COLOR)
 	widget.AddChild(widget.searchVpsButton)
 
 	widget.searchbar.SetEnterCallback(func() {
@@ -550,19 +562,19 @@ func NewServerWidget(root *sws.RootWidget, inventory *Inventory) *ServerWidget {
 	widget.scrolllisting.SetInnerWidget(widget.listing)
 	widget.AddChild(widget.scrolllisting)
 
-	widget.addToPhysical.Move(660, 100)
+	widget.addToPhysical.Move(640, 100)
 	widget.addToPhysical.SetCentered(false)
 	widget.addToPhysical.SetClicked(func() {
 		widget.callbackToPhysical()
 	})
 
-	widget.addToVps.Move(660, 130)
+	widget.addToVps.Move(640, 130)
 	widget.addToVps.SetCentered(false)
 	widget.addToVps.SetClicked(func() {
 		widget.callbackToVps()
 	})
 
-	widget.addToUnallocated.Move(660, 160)
+	widget.addToUnallocated.Move(640, 160)
 	widget.addToUnallocated.SetCentered(false)
 	widget.addToUnallocated.SetClicked(func() {
 		widget.callbackToUnallocated()
