@@ -256,7 +256,27 @@ func (self *RackChassisWidget) Repaint() {
 			continue
 		}
 		nbu := i.Serverconf.ConfType.NbU
+		servercolor := uint32(0xff888888)
+		if i.Pool != nil {
+			servercolor = uint32(global.VPS_COLOR)
+			if i.Pool.IsVps() == false {
+				servercolor = global.PHYSICAL_COLOR
+			}
+		}
+
 		self.FillRect(10, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE, 100, nbu*RACK_SIZE, 0xff000000)
+		self.SetDrawColor(byte((servercolor&0xff0000)>>16), byte((servercolor&0xff00)>>8), byte(servercolor&0xff), 255)
+
+		self.DrawLine(10, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE, 109, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE)
+		self.DrawLine(109, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE, 109, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE+nbu*RACK_SIZE-1)
+		self.DrawLine(109, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE+nbu*RACK_SIZE-1, 10, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE+nbu*RACK_SIZE-1)
+		self.DrawLine(10, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE+nbu*RACK_SIZE-1, 10, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE)
+		for r := int32(0); r < nbu; r++ {
+			self.FillRect(14, CHASSIS_OFFSET+(i.Zplaced+r)*RACK_SIZE+5, 40, 5, servercolor)
+		}
+		self.FillRect(80, CHASSIS_OFFSET+(i.Zplaced+nbu-1)*RACK_SIZE+5, 5, 5, servercolor)
+		self.FillRect(90, CHASSIS_OFFSET+(i.Zplaced+nbu-1)*RACK_SIZE+5, 5, 5, servercolor)
+
 		self.WriteText(120, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE, i.ShortDescription(), sdl.Color{0, 0, 0, 255})
 	}
 

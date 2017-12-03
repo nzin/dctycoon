@@ -211,10 +211,12 @@ func (self *ServerWidget) callbackToPhysical() {
 
 				if l.item.Pool == nil {
 					pool.AddInventoryItem(l.item)
-					l.UpdateBgColor()
-					self.updateLineInSearch(l.item)
-					self.SelectLine(l, false)
 				}
+
+				l.UpdateBgColor()
+				self.updateLineInSearch(l.item)
+				self.SelectLine(l, false)
+				self.selectallButton.SetSelected(false)
 			}
 		}
 	}
@@ -236,10 +238,12 @@ func (self *ServerWidget) callbackToVps() {
 
 				if l.item.Pool == nil {
 					pool.AddInventoryItem(l.item)
-					l.UpdateBgColor()
-					self.updateLineInSearch(l.item)
-					self.SelectLine(l, false)
 				}
+
+				l.UpdateBgColor()
+				self.updateLineInSearch(l.item)
+				self.SelectLine(l, false)
+				self.selectallButton.SetSelected(false)
 			}
 		}
 	}
@@ -252,11 +256,10 @@ func (self *ServerWidget) callbackToUnallocated() {
 				l.item.Pool.RemoveInventoryItem(l.item)
 			}
 
-			if l.item.Pool != nil {
-				l.UpdateBgColor()
-				self.updateLineInSearch(l.item)
-				self.SelectLine(l, false)
-			}
+			l.UpdateBgColor()
+			self.updateLineInSearch(l.item)
+			self.SelectLine(l, false)
+			self.selectallButton.SetSelected(false)
 		}
 	}
 }
