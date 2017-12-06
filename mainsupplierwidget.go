@@ -52,7 +52,7 @@ func (self *MainSupplierWidget) Hide() {
 	self.rootwindow.RemoveChild(self.mainwidget)
 	children := self.rootwindow.GetChildren()
 	if len(children) > 0 {
-		self.rootwindow.SetFocus(children[0])
+		self.rootwindow.SetFocus(children[len(children)-1])
 	}
 }
 

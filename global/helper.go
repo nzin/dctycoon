@@ -1,6 +1,9 @@
 package global
 
 import (
+	"regexp"
+	"strconv"
+
 	"github.com/veandco/go-sdl2/img"
 	"github.com/veandco/go-sdl2/sdl"
 )
@@ -36,4 +39,23 @@ func GlowImage(spritepath string, color uint32) *sdl.Surface {
 		}
 	}
 	return nil
+}
+
+//
+// parse a string like 100M and translate it into
+// a int32 int Megabytes
+func ParseMega(str string) int32 {
+	re := regexp.MustCompile("([0-9]+) *([MGT]?)")
+	values := re.FindStringSubmatch(str)
+	value, err := strconv.Atoi(values[1])
+	if err != nil {
+		return 0
+	}
+	if values[2] == "G" {
+		value = value * 1024
+	}
+	if values[2] == "T" {
+		value = value * 1024 * 1024
+	}
+	return int32(value)
 }

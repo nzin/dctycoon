@@ -181,14 +181,16 @@ func NewVpsServerPool(name string, cpuoverallocation, ramoverallocation float64)
 }
 
 type ServerOffer struct {
+	Active    bool
+	Name      string
 	Inventory *Inventory
 	Pool      ServerPool
 	Vps       bool
 	Nbcores   int32
 	Ramsize   int32
 	Disksize  int32
-	Vt        bool // only for non vps offer
-	Price     float64
+	Vt        bool    // only for non vps offer
+	Price     float64 // per month
 	// network float64
 }
 
@@ -304,16 +306,19 @@ func (self *DemandInstance) FindOffer(inventories []*Inventory) []*ServerContrac
 						break
 					}
 					allocated = append(allocated, &ServerContract{
-						Pool:     kv.Offer.Pool,
-						Item:     inventoryitem,
-						Nbcores:  kv.Offer.Nbcores,
-						Ramsize:  kv.Offer.Ramsize,
-						Disksize: kv.Offer.Disksize,
-						Date:     time.Now(),
+						Item:      inventoryitem,
+						OfferName: kv.Offer.Name,
+						Vps:       kv.Offer.Vps,
+						Nbcores:   kv.Offer.Nbcores,
+						Ramsize:   kv.Offer.Ramsize,
+						Disksize:  kv.Offer.Disksize,
+						Vt:        kv.Offer.Vt,
+						Price:     kv.Offer.Price,
+						Date:      time.Now(),
 					})
 				}
 				for _, contract := range allocated {
-					contract.Pool.Release(contract.Item, contract.Nbcores, contract.Ramsize, contract.Disksize)
+					contract.Item.Pool.Release(contract.Item, contract.Nbcores, contract.Ramsize, contract.Disksize)
 				}
 				if filled == true {
 					selectedoffers[appname] = kv.Offer
@@ -369,12 +374,15 @@ func (self *DemandInstance) FindOffer(inventories []*Inventory) []*ServerContrac
 		for i := 0; i < int(self.nb[appname]); i++ {
 			serveroffer := selection[selectedInventory][appname]
 			allocated = append(allocated, &ServerContract{
-				Pool:     serveroffer.Pool,
-				Item:     serveroffer.Allocate(),
-				Nbcores:  serveroffer.Nbcores,
-				Ramsize:  serveroffer.Ramsize,
-				Disksize: serveroffer.Disksize,
-				Date:     time.Now(),
+				Item:      serveroffer.Allocate(),
+				OfferName: serveroffer.Name,
+				Vps:       serveroffer.Vps,
+				Nbcores:   serveroffer.Nbcores,
+				Ramsize:   serveroffer.Ramsize,
+				Disksize:  serveroffer.Disksize,
+				Vt:        serveroffer.Vt,
+				Price:     serveroffer.Price,
+				Date:      time.Now(),
 			})
 		}
 	}
@@ -382,12 +390,15 @@ func (self *DemandInstance) FindOffer(inventories []*Inventory) []*ServerContrac
 }
 
 type ServerContract struct {
-	Pool     ServerPool
-	Item     *InventoryItem
-	Nbcores  int32
-	Ramsize  int32
-	Disksize int32
-	Date     time.Time
+	Item      *InventoryItem
+	OfferName string
+	Date      time.Time
+	Vps       bool
+	Nbcores   int32
+	Ramsize   int32
+	Disksize  int32
+	Vt        bool    // only for non vps offer
+	Price     float64 // per month
 }
 
 type CriteriaFilter interface {

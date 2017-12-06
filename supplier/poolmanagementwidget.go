@@ -1,8 +1,8 @@
 package supplier
 
 /*
- * Pool server widget (gmail style) to be able to attribute servers to Physical(s)/VPS(s) pools.
- * see InventoryWiget
+ * Pool management widget (gmail style) to be able to attribute servers to Physical(s)/VPS(s) pools.
+ * see MainInventoryWiget
  */
 import (
 	"fmt"
@@ -24,21 +24,21 @@ type PoolManagementLineWidget struct {
 }
 
 func NewPoolManagementLineWidget(item *InventoryItem) *PoolManagementLineWidget {
-	ramSizeText := fmt.Sprintf("%d Mo", item.Serverconf.NbSlotRam*item.Serverconf.RamSize)
+	ramSizeText := fmt.Sprintf("%d MB", item.Serverconf.NbSlotRam*item.Serverconf.RamSize)
 	if item.Serverconf.NbSlotRam*item.Serverconf.RamSize >= 2048 {
-		ramSizeText = fmt.Sprintf("%d Go", item.Serverconf.NbSlotRam*item.Serverconf.RamSize/1024)
+		ramSizeText = fmt.Sprintf("%d GB", item.Serverconf.NbSlotRam*item.Serverconf.RamSize/1024)
 	}
 	text := item.Serverconf.ConfType.ServerName
 	placement := " - "
 	if item.Xplaced != -1 {
 		placement = fmt.Sprintf("%d/%d", item.Xplaced, item.Yplaced)
 	}
-	diskText := fmt.Sprintf("%d Mo", item.Serverconf.NbDisks*item.Serverconf.DiskSize)
+	diskText := fmt.Sprintf("%d MB", item.Serverconf.NbDisks*item.Serverconf.DiskSize)
 	if item.Serverconf.NbDisks*item.Serverconf.DiskSize > 4096 {
-		diskText = fmt.Sprintf("%d Go", item.Serverconf.NbDisks*item.Serverconf.DiskSize/1024)
+		diskText = fmt.Sprintf("%d GB", item.Serverconf.NbDisks*item.Serverconf.DiskSize/1024)
 	}
 	if item.Serverconf.NbDisks*item.Serverconf.DiskSize > 4*1024*1024 {
-		diskText = fmt.Sprintf("%d To", item.Serverconf.NbDisks*item.Serverconf.DiskSize/(1024*1024))
+		diskText = fmt.Sprintf("%d TB", item.Serverconf.NbDisks*item.Serverconf.DiskSize/(1024*1024))
 	}
 
 	line := &PoolManagementLineWidget{

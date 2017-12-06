@@ -17,10 +17,11 @@ import (
 )
 
 type MainInventoryWidget struct {
-	rootwindow *sws.RootWidget
-	mainwidget *sws.MainWidget
-	tabwidget  *sws.TabWidget
-	servers    *supplier.PoolManagementWidget
+	rootwindow  *sws.RootWidget
+	mainwidget  *sws.MainWidget
+	tabwidget   *sws.TabWidget
+	serverpools *supplier.PoolManagementWidget
+	offers      *supplier.OfferManagementWidget
 }
 
 func (self *MainInventoryWidget) Show() {
@@ -41,12 +42,14 @@ func (self *MainInventoryWidget) Hide() {
 func NewMainInventoryWidget(root *sws.RootWidget) *MainInventoryWidget {
 	mainwidget := sws.NewMainWidget(850, 400, " Inventory Management ", true, true)
 	widget := &MainInventoryWidget{
-		rootwindow: root,
-		mainwidget: mainwidget,
-		tabwidget:  sws.NewTabWidget(200, 200),
-		servers:    supplier.NewPoolManagementWidget(root, supplier.GlobalInventory),
+		rootwindow:  root,
+		mainwidget:  mainwidget,
+		tabwidget:   sws.NewTabWidget(200, 200),
+		serverpools: supplier.NewPoolManagementWidget(root, supplier.GlobalInventory),
+		offers:      supplier.NewOfferManagementWidget(root, supplier.GlobalInventory),
 	}
-	widget.tabwidget.AddTab("servers", widget.servers)
+	widget.tabwidget.AddTab("server pools", widget.serverpools)
+	widget.tabwidget.AddTab("offers", widget.offers)
 
 	widget.mainwidget.SetInnerWidget(widget.tabwidget)
 
