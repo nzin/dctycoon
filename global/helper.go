@@ -52,10 +52,18 @@ func ParseMega(str string) int32 {
 		return 0
 	}
 	if values[2] == "G" {
-		value = value * 1024
+		if value < 2048*1024 {
+			value = value * 1024 * 1024
+		} else {
+			value = value * 1024
+		}
 	}
 	if values[2] == "T" {
-		value = value * 1024 * 1024
+		if value < 2048 {
+			value = value * 1024 * 1024
+		} else {
+			value = 2147483647
+		}
 	}
 	return int32(value)
 }
