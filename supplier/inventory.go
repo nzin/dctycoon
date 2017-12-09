@@ -452,6 +452,29 @@ func (self *Inventory) AddPoolSubscriber(subscriber PoolSubscriber) {
 	self.poolsubscribers = append(self.poolsubscribers, subscriber)
 }
 
+func (self *Inventory) AddOffer(offer *ServerOffer) {
+	// check if not already present
+	for _, o := range self.offers {
+		if o == offer {
+			return
+		}
+	}
+	self.offers = append(self.offers, offer)
+}
+
+func (self *Inventory) RemoveOffer(offer *ServerOffer) {
+	for i, o := range self.offers {
+		if o == offer {
+			self.offers = append(self.offers[:i], self.offers[i+1:]...)
+			break
+		}
+	}
+}
+
+func (self *Inventory) UpdateOffer(offer *ServerOffer) {
+	// nothing yet
+}
+
 func NewInventory() *Inventory {
 	inventory := &Inventory{
 		increment:            0,

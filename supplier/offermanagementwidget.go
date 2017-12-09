@@ -44,6 +44,34 @@ func (self *OfferManagementLineWidget) MousePressUp(x, y int32, button uint8) {
 	self.Checkbox.MousePressUp(1, 1, button)
 }
 
+// refresh the UI with the content of self.offer
+func (self *OfferManagementLineWidget) Update() {
+	self.desc.SetText(self.offer.Name)
+
+	self.Vps.SetSelected(self.offer.Vps)
+
+	self.Nbcores.SetText(fmt.Sprint(self.offer.Nbcores))
+
+	ramSizeText := fmt.Sprintf("%d Mo", self.offer.Ramsize)
+	if self.offer.Ramsize >= 2048 {
+		ramSizeText = fmt.Sprintf("%d Go", self.offer.Ramsize/1024)
+	}
+	self.Ramsize.SetText(ramSizeText)
+
+	diskText := fmt.Sprintf("%d Mo", self.offer.Disksize)
+	if self.offer.Disksize > 4096 {
+		diskText = fmt.Sprintf("%d Go", self.offer.Disksize/1024)
+	}
+	if self.offer.Disksize > 4*1024*1024 {
+		diskText = fmt.Sprintf("%d To", self.offer.Disksize/(1024*1024))
+	}
+	self.Disksize.SetText(diskText)
+
+	self.Vt.SetSelected(self.offer.Vt)
+
+	self.Price.SetText(fmt.Sprintf("%.0f $", self.offer.Price))
+}
+
 func NewOfferManagementLineWidget(offer *ServerOffer) *OfferManagementLineWidget {
 	ramSizeText := fmt.Sprintf("%d Mo", offer.Ramsize)
 	if offer.Ramsize >= 2048 {
@@ -68,6 +96,7 @@ func NewOfferManagementLineWidget(offer *ServerOffer) *OfferManagementLineWidget
 		Disksize:   sws.NewLabelWidget(75, 25, diskText),
 		Vt:         sws.NewCheckboxWidget(),
 		Price:      sws.NewLabelWidget(75, 25, fmt.Sprintf("%.0f $", offer.Price)),
+		offer:      offer,
 	}
 	line.AddChild(line.Checkbox)
 
@@ -104,6 +133,7 @@ type OfferManagementWidget struct {
 	inventory      *Inventory
 	root           *sws.RootWidget
 	addoffer       *sws.ButtonWidget
+	updateoffer    *sws.ButtonWidget
 	removeoffer    *sws.ButtonWidget
 	vbox           *sws.VBoxWidget
 	scrolllisting  *sws.ScrollWidget
@@ -124,6 +154,8 @@ func (self *OfferManagementWidget) Resize(width, height int32) {
 	}
 }
 
+//
+// when we click on a offer line
 func (self *OfferManagementWidget) HighlightLine(line *OfferManagementLineWidget, highlight bool) {
 	if self.highlight != nil {
 		self.highlight.Checkbox.SetSelected(false)
@@ -131,6 +163,11 @@ func (self *OfferManagementWidget) HighlightLine(line *OfferManagementLineWidget
 	if highlight {
 		line.Checkbox.SetSelected(true)
 		self.highlight = line
+		self.AddChild(self.updateoffer)
+		self.AddChild(self.removeoffer)
+	} else {
+		self.RemoveChild(self.updateoffer)
+		self.RemoveChild(self.removeoffer)
 	}
 }
 
@@ -140,19 +177,28 @@ func NewOfferManagementWidget(root *sws.RootWidget, inventory *Inventory) *Offer
 		CoreWidget:    *corewidget,
 		inventory:     inventory,
 		root:          root,
-		addoffer:      sws.NewButtonWidget(200, 25, "Create offer"),
-		removeoffer:   sws.NewButtonWidget(200, 25, "Remove offer(s)"),
+		addoffer:      sws.NewButtonWidget(150, 25, "Create offer"),
+		updateoffer:   sws.NewButtonWidget(150, 25, "Update offer"),
+		removeoffer:   sws.NewButtonWidget(150, 25, "Remove offer"),
 		vbox:          sws.NewVBoxWidget(600, 25),
 		scrolllisting: sws.NewScrollWidget(600, 25),
 		highlight:     nil,
 	}
-	widget.newofferwindow = NewOfferManagementNewOfferWidget(root, func(offer *ServerOffer) {
-		offerline := NewOfferManagementLineWidget(offer)
-		offerline.Checkbox.SetClicked(func() {
-			widget.HighlightLine(offerline, offerline.Checkbox.Selected)
-		})
-		widget.vbox.AddChild(offerline)
-		widget.scrolllisting.PostUpdate()
+	widget.newofferwindow = NewOfferManagementNewOfferWidget(root, inventory, func(offer *ServerOffer) {
+		if widget.highlight == nil {
+			offerline := NewOfferManagementLineWidget(offer)
+			offerline.Checkbox.SetClicked(func() {
+				widget.HighlightLine(offerline, offerline.Checkbox.Selected)
+			})
+			widget.vbox.AddChild(offerline)
+			widget.scrolllisting.PostUpdate()
+			// Inventory add offer
+			inventory.AddOffer(offer)
+		} else {
+			// Inventory update offer
+			inventory.UpdateOffer(offer)
+			widget.highlight.Update()
+		}
 	})
 
 	widget.scrolllisting.SetInnerWidget(widget.vbox)
@@ -162,9 +208,28 @@ func NewOfferManagementWidget(root *sws.RootWidget, inventory *Inventory) *Offer
 
 	widget.addoffer.Move(5, 5)
 	widget.addoffer.SetClicked(func() {
+		widget.HighlightLine(widget.highlight, false)
+		widget.highlight = nil
 		widget.newofferwindow.Show(nil)
 	})
 	widget.AddChild(widget.addoffer)
+
+	widget.removeoffer.Move(160, 5)
+	widget.removeoffer.SetClicked(func() {
+		sws.ShowModalYesNo(root, "Remove Offer", "resources/icon-triangular-big.png", "Are you sure you want to remove this offer?", func() {
+			widget.HighlightLine(widget.highlight, false)
+			widget.vbox.RemoveChild(widget.highlight)
+			// Inventory remove offer
+			inventory.RemoveOffer(widget.highlight.offer)
+		}, nil)
+	})
+
+	widget.updateoffer.Move(315, 5)
+	widget.updateoffer.SetClicked(func() {
+		if widget.highlight != nil {
+			widget.newofferwindow.Show(widget.highlight.offer)
+		}
+	})
 
 	// scroll menu
 	desc := sws.NewLabelWidget(200, 25, "Offer")
@@ -233,7 +298,7 @@ func (self *OfferManagementNewOfferWidget) Show(offer *ServerOffer) {
 		}
 		self.Disksize.SetText(disksize)
 		self.Vt.SetSelected(offer.Vt)
-		self.Price.SetText(fmt.Sprintf("%f", offer.Price))
+		self.Price.SetText(fmt.Sprintf("%.0f", offer.Price))
 	}
 	self.rootwindow.SetFocus(self.Name)
 }
@@ -248,6 +313,7 @@ func (self *OfferManagementNewOfferWidget) Hide() {
 
 type OfferManagementNewOfferWidget struct {
 	offer        *ServerOffer
+	inventory    *Inventory
 	rootwindow   *sws.RootWidget
 	mainwidget   *sws.MainWidget
 	Name         *sws.InputWidget
@@ -263,12 +329,13 @@ type OfferManagementNewOfferWidget struct {
 	savecallback func(*ServerOffer)
 }
 
-func NewOfferManagementNewOfferWidget(root *sws.RootWidget, savecallback func(*ServerOffer)) *OfferManagementNewOfferWidget {
+func NewOfferManagementNewOfferWidget(root *sws.RootWidget, inventory *Inventory, savecallback func(*ServerOffer)) *OfferManagementNewOfferWidget {
 	mainwidget := sws.NewMainWidget(400, 300, "Offer settings", false, false)
 	mainwidget.Move(100, 100)
 
 	widget := &OfferManagementNewOfferWidget{
 		offer:        nil,
+		inventory:    inventory,
 		rootwindow:   root,
 		mainwidget:   mainwidget,
 		Name:         sws.NewInputWidget(200, 25, ""),
@@ -290,62 +357,64 @@ func NewOfferManagementNewOfferWidget(root *sws.RootWidget, savecallback func(*S
 	name := sws.NewLabelWidget(150, 25, "Offer name:")
 	name.Move(10, 25)
 	mainwidget.AddChild(name)
-	widget.Name.Move(150, 25)
+	widget.Name.Move(160, 25)
 	mainwidget.AddChild(widget.Name)
 
 	vps := sws.NewLabelWidget(150, 25, "VPS offer?")
 	vps.Move(10, 50)
 	mainwidget.AddChild(vps)
-	widget.Vps.Move(150, 50)
+	widget.Vps.Move(160, 50)
 	mainwidget.AddChild(widget.Vps)
 	widget.Vps.SetClicked(func() {
 		if widget.Vps.Selected {
 			widget.Vt.SetSelected(false)
-			mainwidget.RemoveChild(widget.Vt)
-			mainwidget.RemoveChild(widget.vtdesc)
+			//			mainwidget.RemoveChild(widget.Vt)
+			//			mainwidget.RemoveChild(widget.vtdesc)
+			widget.Vt.SetDisabled(true)
 		} else {
-			mainwidget.AddChild(widget.Vt)
-			mainwidget.AddChild(widget.vtdesc)
+			//			mainwidget.AddChild(widget.Vt)
+			//			mainwidget.AddChild(widget.vtdesc)
+			widget.Vt.SetDisabled(false)
 		}
 	})
 
 	nbcores := sws.NewLabelWidget(150, 25, "Nb cores:")
 	nbcores.Move(10, 75)
 	mainwidget.AddChild(nbcores)
-	widget.Nbcores.Move(150, 75)
+	widget.Nbcores.Move(160, 75)
 	mainwidget.AddChild(widget.Nbcores)
 
 	ramsize := sws.NewLabelWidget(150, 25, "Ram size (M,G):")
 	ramsize.Move(10, 100)
 	mainwidget.AddChild(ramsize)
-	widget.Ramsize.Move(150, 100)
+	widget.Ramsize.Move(160, 100)
 	mainwidget.AddChild(widget.Ramsize)
 
 	disksize := sws.NewLabelWidget(150, 25, "Disk size (M,G,T):")
 	disksize.Move(10, 120)
 	mainwidget.AddChild(disksize)
-	widget.Disksize.Move(150, 120)
+	widget.Disksize.Move(160, 120)
 	mainwidget.AddChild(widget.Disksize)
 
 	widget.vtdesc.Move(10, 150)
 	mainwidget.AddChild(widget.vtdesc)
-	widget.Vt.Move(150, 150)
+	widget.Vt.Move(160, 150)
 	mainwidget.AddChild(widget.Vt)
 
 	price := sws.NewLabelWidget(150, 25, "Price/month:")
 	price.Move(10, 175)
 	mainwidget.AddChild(price)
-	widget.Price.Move(150, 175)
+	widget.Price.Move(160, 175)
 	mainwidget.AddChild(widget.Price)
 
-	widget.Save.Move(150, 225)
+	widget.Save.Move(160, 225)
 	mainwidget.AddChild(widget.Save)
 	widget.Save.SetClicked(func() {
 		widget.Hide()
 		widget.save()
 	})
 
-	widget.Cancel.Move(250, 225)
+	widget.Cancel.Move(260, 225)
 	mainwidget.AddChild(widget.Cancel)
 	widget.Cancel.SetClicked(func() {
 		widget.Hide()
@@ -368,6 +437,12 @@ func (self *OfferManagementNewOfferWidget) save() {
 		offer.Price = price
 	} else {
 		offer.Price = 0
+	}
+	// to be extended when we will have several pools
+	for _, pool := range self.inventory.GetPools() {
+		if pool.IsVps() == offer.Vps {
+			offer.Pool = pool
+		}
 	}
 	self.savecallback(offer)
 }
