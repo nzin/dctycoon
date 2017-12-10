@@ -68,7 +68,7 @@ func NewServerPageRackWidget(width, height int32) *ServerPageRackWidget {
 	serverpagerack.AddChild(rack1Title)
 
 	rack1Desc := sws.NewTextAreaWidget(150, 160, "This thin yet powerfull 1U rack server is equipped from 1 to 2 CPU and up to 2 RAM slots for the best processing job you need")
-	rack1Desc.SetReadonly(true)
+	rack1Desc.SetDisabled(true)
 	rack1Desc.SetFont(sws.LatoRegular14)
 	rack1Desc.SetColor(0xffeeeeee)
 	rack1Desc.Move(0, 160)
@@ -95,7 +95,7 @@ func NewServerPageRackWidget(width, height int32) *ServerPageRackWidget {
 	serverpagerack.AddChild(rack2Title)
 
 	rack2Desc := sws.NewTextAreaWidget(150, 160, "Our best balanced 2U rack server, is equipped from 1 to 2 CPU and up to 4 RAM slots and up to 4 disks to fit all job you require")
-	rack2Desc.SetReadonly(true)
+	rack2Desc.SetDisabled(true)
 	rack2Desc.SetFont(sws.LatoRegular14)
 	rack2Desc.SetColor(0xffeeeeee)
 	rack2Desc.Move(150, 160)
@@ -122,7 +122,7 @@ func NewServerPageRackWidget(width, height int32) *ServerPageRackWidget {
 	serverpagerack.AddChild(rack4Title)
 
 	rack4Desc := sws.NewTextAreaWidget(150, 160, "This 4U storage rack server, with 1 to 2 CPU and up to 10 disks is specifically designed for your heavy storage fulfillment")
-	rack4Desc.SetReadonly(true)
+	rack4Desc.SetDisabled(true)
 	rack4Desc.SetFont(sws.LatoRegular14)
 	rack4Desc.SetColor(0xffeeeeee)
 	rack4Desc.Move(300, 160)
@@ -149,7 +149,7 @@ func NewServerPageRackWidget(width, height int32) *ServerPageRackWidget {
 	serverpagerack.AddChild(rack6Title)
 
 	rack6Desc := sws.NewTextAreaWidget(150, 160, "This 4U HPC rack server, with 2 to 4 CPU and up to 8 RAM slots will put in the dust any cpu-intensive job")
-	rack6Desc.SetReadonly(true)
+	rack6Desc.SetDisabled(true)
 	rack6Desc.SetFont(sws.LatoRegular14)
 	rack6Desc.SetColor(0xffeeeeee)
 	rack6Desc.Move(0, 500)

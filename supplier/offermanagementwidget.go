@@ -391,9 +391,9 @@ func NewOfferManagementNewOfferWidget(root *sws.RootWidget, inventory *Inventory
 	mainwidget.AddChild(widget.Ramsize)
 
 	disksize := sws.NewLabelWidget(150, 25, "Disk size (M,G,T):")
-	disksize.Move(10, 120)
+	disksize.Move(10, 125)
 	mainwidget.AddChild(disksize)
-	widget.Disksize.Move(160, 120)
+	widget.Disksize.Move(160, 125)
 	mainwidget.AddChild(widget.Disksize)
 
 	widget.vtdesc.Move(10, 150)

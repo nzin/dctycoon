@@ -47,7 +47,7 @@ func NewServerPageTowerWidget(width, height int32) *ServerPageTowerWidget {
 	serverpagetower.AddChild(towerTitle)
 
 	tower1Desc := sws.NewTextAreaWidget(150, 160, "Our professional workstation with up to 2 processors, is the ideal powerhouse machine you need to tackle your engineering problem")
-	tower1Desc.SetReadonly(true)
+	tower1Desc.SetDisabled(true)
 	tower1Desc.SetFont(sws.LatoRegular14)
 	tower1Desc.SetColor(0xffeeeeee)
 	tower1Desc.Move(0, 160)

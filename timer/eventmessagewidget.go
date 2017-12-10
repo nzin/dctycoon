@@ -19,7 +19,7 @@ func NewEventMessageWidget(root *sws.RootWidget, longdesc string) *sws.MainWidge
 	widget.AddChild(label)
 
 	text := sws.NewTextAreaWidget(350, 60, longdesc)
-	text.SetReadonly(true)
+	text.SetDisabled(true)
 	text.Move(50, 10)
 	widget.AddChild(text)
 

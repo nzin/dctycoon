@@ -54,7 +54,7 @@ func NewServerPageBladeWidget(width, height int32) *ServerPageBladeWidget {
 	serverpageblade.AddChild(blade1Title)
 
 	blade1Desc := sws.NewTextAreaWidget(150, 160, "Simple, efficient but powerfull blade server, this 8U server is pre-equipped with 8 blades, each with 4 slots of RAM")
-	blade1Desc.SetReadonly(true)
+	blade1Desc.SetDisabled(true)
 	blade1Desc.SetFont(sws.LatoRegular14)
 	blade1Desc.SetColor(0xffeeeeee)
 	blade1Desc.Move(0, 160)
@@ -81,7 +81,7 @@ func NewServerPageBladeWidget(width, height int32) *ServerPageBladeWidget {
 	serverpageblade.AddChild(blade2Title)
 
 	blade2Desc := sws.NewTextAreaWidget(150, 160, "The ultimate 8U solution to all your problems, this pre-equipped 8 blades server has 4 slots of RAM and 2 processors per blade")
-	blade2Desc.SetReadonly(true)
+	blade2Desc.SetDisabled(true)
 	blade2Desc.SetFont(sws.LatoRegular14)
 	blade2Desc.SetColor(0xffeeeeee)
 	blade2Desc.Move(150, 160)

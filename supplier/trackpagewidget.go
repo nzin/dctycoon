@@ -27,7 +27,7 @@ func NewTrackPageItemUi(icon, desc string, deliveryDate time.Time) *TrackPageIte
 	trackitem.icon.SetColor(0xffffffff)
 
 	trackitem.desc.Move(100, 0)
-	trackitem.desc.SetReadonly(true)
+	trackitem.desc.SetDisabled(true)
 	trackitem.desc.SetColor(0xffffffff)
 	trackitem.delivery.Move(250, 0)
 	trackitem.delivery.SetCentered(true)

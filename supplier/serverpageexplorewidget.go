@@ -10,18 +10,18 @@ import (
 //
 type ServerPageExploreWidget struct {
 	sws.CoreWidget
-	towerbutton *sws.ButtonWidget
-	towerflat   *sws.FlatButtonWidget
-	rackserverbutton  *sws.ButtonWidget
-	rackserverflat    *sws.FlatButtonWidget
-	bladebutton *sws.ButtonWidget
-	bladeflat   *sws.FlatButtonWidget
-	acbutton *sws.ButtonWidget
-	acflat   *sws.FlatButtonWidget
-	rackbutton  *sws.ButtonWidget
-	rackflat    *sws.FlatButtonWidget
-	generatorbutton *sws.ButtonWidget
-	generatorflat   *sws.FlatButtonWidget
+	towerbutton      *sws.ButtonWidget
+	towerflat        *sws.FlatButtonWidget
+	rackserverbutton *sws.ButtonWidget
+	rackserverflat   *sws.FlatButtonWidget
+	bladebutton      *sws.ButtonWidget
+	bladeflat        *sws.FlatButtonWidget
+	acbutton         *sws.ButtonWidget
+	acflat           *sws.FlatButtonWidget
+	rackbutton       *sws.ButtonWidget
+	rackflat         *sws.FlatButtonWidget
+	generatorbutton  *sws.ButtonWidget
+	generatorflat    *sws.FlatButtonWidget
 }
 
 func (self *ServerPageExploreWidget) SetTowerCallback(callback func()) {
@@ -82,7 +82,7 @@ func NewServerPageExploreWidget(width, height int32) *ServerPageExploreWidget {
 	serverpageexplore.AddChild(towerTitle)
 
 	towerDesc := sws.NewTextAreaWidget(150, 160, "Our professional workstation with up to 2 processors, is the ideal powerhouse machine you need to tackle your engineering problem")
-	towerDesc.SetReadonly(true)
+	towerDesc.SetDisabled(true)
 	towerDesc.SetFont(sws.LatoRegular14)
 	towerDesc.SetColor(0xffeeeeee)
 	towerDesc.Move(0, 160)
@@ -109,7 +109,7 @@ func NewServerPageExploreWidget(width, height int32) *ServerPageExploreWidget {
 	serverpageexplore.AddChild(rackserverTitle)
 
 	rackserverDesc := sws.NewTextAreaWidget(150, 160, "Discover our large choice of rackserver server, from 1U to 4U, to tackle all your datacenter needs")
-	rackserverDesc.SetReadonly(true)
+	rackserverDesc.SetDisabled(true)
 	rackserverDesc.SetFont(sws.LatoRegular14)
 	rackserverDesc.SetColor(0xffeeeeee)
 	rackserverDesc.Move(150, 160)
@@ -136,7 +136,7 @@ func NewServerPageExploreWidget(width, height int32) *ServerPageExploreWidget {
 	serverpageexplore.AddChild(bladeTitle)
 
 	bladeDesc := sws.NewTextAreaWidget(150, 160, "For maximum rackserver density we propose our best in the class 8U blade server offers, with 8 blades (max 2 CPU per blade)")
-	bladeDesc.SetReadonly(true)
+	bladeDesc.SetDisabled(true)
 	bladeDesc.SetFont(sws.LatoRegular14)
 	bladeDesc.SetColor(0xffeeeeee)
 	bladeDesc.Move(300, 160)
@@ -157,7 +157,7 @@ func NewServerPageExploreWidget(width, height int32) *ServerPageExploreWidget {
 	acIcon.Move(0, 360)
 	serverpageexplore.AddChild(acIcon)
 	serverpageexplore.acflat = acIcon
-	
+
 	acTitle := sws.NewLabelWidget(150, 20, "Air Climatiser")
 	acTitle.SetColor(0xffeeeeee)
 	acTitle.SetTextColor(sdl.Color{0x06, 0x84, 0xdc, 0xff})
@@ -165,7 +165,7 @@ func NewServerPageExploreWidget(width, height int32) *ServerPageExploreWidget {
 	serverpageexplore.AddChild(acTitle)
 
 	acDesc := sws.NewTextAreaWidget(150, 160, "Our next generation efficient Data Center Air Climatiser")
-	acDesc.SetReadonly(true)
+	acDesc.SetDisabled(true)
 	acDesc.SetFont(sws.LatoRegular14)
 	acDesc.SetColor(0xffeeeeee)
 	acDesc.Move(0, 500)
@@ -192,7 +192,7 @@ func NewServerPageExploreWidget(width, height int32) *ServerPageExploreWidget {
 	serverpageexplore.AddChild(rackTitle)
 
 	rackDesc := sws.NewTextAreaWidget(150, 160, "Classic 42U Rack chassis. Up to 64A")
-	rackDesc.SetReadonly(true)
+	rackDesc.SetDisabled(true)
 	rackDesc.SetFont(sws.LatoRegular14)
 	rackDesc.SetColor(0xffeeeeee)
 	rackDesc.Move(150, 500)
@@ -219,7 +219,7 @@ func NewServerPageExploreWidget(width, height int32) *ServerPageExploreWidget {
 	serverpageexplore.AddChild(generatorTitle)
 
 	generatorDesc := sws.NewTextAreaWidget(150, 160, "Prevent electriciy outage with this powerfull yet compact diesel generator. ")
-	generatorDesc.SetReadonly(true)
+	generatorDesc.SetDisabled(true)
 	generatorDesc.SetFont(sws.LatoRegular14)
 	generatorDesc.SetColor(0xffeeeeee)
 	generatorDesc.Move(300, 500)

@@ -2,6 +2,7 @@ package supplier
 
 import (
 	"fmt"
+
 	"github.com/nzin/sws"
 	//	"github.com/veandco/go-sdl2/sdl"
 	"strconv"
@@ -44,7 +45,7 @@ func NewCartPageItemUi(icon, desc string, price float64, qty int32, totalcallbac
 	cartitem.icon.SetColor(0xffffffff)
 
 	cartitem.desc.Move(100, 0)
-	cartitem.desc.SetReadonly(true)
+	cartitem.desc.SetDisabled(true)
 	cartitem.desc.SetColor(0xffffffff)
 	cartitem.priceL.Move(250, 0)
 	cartitem.priceL.SetCentered(true)
@@ -113,7 +114,7 @@ func (self *CartPageWidget) AddItem(productitem int32, conf *ServerConf, unitpri
 	GlobalInventory.Cart = append(GlobalInventory.Cart, item)
 	var ui *CartPageItemUi
 	switch productitem {
-	    case PRODUCT_SERVER:
+	case PRODUCT_SERVER:
 		ramSizeText := fmt.Sprintf("%d Mo", conf.NbSlotRam*conf.RamSize)
 		if conf.NbSlotRam*conf.RamSize >= 2048 {
 			ramSizeText = fmt.Sprintf("%d Go", conf.NbSlotRam*conf.RamSize/1024)
@@ -130,42 +131,42 @@ func (self *CartPageWidget) AddItem(productitem int32, conf *ServerConf, unitpri
 				}
 				self.grandTotal.SetText(fmt.Sprintf("%.2f $", totalprice))
 			})
-	    case PRODUCT_RACK:
+	case PRODUCT_RACK:
 		ui = NewCartPageItemUi("resources/rack0.100.png",
 			"Rack",
 			unitprice,
-			nb,func() {
+			nb, func() {
 				var totalprice float64
 				item.Nb = ui.qty
 				for _, itemui := range self.items {
 					totalprice += itemui.price * float64(itemui.qty)
 				}
 				self.grandTotal.SetText(fmt.Sprintf("%.2f $", totalprice))
-		})
-	    case PRODUCT_AC:
+			})
+	case PRODUCT_AC:
 		ui = NewCartPageItemUi("resources/ac0.100.png",
 			"Air Climatizer",
 			unitprice,
-			nb,func() {
+			nb, func() {
 				var totalprice float64
 				item.Nb = ui.qty
 				for _, itemui := range self.items {
 					totalprice += itemui.price * float64(itemui.qty)
 				}
 				self.grandTotal.SetText(fmt.Sprintf("%.2f $", totalprice))
-		})
-	    case PRODUCT_GENERATOR:
+			})
+	case PRODUCT_GENERATOR:
 		ui = NewCartPageItemUi("resources/generator0.100.png",
 			"Generator",
 			unitprice,
-			nb,func() {
+			nb, func() {
 				var totalprice float64
 				item.Nb = ui.qty
 				for _, itemui := range self.items {
 					totalprice += itemui.price * float64(itemui.qty)
 				}
 				self.grandTotal.SetText(fmt.Sprintf("%.2f $", totalprice))
-		})
+			})
 	}
 
 	self.items = append(self.items, ui)
