@@ -180,8 +180,8 @@ func NewOfferManagementWidget(root *sws.RootWidget, inventory *Inventory) *Offer
 		addoffer:      sws.NewButtonWidget(150, 25, "Create offer"),
 		updateoffer:   sws.NewButtonWidget(150, 25, "Update offer"),
 		removeoffer:   sws.NewButtonWidget(150, 25, "Remove offer"),
-		vbox:          sws.NewVBoxWidget(600, 25),
-		scrolllisting: sws.NewScrollWidget(600, 25),
+		vbox:          sws.NewVBoxWidget(600, 0),
+		scrolllisting: sws.NewScrollWidget(600, 0),
 		highlight:     nil,
 	}
 	widget.newofferwindow = NewOfferManagementNewOfferWidget(root, inventory, func(offer *ServerOffer) {
@@ -191,6 +191,7 @@ func NewOfferManagementWidget(root *sws.RootWidget, inventory *Inventory) *Offer
 				widget.HighlightLine(offerline, offerline.Checkbox.Selected)
 			})
 			widget.vbox.AddChild(offerline)
+			widget.AddChild(widget.scrolllisting)
 			widget.scrolllisting.PostUpdate()
 			// Inventory add offer
 			inventory.AddOffer(offer)
@@ -201,10 +202,14 @@ func NewOfferManagementWidget(root *sws.RootWidget, inventory *Inventory) *Offer
 		}
 	})
 
+	nothing := global.NewNothingWidget(600, 25)
+	nothing.Move(0, 75)
+	widget.AddChild(nothing)
+
 	widget.scrolllisting.SetInnerWidget(widget.vbox)
 	widget.scrolllisting.ShowHorizontalScrollbar(false)
 	widget.scrolllisting.Move(0, 75)
-	widget.AddChild(widget.scrolllisting)
+	//	widget.AddChild(widget.scrolllisting)
 
 	widget.addoffer.Move(5, 5)
 	widget.addoffer.SetClicked(func() {
@@ -221,6 +226,9 @@ func NewOfferManagementWidget(root *sws.RootWidget, inventory *Inventory) *Offer
 			widget.vbox.RemoveChild(widget.highlight)
 			// Inventory remove offer
 			inventory.RemoveOffer(widget.highlight.offer)
+			if len(widget.vbox.GetChildren()) == 0 {
+				widget.RemoveChild(widget.scrolllisting)
+			}
 		}, nil)
 	})
 
