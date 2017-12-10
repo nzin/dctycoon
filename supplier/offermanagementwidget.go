@@ -291,11 +291,17 @@ func (self *OfferManagementNewOfferWidget) Show(offer *ServerOffer) {
 		self.Ramsize.SetText("32M")
 		self.Disksize.SetText("150M")
 		self.Vt.SetSelected(false)
+		self.Vt.SetDisabled(false)
 		self.Price.SetText("100")
 	} else {
 		self.offer = offer
 		self.Name.SetText(offer.Name)
 		self.Vps.SetSelected(offer.Vps)
+		if offer.Vps {
+			self.Vt.SetDisabled(true)
+		} else {
+			self.Vt.SetDisabled(false)
+		}
 		nbcores := offer.Nbcores
 		if nbcores > 12 {
 			nbcores = 12
