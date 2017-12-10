@@ -24,7 +24,8 @@ type DcWidget struct {
 	inventory    *supplier.Inventory
 	activeX      int32
 	activeY      int32
-	hc           *HardwareChoice
+	// the upper left list of placeable hardware (AC,rack,generator...)
+	hc *HardwareChoice
 }
 
 func (self *DcWidget) DragDrop(x, y int32, payload sws.DragPayload) bool {

@@ -224,42 +224,64 @@ type HardwareChoice struct {
 	sws.CoreWidget
 	categories           [5]*HardwareChoiceCategory
 	inventory            *supplier.Inventory
-	currentPanel         sws.Widget
+	currentPanel         sws.Widget // extensions with servers list
 	currentPanelCategory int32
 }
 
 func (self *HardwareChoice) addItem(item *supplier.InventoryItem) {
+	var category int
 	switch item.Typeitem {
 	case supplier.PRODUCT_RACK:
-		self.categories[CATEGORY_RACK].addItem(item)
+		category = CATEGORY_RACK
 	case supplier.PRODUCT_AC:
-		self.categories[CATEGORY_AC].addItem(item)
+		category = CATEGORY_AC
 	case supplier.PRODUCT_GENERATOR:
-		self.categories[CATEGORY_GENERATOR].addItem(item)
+		category = CATEGORY_GENERATOR
 	case supplier.PRODUCT_SERVER:
 		if item.Serverconf.ConfType.NbU < 0 {
-			self.categories[CATEGORY_SERVER_TOWER].addItem(item)
+			category = CATEGORY_SERVER_TOWER
 		} else {
-			self.categories[CATEGORY_SERVER_RACK].addItem(item)
+			category = CATEGORY_SERVER_RACK
 		}
 	}
+	if len(self.categories[category].items) == 0 {
+		self.AddChild(self.categories[category])
+		self.categories[category].Move(0, self.Height())
+		self.Resize(50, self.Height()+75)
+	}
+	self.categories[category].addItem(item)
 }
 
 func (self *HardwareChoice) removeItem(item *supplier.InventoryItem) {
+	var category int
 	switch item.Typeitem {
 	case supplier.PRODUCT_RACK:
-		self.categories[CATEGORY_RACK].removeItem(item)
+		category = CATEGORY_RACK
 	case supplier.PRODUCT_AC:
-		self.categories[CATEGORY_AC].removeItem(item)
+		category = CATEGORY_AC
 	case supplier.PRODUCT_GENERATOR:
-		self.categories[CATEGORY_GENERATOR].removeItem(item)
+		category = CATEGORY_GENERATOR
 	case supplier.PRODUCT_SERVER:
 		if item.Serverconf.ConfType.NbU < 0 {
-			self.categories[CATEGORY_SERVER_TOWER].removeItem(item)
+			category = CATEGORY_SERVER_TOWER
 		} else {
-			self.categories[CATEGORY_SERVER_RACK].removeItem(item)
+			category = CATEGORY_SERVER_RACK
 		}
 	}
+	self.categories[category].removeItem(item)
+
+	if len(self.categories[category].items) == 0 {
+		self.RemoveChild(self.categories[category])
+		self.Resize(50, self.Height()-75)
+
+		for i, c := range self.GetChildren() {
+			c.Move(0, int32(i)*75)
+		}
+		if self.currentPanel != nil {
+			self.currentPanel.Move(50, self.categories[category].Y())
+		}
+	}
+
 }
 
 func (self *HardwareChoice) ItemInTransit(*supplier.InventoryItem) {
@@ -308,7 +330,7 @@ func (self *HardwareChoice) switchItemPanel(category int32, widget sws.Widget) {
 	}
 	self.currentPanelCategory = category
 	self.currentPanel = widget
-	self.currentPanel.Move(50, 75*category)
+	self.currentPanel.Move(50, self.categories[category].Y())
 
 	self.Parent().AddChild(self.currentPanel)
 	self.categories[category].SetColor(0xdddddddd)
@@ -328,25 +350,16 @@ func (self *HardwareChoice) closeItemPanel() {
 
 func NewHardwareChoice(inventory *supplier.Inventory) *HardwareChoice {
 	hc := &HardwareChoice{
-		CoreWidget:           *sws.NewCoreWidget(50, 375),
+		CoreWidget:           *sws.NewCoreWidget(50, 0),
 		inventory:            inventory,
 		currentPanelCategory: -1,
 	}
 	hc.SetColor(0)
 	hc.categories[CATEGORY_SERVER_TOWER] = NewHardwareChoiceCategory(CATEGORY_SERVER_TOWER, hc)
-	hc.AddChild(hc.categories[CATEGORY_SERVER_TOWER])
 	hc.categories[CATEGORY_SERVER_RACK] = NewHardwareChoiceCategory(CATEGORY_SERVER_RACK, hc)
-	hc.categories[CATEGORY_SERVER_RACK].Move(0, 75)
-	hc.AddChild(hc.categories[CATEGORY_SERVER_RACK])
 	hc.categories[CATEGORY_RACK] = NewHardwareChoiceCategory(CATEGORY_RACK, hc)
-	hc.categories[CATEGORY_RACK].Move(0, 150)
-	hc.AddChild(hc.categories[CATEGORY_RACK])
 	hc.categories[CATEGORY_AC] = NewHardwareChoiceCategory(CATEGORY_AC, hc)
-	hc.categories[CATEGORY_AC].Move(0, 225)
-	hc.AddChild(hc.categories[CATEGORY_AC])
 	hc.categories[CATEGORY_GENERATOR] = NewHardwareChoiceCategory(CATEGORY_GENERATOR, hc)
-	hc.categories[CATEGORY_GENERATOR].Move(0, 300)
-	hc.AddChild(hc.categories[CATEGORY_GENERATOR])
 
 	inventory.AddInventorySubscriber(hc)
 
