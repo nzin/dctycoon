@@ -1,9 +1,10 @@
 package supplier
 
 import (
-	"github.com/nzin/sws"
 	"strconv"
 	"time"
+
+	"github.com/nzin/sws"
 )
 
 //
@@ -33,7 +34,7 @@ func NewBannerWidget(width, height int32) *BannerWidget {
 	}
 	widget.AddChild(widget.banners[0])
 
-	widget.te = sws.TimerAddEvent(time.Now(), 6000*time.Millisecond, func() {
+	widget.te = sws.TimerAddEvent(time.Now(), 6000*time.Millisecond, func(evt *sws.TimerEvent) {
 		widget.RemoveChild(widget.banners[widget.currentBanner])
 		widget.currentBanner++
 		if widget.currentBanner >= int32(len(widget.banners)) {

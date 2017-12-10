@@ -2,10 +2,11 @@ package dctycoon
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/nzin/dctycoon/accounting"
 	"github.com/nzin/dctycoon/timer"
 	"github.com/nzin/sws"
-	"time"
 )
 
 type DockWidget struct {
@@ -83,7 +84,7 @@ func NewDockWidget(timer *timer.GameTimer) *DockWidget {
 		if widget.timerevent != nil {
 			widget.timerevent.StopRepeat()
 		}
-		widget.timerevent = sws.TimerAddEvent(time.Now().Add(2*time.Second), 2*time.Second, func() {
+		widget.timerevent = sws.TimerAddEvent(time.Now().Add(2*time.Second), 2*time.Second, func(evt *sws.TimerEvent) {
 			timer.TimerClock()
 			today := fmt.Sprintf("%d %s %d", timer.CurrentTime.Day(), timer.CurrentTime.Month().String(), timer.CurrentTime.Year())
 			widget.currentDay.SetText(today)
@@ -101,7 +102,7 @@ func NewDockWidget(timer *timer.GameTimer) *DockWidget {
 		if widget.timerevent != nil {
 			widget.timerevent.StopRepeat()
 		}
-		widget.timerevent = sws.TimerAddEvent(time.Now().Add(time.Second/2), time.Second/2, func() {
+		widget.timerevent = sws.TimerAddEvent(time.Now().Add(time.Second/2), time.Second/2, func(evt *sws.TimerEvent) {
 			timer.TimerClock()
 			today := fmt.Sprintf("%d %s %d", timer.CurrentTime.Day(), timer.CurrentTime.Month().String(), timer.CurrentTime.Year())
 			widget.currentDay.SetText(today)

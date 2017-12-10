@@ -268,25 +268,25 @@ func (self *DcWidget) MouseMove(x, y, xrel, yrel int32) {
 		self.te = nil
 	}
 	if x < 10 {
-		self.te = sws.TimerAddEvent(time.Now(), 50*time.Millisecond, func() {
+		self.te = sws.TimerAddEvent(time.Now(), 50*time.Millisecond, func(evt *sws.TimerEvent) {
 			self.MoveLeft()
 		})
 		return
 	}
 	if y < 10 {
-		self.te = sws.TimerAddEvent(time.Now(), 50*time.Millisecond, func() {
+		self.te = sws.TimerAddEvent(time.Now(), 50*time.Millisecond, func(evt *sws.TimerEvent) {
 			self.MoveUp()
 		})
 		return
 	}
 	if x > self.Width()-10 {
-		self.te = sws.TimerAddEvent(time.Now(), 50*time.Millisecond, func() {
+		self.te = sws.TimerAddEvent(time.Now(), 50*time.Millisecond, func(evt *sws.TimerEvent) {
 			self.MoveRight()
 		})
 		return
 	}
 	if y > self.Height()-10 {
-		self.te = sws.TimerAddEvent(time.Now(), 50*time.Millisecond, func() {
+		self.te = sws.TimerAddEvent(time.Now(), 50*time.Millisecond, func(evt *sws.TimerEvent) {
 			self.MoveDown()
 		})
 		return

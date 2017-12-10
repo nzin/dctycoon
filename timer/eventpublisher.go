@@ -1,8 +1,9 @@
 package timer
 
 import (
-	"github.com/nzin/sws"
 	"time"
+
+	"github.com/nzin/sws"
 )
 
 type EventPublished struct {
@@ -38,7 +39,7 @@ func NewEventPublished(shortdesc string, longdesc string, eventpub *EventPublish
 	})
 
 	widget.Move(eventpub.root.Width()-300, eventpub.root.Height()-30-30*pos)
-	widget.te = sws.TimerAddEvent(time.Now(), 25*time.Millisecond, func() {
+	widget.te = sws.TimerAddEvent(time.Now(), 25*time.Millisecond, func(evt *sws.TimerEvent) {
 		if widget.fadeintime > 0 {
 			widget.fadeintime--
 			if widget.fadeintime == 0 {
@@ -47,10 +48,10 @@ func NewEventPublished(shortdesc string, longdesc string, eventpub *EventPublish
 			widget.staytime--
 		} else if widget.fadeouttime > 0 {
 			widget.fadeouttime--
-			widget.Surface().SetAlphaMod(uint8(255 * widget.fadeouttime / 40))
+			widget.SetAlphaMod(uint8(255 * widget.fadeouttime / 40))
 			widget.PostUpdate()
 		} else {
-			widget.te.StopRepeat()
+			evt.StopRepeat()
 			eventpub.remove(widget)
 		}
 	})

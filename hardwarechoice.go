@@ -2,6 +2,7 @@ package dctycoon
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/dctycoon/supplier"
@@ -247,7 +248,21 @@ func (self *HardwareChoice) addItem(item *supplier.InventoryItem) {
 	if len(self.categories[category].items) == 0 {
 		self.AddChild(self.categories[category])
 		self.categories[category].Move(0, self.Height())
+		self.categories[category].SetAlphaMod(0)
 		self.Resize(50, self.Height()+75)
+
+		var fadein = 0
+		sws.TimerAddEvent(time.Now(), 100*time.Millisecond, func(evt *sws.TimerEvent) {
+			myfadein := &fadein
+			mycategory := category
+			*myfadein++
+			self.categories[mycategory].SetAlphaMod(uint8(255 * (*myfadein) / 10))
+			self.categories[mycategory].PostUpdate()
+			if *myfadein == 10 {
+				evt.StopRepeat()
+			}
+		})
+
 	}
 	self.categories[category].addItem(item)
 }
