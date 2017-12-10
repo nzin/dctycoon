@@ -256,9 +256,9 @@ func (self *HardwareChoice) addItem(item *supplier.InventoryItem) {
 			myfadein := &fadein
 			mycategory := category
 			*myfadein++
-			self.categories[mycategory].SetAlphaMod(uint8(255 * (*myfadein) / 10))
+			self.categories[mycategory].SetAlphaMod(uint8(255 * (*myfadein) / 5))
 			self.categories[mycategory].PostUpdate()
-			if *myfadein == 10 {
+			if *myfadein == 5 {
 				evt.StopRepeat()
 			}
 		})
@@ -286,17 +286,27 @@ func (self *HardwareChoice) removeItem(item *supplier.InventoryItem) {
 	self.categories[category].removeItem(item)
 
 	if len(self.categories[category].items) == 0 {
-		self.RemoveChild(self.categories[category])
-		self.Resize(50, self.Height()-75)
+		var fadein = 0
+		sws.TimerAddEvent(time.Now(), 100*time.Millisecond, func(evt *sws.TimerEvent) {
+			myfadein := &fadein
+			mycategory := category
+			*myfadein++
+			self.categories[mycategory].SetAlphaMod(uint8(255 * (5 - *myfadein) / 5))
+			self.categories[mycategory].PostUpdate()
+			if *myfadein == 5 {
+				evt.StopRepeat()
+				self.RemoveChild(self.categories[mycategory])
+				self.Resize(50, self.Height()-75)
 
-		for i, c := range self.GetChildren() {
-			c.Move(0, int32(i)*75)
-		}
-		if self.currentPanel != nil {
-			self.currentPanel.Move(50, self.categories[category].Y())
-		}
+				for i, c := range self.GetChildren() {
+					c.Move(0, int32(i)*75)
+				}
+				if self.currentPanel != nil {
+					self.currentPanel.Move(50, self.categories[self.currentPanelCategory].Y())
+				}
+			}
+		})
 	}
-
 }
 
 func (self *HardwareChoice) ItemInTransit(*supplier.InventoryItem) {
