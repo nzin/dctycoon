@@ -98,33 +98,42 @@ func NewOfferManagementLineWidget(offer *ServerOffer) *OfferManagementLineWidget
 		Price:      sws.NewLabelWidget(75, 25, fmt.Sprintf("%.0f $", offer.Price)),
 		offer:      offer,
 	}
+	line.Checkbox.SetColor(0)
 	line.AddChild(line.Checkbox)
 
 	line.desc.Move(25, 0)
+	line.desc.SetColor(0)
 	line.AddChild(line.desc)
 
 	line.Vps.SetSelected(offer.Vps)
 	line.Vps.SetDisabled(true)
 	line.Vps.Move(225, 0)
+	line.Vps.SetColor(0)
 	line.AddChild(line.Vps)
 
 	line.Nbcores.Move(275, 0)
+	line.Nbcores.SetColor(0)
 	line.AddChild(line.Nbcores)
 
 	line.Ramsize.Move(325, 0)
+	line.Ramsize.SetColor(0)
 	line.AddChild(line.Ramsize)
 
 	line.Disksize.Move(400, 0)
+	line.Disksize.SetColor(0)
 	line.AddChild(line.Disksize)
 
 	line.Vt.SetSelected(offer.Vt)
 	line.Vt.SetDisabled(true)
 	line.Vt.Move(475, 0)
+	line.Vt.SetColor(0)
 	line.AddChild(line.Vt)
 
 	line.Price.Move(525, 0)
+	line.Price.SetColor(0)
 	line.AddChild(line.Price)
 
+	line.SetColor(0xffffffff)
 	return line
 }
 
@@ -202,9 +211,9 @@ func NewOfferManagementWidget(root *sws.RootWidget, inventory *Inventory) *Offer
 		}
 	})
 
-	nothing := global.NewNothingWidget(600, 25)
-	nothing.Move(0, 75)
-	widget.AddChild(nothing)
+	na := global.NewNothingWidget(600, 25)
+	na.Move(0, 75)
+	widget.AddChild(na)
 
 	widget.scrolllisting.SetInnerWidget(widget.vbox)
 	widget.scrolllisting.ShowHorizontalScrollbar(false)
