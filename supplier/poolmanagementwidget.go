@@ -433,11 +433,11 @@ func (self *PoolManagementWidget) Search(search string) {
 	}
 
 	if error == true {
-		self.searchbar.SetColor(0xffff5555)
+		self.searchbar.SetInnerColor(0xffff5555)
 		return
 	}
 	self.currentFilter = filter
-	self.searchbar.SetColor(0xffffffff)
+	self.searchbar.SetInnerColor(0xffffffff)
 
 	self.listing.RemoveAllChildren()
 	self.selected = make(map[*PoolManagementLineWidget]bool)
