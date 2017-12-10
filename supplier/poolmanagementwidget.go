@@ -327,6 +327,7 @@ func (self *PoolManagementWidget) updateLineInSearch(item *InventoryItem) {
 				self.selectallButton.SetSelected(false) //self.selectallButton.Selected)
 			})
 			self.listing.AddChild(line)
+			self.AddChild(self.scrolllisting)
 		} else {
 			// in case updateLineInSearch() was called because of an item installed/uninstalled
 			foundLine.UpdatePlacement()
@@ -335,6 +336,9 @@ func (self *PoolManagementWidget) updateLineInSearch(item *InventoryItem) {
 		if foundLine != nil {
 			self.SelectLine(foundLine, false)
 			self.listing.RemoveChild(foundLine)
+			if len(self.listing.GetChildren()) == 0 {
+				self.RemoveChild(self.scrolllisting)
+			}
 		}
 	}
 }
@@ -440,6 +444,7 @@ func (self *PoolManagementWidget) Search(search string) {
 	self.searchbar.SetInnerColor(0xffffffff)
 
 	self.listing.RemoveAllChildren()
+	self.RemoveChild(self.scrolllisting)
 	self.selected = make(map[*PoolManagementLineWidget]bool)
 	self.RemoveChild(self.addToPhysical)
 	self.RemoveChild(self.addToVps)
@@ -453,6 +458,7 @@ func (self *PoolManagementWidget) Search(search string) {
 				self.selectallButton.SetSelected(false)
 			})
 			self.listing.AddChild(line)
+			self.AddChild(self.scrolllisting)
 		}
 	}
 	self.selectallButton.SetSelected(false)
@@ -485,8 +491,8 @@ func NewPoolManagementWidget(root *sws.RootWidget, inventory *Inventory) *PoolMa
 		searchbar:              sws.NewInputWidget(605, 25, "assigned:unassigned"),
 		selected:               make(map[*PoolManagementLineWidget]bool),
 		selectallButton:        sws.NewCheckboxWidget(),
-		listing:                sws.NewVBoxWidget(600, 10),
-		scrolllisting:          sws.NewScrollWidget(600, 400),
+		listing:                sws.NewVBoxWidget(625, 10),
+		scrolllisting:          sws.NewScrollWidget(625, 400),
 		addToPhysical:          sws.NewButtonWidget(170, 25, "> Physical pool"),
 		addToVps:               sws.NewButtonWidget(170, 25, "> Vps pool"),
 		addToUnallocated:       sws.NewButtonWidget(170, 25, "> Back to unallocated"),
@@ -555,10 +561,14 @@ func NewPoolManagementWidget(root *sws.RootWidget, inventory *Inventory) *PoolMa
 	globaldisk.Move(525, 100)
 	widget.AddChild(globaldisk)
 
+	na := global.NewNothingWidget(625, 25)
+	na.Move(0, 125)
+	widget.AddChild(na)
+
 	widget.scrolllisting.Move(0, 125)
 	widget.scrolllisting.ShowHorizontalScrollbar(false)
 	widget.scrolllisting.SetInnerWidget(widget.listing)
-	widget.AddChild(widget.scrolllisting)
+	//	widget.AddChild(widget.scrolllisting)
 
 	widget.addToPhysical.Move(640, 100)
 	widget.addToPhysical.SetCentered(false)
