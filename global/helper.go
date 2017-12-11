@@ -47,6 +47,9 @@ func GlowImage(spritepath string, color uint32) *sdl.Surface {
 func ParseMega(str string) int32 {
 	re := regexp.MustCompile("([0-9]+) *([MGT]?)")
 	values := re.FindStringSubmatch(str)
+	if len(values) < 2 {
+		return 0
+	}
 	value, err := strconv.Atoi(values[1])
 	if err != nil {
 		return 0
