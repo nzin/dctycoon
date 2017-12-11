@@ -6,6 +6,13 @@ import (
 	"time"
 )
 
+type PoolSubscriber interface {
+	InventoryItemAdd(*InventoryItem)
+	InventoryItemRemove(*InventoryItem)
+	InventoryItemAllocate(*InventoryItem)
+	InventoryItemRelease(*InventoryItem)
+}
+
 type ServerPool interface {
 	GetName() string
 	addInventoryItem(item *InventoryItem)
@@ -16,11 +23,31 @@ type ServerPool interface {
 	Release(item *InventoryItem, nbcores, ramsize, disksize int32)
 	IsVps() bool
 	HowManyFit(nbcores, ramsize, disksize int32, vt bool) int32
+	AddPoolSubscriber(subscriber PoolSubscriber)
+	RemovePoolSubscriber(subscriber PoolSubscriber)
 }
 
 type HardwareServerPool struct {
-	Name string
-	pool map[int32]*InventoryItem
+	Name            string
+	pool            map[int32]*InventoryItem
+	poolSubscribers []PoolSubscriber
+}
+
+func (self *HardwareServerPool) AddPoolSubscriber(subscriber PoolSubscriber) {
+	for _, s := range self.poolSubscribers {
+		if s == subscriber {
+			return
+		}
+	}
+	self.poolSubscribers = append(self.poolSubscribers, subscriber)
+}
+
+func (self *HardwareServerPool) RemovePoolSubscriber(subscriber PoolSubscriber) {
+	for p, s := range self.poolSubscribers {
+		if s == subscriber {
+			self.poolSubscribers = append(self.poolSubscribers[:p], self.poolSubscribers[p+1:]...)
+		}
+	}
 }
 
 func (self *HardwareServerPool) GetName() string {
@@ -33,6 +60,10 @@ func (self *HardwareServerPool) IsVps() bool {
 
 func (self *HardwareServerPool) addInventoryItem(item *InventoryItem) {
 	self.pool[item.Id] = item
+	item.Pool = self
+	for _, s := range self.poolSubscribers {
+		s.InventoryItemAdd(item)
+	}
 }
 
 func (self *HardwareServerPool) IsInside(item *InventoryItem) bool {
@@ -46,6 +77,9 @@ func (self *HardwareServerPool) IsInside(item *InventoryItem) bool {
 func (self *HardwareServerPool) removeInventoryItem(item *InventoryItem) {
 	delete(self.pool, item.Id)
 	item.Pool = nil
+	for _, s := range self.poolSubscribers {
+		s.InventoryItemRemove(item)
+	}
 }
 
 func (self *HardwareServerPool) Allocate(nbcores, ramsize, disksize int32, vt bool) *InventoryItem {
@@ -77,6 +111,9 @@ func (self *HardwareServerPool) Allocate(nbcores, ramsize, disksize int32, vt bo
 		selected.Ramallocated = selected.Serverconf.NbSlotRam * selected.Serverconf.RamSize
 		selected.Diskallocated = selected.Serverconf.NbDisks * selected.Serverconf.DiskSize
 	}
+	for _, s := range self.poolSubscribers {
+		s.InventoryItemAllocate(selected)
+	}
 	return selected
 }
 
@@ -102,12 +139,16 @@ func (self *HardwareServerPool) Release(item *InventoryItem, nbcores, ramsize, d
 	item.Coresallocated = 0
 	item.Ramallocated = 0
 	item.Diskallocated = 0
+	for _, s := range self.poolSubscribers {
+		s.InventoryItemRelease(item)
+	}
 }
 
 func NewHardwareServerPool(name string) *HardwareServerPool {
 	return &HardwareServerPool{
-		Name: name,
-		pool: make(map[int32]*InventoryItem),
+		Name:            name,
+		pool:            make(map[int32]*InventoryItem),
+		poolSubscribers: make([]PoolSubscriber, 0, 0),
 	}
 }
 
@@ -118,6 +159,24 @@ type VpsServerPool struct {
 	cpuoverallocation float64
 	// by default ramoverallocation is 1.0 (and can go till 1.5)
 	ramoverallocation float64
+	poolSubscribers   []PoolSubscriber
+}
+
+func (self *VpsServerPool) AddPoolSubscriber(subscriber PoolSubscriber) {
+	for _, s := range self.poolSubscribers {
+		if s == subscriber {
+			return
+		}
+	}
+	self.poolSubscribers = append(self.poolSubscribers, subscriber)
+}
+
+func (self *VpsServerPool) RemovePoolSubscriber(subscriber PoolSubscriber) {
+	for p, s := range self.poolSubscribers {
+		if s == subscriber {
+			self.poolSubscribers = append(self.poolSubscribers[:p], self.poolSubscribers[p+1:]...)
+		}
+	}
 }
 
 func (self *VpsServerPool) GetName() string {
@@ -131,6 +190,9 @@ func (self *VpsServerPool) IsVps() bool {
 func (self *VpsServerPool) addInventoryItem(item *InventoryItem) {
 	self.pool[item.Id] = item
 	item.Pool = self
+	for _, s := range self.poolSubscribers {
+		s.InventoryItemAdd(item)
+	}
 }
 
 func (self *VpsServerPool) IsInside(item *InventoryItem) bool {
@@ -143,6 +205,10 @@ func (self *VpsServerPool) IsInside(item *InventoryItem) bool {
 //
 func (self *VpsServerPool) removeInventoryItem(item *InventoryItem) {
 	delete(self.pool, item.Id)
+	item.Pool = nil
+	for _, s := range self.poolSubscribers {
+		s.InventoryItemRemove(item)
+	}
 }
 
 func (self *VpsServerPool) Allocate(nbcores, ramsize, disksize int32, vt bool) *InventoryItem {
@@ -172,6 +238,9 @@ func (self *VpsServerPool) Allocate(nbcores, ramsize, disksize int32, vt bool) *
 		selected.Coresallocated += nbcores
 		selected.Ramallocated += ramsize
 		selected.Diskallocated += disksize
+	}
+	for _, s := range self.poolSubscribers {
+		s.InventoryItemAllocate(selected)
 	}
 	return selected
 }
@@ -210,6 +279,9 @@ func (self *VpsServerPool) Release(item *InventoryItem, nbcores, ramsize, disksi
 	item.Coresallocated -= nbcores
 	item.Ramallocated -= ramsize
 	item.Diskallocated -= disksize
+	for _, s := range self.poolSubscribers {
+		s.InventoryItemRelease(item)
+	}
 }
 
 func NewVpsServerPool(name string, cpuoverallocation, ramoverallocation float64) *VpsServerPool {
@@ -218,6 +290,7 @@ func NewVpsServerPool(name string, cpuoverallocation, ramoverallocation float64)
 		pool:              make(map[int32]*InventoryItem),
 		cpuoverallocation: cpuoverallocation,
 		ramoverallocation: ramoverallocation,
+		poolSubscribers:   make([]PoolSubscriber, 0, 0),
 	}
 }
 

@@ -23,7 +23,7 @@ type CartItem struct {
 	Nb         int32
 }
 
-type PoolSubscriber interface {
+type InventoryPoolSubscriber interface {
 	PoolCreate(ServerPool)
 	PoolRemove(ServerPool)
 }
@@ -191,13 +191,13 @@ func (self *InventoryItem) ShortDescription() string {
 // - offers
 //
 type Inventory struct {
-	increment            int32
-	Cart                 []*CartItem
-	Items                map[int32]*InventoryItem
-	pools                []ServerPool
-	offers               []*ServerOffer
-	inventorysubscribers []InventorySubscriber
-	poolsubscribers      []PoolSubscriber
+	increment                int32
+	Cart                     []*CartItem
+	Items                    map[int32]*InventoryItem
+	pools                    []ServerPool
+	offers                   []*ServerOffer
+	inventorysubscribers     []InventorySubscriber
+	inventoryPoolSubscribers []InventoryPoolSubscriber
 }
 
 var GlobalInventory *Inventory
@@ -427,7 +427,7 @@ func (self *Inventory) AddInventorySubscriber(subscriber InventorySubscriber) {
 
 func (self *Inventory) AddPool(pool ServerPool) {
 	self.pools = append(self.pools, pool)
-	for _, s := range self.poolsubscribers {
+	for _, s := range self.inventoryPoolSubscribers {
 		s.PoolCreate(pool)
 	}
 }
@@ -439,7 +439,7 @@ func (self *Inventory) RemovePool(pool ServerPool) {
 			break
 		}
 	}
-	for _, s := range self.poolsubscribers {
+	for _, s := range self.inventoryPoolSubscribers {
 		s.PoolRemove(pool)
 	}
 }
@@ -448,8 +448,8 @@ func (self *Inventory) GetPools() []ServerPool {
 	return self.pools
 }
 
-func (self *Inventory) AddPoolSubscriber(subscriber PoolSubscriber) {
-	self.poolsubscribers = append(self.poolsubscribers, subscriber)
+func (self *Inventory) AddInventoryPoolSubscriber(subscriber InventoryPoolSubscriber) {
+	self.inventoryPoolSubscribers = append(self.inventoryPoolSubscribers, subscriber)
 }
 
 func (self *Inventory) AddOffer(offer *ServerOffer) {

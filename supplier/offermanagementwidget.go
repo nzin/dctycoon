@@ -27,6 +27,7 @@ type OfferManagementLineWidget struct {
 	Disksize *sws.LabelWidget
 	Vt       *sws.CheckboxWidget
 	Price    *sws.LabelWidget
+	Fitting  *sws.LabelWidget
 
 	offer *ServerOffer
 }
@@ -70,6 +71,21 @@ func (self *OfferManagementLineWidget) Update() {
 	self.Vt.SetSelected(self.offer.Vt)
 
 	self.Price.SetText(fmt.Sprintf("%.0f $", self.offer.Price))
+
+	self.Fitting.SetText(fmt.Sprintf("%d", self.offer.Pool.HowManyFit(self.offer.Nbcores, self.offer.Ramsize, self.offer.Disksize, self.offer.Vt)))
+}
+
+func (self *OfferManagementLineWidget) InventoryItemAdd(*InventoryItem) {
+	self.Update()
+}
+func (self *OfferManagementLineWidget) InventoryItemRemove(*InventoryItem) {
+	self.Update()
+}
+func (self *OfferManagementLineWidget) InventoryItemAllocate(*InventoryItem) {
+	self.Update()
+}
+func (self *OfferManagementLineWidget) InventoryItemRelease(*InventoryItem) {
+	self.Update()
 }
 
 func NewOfferManagementLineWidget(offer *ServerOffer) *OfferManagementLineWidget {
@@ -87,7 +103,7 @@ func NewOfferManagementLineWidget(offer *ServerOffer) *OfferManagementLineWidget
 	}
 
 	line := &OfferManagementLineWidget{
-		CoreWidget: *sws.NewCoreWidget(600, 25),
+		CoreWidget: *sws.NewCoreWidget(650, 25),
 		Checkbox:   sws.NewCheckboxWidget(),
 		desc:       sws.NewLabelWidget(200, 25, offer.Name),
 		Vps:        sws.NewCheckboxWidget(),
@@ -96,6 +112,7 @@ func NewOfferManagementLineWidget(offer *ServerOffer) *OfferManagementLineWidget
 		Disksize:   sws.NewLabelWidget(75, 25, diskText),
 		Vt:         sws.NewCheckboxWidget(),
 		Price:      sws.NewLabelWidget(75, 25, fmt.Sprintf("%.0f $", offer.Price)),
+		Fitting:    sws.NewLabelWidget(50, 25, fmt.Sprintf("%d", offer.Pool.HowManyFit(offer.Nbcores, offer.Ramsize, offer.Disksize, offer.Vt))),
 		offer:      offer,
 	}
 	line.Checkbox.SetColor(0)
@@ -133,7 +150,12 @@ func NewOfferManagementLineWidget(offer *ServerOffer) *OfferManagementLineWidget
 	line.Price.SetColor(0)
 	line.AddChild(line.Price)
 
+	line.Fitting.Move(600, 0)
+	line.Fitting.SetColor(0)
+	line.AddChild(line.Fitting)
+
 	line.SetColor(0xffffffff)
+
 	return line
 }
 
@@ -153,8 +175,8 @@ type OfferManagementWidget struct {
 func (self *OfferManagementWidget) Resize(width, height int32) {
 	self.CoreWidget.Resize(width, height)
 	if height > 75 {
-		if width > 600 {
-			width = 600
+		if width > 650 {
+			width = 650
 		}
 		if width < 20 {
 			width = 20
@@ -189,8 +211,8 @@ func NewOfferManagementWidget(root *sws.RootWidget, inventory *Inventory) *Offer
 		addoffer:      sws.NewButtonWidget(150, 25, "Create offer"),
 		updateoffer:   sws.NewButtonWidget(150, 25, "Update offer"),
 		removeoffer:   sws.NewButtonWidget(150, 25, "Remove offer"),
-		vbox:          sws.NewVBoxWidget(600, 0),
-		scrolllisting: sws.NewScrollWidget(600, 0),
+		vbox:          sws.NewVBoxWidget(650, 0),
+		scrolllisting: sws.NewScrollWidget(650, 0),
 		highlight:     nil,
 	}
 	widget.newofferwindow = NewOfferManagementNewOfferWidget(root, inventory, func(offer *ServerOffer) {
@@ -203,15 +225,17 @@ func NewOfferManagementWidget(root *sws.RootWidget, inventory *Inventory) *Offer
 			widget.AddChild(widget.scrolllisting)
 			widget.scrolllisting.PostUpdate()
 			// Inventory add offer
+			offer.Pool.AddPoolSubscriber(offerline)
 			inventory.AddOffer(offer)
 		} else {
 			// Inventory update offer
 			inventory.UpdateOffer(offer)
+			offer.Pool.AddPoolSubscriber(widget.highlight)
 			widget.highlight.Update()
 		}
 	})
 
-	na := global.NewNothingWidget(600, 25)
+	na := global.NewNothingWidget(650, 25)
 	na.Move(0, 75)
 	widget.AddChild(na)
 
@@ -233,6 +257,8 @@ func NewOfferManagementWidget(root *sws.RootWidget, inventory *Inventory) *Offer
 		sws.ShowModalYesNo(root, "Remove Offer", "resources/icon-triangular-big.png", "Are you sure you want to remove this offer?", func() {
 			widget.HighlightLine(widget.highlight, false)
 			widget.vbox.RemoveChild(widget.highlight)
+			//unsubscribe pool
+			widget.highlight.offer.Pool.RemovePoolSubscriber(widget.highlight)
 			// Inventory remove offer
 			inventory.RemoveOffer(widget.highlight.offer)
 			if len(widget.vbox.GetChildren()) == 0 {
@@ -244,6 +270,7 @@ func NewOfferManagementWidget(root *sws.RootWidget, inventory *Inventory) *Offer
 	widget.updateoffer.Move(315, 5)
 	widget.updateoffer.SetClicked(func() {
 		if widget.highlight != nil {
+			widget.highlight.offer.Pool.RemovePoolSubscriber(widget.highlight)
 			widget.newofferwindow.Show(widget.highlight.offer)
 		}
 	})
@@ -276,6 +303,10 @@ func NewOfferManagementWidget(root *sws.RootWidget, inventory *Inventory) *Offer
 	price := sws.NewLabelWidget(75, 25, "Price")
 	price.Move(525, 50)
 	widget.AddChild(price)
+
+	fitting := sws.NewLabelWidget(50, 25, "#offers")
+	fitting.Move(600, 50)
+	widget.AddChild(fitting)
 
 	return widget
 }
@@ -393,12 +424,8 @@ func NewOfferManagementNewOfferWidget(root *sws.RootWidget, inventory *Inventory
 	widget.Vps.SetClicked(func() {
 		if widget.Vps.Selected {
 			widget.Vt.SetSelected(false)
-			//			mainwidget.RemoveChild(widget.Vt)
-			//			mainwidget.RemoveChild(widget.vtdesc)
 			widget.Vt.SetDisabled(true)
 		} else {
-			//			mainwidget.AddChild(widget.Vt)
-			//			mainwidget.AddChild(widget.vtdesc)
 			widget.Vt.SetDisabled(false)
 		}
 	})
