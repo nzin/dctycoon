@@ -1,7 +1,7 @@
 package supplier
 
 /*
- * Offer management widget allow to create and check physical/vps offers
+ * Offer management widget allow to create and check physical/vps OFFERs
  * see MainInventoryWiget
  *
  * - offer list
@@ -350,10 +350,11 @@ type OfferManagementNewOfferWidget struct {
 	Save         *sws.ButtonWidget
 	Cancel       *sws.ButtonWidget
 	savecallback func(*ServerOffer)
+	HowManyFit   *sws.LabelWidget
 }
 
 func NewOfferManagementNewOfferWidget(root *sws.RootWidget, inventory *Inventory, savecallback func(*ServerOffer)) *OfferManagementNewOfferWidget {
-	mainwidget := sws.NewMainWidget(400, 300, "Offer settings", false, false)
+	mainwidget := sws.NewMainWidget(400, 350, "Offer settings", false, false)
 	mainwidget.Move(100, 100)
 
 	widget := &OfferManagementNewOfferWidget{
@@ -372,6 +373,7 @@ func NewOfferManagementNewOfferWidget(root *sws.RootWidget, inventory *Inventory
 		Save:         sws.NewButtonWidget(75, 25, "Save"),
 		Cancel:       sws.NewButtonWidget(75, 25, "Cancel"),
 		savecallback: savecallback,
+		HowManyFit:   sws.NewLabelWidget(100, 25, "0"),
 	}
 	mainwidget.SetCloseCallback(func() {
 		widget.Hide()
@@ -430,22 +432,62 @@ func NewOfferManagementNewOfferWidget(root *sws.RootWidget, inventory *Inventory
 	widget.Price.Move(160, 175)
 	mainwidget.AddChild(widget.Price)
 
-	widget.Save.Move(160, 225)
+	widget.Save.Move(160, 275)
 	mainwidget.AddChild(widget.Save)
 	widget.Save.SetClicked(func() {
 		widget.Hide()
 		widget.save()
 	})
 
-	widget.Cancel.Move(260, 225)
+	widget.Cancel.Move(260, 275)
 	mainwidget.AddChild(widget.Cancel)
 	widget.Cancel.SetClicked(func() {
 		widget.Hide()
 	})
 
+	// how many fit
+	estimation := sws.NewLabelWidget(150, 25, "Nb offers fitting:")
+	estimation.Move(10, 225)
+	mainwidget.AddChild(estimation)
+
+	widget.HowManyFit.Move(160, 225)
+	mainwidget.AddChild(widget.HowManyFit)
+	widget.Vps.SetCallbackValueChanged(func() {
+		widget.UpdateHowManyFit()
+	})
+	widget.Nbcores.SetCallbackValueChanged(func() {
+		widget.UpdateHowManyFit()
+	})
+	widget.Ramsize.SetCallbackValueChanged(func() {
+		widget.UpdateHowManyFit()
+	})
+	widget.Disksize.SetCallbackValueChanged(func() {
+		widget.UpdateHowManyFit()
+	})
+	widget.Vt.SetCallbackValueChanged(func() {
+		widget.UpdateHowManyFit()
+	})
 	return widget
 }
 
+// will update the HowManyFit label with an estimation of how
+// many offers we can fullfill
+func (self *OfferManagementNewOfferWidget) UpdateHowManyFit() {
+	vps := self.Vps.Selected
+	nbcores := self.Nbcores.ActiveChoice + 1
+	ramsize := global.ParseMega(self.Ramsize.GetText())
+	disksize := global.ParseMega(self.Disksize.GetText())
+	vt := self.Vt.Selected
+	for _, pool := range self.inventory.GetPools() {
+		if pool.IsVps() == vps {
+			howmany := pool.HowManyFit(nbcores, ramsize, disksize, vt)
+			self.HowManyFit.SetText(fmt.Sprintf("%d", howmany))
+			return
+		}
+	}
+}
+
+// save to the self.offer with the correct values
 func (self *OfferManagementNewOfferWidget) save() {
 	offer := self.offer
 	offer.Name = self.Name.GetText()

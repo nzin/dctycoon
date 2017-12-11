@@ -15,6 +15,7 @@ type ServerPool interface {
 	IsAllocated(item *InventoryItem) bool
 	Release(item *InventoryItem, nbcores, ramsize, disksize int32)
 	IsVps() bool
+	HowManyFit(nbcores, ramsize, disksize int32, vt bool) int32
 }
 
 type HardwareServerPool struct {
@@ -57,7 +58,7 @@ func (self *HardwareServerPool) Allocate(nbcores, ramsize, disksize int32, vt bo
 			v.Serverconf.NbDisks*v.Serverconf.DiskSize >= disksize {
 			if selected == nil {
 				selected = v
-			} else {
+			} else { // try to find the closest
 				if selected.Serverconf.NbProcessors*selected.Serverconf.NbCore >
 					v.Serverconf.NbProcessors*v.Serverconf.NbCore {
 					selected = v
@@ -77,6 +78,20 @@ func (self *HardwareServerPool) Allocate(nbcores, ramsize, disksize int32, vt bo
 		selected.Diskallocated = selected.Serverconf.NbDisks * selected.Serverconf.DiskSize
 	}
 	return selected
+}
+
+func (self *HardwareServerPool) HowManyFit(nbcores, ramsize, disksize int32, vt bool) int32 {
+	var howmany int32
+	for _, v := range self.pool {
+		if v.Coresallocated == 0 &&
+			(v.Serverconf.VtSupport == true || v.Serverconf.VtSupport == vt) &&
+			v.Serverconf.NbProcessors*v.Serverconf.NbCore >= nbcores &&
+			v.Serverconf.NbSlotRam*v.Serverconf.RamSize >= ramsize &&
+			v.Serverconf.NbDisks*v.Serverconf.DiskSize >= disksize {
+			howmany++
+		}
+	}
+	return howmany
 }
 
 func (self *HardwareServerPool) IsAllocated(item *InventoryItem) bool {
@@ -139,7 +154,7 @@ func (self *VpsServerPool) Allocate(nbcores, ramsize, disksize int32, vt bool) *
 			v.Serverconf.NbDisks*v.Serverconf.DiskSize-v.Diskallocated >= disksize {
 			if selected == nil {
 				selected = v
-			} else {
+			} else { // try to find the closest
 				if selected.Serverconf.NbProcessors*selected.Serverconf.NbCore >
 					v.Serverconf.NbProcessors*v.Serverconf.NbCore {
 					selected = v
@@ -159,6 +174,32 @@ func (self *VpsServerPool) Allocate(nbcores, ramsize, disksize int32, vt bool) *
 		selected.Diskallocated += disksize
 	}
 	return selected
+}
+
+func (self *VpsServerPool) HowManyFit(nbcores, ramsize, disksize int32, vt bool) int32 {
+	var howmany int32
+	for _, v := range self.pool {
+		if (v.Serverconf.VtSupport == true) &&
+			float64(v.Serverconf.NbProcessors*v.Serverconf.NbCore)*self.cpuoverallocation-float64(v.Coresallocated) >= float64(nbcores) &&
+			float64(v.Serverconf.NbSlotRam*v.Serverconf.RamSize)*self.ramoverallocation-float64(v.Ramallocated) >= float64(ramsize) &&
+			v.Serverconf.NbDisks*v.Serverconf.DiskSize-v.Diskallocated >= disksize {
+			cpuX := int32(float64(v.Serverconf.NbProcessors*v.Serverconf.NbCore)*self.cpuoverallocation - float64(v.Coresallocated)/float64(nbcores))
+			ramX := int32(float64(v.Serverconf.NbSlotRam*v.Serverconf.RamSize)*self.ramoverallocation - float64(v.Ramallocated)/float64(ramsize))
+			diskX := int32(v.Serverconf.NbDisks*v.Serverconf.DiskSize - v.Diskallocated/disksize)
+
+			// how many times we can put nbcores/ramsize/disksize...
+			x := cpuX
+			if ramX < x {
+				x = ramX
+			}
+			if diskX < x {
+				x = diskX
+			}
+
+			howmany += x
+		}
+	}
+	return howmany
 }
 
 func (self *VpsServerPool) IsAllocated(item *InventoryItem) bool {
