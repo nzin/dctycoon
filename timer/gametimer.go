@@ -2,8 +2,9 @@ package timer
 
 import (
 	"fmt"
-	"github.com/google/btree"
 	"time"
+
+	"github.com/google/btree"
 )
 
 type GamerTimerEvent struct {
@@ -21,9 +22,9 @@ func (self *GamerTimerEvent) Less(b btree.Item) bool {
 }
 
 type GameCronEvent struct {
-	day   int32 // -1 = '*'
-	month int32 // -1 = '*'
-	year  int32 // -1 = '*'
+	day     int32 // -1 = '*'
+	month   int32 // -1 = '*'
+	year    int32 // -1 = '*'
 	Trigger func()
 }
 
@@ -37,12 +38,14 @@ type GameTimer struct {
 
 var GlobalGameTimer *GameTimer
 
+//
+// NewGameTimer create a timer object starting at 1/1/1990
 func NewGameTimer() *GameTimer {
 	timer := &GameTimer{
 		autoinc:     0,
 		CurrentTime: time.Date(1990, time.Month(01), 01, 0, 0, 0, 0, time.UTC),
 		events:      btree.New(10),
-		cron:        make([]*GameCronEvent,0),
+		cron:        make([]*GameCronEvent, 0),
 	}
 	timer.TimerClock = func() {
 		timer.CurrentTime = timer.CurrentTime.Add(24 * time.Hour)
@@ -57,7 +60,7 @@ func NewGameTimer() *GameTimer {
 			}
 		}
 		// check for cron
-		for _,c := range timer.cron {
+		for _, c := range timer.cron {
 			if c.day == -1 || timer.CurrentTime.Day() == int(c.day) {
 				if c.month == -1 || timer.CurrentTime.Month() == time.Month(c.month) {
 					if c.year == -1 || timer.CurrentTime.Year() == int(c.year) {
@@ -89,21 +92,21 @@ func (self *GameTimer) AddEvent(evdate time.Time, callback func()) {
 	self.autoinc++
 }
 
-func (self *GameTimer) AddCron(day,month,year int32, callback func()) *GameCronEvent{
-	cronevent:=&GameCronEvent{
-		day: day,
-		month: month,
-		year: year,
+func (self *GameTimer) AddCron(day, month, year int32, callback func()) *GameCronEvent {
+	cronevent := &GameCronEvent{
+		day:     day,
+		month:   month,
+		year:    year,
 		Trigger: callback,
 	}
-	self.cron = append(self.cron,cronevent)
+	self.cron = append(self.cron, cronevent)
 	return cronevent
 }
 
 func (self *GameTimer) RemoveCron(evt *GameCronEvent) {
-	for i,c := range self.cron {
+	for i, c := range self.cron {
 		if c == evt {
-			self.cron = append(self.cron[:i],self.cron[i+1:]...)
+			self.cron = append(self.cron[:i], self.cron[i+1:]...)
 			return
 		}
 	}
