@@ -167,7 +167,7 @@ func (self *Ledger) GetYearAccount(year int) AccountYearly {
 func (self *Ledger) AddMovement(ev LedgerMovement) {
 	ev.Id = self.autoinc
 	self.Movements.ReplaceOrInsert(&ev)
-	self.accounts = self.RunLedger()
+	self.accounts = self.runLedger()
 	for _, s := range self.subscribers {
 		s.LedgerChange(self)
 	}
@@ -255,7 +255,7 @@ func (self *Ledger) BuyProduct(desc string, t time.Time, price float64) {
 
 	// compute the ledger
 
-	self.accounts = self.RunLedger()
+	self.accounts = self.runLedger()
 	for _, s := range self.subscribers {
 		s.LedgerChange(self)
 	}
@@ -279,7 +279,7 @@ func (self *Ledger) AskLoan(desc string, t time.Time, amount float64) {
 
 	// compute the ledger
 
-	self.accounts = self.RunLedger()
+	self.accounts = self.runLedger()
 	for _, s := range self.subscribers {
 		s.LedgerChange(self)
 	}
@@ -303,7 +303,7 @@ func (self *Ledger) RefundLoan(desc string, t time.Time, amount float64) {
 
 	// compute the ledger
 
-	self.accounts = self.RunLedger()
+	self.accounts = self.runLedger()
 	for _, s := range self.subscribers {
 		s.LedgerChange(self)
 	}
@@ -324,7 +324,7 @@ func NewLedger(timer *timer.GameTimer, taxrate, loanrate float64) *Ledger {
 	// compute fiscal year
 	ledger.computeYear = func() {
 		l := ledger
-		l.accounts = l.RunLedger()
+		l.accounts = l.runLedger()
 		for _, s := range l.subscribers {
 			s.LedgerChange(l)
 		}
@@ -332,7 +332,7 @@ func NewLedger(timer *timer.GameTimer, taxrate, loanrate float64) *Ledger {
 	ledger.computeLoanInterest = func() {
 		l := ledger
 		if _, ok := l.accounts[timer.CurrentTime.Year()]; ok == false {
-			l.accounts = l.RunLedger()
+			l.accounts = l.runLedger()
 		}
 		if l.accounts[timer.CurrentTime.Year()]["16"] != 0.0 {
 			interest := &LedgerMovement{
@@ -345,7 +345,7 @@ func NewLedger(timer *timer.GameTimer, taxrate, loanrate float64) *Ledger {
 			}
 			l.autoinc++
 			l.Movements.ReplaceOrInsert(interest)
-			l.accounts = l.RunLedger()
+			l.accounts = l.runLedger()
 			for _, s := range l.subscribers {
 				s.LedgerChange(l)
 			}
@@ -375,7 +375,7 @@ func (self *Ledger) Load(game map[string]interface{}, taxrate, loanrate float64)
 		}
 		self.Movements.ReplaceOrInsert(le)
 	}
-	self.accounts = self.RunLedger()
+	self.accounts = self.runLedger()
 	for _, s := range self.subscribers {
 		s.LedgerChange(self)
 	}
@@ -410,10 +410,10 @@ func computeYearlyTaxes(accounts AccountYearly, taxrate float64) (profitlost, ta
 }
 
 //
-// RunLedger() computes all movement and returns the result.
+// runLedger() computes all movement and returns the result.
 // it does not store the result in the Ledger object
 // Usually you don't call this function but AddMovement()
-func (self *Ledger) RunLedger() (accounts map[int]AccountYearly) {
+func (self *Ledger) runLedger() (accounts map[int]AccountYearly) {
 	accounts = make(map[int]AccountYearly)
 	currentyear := -1
 	self.Movements.Ascend(func(i btree.Item) bool {
