@@ -51,4 +51,9 @@ func TestCronGameTimer(t *testing.T) {
 	}
 	gt.TimerClock()
 	assert.Equal(t, 3, month, "1/3, beginning of march")
+
+	// skip some days...
+	gt.CurrentTime = time.Date(1990, 4, 3, 1, 1, 1, 0, time.UTC)
+	gt.TimerClock()
+	assert.NotEqual(t, 4, month, "pass april")
 }
