@@ -147,15 +147,14 @@ type LedgerSubscriber interface {
 // Ledger
 //
 type Ledger struct {
-	autoinc             int32
-	Movements           *btree.BTree
-	subscribers         []LedgerSubscriber
-	accounts            map[int]AccountYearly
-	taxrate             float64
-	loanrate            float64
-	computeYear         func()
-	computeLoanInterest func()
-	timer               *timer.GameTimer
+	autoinc     int32
+	Movements   *btree.BTree
+	subscribers []LedgerSubscriber
+	accounts    map[int]AccountYearly
+	taxrate     float64
+	loanrate    float64
+	computeYear func()
+	timer       *timer.GameTimer
 }
 
 var GlobalLedger *Ledger
@@ -329,29 +328,6 @@ func NewLedger(timer *timer.GameTimer, taxrate, loanrate float64) *Ledger {
 			s.LedgerChange(l)
 		}
 	}
-	ledger.computeLoanInterest = func() {
-		l := ledger
-		if _, ok := l.accounts[timer.CurrentTime.Year()]; ok == false {
-			l.accounts = l.runLedger()
-		}
-		if l.accounts[timer.CurrentTime.Year()]["16"] != 0.0 {
-			interest := &LedgerMovement{
-				Id:          l.autoinc,
-				Description: "debt interest",
-				Amount:      -l.accounts[timer.CurrentTime.Year()]["16"] * l.loanrate / 12,
-				AccountFrom: "5121",
-				AccountTo:   "66",
-				Date:        timer.CurrentTime,
-			}
-			l.autoinc++
-			l.Movements.ReplaceOrInsert(interest)
-			l.accounts = l.runLedger()
-			for _, s := range l.subscribers {
-				s.LedgerChange(l)
-			}
-		}
-	}
-	timer.AddCron(1, -1, -1, ledger.computeLoanInterest)
 	timer.AddCron(1, 1, -1, ledger.computeYear)
 
 	return ledger
@@ -416,6 +392,7 @@ func computeYearlyTaxes(accounts AccountYearly, taxrate float64) (profitlost, ta
 func (self *Ledger) runLedger() (accounts map[int]AccountYearly) {
 	accounts = make(map[int]AccountYearly)
 	currentyear := -1
+	currentMonth := -1
 	self.Movements.Ascend(func(i btree.Item) bool {
 		ev := i.(*LedgerMovement)
 		from := ev.AccountFrom[:2]
@@ -423,9 +400,67 @@ func (self *Ledger) runLedger() (accounts map[int]AccountYearly) {
 
 		if currentyear == -1 {
 			currentyear = ev.Date.Year()
+			currentMonth = int(ev.Date.Month())
 			accounts[currentyear] = make(AccountYearly)
 		}
-		for currentyear != ev.Date.Year() { // we must close the year and prepare the new year
+		for !(currentyear == ev.Date.Year() && currentMonth == int(ev.Date.Month())) { // we must close the month (and eventually the year)
+			// compute loan for the month
+			loanAmount := -accounts[currentyear]["16"] * self.loanrate / 12
+			accounts[currentyear]["51"] -= loanAmount
+			accounts[currentyear]["66"] += loanAmount
+
+			currentMonth++
+			if currentMonth > 12 {
+				currentMonth = 1
+
+				previousYear := currentyear
+				currentyear++
+
+				//fmt.Println("compute taxes for ", currentyear)
+				profitlost, taxes := computeYearlyTaxes(accounts[previousYear], self.taxrate)
+				accounts[previousYear]["44"] = taxes
+
+				// 51: current balance, 44: taxes
+				accounts[previousYear]["51"] -= accounts[previousYear]["44"]
+				accounts[currentyear] = make(AccountYearly)
+				// copy from previous year, accounts 1 to 5 (except 44 => 0)
+				for k, v := range accounts[previousYear] {
+					if k[0] == '1' || k[0] == '2' || k[0] == '3' || k[0] == '4' || k[0] == '5' {
+						accounts[currentyear][k] = v
+					}
+				}
+				accounts[currentyear]["44"] = 0
+				accounts[currentyear]["45"] -= profitlost
+				accounts[currentyear]["46"] += accounts[previousYear]["66"]
+				//accounts[currentyear]["23"] -= accounts[previousYear]["28"]
+				accounts[currentyear]["28"] = 0
+			}
+		}
+
+		accounts[currentyear][from] = accounts[currentyear][from] - ev.Amount
+		accounts[currentyear][to] = accounts[currentyear][to] + ev.Amount
+		fmt.Println("from: ", from, " to:", to, "currentyear: ", currentyear, currentMonth, ",desc: ", ev.Description, accounts[currentyear][from], accounts[currentyear][to])
+
+		return true
+	})
+
+	// if we don't have any movements...
+	if currentyear == -1 || currentyear > self.timer.CurrentTime.Year() || (currentyear == self.timer.CurrentTime.Year() && currentMonth > int(self.timer.CurrentTime.Month())) {
+		return accounts
+	}
+	//
+	// in case of we have no movement from "current year" until today
+	//
+	for !(currentyear == self.timer.CurrentTime.Year() && currentMonth == int(self.timer.CurrentTime.Month())) { // we must close the month until self.timer.CurrentTime
+		// compute loan for the month
+		loanAmount := -accounts[currentyear]["16"] * self.loanrate / 12
+		accounts[currentyear]["51"] -= loanAmount
+		accounts[currentyear]["66"] += loanAmount
+
+		currentMonth++
+		if currentMonth > 12 {
+			currentMonth = 1
+
 			previousYear := currentyear
 			currentyear++
 
@@ -448,43 +483,6 @@ func (self *Ledger) runLedger() (accounts map[int]AccountYearly) {
 			//accounts[currentyear]["23"] -= accounts[previousYear]["28"]
 			accounts[currentyear]["28"] = 0
 		}
-
-		accounts[currentyear][from] = accounts[currentyear][from] - ev.Amount
-		accounts[currentyear][to] = accounts[currentyear][to] + ev.Amount
-		fmt.Println("from: ", from, " to:", to, "currentyear: ", currentyear, ",desc: ", ev.Description)
-
-		return true
-	})
-
-	// if we don't have any movements...
-	if currentyear == -1 {
-		return accounts
-	}
-	//
-	// in case of we have no movement from "current year" until today
-	//
-	for currentyear < self.timer.CurrentTime.Year() { // we must close the year and prepare the new year
-		previousYear := currentyear
-		currentyear++
-
-		//fmt.Println("compute taxes for ", currentyear)
-		profitlost, taxes := computeYearlyTaxes(accounts[previousYear], self.taxrate)
-		accounts[previousYear]["44"] = taxes
-
-		// 51: current balance, 44: taxes
-		accounts[previousYear]["51"] -= accounts[previousYear]["44"]
-		accounts[currentyear] = make(AccountYearly)
-		// copy from previous year, accounts 1 to 5 (except 44 => 0)
-		for k, v := range accounts[previousYear] {
-			if k[0] == '1' || k[0] == '2' || k[0] == '3' || k[0] == '4' || k[0] == '5' {
-				accounts[currentyear][k] = v
-			}
-		}
-		accounts[currentyear]["44"] = 0
-		accounts[currentyear]["45"] -= profitlost
-		accounts[currentyear]["46"] += accounts[previousYear]["66"]
-		//accounts[currentyear]["23"] -= accounts[previousYear]["28"]
-		accounts[currentyear]["28"] = 0
 	}
 
 	return accounts

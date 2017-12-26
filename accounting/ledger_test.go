@@ -40,3 +40,31 @@ func TestLedger(t *testing.T) {
 	assert.Equal(t, -12000.0, accounts[1993]["45"], "ledger equity is not yet 12000")
 
 }
+
+func TestLoanLedger(t *testing.T) {
+
+	// timer start in 1990
+	timer := timer.NewGameTimer()
+	ledger1 := NewLedger(timer, 0.15, 0.03)
+	accounts := ledger1.runLedger()
+
+	// add some equity
+	ledger1.AskLoan("loan", time.Date(1991, 1, 1, 0, 0, 0, 0, time.UTC), 1000.0)
+
+	// now we will jump to 1992, and check the end result of 1991
+	timer.CurrentTime = time.Date(1992, 1, 1, 0, 0, 0, 0, time.UTC)
+	accounts = ledger1.runLedger()
+
+	// refund equity
+	timer.CurrentTime = time.Date(1992, 12, 1, 0, 0, 0, 0, time.UTC)
+	ledger1.RefundLoan("loan refunded", time.Date(1992, 7, 1, 0, 0, 0, 0, time.UTC), 1000.0)
+	accounts = ledger1.runLedger()
+
+	assert.Equal(t, -1000.0, accounts[1991]["16"], "loan from the bank")
+	assert.Equal(t, 970.0, accounts[1991]["51"], "equity - loan interest (3% of 1000$)")
+	assert.Equal(t, 30.0, accounts[1991]["66"], "loan interest (3% of 1000$)")
+
+	assert.Equal(t, 0.0, accounts[1992]["16"], "loan from the bank")
+	assert.Equal(t, -45.0, accounts[1992]["51"], "equity - loan interest (3% of 1000$)")
+	assert.Equal(t, 15.0, accounts[1992]["66"], "loan interest (3% of 1000$)")
+}
