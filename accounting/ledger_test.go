@@ -48,7 +48,7 @@ func TestLoanLedger(t *testing.T) {
 	ledger1 := NewLedger(timer, 0.15, 0.03)
 	accounts := ledger1.runLedger()
 
-	// add some equity
+	// ask for a loan
 	ledger1.AskLoan("loan", time.Date(1991, 1, 1, 0, 0, 0, 0, time.UTC), 1000.0)
 
 	// now we will jump to 1992, and check the end result of 1991
@@ -67,4 +67,36 @@ func TestLoanLedger(t *testing.T) {
 	assert.Equal(t, 0.0, accounts[1992]["16"], "loan from the bank")
 	assert.Equal(t, -45.0, accounts[1992]["51"], "equity - loan interest (3% of 1000$)")
 	assert.Equal(t, 15.0, accounts[1992]["66"], "loan interest (3% of 1000$)")
+}
+
+func TestBuyLedger(t *testing.T) {
+
+	// timer start in 1990
+	timer := timer.NewGameTimer()
+	ledger1 := NewLedger(timer, 0.15, 0.03)
+	accounts := ledger1.runLedger()
+
+	// add some equity
+	ledger1.AddMovement(LedgerMovement{
+		Description: "initial opening",
+		Amount:      1000,
+		AccountFrom: "4561",
+		AccountTo:   "5121",
+		Date:        time.Date(1991, 1, 1, 0, 0, 0, 0, time.UTC),
+	})
+
+	ledger1.BuyProduct("a product", time.Date(1991, 6, 1, 0, 0, 0, 0, time.UTC), 500)
+
+	// now we will jump to 1996, and check the end result of 1991
+	timer.CurrentTime = time.Date(1996, 1, 1, 0, 0, 0, 0, time.UTC)
+	accounts = ledger1.runLedger()
+
+	assert.Equal(t, 500.0, accounts[1991]["51"], "500$ remaining after the purchase")
+	assert.Equal(t, 97.62773722627738, accounts[1991]["28"], "armotization 1991")
+	assert.Equal(t, 166.97080291970804, accounts[1992]["28"], "armotization 1992")
+	assert.Equal(t, 166.51459854014598, accounts[1993]["28"], "armotization 1993")
+	assert.Equal(t, 68.88686131386861, accounts[1994]["28"], "armotization 1994")
+
+	assert.Equal(t, 500.0, accounts[1996]["51"], "500$ remaining after the purchase")
+	assert.Equal(t, 0.0, accounts[1996]["28"], "armotization")
 }
