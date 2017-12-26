@@ -147,14 +147,14 @@ type LedgerSubscriber interface {
 // Ledger
 //
 type Ledger struct {
-	autoinc     int32
-	Movements   *btree.BTree
-	subscribers []LedgerSubscriber
-	accounts    map[int]AccountYearly
-	taxrate     float64
-	loanrate    float64
-	computeYear func()
-	timer       *timer.GameTimer
+	autoinc      int32
+	Movements    *btree.BTree
+	subscribers  []LedgerSubscriber
+	accounts     map[int]AccountYearly
+	taxrate      float64
+	loanrate     float64
+	computeMonth func()
+	timer        *timer.GameTimer
 }
 
 var GlobalLedger *Ledger
@@ -321,14 +321,14 @@ func NewLedger(timer *timer.GameTimer, taxrate, loanrate float64) *Ledger {
 		timer:       timer,
 	}
 	// compute fiscal year
-	ledger.computeYear = func() {
+	ledger.computeMonth = func() {
 		l := ledger
 		l.accounts = l.runLedger()
 		for _, s := range l.subscribers {
 			s.LedgerChange(l)
 		}
 	}
-	timer.AddCron(1, 1, -1, ledger.computeYear)
+	timer.AddCron(1, -1, -1, ledger.computeMonth)
 
 	return ledger
 }
