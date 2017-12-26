@@ -37,7 +37,7 @@ func TestCronGameTimer(t *testing.T) {
 	month := 1
 
 	gt := NewGameTimer()
-	gt.AddCron(1, -1, -1, func() {
+	evt := gt.AddCron(1, -1, -1, func() {
 		month++
 	})
 	gt.CurrentTime = time.Date(1990, 1, 30, 1, 1, 1, 0, time.UTC)
@@ -57,4 +57,9 @@ func TestCronGameTimer(t *testing.T) {
 	gt.CurrentTime = time.Date(1990, 4, 3, 1, 1, 1, 0, time.UTC)
 	gt.TimerClock()
 	assert.NotEqual(t, 4, month, "pass april")
+
+	// unregister cron
+	assert.Equal(t, 1, len(gt.cron), "before unregistering cron")
+	gt.RemoveCron(evt)
+	assert.Equal(t, 0, len(gt.cron), "unregister cron")
 }
