@@ -43,7 +43,7 @@ func GlowImage(spritepath string, color uint32) *sdl.Surface {
 
 //
 // parse a string like 100M and translate it into
-// a int32 int Megabytes
+// a int32 in Megabytes
 func ParseMega(str string) int32 {
 	re := regexp.MustCompile("([0-9]+) *([MGT]?)")
 	values := re.FindStringSubmatch(str)
@@ -55,18 +55,21 @@ func ParseMega(str string) int32 {
 		return 0
 	}
 	if values[2] == "G" {
-		if value < 2048*1024 {
-			value = value * 1024 * 1024
-		} else {
+		if value < 2048*1024 && value > 0 {
 			value = value * 1024
+		} else {
+			value = 2147483647
 		}
 	}
 	if values[2] == "T" {
-		if value < 2048 {
+		if value < 2048 && value > 0 {
 			value = value * 1024 * 1024
 		} else {
 			value = 2147483647
 		}
+	}
+	if int32(value) < 0 {
+		return 2147483647
 	}
 	return int32(value)
 }
