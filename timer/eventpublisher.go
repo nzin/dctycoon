@@ -59,6 +59,10 @@ func NewEventPublished(shortdesc string, longdesc string, eventpub *EventPublish
 	return widget
 }
 
+type EventPublisherService interface {
+	Publish(shortdesc string, longdesc string)
+}
+
 type EventPublisher struct {
 	root   *sws.RootWidget
 	events map[*EventPublished]int32

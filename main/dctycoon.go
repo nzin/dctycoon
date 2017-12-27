@@ -63,7 +63,7 @@ func main() {
 	dock.Move(root.Width()-dock.Width(), 0)
 	root.AddChild(dock)
 
-	supplier.Trends = supplier.TrendLoad(v["trends"].(map[string]interface{}))
+	supplier.Trends = supplier.TrendLoad(v["trends"].(map[string]interface{}), timer.GlobalEventPublisher, timer.GlobalGameTimer)
 	dock.SetShopCallback(func() {
 		supplierwidget.Show()
 	})

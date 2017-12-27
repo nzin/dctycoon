@@ -2,10 +2,11 @@ package supplier
 
 import (
 	"fmt"
-	"github.com/nzin/dctycoon/timer"
 	"math/rand"
 	"sort"
 	"time"
+
+	"github.com/nzin/dctycoon/timer"
 )
 
 //
@@ -334,7 +335,7 @@ var cpucorePriceTrend = []PriceTrendItem{ // $/core
 	PriceTrendItem{Pit: time.Date(2012, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value: 100},
 }
 
-func TrendLoad(json map[string]interface{}) *Trend {
+func TrendLoad(json map[string]interface{}, publishservice timer.EventPublisherService, timer *timer.GameTimer) *Trend {
 	t := &Trend{
 		Corepercpu: initCorepercpu,
 		Vt:         initVt,
@@ -348,29 +349,29 @@ func TrendLoad(json map[string]interface{}) *Trend {
 
 	for _, core := range initCorepercpu {
 		c := core
-		timer.GlobalGameTimer.AddEvent(c.Pit, func() {
-			timer.GlobalEventPublisher.Publish(c.ShortDesc, c.LongDesc)
+		timer.AddEvent(c.Pit, func() {
+			publishservice.Publish(c.ShortDesc, c.LongDesc)
 		})
 	}
 
 	for _, vt := range initVt {
 		v := vt
-		timer.GlobalGameTimer.AddEvent(v.Pit, func() {
-			timer.GlobalEventPublisher.Publish(v.ShortDesc, v.LongDesc)
+		timer.AddEvent(v.Pit, func() {
+			publishservice.Publish(v.ShortDesc, v.LongDesc)
 		})
 	}
 
 	for _, dd := range initDisksize {
 		d := dd
-		timer.GlobalGameTimer.AddEvent(d.Pit, func() {
-			timer.GlobalEventPublisher.Publish(d.ShortDesc, d.LongDesc)
+		timer.AddEvent(d.Pit, func() {
+			publishservice.Publish(d.ShortDesc, d.LongDesc)
 		})
 	}
 
 	for _, ram := range initRamsize {
 		r := ram
-		timer.GlobalGameTimer.AddEvent(r.Pit, func() {
-			timer.GlobalEventPublisher.Publish(r.ShortDesc, r.LongDesc)
+		timer.AddEvent(r.Pit, func() {
+			publishservice.Publish(r.ShortDesc, r.LongDesc)
 		})
 	}
 
