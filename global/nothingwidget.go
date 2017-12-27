@@ -5,6 +5,8 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
+//
+// Widget used to print a "N/A" banner
 type NothingWidget struct {
 	sws.CoreWidget
 }
