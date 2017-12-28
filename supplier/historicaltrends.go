@@ -3,6 +3,7 @@ package supplier
 import (
 	"fmt"
 	"math/rand"
+	"reflect"
 	"sort"
 	"time"
 
@@ -166,17 +167,19 @@ func (self *PriceTrend) CurrentValue(now time.Time) float64 {
 func PriceTrendListLoad(noise []interface{}, trend []PriceTrendItem) PriceTrend {
 	pt := PriceTrend{}
 
-	//tl.Sort()
 	pt.Trend = trend
 
-	nl := make(PriceTrendList, len(noise))
-	for i, n := range noise {
-		ne := n.(map[string]interface{})
-		var year, month, day int
-		fmt.Sscanf(ne["pit"].(string), "%d-%d-%d", &year, &month, &day)
-		nl[i] = PriceTrendItem{
-			Pit:   time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC),
-			Value: ne["value"].(float64),
+	nl := make(PriceTrendList, 0)
+
+	for _, n := range noise {
+		if data, ok := n.(map[string]interface{}); ok {
+			ne := data
+			var year, month, day int
+			fmt.Sscanf(ne["pit"].(string), "%d-%d-%d", &year, &month, &day)
+			nl = append(nl, PriceTrendItem{
+				Pit:   time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC),
+				Value: ne["value"].(float64),
+			})
 		}
 	}
 	nl.Sort()
@@ -336,15 +339,46 @@ var cpucorePriceTrend = []PriceTrendItem{ // $/core
 }
 
 func TrendLoad(json map[string]interface{}, publishservice timer.EventPublisherService, timer *timer.GameTimer) *Trend {
+	cpupricenoise := make([]interface{}, 0, 0)
+	diskpricenoise := make([]interface{}, 0, 0)
+	rampricenoise := make([]interface{}, 0, 0)
+
+	if array, ok := json["cpupricenoise"]; ok == true {
+		if reflect.TypeOf(array).Kind() == reflect.Slice {
+			s := reflect.ValueOf(array)
+			for i := 0; i < s.Len(); i++ {
+				cpupricenoise = append(cpupricenoise, s.Index(i).Interface())
+			}
+		}
+	}
+
+	if array, ok := json["diskpricenoise"]; ok == true {
+		if reflect.TypeOf(array).Kind() == reflect.Slice {
+			s := reflect.ValueOf(array)
+			for i := 0; i < s.Len(); i++ {
+				diskpricenoise = append(diskpricenoise, s.Index(i).Interface())
+			}
+		}
+	}
+
+	if array, ok := json["rampricenoise"]; ok == true {
+		if reflect.TypeOf(array).Kind() == reflect.Slice {
+			s := reflect.ValueOf(array)
+			for i := 0; i < s.Len(); i++ {
+				rampricenoise = append(rampricenoise, s.Index(i).Interface())
+			}
+		}
+	}
+
 	t := &Trend{
 		Corepercpu: initCorepercpu,
 		Vt:         initVt,
 		Disksize:   initDisksize,
 		Ramsize:    initRamsize,
 
-		Cpuprice:  PriceTrendListLoad(json["cpupricenoise"].([]interface{}), cpucorePriceTrend),
-		Diskprice: PriceTrendListLoad(json["diskpricenoise"].([]interface{}), diskPriceTrend),
-		Ramprice:  PriceTrendListLoad(json["rampricenoise"].([]interface{}), ramPriceTrend),
+		Cpuprice:  PriceTrendListLoad(cpupricenoise, cpucorePriceTrend),
+		Diskprice: PriceTrendListLoad(diskpricenoise, diskPriceTrend),
+		Ramprice:  PriceTrendListLoad(rampricenoise, ramPriceTrend),
 	}
 
 	for _, core := range initCorepercpu {
