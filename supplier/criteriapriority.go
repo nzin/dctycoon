@@ -1,6 +1,7 @@
 package supplier
 
 import (
+	"reflect"
 	"sort"
 )
 
@@ -159,7 +160,6 @@ func (self *PriorityDisk) Score(offer []*ServerOffer, points *map[*ServerOffer]f
 		(*points)[s[i].offer] = weight
 		weight -= float64(self.weight) / float64(len(offer))
 	}
-	return
 }
 
 type PriorityRam struct {
@@ -184,7 +184,6 @@ func (self *PriorityRam) Score(offer []*ServerOffer, points *map[*ServerOffer]fl
 		(*points)[s[i].offer] = weight
 		weight -= float64(self.weight) / float64(len(offer))
 	}
-	return
 }
 
 type PriorityNbcores struct {
@@ -209,5 +208,69 @@ func (self *PriorityNbcores) Score(offer []*ServerOffer, points *map[*ServerOffe
 		(*points)[s[i].offer] = weight
 		weight -= float64(self.weight) / float64(len(offer))
 	}
-	return
+}
+
+func ServerDemandParsingNumbers(m map[string]interface{}) [2]int32 {
+	var numbers [2]int32
+	if v, ok := m["low"]; ok {
+		numbers[0] = int32(v.(float64))
+	}
+	if v, ok := m["high"]; ok {
+		numbers[1] = int32(v.(float64))
+	}
+	return numbers
+}
+
+func ServerDemandParsingFilters(m map[string]interface{}) []CriteriaFilter {
+	filters := make([]CriteriaFilter, 0, 0)
+	if v, ok := m["diskfilter"]; ok {
+		if reflect.TypeOf(v).Kind() == reflect.Map {
+			filters = append(filters, NewFilterDisk(v.(map[string]interface{})))
+		}
+	}
+	if v, ok := m["ramfilter"]; ok {
+		if reflect.TypeOf(v).Kind() == reflect.Map {
+			filters = append(filters, NewFilterRam(v.(map[string]interface{})))
+		}
+	}
+	if v, ok := m["nbcorefilter"]; ok {
+		if reflect.TypeOf(v).Kind() == reflect.Map {
+			filters = append(filters, NewFilterNbcores(v.(map[string]interface{})))
+		}
+	}
+	if v, ok := m["pricefilter"]; ok {
+		if reflect.TypeOf(v).Kind() == reflect.Map {
+			filters = append(filters, NewFilterPrice(v.(map[string]interface{})))
+		}
+	}
+
+	return filters
+}
+
+func ServerDemandParsingPriorities(m map[string]interface{}) []PriortyPoint {
+	priorities := make([]PriortyPoint, 0, 0)
+	if v, ok := m["disk"]; ok {
+		if reflect.TypeOf(v).Kind() == reflect.Float64 {
+			priorities = append(priorities, NewPriorityDisk(int32(v.(float64))))
+		}
+	}
+	if v, ok := m["ram"]; ok {
+		if reflect.TypeOf(v).Kind() == reflect.Float64 {
+
+			priorities = append(priorities, NewPriorityRam(int32(v.(float64))))
+		}
+	}
+	if v, ok := m["nbcore"]; ok {
+		if reflect.TypeOf(v).Kind() == reflect.Float64 {
+			priorities = append(priorities, NewPriorityNbcores(int32(v.(float64))))
+		}
+	}
+
+	if v, ok := m["price"]; ok {
+		if reflect.TypeOf(v).Kind() == reflect.Float64 {
+			priorities = append(priorities, NewPriorityPrice(int32(v.(float64))))
+		}
+	}
+
+	return priorities
 }

@@ -21,7 +21,7 @@ func main() {
 	timer.GlobalEventPublisher = timer.NewEventPublisher(root)
 	timer.GlobalGameTimer = timer.NewGameTimer()
 	accounting.GlobalLedger = accounting.NewLedger(timer.GlobalGameTimer, dctycoon.AvailableLocation[dctycoon.GlobalLocation].Taxrate, dctycoon.AvailableLocation[dctycoon.GlobalLocation].Bankinterestrate)
-	supplier.GlobalInventory = supplier.NewInventory()
+	supplier.GlobalInventory = supplier.NewInventory(timer.GlobalEventPublisher)
 
 	dc := dctycoon.NewDcWidget(root.Width(), root.Height(), root, supplier.GlobalInventory)
 	supplierwidget := dctycoon.NewMainSupplierWidget(root)

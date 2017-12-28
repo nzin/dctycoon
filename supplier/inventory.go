@@ -66,6 +66,19 @@ type InventoryItem struct {
 	Diskallocated  int32 // in Mo
 }
 
+//
+// HasArrived(time) is an helper method to know if a bough item arrived in the datacenter
+// i.e. InnventoryItem.Deliverydate <= now
+func (self *InventoryItem) HasArrived(t time.Time) bool {
+	return self.Deliverydate.Before(t) || self.Deliverydate.Equal(t)
+}
+
+//
+// IsPlaced() is an helper method to know if a given item is on the map (in a rack or placed)
+func (self *InventoryItem) IsPlaced() bool {
+	return self.Xplaced != -1
+}
+
 func (self *InventoryItem) GetSprite() string {
 	switch self.Typeitem {
 	case PRODUCT_SERVER:
@@ -191,6 +204,7 @@ func (self *InventoryItem) ShortDescription() string {
 // - offers
 //
 type Inventory struct {
+	globaltimer              *timer.GameTimer
 	increment                int32
 	Cart                     []*CartItem
 	Items                    map[int32]*InventoryItem
@@ -205,7 +219,7 @@ var GlobalInventory *Inventory
 func (self *Inventory) BuyCart(buydate time.Time) {
 	for _, item := range self.Cart {
 		for i := 0; i < int(item.Nb); i++ {
-			inventory := &InventoryItem{
+			inventoryitem := &InventoryItem{
 				Id:           self.increment,
 				Typeitem:     item.Typeitem,
 				Serverconf:   item.Serverconf,
@@ -216,12 +230,12 @@ func (self *Inventory) BuyCart(buydate time.Time) {
 				Zplaced:      -1,
 			}
 			self.increment++
-			self.Items[inventory.Id] = inventory
+			self.Items[inventoryitem.Id] = inventoryitem
 			for _, sub := range self.inventorysubscribers {
 				instocksub := sub
-				sub.ItemInTransit(inventory)
-				timer.GlobalGameTimer.AddEvent(inventory.Deliverydate, func() {
-					instocksub.ItemInStock(inventory)
+				sub.ItemInTransit(inventoryitem)
+				self.globaltimer.AddEvent(inventoryitem.Deliverydate, func() {
+					instocksub.ItemInStock(inventoryitem)
 				})
 			}
 		}
@@ -352,11 +366,11 @@ func (self *Inventory) LoadPublishItems() {
 					sub.ItemInstalled(item)
 				}
 			} else {
-				if timer.GlobalGameTimer.CurrentTime.Before(item.Deliverydate) {
+				if self.globaltimer.CurrentTime.Before(item.Deliverydate) {
 					for _, sub := range self.inventorysubscribers {
 						instocksub := sub
 						sub.ItemInTransit(item)
-						timer.GlobalGameTimer.AddEvent(item.Deliverydate, func() {
+						self.globaltimer.AddEvent(item.Deliverydate, func() {
 							instocksub.ItemInStock(item)
 						})
 					}
@@ -376,11 +390,11 @@ func (self *Inventory) LoadPublishItems() {
 					sub.ItemInstalled(item)
 				}
 			} else {
-				if timer.GlobalGameTimer.CurrentTime.Before(item.Deliverydate) {
+				if self.globaltimer.CurrentTime.Before(item.Deliverydate) {
 					for _, sub := range self.inventorysubscribers {
 						instocksub := sub
 						sub.ItemInTransit(item)
-						timer.GlobalGameTimer.AddEvent(item.Deliverydate, func() {
+						self.globaltimer.AddEvent(item.Deliverydate, func() {
 							instocksub.ItemInStock(item)
 						})
 					}
@@ -475,8 +489,9 @@ func (self *Inventory) UpdateOffer(offer *ServerOffer) {
 	// nothing yet
 }
 
-func NewInventory() *Inventory {
+func NewInventory(globaltimer *timer.GameTimer) *Inventory {
 	inventory := &Inventory{
+		globaltimer:          globaltimer,
 		increment:            0,
 		Cart:                 make([]*CartItem, 0),
 		Items:                make(map[int32]*InventoryItem),

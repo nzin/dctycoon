@@ -1,7 +1,9 @@
 package supplier
 
 import (
+	"fmt"
 	"math/rand"
+	"reflect"
 	"sort"
 	"time"
 )
@@ -324,25 +326,25 @@ func (self *ServerOffer) Release(item *InventoryItem) {
 //      diskfilter: { mindisk: 40 // Go
 //      }
 //    },
-//    priority: [ {"price": 2}, {"disk": 1}, {"network":1}, {"image":1},{"captif":2} ]
-//    number: { low: 1, high: 4} // tire au hasard?
+//    priorities: [ {"price": 2}, {"disk": 1}, {"network":1}, {"image":1},{"captive":2} ]
+//    numbers: { low: 1, high: 4} // randomly?
 //    },
 //  "db": ...
 // },
-// "beginningdate": "2000-12-01" // date d'apparition de ce type de demande
+// "beginningdate": "2000-12-01" // when this demand begins to appear
 // "howoften": 40 // /par an (modulo la courbe de penetration du marché?)
 // "renewalfactorperyear": 0.7 // sur 1
 // }
 //}
 //
 type ServerDemandTemplate struct {
-	filters  []CriteriaFilter
-	priority []PriortyPoint
-	nb       [2]int32 // low, high
+	filters    []CriteriaFilter
+	priorities []PriortyPoint
+	nb         [2]int32 // low, high
 }
 
 type DemandTemplate struct {
-	specs         map[string]ServerDemandTemplate
+	specs         map[string]*ServerDemandTemplate
 	beginningdate time.Time
 	howoften      int32   // per year
 	renewalfactor float64 // per year
@@ -362,7 +364,11 @@ func (self *DemandTemplate) InstanciateDemand() *DemandInstance {
 		nb:       make(map[string]int32),
 	}
 	for appname, app := range self.specs {
-		instance.nb[appname] = app.nb[0] + rand.Int31()%(app.nb[1]-app.nb[0])
+		if app.nb[1] > app.nb[0] {
+			instance.nb[appname] = app.nb[0] + rand.Int31()%(app.nb[1]-app.nb[0])
+		} else {
+			instance.nb[appname] = app.nb[0]
+		}
 	}
 	return instance
 }
@@ -386,7 +392,7 @@ func (self *DemandInstance) FindOffer(inventories []*Inventory) []*ServerContrac
 
 			// we score it
 			points := make(map[*ServerOffer]float64)
-			for _, prio := range app.priority {
+			for _, prio := range app.priorities {
 				prio.Score(offers, &points)
 			}
 
@@ -461,7 +467,7 @@ func (self *DemandInstance) FindOffer(inventories []*Inventory) []*ServerContrac
 			points[invSelection[appname]] = 0.0
 			offers = append(offers, invSelection[appname])
 		}
-		for _, prio := range app.priority {
+		for _, prio := range app.priorities {
 			prio.Score(offers, &points)
 		}
 		for inventory, invSelection := range selection {
@@ -520,5 +526,83 @@ type CriteriaFilter interface {
 }
 
 type PriortyPoint interface {
+	// point = the bigger, the better
 	Score(offer []*ServerOffer, points *map[*ServerOffer]float64)
+}
+
+func ServerDemandParsing(json map[string]interface{}) *ServerDemandTemplate {
+	template := &ServerDemandTemplate{
+		filters:    make([]CriteriaFilter, 0, 0),
+		priorities: make([]PriortyPoint, 0, 0),
+	}
+	for k, v := range json {
+		switch k {
+		case "filters":
+			if reflect.TypeOf(v).Kind() == reflect.Map {
+				if reflect.TypeOf(v).Key().Kind() == reflect.String {
+					// see criteriapriority.go
+					template.filters = ServerDemandParsingFilters(v.(map[string]interface{}))
+				}
+			}
+			break
+		case "priorities":
+			if reflect.TypeOf(v).Kind() == reflect.Map {
+				if reflect.TypeOf(v).Key().Kind() == reflect.String {
+					// see criteriapriority.go
+					template.priorities = ServerDemandParsingPriorities(v.(map[string]interface{}))
+				}
+			}
+			break
+		case "numbers":
+			if reflect.TypeOf(v).Kind() == reflect.Map {
+				if reflect.TypeOf(v).Key().Kind() == reflect.String {
+					// see criteriapriority.go
+					template.nb = ServerDemandParsingNumbers(v.(map[string]interface{}))
+				}
+			}
+			break
+		}
+	}
+	return template
+}
+
+func DemandParsing(j map[string]interface{}) *DemandTemplate {
+	template := &DemandTemplate{
+		specs:         make(map[string]*ServerDemandTemplate),
+		beginningdate: time.Date(1980, 1, 1, 0, 0, 0, 0, time.UTC),
+		howoften:      10,
+		renewalfactor: 0.1,
+	}
+
+	if data, ok := j["specs"]; ok {
+		if reflect.TypeOf(data).Kind() == reflect.Map {
+			for k, v := range data.(map[string]interface{}) {
+				if reflect.TypeOf(v).Kind() == reflect.Map {
+					template.specs[k] = ServerDemandParsing(v.(map[string]interface{}))
+				}
+			}
+		}
+	}
+
+	if data, ok := j["beginningdate"]; ok {
+		if reflect.TypeOf(data).Kind() == reflect.String {
+			var year, month, day int
+			fmt.Sscanf(data.(string), "%d-%d-%d", &year, &month, &day)
+			template.beginningdate = time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC)
+		}
+	}
+
+	if data, ok := j["howoften"]; ok {
+		if reflect.TypeOf(data).Kind() == reflect.Float64 {
+			template.howoften = int32(data.(float64))
+		}
+	}
+
+	if data, ok := j["renewalfactorperyear"]; ok {
+		if reflect.TypeOf(data).Kind() == reflect.Float64 {
+			template.renewalfactor = data.(float64)
+		}
+	}
+
+	return template
 }
