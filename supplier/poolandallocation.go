@@ -377,7 +377,7 @@ func (self *DemandTemplate) InstanciateDemand() *DemandInstance {
 // we should check across the inventory of different competitors
 //  and from these inventory checks across all the offers
 //
-func (self *DemandInstance) FindOffer(inventories []*Inventory) []*ServerContract {
+func (self *DemandInstance) FindOffer(inventories []*Inventory, now time.Time) *ServerBundle {
 	selection := make(map[*Inventory]map[string]*ServerOffer)
 	for _, inventory := range inventories {
 		// for a given inventory we try to create the apps
@@ -434,7 +434,7 @@ func (self *DemandInstance) FindOffer(inventories []*Inventory) []*ServerContrac
 						Disksize:  kv.Offer.Disksize,
 						Vt:        kv.Offer.Vt,
 						Price:     kv.Offer.Price,
-						Date:      time.Now(),
+						Date:      now,
 					})
 				}
 				for _, contract := range allocated {
@@ -502,11 +502,15 @@ func (self *DemandInstance) FindOffer(inventories []*Inventory) []*ServerContrac
 				Disksize:  serveroffer.Disksize,
 				Vt:        serveroffer.Vt,
 				Price:     serveroffer.Price,
-				Date:      time.Now(),
+				Date:      now,
 			})
 		}
 	}
-	return allocated
+	return &ServerBundle{
+		contracts:   allocated,
+		renewalrate: self.template.renewalfactor,
+		Date:        now,
+	}
 }
 
 type ServerContract struct {
@@ -519,6 +523,12 @@ type ServerContract struct {
 	Disksize  int32
 	Vt        bool    // only for non vps offer
 	Price     float64 // per month
+}
+
+type ServerBundle struct {
+	contracts   []*ServerContract
+	renewalrate float64
+	Date        time.Time
 }
 
 type CriteriaFilter interface {

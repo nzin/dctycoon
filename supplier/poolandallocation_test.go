@@ -132,8 +132,8 @@ func TestPool(t *testing.T) {
 
 	demand := demandtemplate.InstanciateDemand()
 	inventories := []*Inventory{inventory}
-	contracts := demand.FindOffer(inventories)
-	assert.Empty(t, contracts, "we didn't found servers fitting the demand")
+	bundlecontracts := demand.FindOffer(inventories, time.Date(1999, 1, 1, 0, 0, 0, 0, time.UTC))
+	assert.Empty(t, bundlecontracts, "we didn't found servers fitting the demand")
 
 	bigpayload2 := `{
 		"specs": {
@@ -172,10 +172,12 @@ func TestPool(t *testing.T) {
 	assert.Equal(t, 2, len(demandtemplate2.specs), "2 servers asked ")
 
 	demand2 := demandtemplate2.InstanciateDemand()
-	contracts2 := demand2.FindOffer(inventories)
-	assert.NotEmpty(t, contracts2, "we found servers fitting the demand")
-	assert.Equal(t, 2, len(contracts2), "2 servers allocated")
+	bundlecontracts2 := demand2.FindOffer(inventories, time.Date(1999, 1, 1, 0, 0, 0, 0, time.UTC))
+	assert.NotEmpty(t, bundlecontracts2, "we found servers fitting the demand")
+	assert.Equal(t, 2, len(bundlecontracts2.contracts), "2 servers allocated")
 
-	assert.Equal(t, int32(1), contracts2[0].Item.Coresallocated, "1st server allocated")
+	assert.Equal(t, int32(1), bundlecontracts2.contracts[0].Item.Coresallocated, "1st server allocated")
 
+	bundlecontracts3 := demand2.FindOffer(inventories, time.Date(1999, 1, 1, 0, 0, 0, 0, time.UTC))
+	assert.Empty(t, bundlecontracts3, "no server left fitting the demand")
 }
