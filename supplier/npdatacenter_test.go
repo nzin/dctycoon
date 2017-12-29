@@ -3,6 +3,7 @@ package supplier
 import (
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/dctycoon/timer"
@@ -29,4 +30,25 @@ func TestNPDatacenter(t *testing.T) {
 	npd := NewNPDatacenter(gt, trend, 10000, "siliconvalley", "mono_r100_r200.json")
 	assert.NotEmpty(t, npd, "NPDatacenter mono_r100_r200 profile loaded")
 	assert.Equal(t, "R100", npd.buyoutprofile["R100physical"].Servertype, "check if the profile is correctly loaded")
+}
+
+func TestNPDatacenterBuyout(t *testing.T) {
+	gt := timer.NewGameTimer()
+	gt.CurrentTime = time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
+	ps := &EventPublisherServiceMock{}
+	j := map[string]interface{}{
+		"cpupricenoise":  make([]interface{}, 0, 0),
+		"diskpricenoise": make([]interface{}, 0, 0),
+		"rampricenoise":  make([]interface{}, 0, 0),
+	}
+	trend := TrendLoad(j, ps, gt)
+
+	npd := NewNPDatacenter(gt, trend, 10000, "siliconvalley", "mono_r100_r200.json")
+	assert.NotEmpty(t, npd, "NPDatacenter mono_r100_r200 profile loaded")
+	assert.Equal(t, "R100", npd.buyoutprofile["R100physical"].Servertype, "check if the profile is correctly loaded")
+
+	npd.NewYearOperations()
+	assert.Equal(t, 1, len(npd.inventory.Items), "new year passed, we bought some servers")
+	assert.Equal(t, 1, len(npd.inventory.offers), "we have one offer for R100 server")
+	assert.Equal(t, float64(2700.0), npd.inventory.offers[0].Price, "R100 is priced as 2400$")
 }

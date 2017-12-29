@@ -1,6 +1,7 @@
 package supplier
 
 import (
+	"math"
 	"time"
 )
 
@@ -138,5 +139,5 @@ func (self *ServerConf) Price(trend *Trend, now time.Time) float64 {
 		trend.Cpuprice.CurrentValue(now)*float64(self.NbProcessors)*float64(self.NbCore) +
 		trend.Diskprice.CurrentValue(now)*float64(self.NbDisks*self.DiskSize)/1000 +
 		trend.Ramprice.CurrentValue(now)*float64(self.NbSlotRam*self.RamSize)/1000
-	return price * complexity
+	return math.Floor(price * complexity)
 }

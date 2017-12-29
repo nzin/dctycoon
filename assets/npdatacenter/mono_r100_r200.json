@@ -2,7 +2,7 @@
   "R100physical": {
     "servertype": "R100",
     "vps": false,
-    "buyperyear": 0.1,
+    "buyperyear": 0.2,
     "margin": 1.5,
     "configuration": "low"
   },

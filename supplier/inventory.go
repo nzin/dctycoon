@@ -489,6 +489,10 @@ func (self *Inventory) UpdateOffer(offer *ServerOffer) {
 	// nothing yet
 }
 
+func (self *Inventory) GetOffers() []*ServerOffer {
+	return self.offers
+}
+
 func NewInventory(globaltimer *timer.GameTimer) *Inventory {
 	inventory := &Inventory{
 		globaltimer:          globaltimer,

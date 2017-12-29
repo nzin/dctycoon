@@ -2,15 +2,10 @@ package supplier
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/dctycoon/timer"
-)
-
-const (
-	CONFIGURATION_LOW    = 1
-	CONFIGURATION_MEDIUM = 2
-	CONFIGURATION_HIGH   = 3
 )
 
 //
@@ -31,8 +26,8 @@ type BuyoutProfile struct {
 	Servertype    string
 	Vps           bool
 	Buyperyear    float64
-	margin        float64
-	configuration int
+	Margin        float64
+	Configuration string
 }
 
 type NPDatacenter struct {
@@ -83,7 +78,118 @@ func NewNPDatacenter(timer *timer.GameTimer, trend *Trend, initialcapital float6
 //
 // NewYearOperations will trigger every year different actions, in particular
 // - buy goods
-// - create/refresh services
+// - create/refresh offers
 func (self *NPDatacenter) NewYearOperations() {
 
+	// let's begin by removing all offers
+	for _, o := range self.inventory.GetOffers() {
+		self.inventory.RemoveOffer(o)
+	}
+
+	// loop over the buyoutprofile and buy some hardware + create the corresponding offer
+	cartitems := []*CartItem{}
+	for profilename, profile := range self.buyoutprofile {
+
+		// if the offer is a VPS and we don't have yet VT enable hardware... we skip for next year
+		if profile.Vps == true && self.trend.Vt.CurrentValue(self.timer.CurrentTime) == 0 {
+			continue
+		}
+
+		conftype := GetServerConfTypeByName(profile.Servertype)
+		var serverconf ServerConf
+		if conftype != nil {
+			switch profile.Configuration {
+			case "low":
+				serverconf.NbProcessors = 1
+				serverconf.NbCore = 1
+				if self.trend.Vt.CurrentValue(self.timer.CurrentTime) == 1 && profile.Vps == false {
+					serverconf.VtSupport = true
+				} else {
+					serverconf.VtSupport = false
+				}
+				serverconf.NbDisks = conftype.NbDisks[0]
+				serverconf.NbSlotRam = conftype.NbSlotRam[0]
+				serverconf.DiskSize = self.trend.Disksize.CurrentValue(self.timer.CurrentTime) / 4 // 3 options: Trend.Disksize: 1,1/2,1/4
+				serverconf.RamSize = self.trend.Ramsize.CurrentValue(self.timer.CurrentTime) / 4   // 4 options: Trend.Ramsize: 1,1/2,1/4,1/8
+				serverconf.ConfType = conftype
+				break
+			case "medium":
+				serverconf.NbProcessors = (conftype.NbProcessors[0] + conftype.NbProcessors[1]) / 2
+				if self.trend.Corepercpu.CurrentValue(self.timer.CurrentTime) > 1 {
+					serverconf.NbCore = self.trend.Corepercpu.CurrentValue(self.timer.CurrentTime) / 2
+				} else {
+					serverconf.NbCore = 1
+				}
+				if self.trend.Vt.CurrentValue(self.timer.CurrentTime) == 1 && profile.Vps == false {
+					serverconf.VtSupport = true
+				} else {
+					serverconf.VtSupport = false
+				}
+				serverconf.NbDisks = (conftype.NbDisks[0] + conftype.NbDisks[1]) / 2
+				serverconf.NbSlotRam = (conftype.NbSlotRam[0] + conftype.NbSlotRam[1]) / 2
+				serverconf.DiskSize = self.trend.Disksize.CurrentValue(self.timer.CurrentTime) / 2 // 3 options: Trend.Disksize: 1,1/2,1/4
+				serverconf.RamSize = self.trend.Ramsize.CurrentValue(self.timer.CurrentTime) / 2   // 4 options: Trend.Ramsize: 1,1/2,1/4,1/8
+				serverconf.ConfType = conftype
+				break
+			case "high":
+				serverconf.NbProcessors = conftype.NbProcessors[1]
+				serverconf.NbCore = self.trend.Corepercpu.CurrentValue(self.timer.CurrentTime)
+				if self.trend.Vt.CurrentValue(self.timer.CurrentTime) == 1 && profile.Vps == false {
+					serverconf.VtSupport = true
+				} else {
+					serverconf.VtSupport = false
+				}
+				serverconf.NbDisks = conftype.NbDisks[1]
+				serverconf.NbSlotRam = conftype.NbSlotRam[1]
+				serverconf.DiskSize = self.trend.Disksize.CurrentValue(self.timer.CurrentTime) // 3 options: Trend.Disksize: 1,1/2,1/4
+				serverconf.RamSize = self.trend.Ramsize.CurrentValue(self.timer.CurrentTime)   // 4 options: Trend.Ramsize: 1,1/2,1/4,1/8
+				serverconf.ConfType = conftype
+				break
+			default: // profile configuration not found
+				continue
+			}
+			unitprice := serverconf.Price(self.trend, self.timer.CurrentTime)
+			//fmt.Println("profilename", profilename, "unitprice:", unitprice, "profilemargin:", profile.Margin)
+			nb := int32((self.initialcapital * profile.Buyperyear) / unitprice)
+			// if we can afford, then we buy it
+			if nb > 0 {
+				item := &CartItem{
+					Typeitem:   PRODUCT_SERVER,
+					Serverconf: &serverconf,
+					Unitprice:  unitprice,
+					Nb:         nb,
+				}
+				cartitems = append(cartitems, item)
+
+				// create the offer
+				var pool ServerPool
+				// check the first available pool
+				for _, p := range self.inventory.GetPools() {
+					if p.IsVps() == profile.Vps {
+						pool = p
+						break
+					}
+				}
+				if pool == nil {
+					fmt.Println("We didn't find a correct pool!")
+					continue
+				}
+				offer := &ServerOffer{
+					Active:    true,
+					Name:      profilename,
+					Inventory: self.inventory,
+					Pool:      pool,
+					Vps:       profile.Vps,
+					Nbcores:   serverconf.NbCore * serverconf.NbProcessors,
+					Ramsize:   serverconf.NbSlotRam * serverconf.RamSize,
+					Disksize:  serverconf.NbDisks * serverconf.DiskSize,
+					Vt:        serverconf.VtSupport,
+					Price:     unitprice * profile.Margin,
+				}
+				self.inventory.AddOffer(offer)
+			}
+		}
+	}
+	self.inventory.Cart = cartitems
+	self.inventory.BuyCart(self.timer.CurrentTime)
 }
