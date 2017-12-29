@@ -21,7 +21,7 @@ type CriteriaFilterDisk struct {
 	Disksize int32
 }
 
-func NewFilterDisk(i map[string]interface{}) *CriteriaFilterDisk {
+func NewFilterDisk(i map[string]interface{}) CriteriaFilter {
 	filter := &CriteriaFilterDisk{
 		Disksize: 0,
 	}
@@ -45,7 +45,7 @@ type CriteriaFilterRam struct {
 	Ramsize int32
 }
 
-func NewFilterRam(i map[string]interface{}) *CriteriaFilterRam {
+func NewFilterRam(i map[string]interface{}) CriteriaFilter {
 	filter := &CriteriaFilterRam{
 		Ramsize: 0,
 	}
@@ -69,7 +69,7 @@ type CriteriaFilterNbcores struct {
 	Nbcores int32
 }
 
-func NewFilterNbcores(i map[string]interface{}) *CriteriaFilterNbcores {
+func NewFilterNbcores(i map[string]interface{}) CriteriaFilter {
 	filter := &CriteriaFilterNbcores{
 		Nbcores: 0,
 	}
@@ -93,7 +93,7 @@ type CriteriaFilterPrice struct {
 	Price float64
 }
 
-func NewFilterPrice(i map[string]interface{}) *CriteriaFilterPrice {
+func NewFilterPrice(i map[string]interface{}) CriteriaFilter {
 	filter := &CriteriaFilterPrice{
 		Price: 0,
 	}
@@ -117,7 +117,7 @@ type PriorityPrice struct {
 	weight int32
 }
 
-func NewPriorityPrice(value int32) *PriorityPrice {
+func NewPriorityPrice(value int32) PriorityPoint {
 	priority := &PriorityPrice{
 		weight: value,
 	}
@@ -142,7 +142,7 @@ type PriorityDisk struct {
 	weight int32
 }
 
-func NewPriorityDisk(value int32) *PriorityDisk {
+func NewPriorityDisk(value int32) PriorityPoint {
 	priority := &PriorityDisk{
 		weight: value,
 	}
@@ -166,7 +166,7 @@ type PriorityRam struct {
 	weight int32
 }
 
-func NewPriorityRam(value int32) *PriorityRam {
+func NewPriorityRam(value int32) PriorityPoint {
 	priority := &PriorityRam{
 		weight: value,
 	}
@@ -190,7 +190,7 @@ type PriorityNbcores struct {
 	weight int32
 }
 
-func NewPriorityNbcores(value int32) *PriorityNbcores {
+func NewPriorityNbcores(value int32) PriorityPoint {
 	priority := &PriorityNbcores{
 		weight: value,
 	}
@@ -221,56 +221,40 @@ func ServerDemandParsingNumbers(m map[string]interface{}) [2]int32 {
 	return numbers
 }
 
+var serverdemandfilterlist = map[string](func(map[string]interface{}) CriteriaFilter){
+	"diskfilter":   NewFilterDisk,
+	"ramfilter":    NewFilterRam,
+	"nbcorefilter": NewFilterNbcores,
+	"pricefilter":  NewFilterPrice,
+}
+
 func ServerDemandParsingFilters(m map[string]interface{}) []CriteriaFilter {
 	filters := make([]CriteriaFilter, 0, 0)
-	if v, ok := m["diskfilter"]; ok {
-		if reflect.TypeOf(v).Kind() == reflect.Map {
-			filters = append(filters, NewFilterDisk(v.(map[string]interface{})))
+	for filtername, function := range serverdemandfilterlist {
+		if v, ok := m[filtername]; ok {
+			if reflect.TypeOf(v).Kind() == reflect.Map {
+				filters = append(filters, function(v.(map[string]interface{})))
+			}
 		}
 	}
-	if v, ok := m["ramfilter"]; ok {
-		if reflect.TypeOf(v).Kind() == reflect.Map {
-			filters = append(filters, NewFilterRam(v.(map[string]interface{})))
-		}
-	}
-	if v, ok := m["nbcorefilter"]; ok {
-		if reflect.TypeOf(v).Kind() == reflect.Map {
-			filters = append(filters, NewFilterNbcores(v.(map[string]interface{})))
-		}
-	}
-	if v, ok := m["pricefilter"]; ok {
-		if reflect.TypeOf(v).Kind() == reflect.Map {
-			filters = append(filters, NewFilterPrice(v.(map[string]interface{})))
-		}
-	}
-
 	return filters
 }
 
-func ServerDemandParsingPriorities(m map[string]interface{}) []PriortyPoint {
-	priorities := make([]PriortyPoint, 0, 0)
-	if v, ok := m["disk"]; ok {
-		if reflect.TypeOf(v).Kind() == reflect.Float64 {
-			priorities = append(priorities, NewPriorityDisk(int32(v.(float64))))
-		}
-	}
-	if v, ok := m["ram"]; ok {
-		if reflect.TypeOf(v).Kind() == reflect.Float64 {
+var serverdemandprioritylist = map[string](func(int32) PriorityPoint){
+	"disk":   NewPriorityDisk,
+	"ram":    NewPriorityDisk,
+	"nbcore": NewPriorityNbcores,
+	"price":  NewPriorityPrice,
+}
 
-			priorities = append(priorities, NewPriorityRam(int32(v.(float64))))
+func ServerDemandParsingPriorities(m map[string]interface{}) []PriorityPoint {
+	priorities := make([]PriorityPoint, 0, 0)
+	for priorityname, function := range serverdemandprioritylist {
+		if v, ok := m[priorityname]; ok {
+			if reflect.TypeOf(v).Kind() == reflect.Float64 {
+				priorities = append(priorities, function(int32(v.(float64))))
+			}
 		}
 	}
-	if v, ok := m["nbcore"]; ok {
-		if reflect.TypeOf(v).Kind() == reflect.Float64 {
-			priorities = append(priorities, NewPriorityNbcores(int32(v.(float64))))
-		}
-	}
-
-	if v, ok := m["price"]; ok {
-		if reflect.TypeOf(v).Kind() == reflect.Float64 {
-			priorities = append(priorities, NewPriorityPrice(int32(v.(float64))))
-		}
-	}
-
 	return priorities
 }

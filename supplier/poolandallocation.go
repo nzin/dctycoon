@@ -339,7 +339,7 @@ func (self *ServerOffer) Release(item *InventoryItem) {
 //
 type ServerDemandTemplate struct {
 	filters    []CriteriaFilter
-	priorities []PriortyPoint
+	priorities []PriorityPoint
 	nb         [2]int32 // low, high
 }
 
@@ -535,7 +535,7 @@ type CriteriaFilter interface {
 	Filter(offers []*ServerOffer) []*ServerOffer
 }
 
-type PriortyPoint interface {
+type PriorityPoint interface {
 	// point = the bigger, the better
 	Score(offer []*ServerOffer, points *map[*ServerOffer]float64)
 }
@@ -543,7 +543,7 @@ type PriortyPoint interface {
 func ServerDemandParsing(json map[string]interface{}) *ServerDemandTemplate {
 	template := &ServerDemandTemplate{
 		filters:    make([]CriteriaFilter, 0, 0),
-		priorities: make([]PriortyPoint, 0, 0),
+		priorities: make([]PriorityPoint, 0, 0),
 	}
 	for k, v := range json {
 		switch k {
