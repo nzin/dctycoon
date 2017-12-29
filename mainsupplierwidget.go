@@ -56,7 +56,7 @@ func (self *MainSupplierWidget) Hide() {
 	}
 }
 
-func NewMainSupplierWidget(root *sws.RootWidget) *MainSupplierWidget {
+func NewMainSupplierWidget(trend *supplier.Trend, root *sws.RootWidget) *MainSupplierWidget {
 	mainwidget := sws.NewMainWidget(650, 400, " Your DEAL supplier", true, true)
 	scrollwidgetshop := sws.NewScrollWidget(600, 550)
 	scrollwidgetshop.SetColor(0xffffffff)
@@ -143,7 +143,7 @@ func NewMainSupplierWidget(root *sws.RootWidget) *MainSupplierWidget {
 	bladepage.Move(120, 160)
 
 	// configure
-	configurepage := supplier.NewServerPageConfigureWidget(480, 700)
+	configurepage := supplier.NewServerPageConfigureWidget(trend, 480, 700)
 	configurepage.Move(120, 160)
 
 	// buttons callback
@@ -265,7 +265,7 @@ func NewMainSupplierWidget(root *sws.RootWidget) *MainSupplierWidget {
 		now := timer.GlobalGameTimer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		//serverpage.RemoveChild(banners)
-		configurepage.SetConfType("T1000", now)
+		configurepage.SetConfType(trend, "T1000", now)
 		widget.content = configurepage
 		serverpage.AddChild(configurepage)
 		scrollwidgetshop.SetHorizontalPosition(0)
@@ -277,7 +277,7 @@ func NewMainSupplierWidget(root *sws.RootWidget) *MainSupplierWidget {
 		now := timer.GlobalGameTimer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		//serverpage.RemoveChild(banners)
-		configurepage.SetConfType("R100", now)
+		configurepage.SetConfType(trend, "R100", now)
 		widget.content = configurepage
 		serverpage.AddChild(configurepage)
 		scrollwidgetshop.SetHorizontalPosition(0)
@@ -289,7 +289,7 @@ func NewMainSupplierWidget(root *sws.RootWidget) *MainSupplierWidget {
 		now := timer.GlobalGameTimer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		//serverpage.RemoveChild(banners)
-		configurepage.SetConfType("R200", now)
+		configurepage.SetConfType(trend, "R200", now)
 		widget.content = configurepage
 		serverpage.AddChild(configurepage)
 		scrollwidgetshop.SetHorizontalPosition(0)
@@ -301,7 +301,7 @@ func NewMainSupplierWidget(root *sws.RootWidget) *MainSupplierWidget {
 		now := timer.GlobalGameTimer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		//serverpage.RemoveChild(banners)
-		configurepage.SetConfType("R400", now)
+		configurepage.SetConfType(trend, "R400", now)
 		widget.content = configurepage
 		serverpage.AddChild(configurepage)
 		scrollwidgetshop.SetHorizontalPosition(0)
@@ -313,7 +313,7 @@ func NewMainSupplierWidget(root *sws.RootWidget) *MainSupplierWidget {
 		now := timer.GlobalGameTimer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		//serverpage.RemoveChild(banners)
-		configurepage.SetConfType("R600", now)
+		configurepage.SetConfType(trend, "R600", now)
 		widget.content = configurepage
 		serverpage.AddChild(configurepage)
 		scrollwidgetshop.SetHorizontalPosition(0)
@@ -325,7 +325,7 @@ func NewMainSupplierWidget(root *sws.RootWidget) *MainSupplierWidget {
 		now := timer.GlobalGameTimer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		//serverpage.RemoveChild(banners)
-		configurepage.SetConfType("B100", now)
+		configurepage.SetConfType(trend, "B100", now)
 		widget.content = configurepage
 		serverpage.AddChild(configurepage)
 		scrollwidgetshop.SetHorizontalPosition(0)
@@ -337,7 +337,7 @@ func NewMainSupplierWidget(root *sws.RootWidget) *MainSupplierWidget {
 		now := timer.GlobalGameTimer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		//serverpage.RemoveChild(banners)
-		configurepage.SetConfType("B200", now)
+		configurepage.SetConfType(trend, "B200", now)
 		widget.content = configurepage
 		serverpage.AddChild(configurepage)
 		scrollwidgetshop.SetHorizontalPosition(0)

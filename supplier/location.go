@@ -1,4 +1,4 @@
-package dctycoon
+package supplier
 
 type LocationType struct {
 	Metersquareprice    float64
@@ -12,8 +12,8 @@ type LocationType struct {
 
 var GlobalLocation string
 
-var AvailableLocation = map[string]LocationType{
-	"siliconvalley": LocationType{
+var AvailableLocation = map[string]*LocationType{
+	"siliconvalley": &LocationType{
 		Metersquareprice:    862, //https://www.zillow.com/mountain-view-ca/home-values/
 		Internetfailrate:    0.005,
 		Electricityfailrate: 0.005,

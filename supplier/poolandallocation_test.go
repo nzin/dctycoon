@@ -90,7 +90,7 @@ func TestPool(t *testing.T) {
 	j := make(map[string]interface{})
 	err := json.Unmarshal([]byte(payload), &j)
 	assert.Empty(t, err, "correct JSON payload format")
-	serverspecs := ServerDemandParsing(j)
+	serverspecs := serverDemandParsing(j)
 	assert.Equal(t, 1, len(serverspecs.filters), "only one filter accepted (disk) ")
 	assert.Equal(t, 2, len(serverspecs.priorities), "only 2 priorities accepted (disk,price) ")
 

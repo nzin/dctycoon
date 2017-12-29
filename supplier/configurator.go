@@ -96,9 +96,9 @@ var AvailableConfs = []ServerConfType{
 	},
 }
 
-func GetServerConfTypeByName(name string) *ServerConfType{
-	for _,conftype := range AvailableConfs {
-		if conftype.ServerName==name {
+func GetServerConfTypeByName(name string) *ServerConfType {
+	for _, conftype := range AvailableConfs {
+		if conftype.ServerName == name {
 			return &conftype
 		}
 	}
@@ -131,12 +131,12 @@ func (self *ServerConf) PowerConsumption() float64 {
 	return consumption
 }
 
-func (self *ServerConf) Price(now time.Time) float64 {
+func (self *ServerConf) Price(trend *Trend, now time.Time) float64 {
 	var price float64
 	complexity := float64(self.NbProcessors)/10 + float64(self.NbDisks)/20 + float64(self.NbSlotRam)/40 + 1
 	price = self.ConfType.BackplanePrice +
-		Trends.Cpuprice.CurrentValue(now)*float64(self.NbProcessors)*float64(self.NbCore) +
-		Trends.Diskprice.CurrentValue(now)*float64(self.NbDisks*self.DiskSize)/1000 +
-		Trends.Ramprice.CurrentValue(now)*float64(self.NbSlotRam*self.RamSize)/1000
+		trend.Cpuprice.CurrentValue(now)*float64(self.NbProcessors)*float64(self.NbCore) +
+		trend.Diskprice.CurrentValue(now)*float64(self.NbDisks*self.DiskSize)/1000 +
+		trend.Ramprice.CurrentValue(now)*float64(self.NbSlotRam*self.RamSize)/1000
 	return price * complexity
 }

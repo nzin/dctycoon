@@ -15,18 +15,6 @@ import (
 func main() {
 	quit := false
 
-	root := sws.Init(800, 600)
-	dctycoon.GlobalLocation = "siliconvalley"
-
-	timer.GlobalEventPublisher = timer.NewEventPublisher(root)
-	timer.GlobalGameTimer = timer.NewGameTimer()
-	accounting.GlobalLedger = accounting.NewLedger(timer.GlobalGameTimer, dctycoon.AvailableLocation[dctycoon.GlobalLocation].Taxrate, dctycoon.AvailableLocation[dctycoon.GlobalLocation].Bankinterestrate)
-	supplier.GlobalInventory = supplier.NewInventory(timer.GlobalEventPublisher)
-
-	dc := dctycoon.NewDcWidget(root.Width(), root.Height(), root, supplier.GlobalInventory)
-	supplierwidget := dctycoon.NewMainSupplierWidget(root)
-	inventorywidget := dctycoon.NewMainInventoryWidget(root)
-	accountingui := accounting.NewMainAccountingWidget(root)
 	gamefile, err := os.Open("example.map")
 	if err != nil {
 		fmt.Println(err.Error())
@@ -40,14 +28,27 @@ func main() {
 	}
 	gamefile.Close()
 
-	// initiate the location
-	dctycoon.GlobalLocation = v["location"].(string)
+	root := sws.Init(800, 600)
+
+	timer.GlobalEventPublisher = timer.NewEventPublisher(root)
+	timer.GlobalGameTimer = timer.NewGameTimer()
+	trends := supplier.TrendLoad(v["trends"].(map[string]interface{}), timer.GlobalEventPublisher, timer.GlobalGameTimer)
+
+	// specific to player
+	location := v["location"].(string)
+	accounting.GlobalLedger = accounting.NewLedger(timer.GlobalGameTimer, supplier.AvailableLocation[location].Taxrate, supplier.AvailableLocation[location].Bankinterestrate)
+	supplier.GlobalInventory = supplier.NewInventory(timer.GlobalGameTimer)
+
+	dc := dctycoon.NewDcWidget(root.Width(), root.Height(), root, supplier.GlobalInventory)
+	supplierwidget := dctycoon.NewMainSupplierWidget(trends, root)
+	inventorywidget := dctycoon.NewMainInventoryWidget(root)
+	accountingui := accounting.NewMainAccountingWidget(root)
 
 	// initiate the game timer
 	timer.GlobalGameTimer.Load(v["clock"].(map[string]interface{}))
 
 	// initiate the ledger
-	accounting.GlobalLedger.Load(v["ledger"].(map[string]interface{}), dctycoon.AvailableLocation[dctycoon.GlobalLocation].Taxrate, dctycoon.AvailableLocation[dctycoon.GlobalLocation].Bankinterestrate)
+	accounting.GlobalLedger.Load(v["ledger"].(map[string]interface{}), supplier.AvailableLocation[location].Taxrate, supplier.AvailableLocation[location].Bankinterestrate)
 	//accountingui.SetBankinterestrate(dctycoon.AvailableLocation[dctycoon.GlobalLocation].Bankinterestrate)
 
 	gamemap := v["map"].(map[string]interface{})
@@ -63,7 +64,6 @@ func main() {
 	dock.Move(root.Width()-dock.Width(), 0)
 	root.AddChild(dock)
 
-	supplier.Trends = supplier.TrendLoad(v["trends"].(map[string]interface{}), timer.GlobalEventPublisher, timer.GlobalGameTimer)
 	dock.SetShopCallback(func() {
 		supplierwidget.Show()
 	})
@@ -91,7 +91,7 @@ func main() {
 		os.Exit(1)
 	}
 	gamefile.WriteString("{")
-	gamefile.WriteString(fmt.Sprintf(`"location": "%s",`, dctycoon.GlobalLocation) + "\n")
+	gamefile.WriteString(fmt.Sprintf(`"location": "%s",`, location) + "\n")
 	gamefile.WriteString(fmt.Sprintf(`"map": %s,`, data) + "\n")
 	gamefile.WriteString(fmt.Sprintf(`"trends": %s,`, supplier.TrendSave(supplier.Trends)) + "\n")
 	gamefile.WriteString(fmt.Sprintf(`"clock": %s,`, timer.GlobalGameTimer.Save()+"\n"))

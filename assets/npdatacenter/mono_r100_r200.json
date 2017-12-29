@@ -1,0 +1,16 @@
+{
+  "R100physical": {
+    "servertype": "R100",
+    "vps": false,
+    "buyperyear": 0.1,
+    "margin": 1.5,
+    "configuration": "low"
+  },
+  "R200phyisical": {
+    "servertype": "R200",
+    "vps": false,
+    "buyperyear": 0.2,
+    "margin": 2.0,
+    "configuration": "medium"
+  }
+}
