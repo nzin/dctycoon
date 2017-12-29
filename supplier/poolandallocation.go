@@ -434,7 +434,6 @@ func (self *DemandInstance) FindOffer(inventories []*Inventory, now time.Time) *
 						Disksize:  kv.Offer.Disksize,
 						Vt:        kv.Offer.Vt,
 						Price:     kv.Offer.Price,
-						Date:      now,
 					})
 				}
 				for _, contract := range allocated {
@@ -502,7 +501,6 @@ func (self *DemandInstance) FindOffer(inventories []*Inventory, now time.Time) *
 				Disksize:  serveroffer.Disksize,
 				Vt:        serveroffer.Vt,
 				Price:     serveroffer.Price,
-				Date:      now,
 			})
 		}
 	}
@@ -516,7 +514,6 @@ func (self *DemandInstance) FindOffer(inventories []*Inventory, now time.Time) *
 type ServerContract struct {
 	Item      *InventoryItem
 	OfferName string
-	Date      time.Time
 	Vps       bool
 	Nbcores   int32
 	Ramsize   int32
@@ -540,7 +537,22 @@ type PriorityPoint interface {
 	Score(offer []*ServerOffer, points *map[*ServerOffer]float64)
 }
 
-func ServerDemandParsing(json map[string]interface{}) *ServerDemandTemplate {
+//
+// serverDemandParsing parse the "specs" sub part of a template demand such as:
+//			{
+//				"filters": {
+//					"diskfilter": { "mindisk": 40}
+//				},
+//				"priorities": {
+//					"price": 2,
+//					"disk": 1,
+//					"network":1,
+//					"image":1,
+//					"captive":2
+//				},
+//				"numbers": { "low": 1, "high": 1}
+//			}
+func serverDemandParsing(json map[string]interface{}) *ServerDemandTemplate {
 	template := &ServerDemandTemplate{
 		filters:    make([]CriteriaFilter, 0, 0),
 		priorities: make([]PriorityPoint, 0, 0),
@@ -576,6 +588,39 @@ func ServerDemandParsing(json map[string]interface{}) *ServerDemandTemplate {
 	return template
 }
 
+//
+// DemandParsing parse a complete demand template
+// such as
+//  {
+//		"specs": {
+//			"app": {
+//				"filters": {
+//					"diskfilter": { "mindisk": 40}
+//				},
+//				"priorities": {
+//					"price": 2,
+//					"disk": 1,
+//					"network":1,
+//					"image":1,
+//					"captive":2
+//				},
+//				"numbers": { "low": 1, "high": 1}
+//			},
+//			"db": {
+//				"filters": {
+//					"diskfilter": { "mindisk": 40}
+//				},
+//				"priorities": {
+//					"disk": 1,
+//					"network":1,
+//					"image":1
+//				},
+//				"numbers": { "low": 1, "high": 1}
+//			}
+//		},
+//		"beginningdate": "1996-12-01",
+//		"howoften": 40
+//	}
 func DemandParsing(j map[string]interface{}) *DemandTemplate {
 	template := &DemandTemplate{
 		specs:         make(map[string]*ServerDemandTemplate),
@@ -588,7 +633,7 @@ func DemandParsing(j map[string]interface{}) *DemandTemplate {
 		if reflect.TypeOf(data).Kind() == reflect.Map {
 			for k, v := range data.(map[string]interface{}) {
 				if reflect.TypeOf(v).Kind() == reflect.Map {
-					template.specs[k] = ServerDemandParsing(v.(map[string]interface{}))
+					template.specs[k] = serverDemandParsing(v.(map[string]interface{}))
 				}
 			}
 		}

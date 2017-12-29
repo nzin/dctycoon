@@ -95,35 +95,35 @@ func TestPool(t *testing.T) {
 	assert.Equal(t, 2, len(serverspecs.priorities), "only 2 priorities accepted (disk,price) ")
 
 	bigpayload := `{
-	"specs": {
-		"app": {
-			"filters": {
-				"diskfilter": { "mindisk": 200}
+		"specs": {
+			"app": {
+				"filters": {
+					"diskfilter": { "mindisk": 200}
+				},
+				"priorities": {
+					"price": 2,
+					"disk": 1, 
+					"network":1, 
+					"image":1, 
+					"captive":2
+				},
+				"numbers": { "low": 1, "high": 1}
 			},
-			"priorities": {
-				"price": 2,
-				"disk": 1, 
-				"network":1, 
-				"image":1, 
-				"captive":2
-			},
-			"numbers": { "low": 1, "high": 1}
+			"db": {
+				"filters": {
+					"diskfilter": { "mindisk": 40}
+				},
+				"priorities": {
+					"disk": 1, 
+					"network":1, 
+					"image":1
+				},
+				"numbers": { "low": 1, "high": 1}
+			}
 		},
-		"db": {
-			"filters": {
-				"diskfilter": { "mindisk": 40}
-			},
-			"priorities": {
-				"disk": 1, 
-				"network":1, 
-				"image":1
-			},
-			"numbers": { "low": 1, "high": 1}
-		}
-	},
-	"beginningdate": "1996-12-01",
-	"howoften": 40
-}`
+		"beginningdate": "1996-12-01",
+		"howoften": 40
+	}`
 	j2 := make(map[string]interface{})
 	err = json.Unmarshal([]byte(bigpayload), &j2)
 	assert.Empty(t, err, "correct JSON payload format")
