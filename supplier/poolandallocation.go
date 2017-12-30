@@ -350,10 +350,10 @@ type ServerDemandTemplate struct {
 }
 
 type DemandTemplate struct {
-	specs         map[string]*ServerDemandTemplate
-	beginningdate time.Time
-	howoften      int32   // per year
-	renewalfactor float64 // per year
+	Specs         map[string]*ServerDemandTemplate
+	Beginningdate time.Time
+	Howoften      int32   // per year
+	Renewalfactor float64 // per year
 }
 
 type DemandInstance struct {
@@ -369,7 +369,7 @@ func (self *DemandTemplate) InstanciateDemand() *DemandInstance {
 		template: self,
 		nb:       make(map[string]int32),
 	}
-	for appname, app := range self.specs {
+	for appname, app := range self.Specs {
 		if app.nb[1] > app.nb[0] {
 			instance.nb[appname] = app.nb[0] + rand.Int31()%(app.nb[1]-app.nb[0])
 		} else {
@@ -390,7 +390,7 @@ func (self *DemandInstance) FindOffer(inventories []*Inventory, now time.Time) *
 		// for a given inventory we try to create the apps
 		selectedoffers := make(map[string]*ServerOffer)
 		nooffer := false
-		for appname, app := range self.template.specs {
+		for appname, app := range self.template.Specs {
 			// we filter
 			offers := inventory.offers
 			for _, filter := range app.filters {
@@ -466,7 +466,7 @@ func (self *DemandInstance) FindOffer(inventories []*Inventory, now time.Time) *
 	// pass 2: we sort serverconf by inventory score
 
 	prioInventory := make(map[*Inventory]float64)
-	for appname, app := range self.template.specs {
+	for appname, app := range self.template.Specs {
 		points := make(map[*ServerOffer]float64)
 		offers := make([]*ServerOffer, 0)
 		for _, invSelection := range selection {
@@ -496,7 +496,7 @@ func (self *DemandInstance) FindOffer(inventories []*Inventory, now time.Time) *
 	}
 
 	var allocated []*ServerContract
-	for appname, _ := range self.template.specs {
+	for appname, _ := range self.template.Specs {
 		for i := 0; i < int(self.nb[appname]); i++ {
 			serveroffer := selection[selectedInventory][appname]
 			allocated = append(allocated, &ServerContract{
@@ -512,8 +512,8 @@ func (self *DemandInstance) FindOffer(inventories []*Inventory, now time.Time) *
 		}
 	}
 	return &ServerBundle{
-		contracts:   allocated,
-		renewalrate: self.template.renewalfactor,
+		Contracts:   allocated,
+		Renewalrate: self.template.Renewalfactor,
 		Date:        now,
 	}
 }
@@ -530,8 +530,8 @@ type ServerContract struct {
 }
 
 type ServerBundle struct {
-	contracts   []*ServerContract
-	renewalrate float64
+	Contracts   []*ServerContract
+	Renewalrate float64
 	Date        time.Time
 }
 
@@ -630,17 +630,17 @@ func serverDemandParsing(json map[string]interface{}) *ServerDemandTemplate {
 //	}
 func DemandParsing(j map[string]interface{}) *DemandTemplate {
 	template := &DemandTemplate{
-		specs:         make(map[string]*ServerDemandTemplate),
-		beginningdate: time.Date(1980, 1, 1, 0, 0, 0, 0, time.UTC),
-		howoften:      10,
-		renewalfactor: 0.1,
+		Specs:         make(map[string]*ServerDemandTemplate),
+		Beginningdate: time.Date(1980, 1, 1, 0, 0, 0, 0, time.UTC),
+		Howoften:      10,
+		Renewalfactor: 0.1,
 	}
 
 	if data, ok := j["specs"]; ok {
 		if reflect.TypeOf(data).Kind() == reflect.Map {
 			for k, v := range data.(map[string]interface{}) {
 				if reflect.TypeOf(v).Kind() == reflect.Map {
-					template.specs[k] = serverDemandParsing(v.(map[string]interface{}))
+					template.Specs[k] = serverDemandParsing(v.(map[string]interface{}))
 				}
 			}
 		}
@@ -650,19 +650,19 @@ func DemandParsing(j map[string]interface{}) *DemandTemplate {
 		if reflect.TypeOf(data).Kind() == reflect.String {
 			var year, month, day int
 			fmt.Sscanf(data.(string), "%d-%d-%d", &year, &month, &day)
-			template.beginningdate = time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC)
+			template.Beginningdate = time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC)
 		}
 	}
 
 	if data, ok := j["howoften"]; ok {
 		if reflect.TypeOf(data).Kind() == reflect.Float64 {
-			template.howoften = int32(data.(float64))
+			template.Howoften = int32(data.(float64))
 		}
 	}
 
 	if data, ok := j["renewalfactorperyear"]; ok {
 		if reflect.TypeOf(data).Kind() == reflect.Float64 {
-			template.renewalfactor = data.(float64)
+			template.Renewalfactor = data.(float64)
 		}
 	}
 

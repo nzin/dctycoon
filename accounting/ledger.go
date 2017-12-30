@@ -161,6 +161,11 @@ type Ledger struct {
 var GlobalLedger *Ledger
 
 func (self *Ledger) GetYearAccount(year int) AccountYearly {
+	if account, ok := self.accounts[year]; ok {
+		return account
+	}
+	self.runLedger()
+
 	return self.accounts[year]
 }
 

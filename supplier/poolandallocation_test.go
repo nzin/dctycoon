@@ -128,7 +128,7 @@ func TestPool(t *testing.T) {
 	err = json.Unmarshal([]byte(bigpayload), &j2)
 	assert.Empty(t, err, "correct JSON payload format")
 	demandtemplate := DemandParsing(j2)
-	assert.Equal(t, 2, len(demandtemplate.specs), "2 servers asked ")
+	assert.Equal(t, 2, len(demandtemplate.Specs), "2 servers asked ")
 
 	demand := demandtemplate.InstanciateDemand()
 	inventories := []*Inventory{inventory}
@@ -169,14 +169,14 @@ func TestPool(t *testing.T) {
 	err = json.Unmarshal([]byte(bigpayload2), &j3)
 	assert.Empty(t, err, "correct JSON payload format")
 	demandtemplate2 := DemandParsing(j3)
-	assert.Equal(t, 2, len(demandtemplate2.specs), "2 servers asked ")
+	assert.Equal(t, 2, len(demandtemplate2.Specs), "2 servers asked ")
 
 	demand2 := demandtemplate2.InstanciateDemand()
 	bundlecontracts2 := demand2.FindOffer(inventories, time.Date(1999, 1, 1, 0, 0, 0, 0, time.UTC))
 	assert.NotEmpty(t, bundlecontracts2, "we found servers fitting the demand")
-	assert.Equal(t, 2, len(bundlecontracts2.contracts), "2 servers allocated")
+	assert.Equal(t, 2, len(bundlecontracts2.Contracts), "2 servers allocated")
 
-	assert.Equal(t, int32(1), bundlecontracts2.contracts[0].Item.Coresallocated, "1st server allocated")
+	assert.Equal(t, int32(1), bundlecontracts2.Contracts[0].Item.Coresallocated, "1st server allocated")
 
 	bundlecontracts3 := demand2.FindOffer(inventories, time.Date(1999, 1, 1, 0, 0, 0, 0, time.UTC))
 	assert.Empty(t, bundlecontracts3, "no server left fitting the demand")
