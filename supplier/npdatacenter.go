@@ -2,10 +2,10 @@ package supplier
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/dctycoon/timer"
+	log "github.com/sirupsen/logrus"
 )
 
 //
@@ -47,16 +47,20 @@ func NewNPDatacenter(timer *timer.GameTimer, trend *Trend, initialcapital float6
 
 	if l, ok := AvailableLocation[locationid]; ok {
 		location = l
+	} else {
+		log.Error("NewNPDatacenter(): location " + locationid + " not found")
 	}
 
 	// load buyout profile
 	data, err := global.Asset("assets/npdatacenter/" + profilename)
 	if err != nil {
+		log.Error("NewNPDatacenter(): asset assets/npdatacenter/" + profilename + " not found")
 		return nil
 	}
 	profile := make(map[string]BuyoutProfile)
 	err = json.Unmarshal(data, &profile)
 	if err != nil {
+		log.Error("NewNPDatacenter(): asset assets/npdatacenter/" + profilename + " not json compatible")
 		return nil
 	}
 
@@ -80,7 +84,7 @@ func NewNPDatacenter(timer *timer.GameTimer, trend *Trend, initialcapital float6
 // - buy goods
 // - create/refresh offers
 func (self *NPDatacenter) NewYearOperations() {
-
+	log.Debug("NPDatacenter::NewYearOperations()")
 	// let's begin by removing all offers
 	for _, o := range self.inventory.GetOffers() {
 		self.inventory.RemoveOffer(o)
@@ -146,10 +150,12 @@ func (self *NPDatacenter) NewYearOperations() {
 				serverconf.ConfType = conftype
 				break
 			default: // profile configuration not found
+				log.Error("NPDatacenter::NewYearOperations(): profile " + profilename + " has a strange configuration: " + profile.Configuration)
 				continue
 			}
 			unitprice := serverconf.Price(self.trend, self.timer.CurrentTime)
-			//fmt.Println("profilename", profilename, "unitprice:", unitprice, "profilemargin:", profile.Margin)
+			log.Info("NPDatacenter::NewYearOperations(): profilename", profilename, "unitprice:", unitprice, "profilemargin:", profile.Margin)
+
 			nb := int32((self.initialcapital * profile.Buyperyear) / unitprice)
 			// if we can afford, then we buy it
 			if nb > 0 {
@@ -171,7 +177,7 @@ func (self *NPDatacenter) NewYearOperations() {
 					}
 				}
 				if pool == nil {
-					fmt.Println("We didn't find a correct pool!")
+					log.Error("NPDatacenter::NewYearOperations(): We didn't find a correct (default) pool!")
 					continue
 				}
 				offer := &ServerOffer{

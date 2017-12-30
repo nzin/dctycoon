@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"os"
 
@@ -10,20 +11,52 @@ import (
 	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/dctycoon/timer"
 	"github.com/nzin/sws"
+	log "github.com/sirupsen/logrus"
 )
+
+func initLog(loglevel, filename string) {
+	// Output to stdout instead of the default stderr
+	// Can be any io.Writer, see below for File example
+	if filename != "" {
+		f, err := os.Open(filename)
+		if err != nil {
+			log.SetOutput(os.Stdout)
+		} else {
+			log.SetOutput(f)
+		}
+	} else {
+		log.SetOutput(os.Stdout)
+	}
+
+	log.SetLevel(log.ErrorLevel)
+	switch loglevel {
+	case "debug":
+		log.SetLevel(log.DebugLevel)
+	case "info":
+		log.SetLevel(log.InfoLevel)
+	case "warning":
+		log.SetLevel(log.WarnLevel)
+	}
+
+}
 
 func main() {
 	quit := false
 
+	loglevel := flag.String("loglevel", "", "[debug,info,warning,error] Default to error")
+	logfile := flag.String("logfile", "", "optional if we want the log to not be on stdout")
+	flag.Parse()
+	initLog(*loglevel, *logfile)
+
 	gamefile, err := os.Open("example.map")
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Error(err.Error())
 		os.Exit(1)
 	}
 	var v map[string]interface{}
 	jsonParser := json.NewDecoder(gamefile)
 	if err = jsonParser.Decode(&v); err != nil {
-		fmt.Println("parsing game file", err.Error())
+		log.Error("parsing game file", err.Error())
 		os.Exit(1)
 	}
 	gamefile.Close()
