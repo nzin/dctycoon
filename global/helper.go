@@ -4,11 +4,13 @@ import (
 	"regexp"
 	"strconv"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/veandco/go-sdl2/img"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
 func GlowImage(spritepath string, color uint32) *sdl.Surface {
+	log.Debug("GlowImage(", spritepath, ",", color, ")")
 	red := byte((color & 0xff0000) >> 16)
 	green := byte((color & 0x00ff00) >> 8)
 	blue := byte(color & 0x0000ff)
@@ -45,6 +47,7 @@ func GlowImage(spritepath string, color uint32) *sdl.Surface {
 // parse a string like 100M and translate it into
 // a int32 in Megabytes
 func ParseMega(str string) int32 {
+	log.Debug("ParseMega(", str, ")")
 	re := regexp.MustCompile("([0-9]+) *([MGT]?)")
 	values := re.FindStringSubmatch(str)
 	if len(values) < 2 {

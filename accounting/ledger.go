@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/btree"
 	"github.com/nzin/dctycoon/timer"
+	log "github.com/sirupsen/logrus"
 )
 
 //
@@ -164,6 +165,7 @@ func (self *Ledger) GetYearAccount(year int) AccountYearly {
 }
 
 func (self *Ledger) AddMovement(ev LedgerMovement) {
+	log.Debug("Ledger::AddMovement(", ev, ")")
 	ev.Id = self.autoinc
 	self.Movements.ReplaceOrInsert(&ev)
 	self.accounts = self.runLedger()
@@ -184,6 +186,7 @@ func (self *Ledger) AddSubscriber(sub LedgerSubscriber) {
 // et 5121 -> 4011 : money
 // 2315 -> 2815 : amortization
 func (self *Ledger) BuyProduct(desc string, t time.Time, price float64) {
+	log.Debug("Ledger::BuyProduct(", desc, ",", t, ",", price, ")")
 	product := &LedgerMovement{
 		Id:          self.autoinc,
 		Description: desc,
@@ -265,6 +268,7 @@ func (self *Ledger) BuyProduct(desc string, t time.Time, price float64) {
 // every year (every month?) interest rate: 5121 -> 46 (fictious bank account for interest)
 //
 func (self *Ledger) AskLoan(desc string, t time.Time, amount float64) {
+	log.Debug("Ledger::AskLoan(", desc, ",", t, ",", amount, ")")
 	loan := &LedgerMovement{
 		Id:          self.autoinc,
 		Description: desc,
@@ -288,7 +292,7 @@ func (self *Ledger) AskLoan(desc string, t time.Time, amount float64) {
 // 5121 (current bank account) -> 161 (capital/debt)
 //
 func (self *Ledger) RefundLoan(desc string, t time.Time, amount float64) {
-	fmt.Println("Refund: ", amount)
+	log.Debug("Ledger::RefundLoan(", desc, ",", t, ",", amount, ")")
 	loan := &LedgerMovement{
 		Id:          self.autoinc,
 		Description: desc,
@@ -312,6 +316,7 @@ func (self *Ledger) RefundLoan(desc string, t time.Time, amount float64) {
 // - taxrate are in percent per year (for example 0.15)
 // - loanrate are in percent per year (for example 0.03)
 func NewLedger(timer *timer.GameTimer, taxrate, loanrate float64) *Ledger {
+	log.Debug("NewLedger(", timer, ",", taxrate, ",", loanrate, ")")
 	ledger := &Ledger{
 		Movements:   btree.New(10),
 		accounts:    make(map[int]AccountYearly),
@@ -334,6 +339,7 @@ func NewLedger(timer *timer.GameTimer, taxrate, loanrate float64) *Ledger {
 }
 
 func (self *Ledger) Load(game map[string]interface{}, taxrate, loanrate float64) {
+	log.Debug("Ledger::Load(", game, ",", taxrate, ",", loanrate, ")")
 	self.Movements = btree.New(10)
 	self.taxrate = taxrate
 	self.loanrate = loanrate
@@ -369,6 +375,7 @@ func (self *Ledger) Load(game map[string]interface{}, taxrate, loanrate float64)
 // - taxes sur les benefices (44 (en fait 444))
 // = benefices/resultat net
 func computeYearlyTaxes(accounts AccountYearly, taxrate float64) (profitlost, taxes float64) {
+	log.Debug("computeYearlyTaxes(", accounts, ",", taxrate, ")")
 	var ebt float64
 	ebt -= accounts["70"]
 	for k, v := range accounts {
@@ -390,6 +397,7 @@ func computeYearlyTaxes(accounts AccountYearly, taxrate float64) (profitlost, ta
 // it does not store the result in the Ledger object
 // Usually you don't call this function but AddMovement()
 func (self *Ledger) runLedger() (accounts map[int]AccountYearly) {
+	log.Debug("runLedger()")
 	accounts = make(map[int]AccountYearly)
 	currentyear := -1
 	currentMonth := -1
@@ -489,6 +497,7 @@ func (self *Ledger) runLedger() (accounts map[int]AccountYearly) {
 }
 
 func (self *Ledger) Save() string {
+	log.Debug("Ledger::Save()")
 	str := "{\n"
 	str += `"movements": [`
 	self.Movements.Ascend(func(i btree.Item) bool {

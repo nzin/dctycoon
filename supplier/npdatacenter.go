@@ -42,6 +42,7 @@ type NPDatacenter struct {
 //
 // NewNPDatacenter() create a new NonPlayerDatacenter that will compete with the player
 func NewNPDatacenter(timer *timer.GameTimer, trend *Trend, initialcapital float64, locationid string, profilename string) *NPDatacenter {
+	log.Debug("NewNPDatacenter(", timer, ",", trend, ",", initialcapital, ",", locationid, ",", profilename, ")")
 	// a default value
 	location := AvailableLocation["siliconvalley"]
 

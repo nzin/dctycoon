@@ -7,6 +7,7 @@ import (
 	"time"
 	//	"github.com/nzin/dctycoon/accounting"
 	"github.com/nzin/dctycoon/timer"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -94,6 +95,7 @@ func (self *InventoryItem) GetSprite() string {
 }
 
 func (self *InventoryItem) Save() string {
+	log.Debug("InventoryItem::Save()")
 	str := "{"
 	switch self.Typeitem {
 	case PRODUCT_SERVER:
@@ -217,6 +219,7 @@ type Inventory struct {
 var GlobalInventory *Inventory
 
 func (self *Inventory) BuyCart(buydate time.Time) {
+	log.Debug("Inventory::BuyCart(", buydate, ")")
 	for _, item := range self.Cart {
 		for i := 0; i < int(item.Nb); i++ {
 			inventoryitem := &InventoryItem{
@@ -310,6 +313,7 @@ func (self *Inventory) AssignPool(item *InventoryItem, pool ServerPool) {
 }
 
 func (self *Inventory) LoadItem(product map[string]interface{}) {
+	log.Debug("Inventory::LoadItem(", product, ")")
 	typeitem := product["Typeitem"].(string)
 	buydate := strings.Split(product["Buydate"].(string), "-")
 	buydateY, _ := strconv.Atoi(buydate[0])
@@ -358,6 +362,7 @@ func (self *Inventory) LoadItem(product map[string]interface{}) {
 }
 
 func (self *Inventory) LoadPublishItems() {
+	log.Debug("Inventory::LoadPublishItems()")
 	// placed first RACK, AC, GENERATOR
 	for _, item := range self.Items {
 		if item.Typeitem == PRODUCT_RACK || item.Typeitem == PRODUCT_AC || item.Typeitem == PRODUCT_GENERATOR {
@@ -409,6 +414,7 @@ func (self *Inventory) LoadPublishItems() {
 }
 
 func (self *Inventory) Load(conf map[string]interface{}) {
+	log.Debug("Inventory::Load(", conf, ")")
 	self.increment = int32(conf["increment"].(float64))
 	self.Items = make(map[int32]*InventoryItem)
 	items := conf["items"].([]interface{})
@@ -419,6 +425,7 @@ func (self *Inventory) Load(conf map[string]interface{}) {
 }
 
 func (self *Inventory) Save() string {
+	log.Debug("Inventory::Save()")
 	str := "{"
 	str += fmt.Sprintf(`"increment":%d,`, self.increment)
 	str += `"items":[`
@@ -494,6 +501,7 @@ func (self *Inventory) GetOffers() []*ServerOffer {
 }
 
 func NewInventory(globaltimer *timer.GameTimer) *Inventory {
+	log.Debug("NewInventory(", globaltimer, ")")
 	inventory := &Inventory{
 		globaltimer:          globaltimer,
 		increment:            0,

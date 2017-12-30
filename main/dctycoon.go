@@ -50,13 +50,13 @@ func main() {
 
 	gamefile, err := os.Open("example.map")
 	if err != nil {
-		log.Error(err.Error())
+		log.Error("main(): ", err.Error())
 		os.Exit(1)
 	}
 	var v map[string]interface{}
 	jsonParser := json.NewDecoder(gamefile)
 	if err = jsonParser.Decode(&v); err != nil {
-		log.Error("parsing game file", err.Error())
+		log.Error("main(): parsing game file ", err.Error())
 		os.Exit(1)
 	}
 	gamefile.Close()

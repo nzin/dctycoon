@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/btree"
+	log "github.com/sirupsen/logrus"
 )
 
 type GamerTimerEvent struct {
@@ -41,6 +42,7 @@ var GlobalGameTimer *GameTimer
 //
 // NewGameTimer create a timer object starting at 1/1/1990
 func NewGameTimer() *GameTimer {
+	log.Debug("NewGameTimer()")
 	timer := &GameTimer{
 		autoinc:     0,
 		CurrentTime: time.Date(1990, time.Month(01), 01, 0, 0, 0, 0, time.UTC),
@@ -74,6 +76,7 @@ func NewGameTimer() *GameTimer {
 }
 
 func (self *GameTimer) Load(game map[string]interface{}) {
+	log.Debug("GameTimer::Load(", game, ")")
 	var year, month, day int
 	fmt.Sscanf(game["timer"].(string), "%d-%d-%d", &year, &month, &day)
 	self.CurrentTime = time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC)
@@ -81,6 +84,7 @@ func (self *GameTimer) Load(game map[string]interface{}) {
 }
 
 func (self *GameTimer) AddEvent(evdate time.Time, callback func()) {
+	log.Debug("GameTimer::AddEvent(", evdate, ",callback)")
 	if evdate.Before(self.CurrentTime) {
 		return
 	}
@@ -93,6 +97,7 @@ func (self *GameTimer) AddEvent(evdate time.Time, callback func()) {
 }
 
 func (self *GameTimer) AddCron(day, month, year int32, callback func()) *GameCronEvent {
+	log.Debug("GameTimer::AddCron(", day, ",", month, ",", year, ",callback)")
 	cronevent := &GameCronEvent{
 		day:     day,
 		month:   month,
@@ -104,6 +109,7 @@ func (self *GameTimer) AddCron(day, month, year int32, callback func()) *GameCro
 }
 
 func (self *GameTimer) RemoveCron(evt *GameCronEvent) {
+	log.Debug("GameTimer::RemoveCron(", evt, ")")
 	for i, c := range self.cron {
 		if c == evt {
 			self.cron = append(self.cron[:i], self.cron[i+1:]...)
@@ -113,5 +119,6 @@ func (self *GameTimer) RemoveCron(evt *GameCronEvent) {
 }
 
 func (self *GameTimer) Save() string {
+	log.Debug("GameTimer::Save()")
 	return fmt.Sprintf(`{"timer": "%d-%d-%d"}`, self.CurrentTime.Year(), self.CurrentTime.Month(), self.CurrentTime.Day())
 }

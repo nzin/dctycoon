@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"sort"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type PoolSubscriber interface {
@@ -85,6 +87,7 @@ func (self *HardwareServerPool) removeInventoryItem(item *InventoryItem) {
 }
 
 func (self *HardwareServerPool) Allocate(nbcores, ramsize, disksize int32, vt bool) *InventoryItem {
+	log.Debug("HardwareServerPool::Allocate(", nbcores, ",", ramsize, ",", disksize, ",", vt, ")")
 	var selected *InventoryItem
 	for _, v := range self.pool {
 		if v.Coresallocated == 0 &&
@@ -138,6 +141,7 @@ func (self *HardwareServerPool) IsAllocated(item *InventoryItem) bool {
 }
 
 func (self *HardwareServerPool) Release(item *InventoryItem, nbcores, ramsize, disksize int32) {
+	log.Debug("HardwareServerPool::Release(", item, ",", nbcores, ",", ramsize, ",", disksize, ")")
 	item.Coresallocated = 0
 	item.Ramallocated = 0
 	item.Diskallocated = 0
@@ -214,6 +218,7 @@ func (self *VpsServerPool) removeInventoryItem(item *InventoryItem) {
 }
 
 func (self *VpsServerPool) Allocate(nbcores, ramsize, disksize int32, vt bool) *InventoryItem {
+	log.Debug("VpsServerPool::Allocate(", nbcores, ",", ramsize, ",", disksize, ",", vt, ")")
 	var selected *InventoryItem
 	for _, v := range self.pool {
 		if (v.Serverconf.VtSupport == true) &&
@@ -278,6 +283,7 @@ func (self *VpsServerPool) IsAllocated(item *InventoryItem) bool {
 }
 
 func (self *VpsServerPool) Release(item *InventoryItem, nbcores, ramsize, disksize int32) {
+	log.Debug("HardwareServerPool::Release(", item, ",", nbcores, ",", ramsize, ",", disksize, ")")
 	item.Coresallocated -= nbcores
 	item.Ramallocated -= ramsize
 	item.Diskallocated -= disksize
@@ -378,6 +384,7 @@ func (self *DemandTemplate) InstanciateDemand() *DemandInstance {
 //  and from these inventory checks across all the offers
 //
 func (self *DemandInstance) FindOffer(inventories []*Inventory, now time.Time) *ServerBundle {
+	log.Debug("DemandInstance::FindOffer(", inventories, ",", now, ")")
 	selection := make(map[*Inventory]map[string]*ServerOffer)
 	for _, inventory := range inventories {
 		// for a given inventory we try to create the apps

@@ -2,6 +2,7 @@ package timer
 
 import (
 	"github.com/nzin/sws"
+	log "github.com/sirupsen/logrus"
 )
 
 type EventMessageWidget struct {
@@ -9,6 +10,7 @@ type EventMessageWidget struct {
 }
 
 func NewEventMessageWidget(root *sws.RootWidget, longdesc string) *sws.MainWidget {
+	log.Debug("NewEventMessageWidget(", root, ",", longdesc, ")")
 	widget := &EventMessageWidget{
 		CoreWidget: *sws.NewCoreWidget(400, 100),
 	}

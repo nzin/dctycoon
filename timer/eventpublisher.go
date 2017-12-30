@@ -3,6 +3,8 @@ package timer
 import (
 	"time"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/nzin/sws"
 )
 
@@ -19,6 +21,7 @@ type EventPublished struct {
 }
 
 func NewEventPublished(shortdesc string, longdesc string, eventpub *EventPublisher, pos int32) *EventPublished {
+	log.Debug("NewEventPublished(", shortdesc, ",", longdesc, ",", eventpub, ",", pos, ")")
 	corewidget := sws.NewCoreWidget(300, 30)
 	widget := &EventPublished{
 		CoreWidget:  *corewidget,
@@ -71,6 +74,7 @@ type EventPublisher struct {
 var GlobalEventPublisher *EventPublisher
 
 func (self *EventPublisher) Publish(shortdesc string, longdesc string) {
+	log.Debug("EventPublisher::Publish(", shortdesc, ",", longdesc, ")")
 	var pos int32
 	pos = 0
 	for i := 0; i < len(self.events); i++ {
@@ -92,6 +96,7 @@ func (self *EventPublisher) remove(event *EventPublished) {
 }
 
 func NewEventPublisher(root *sws.RootWidget) *EventPublisher {
+	log.Debug("NewEventPublisher(", root, ")")
 	return &EventPublisher{
 		root:   root,
 		events: make(map[*EventPublished]int32),
