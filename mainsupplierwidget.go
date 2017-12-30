@@ -56,7 +56,7 @@ func (self *MainSupplierWidget) Hide() {
 	}
 }
 
-func NewMainSupplierWidget(trend *supplier.Trend, root *sws.RootWidget) *MainSupplierWidget {
+func NewMainSupplierWidget(timer *timer.GameTimer, inventory *supplier.Inventory, ledger *accounting.Ledger, trend *supplier.Trend, root *sws.RootWidget) *MainSupplierWidget {
 	mainwidget := sws.NewMainWidget(650, 400, " Your DEAL supplier", true, true)
 	scrollwidgetshop := sws.NewScrollWidget(600, 550)
 	scrollwidgetshop.SetColor(0xffffffff)
@@ -262,7 +262,7 @@ func NewMainSupplierWidget(trend *supplier.Trend, root *sws.RootWidget) *MainSup
 
 	// callback configure
 	towerpage.SetConfigureTower1Callback(func() {
-		now := timer.GlobalGameTimer.CurrentTime
+		now := timer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		//serverpage.RemoveChild(banners)
 		configurepage.SetConfType(trend, "T1000", now)
@@ -274,7 +274,7 @@ func NewMainSupplierWidget(trend *supplier.Trend, root *sws.RootWidget) *MainSup
 	})
 
 	rackpage.SetConfigureRack1Callback(func() {
-		now := timer.GlobalGameTimer.CurrentTime
+		now := timer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		//serverpage.RemoveChild(banners)
 		configurepage.SetConfType(trend, "R100", now)
@@ -286,7 +286,7 @@ func NewMainSupplierWidget(trend *supplier.Trend, root *sws.RootWidget) *MainSup
 	})
 
 	rackpage.SetConfigureRack2Callback(func() {
-		now := timer.GlobalGameTimer.CurrentTime
+		now := timer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		//serverpage.RemoveChild(banners)
 		configurepage.SetConfType(trend, "R200", now)
@@ -298,7 +298,7 @@ func NewMainSupplierWidget(trend *supplier.Trend, root *sws.RootWidget) *MainSup
 	})
 
 	rackpage.SetConfigureRack4Callback(func() {
-		now := timer.GlobalGameTimer.CurrentTime
+		now := timer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		//serverpage.RemoveChild(banners)
 		configurepage.SetConfType(trend, "R400", now)
@@ -310,7 +310,7 @@ func NewMainSupplierWidget(trend *supplier.Trend, root *sws.RootWidget) *MainSup
 	})
 
 	rackpage.SetConfigureRack6Callback(func() {
-		now := timer.GlobalGameTimer.CurrentTime
+		now := timer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		//serverpage.RemoveChild(banners)
 		configurepage.SetConfType(trend, "R600", now)
@@ -322,7 +322,7 @@ func NewMainSupplierWidget(trend *supplier.Trend, root *sws.RootWidget) *MainSup
 	})
 
 	bladepage.SetConfigureBlade1Callback(func() {
-		now := timer.GlobalGameTimer.CurrentTime
+		now := timer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		//serverpage.RemoveChild(banners)
 		configurepage.SetConfType(trend, "B100", now)
@@ -334,7 +334,7 @@ func NewMainSupplierWidget(trend *supplier.Trend, root *sws.RootWidget) *MainSup
 	})
 
 	bladepage.SetConfigureBlade2Callback(func() {
-		now := timer.GlobalGameTimer.CurrentTime
+		now := timer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		//serverpage.RemoveChild(banners)
 		configurepage.SetConfType(trend, "B200", now)
@@ -345,7 +345,7 @@ func NewMainSupplierWidget(trend *supplier.Trend, root *sws.RootWidget) *MainSup
 		//		sws.PostUpdate()
 	})
 
-	widget.cartpage = supplier.NewCartPageWidget(600, 850)
+	widget.cartpage = supplier.NewCartPageWidget(600, 850, inventory)
 	scrollwidgetcart.SetInnerWidget(widget.cartpage)
 
 	cart.SetClicked(func() {
@@ -363,17 +363,17 @@ func NewMainSupplierWidget(trend *supplier.Trend, root *sws.RootWidget) *MainSup
 
 	widget.cartpage.SetBuyCallback(func() {
 		var totalprice float64
-		for _, item := range supplier.GlobalInventory.Cart {
+		for _, item := range inventory.Cart {
 			totalprice += item.Unitprice * float64(item.Nb)
 		}
-		accounts := accounting.GlobalLedger.GetYearAccount(timer.GlobalGameTimer.CurrentTime.Year())
+		accounts := ledger.GetYearAccount(timer.CurrentTime.Year())
 		bankAccount := accounts["51"]
 		if bankAccount < totalprice {
 			// show modal window
 			sws.ShowModalError(widget.rootwindow, "Not enough funds", "resources/icon-triangular-big.png", fmt.Sprintf("You cannot buy for %.2f $ of goods: your bank account is currently credited of %.2f $!", totalprice, bankAccount), nil)
 		} else {
 			// we buy
-			for _, item := range supplier.GlobalInventory.Cart {
+			for _, item := range inventory.Cart {
 				var desc string
 				switch item.Typeitem {
 				case supplier.PRODUCT_SERVER:
@@ -385,16 +385,16 @@ func NewMainSupplierWidget(trend *supplier.Trend, root *sws.RootWidget) *MainSup
 				case supplier.PRODUCT_GENERATOR:
 					desc = fmt.Sprintf("%dx Generator", item.Nb)
 				}
-				accounting.GlobalLedger.BuyProduct(desc, timer.GlobalGameTimer.CurrentTime, item.Unitprice*float64(item.Nb))
+				ledger.BuyProduct(desc, timer.CurrentTime, item.Unitprice*float64(item.Nb))
 			}
-			supplier.GlobalInventory.BuyCart(timer.GlobalGameTimer.CurrentTime)
+			inventory.BuyCart(timer.CurrentTime)
 			// we reset the cart
 			widget.cartpage.Reset()
 			sv.SetRightWidget(scrollwidgettrack)
 		}
 	})
 
-	widget.trackpage = supplier.NewTrackPageWidget(600, 850, supplier.GlobalInventory)
+	widget.trackpage = supplier.NewTrackPageWidget(600, 850, inventory)
 	scrollwidgettrack.SetInnerWidget(widget.trackpage)
 
 	track.SetClicked(func() {

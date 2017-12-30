@@ -11,16 +11,17 @@ import (
 
 type DockWidget struct {
 	sws.CoreWidget
-	currentDay *sws.LabelWidget
-	timer      *timer.GameTimer
-	pause      *sws.FlatButtonWidget
-	play       *sws.FlatButtonWidget
-	forward    *sws.FlatButtonWidget
-	shop       *sws.FlatButtonWidget
-	inventory  *sws.FlatButtonWidget
-	quit       *sws.FlatButtonWidget
-	ledger     *sws.FlatButtonWidget
-	timerevent *sws.TimerEvent
+	currentDay   *sws.LabelWidget
+	timer        *timer.GameTimer
+	pause        *sws.FlatButtonWidget
+	play         *sws.FlatButtonWidget
+	forward      *sws.FlatButtonWidget
+	shop         *sws.FlatButtonWidget
+	inventory    *sws.FlatButtonWidget
+	quit         *sws.FlatButtonWidget
+	ledgerButton *sws.FlatButtonWidget
+	timerevent   *sws.TimerEvent
+	ledger       *accounting.Ledger
 }
 
 func (self *DockWidget) SetQuitCallback(callback func()) {
@@ -32,25 +33,26 @@ func (self *DockWidget) SetShopCallback(callback func()) {
 }
 
 func (self *DockWidget) SetLedgerCallback(callback func()) {
-	self.ledger.SetClicked(callback)
+	self.ledgerButton.SetClicked(callback)
 }
 
 func (self *DockWidget) SetInventoryCallback(callback func()) {
 	self.inventory.SetClicked(callback)
 }
 
-func (self *DockWidget) LedgerChange(ledger *accounting.Ledger) {
-	accounts := ledger.GetYearAccount(self.timer.CurrentTime.Year())
-	self.ledger.SetText(fmt.Sprintf("%.2f $", accounts["51"]))
+func (self *DockWidget) LedgerChange() {
+	accounts := self.ledger.GetYearAccount(self.timer.CurrentTime.Year())
+	self.ledgerButton.SetText(fmt.Sprintf("%.2f $", accounts["51"]))
 }
 
-func NewDockWidget(timer *timer.GameTimer) *DockWidget {
+func NewDockWidget(timer *timer.GameTimer, ledger *accounting.Ledger) *DockWidget {
 	corewidget := sws.NewCoreWidget(150, 125)
 	today := fmt.Sprintf("%d %s %d", timer.CurrentTime.Day(), timer.CurrentTime.Month().String(), timer.CurrentTime.Year())
 	widget := &DockWidget{
 		CoreWidget: *corewidget,
 		currentDay: sws.NewLabelWidget(150, 25, today),
 		timer:      timer,
+		ledger:     ledger,
 		timerevent: nil,
 	}
 	title := sws.NewLabelWidget(150, 25, "DC Tycoon")
@@ -130,10 +132,10 @@ func NewDockWidget(timer *timer.GameTimer) *DockWidget {
 	widget.quit.SetImage("resources/icon-power-button-off.png")
 	widget.AddChild(widget.quit)
 
-	widget.ledger = sws.NewFlatButtonWidget(150, 25, "")
-	widget.ledger.Move(0, 100)
-	widget.AddChild(widget.ledger)
-	accounting.GlobalLedger.AddSubscriber(widget)
+	widget.ledgerButton = sws.NewFlatButtonWidget(150, 25, "")
+	widget.ledgerButton.Move(0, 100)
+	widget.AddChild(widget.ledgerButton)
+	ledger.AddSubscriber(widget)
 
 	return widget
 }

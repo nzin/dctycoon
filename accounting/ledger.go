@@ -141,7 +141,7 @@ type AccountYearly map[string]float64
 // essential the Dock
 //
 type LedgerSubscriber interface {
-	LedgerChange(ledger *Ledger)
+	LedgerChange()
 }
 
 //
@@ -158,8 +158,6 @@ type Ledger struct {
 	timer        *timer.GameTimer
 }
 
-var GlobalLedger *Ledger
-
 func (self *Ledger) GetYearAccount(year int) AccountYearly {
 	if account, ok := self.accounts[year]; ok {
 		return account
@@ -175,14 +173,14 @@ func (self *Ledger) AddMovement(ev LedgerMovement) {
 	self.Movements.ReplaceOrInsert(&ev)
 	self.accounts = self.runLedger()
 	for _, s := range self.subscribers {
-		s.LedgerChange(self)
+		s.LedgerChange()
 	}
 	self.autoinc++
 }
 
 func (self *Ledger) AddSubscriber(sub LedgerSubscriber) {
 	self.subscribers = append(self.subscribers, sub)
-	sub.LedgerChange(self)
+	sub.LedgerChange()
 }
 
 //
@@ -264,7 +262,7 @@ func (self *Ledger) BuyProduct(desc string, t time.Time, price float64) {
 
 	self.accounts = self.runLedger()
 	for _, s := range self.subscribers {
-		s.LedgerChange(self)
+		s.LedgerChange()
 	}
 }
 
@@ -289,7 +287,7 @@ func (self *Ledger) AskLoan(desc string, t time.Time, amount float64) {
 
 	self.accounts = self.runLedger()
 	for _, s := range self.subscribers {
-		s.LedgerChange(self)
+		s.LedgerChange()
 	}
 }
 
@@ -313,7 +311,7 @@ func (self *Ledger) RefundLoan(desc string, t time.Time, amount float64) {
 
 	self.accounts = self.runLedger()
 	for _, s := range self.subscribers {
-		s.LedgerChange(self)
+		s.LedgerChange()
 	}
 }
 
@@ -335,7 +333,7 @@ func NewLedger(timer *timer.GameTimer, taxrate, loanrate float64) *Ledger {
 		l := ledger
 		l.accounts = l.runLedger()
 		for _, s := range l.subscribers {
-			s.LedgerChange(l)
+			s.LedgerChange()
 		}
 	}
 	timer.AddCron(1, -1, -1, ledger.computeMonth)
@@ -364,7 +362,7 @@ func (self *Ledger) Load(game map[string]interface{}, taxrate, loanrate float64)
 	}
 	self.accounts = self.runLedger()
 	for _, s := range self.subscribers {
-		s.LedgerChange(self)
+		s.LedgerChange()
 	}
 
 }
@@ -452,7 +450,7 @@ func (self *Ledger) runLedger() (accounts map[int]AccountYearly) {
 
 		accounts[currentyear][from] = accounts[currentyear][from] - ev.Amount
 		accounts[currentyear][to] = accounts[currentyear][to] + ev.Amount
-		fmt.Println("from: ", from, " to:", to, "currentyear: ", currentyear, currentMonth, ",desc: ", ev.Description, accounts[currentyear][from], accounts[currentyear][to])
+		log.Debug("from: ", from, " to:", to, "currentyear: ", currentyear, currentMonth, ",desc: ", ev.Description, accounts[currentyear][from], accounts[currentyear][to])
 
 		return true
 	})

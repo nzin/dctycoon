@@ -55,7 +55,7 @@ func (self *ServerPageConfigureWidget) SetConfType(trend *Trend, conftypename st
 	self.configureicon.SetImage("resources/" + self.conftype.ServerSprite + "0.png")
 
 	vt := false
-	if Trends.Vt.CurrentValue(self.today) > 0 {
+	if trend.Vt.CurrentValue(self.today) > 0 {
 		vt = true
 	}
 	// conf
@@ -65,14 +65,14 @@ func (self *ServerPageConfigureWidget) SetConfType(trend *Trend, conftypename st
 		VtSupport:    vt,
 		NbDisks:      self.conftype.NbDisks[0],
 		NbSlotRam:    self.conftype.NbSlotRam[0],
-		DiskSize:     Trends.Disksize.CurrentValue(self.today) / 4,
-		RamSize:      Trends.Ramsize.CurrentValue(self.today) / 8,
+		DiskSize:     trend.Disksize.CurrentValue(self.today) / 4,
+		RamSize:      trend.Ramsize.CurrentValue(self.today) / 8,
 		ConfType:     self.conftype,
 	}
 	//////// configuration
 	// processors
 	var nbprocs []string
-	maxcores := Trends.Corepercpu.CurrentValue(self.today)
+	maxcores := trend.Corepercpu.CurrentValue(self.today)
 	for i := self.conftype.NbProcessors[0]; i <= self.conftype.NbProcessors[1]; i++ {
 		nbprocs = append(nbprocs, strconv.Itoa(int(i)))
 	}
@@ -112,7 +112,7 @@ func (self *ServerPageConfigureWidget) SetConfType(trend *Trend, conftypename st
 	self.nbdisk.SetChoices(nbdisks)
 
 	// disk size
-	maxsize := Trends.Disksize.CurrentValue(self.today)
+	maxsize := trend.Disksize.CurrentValue(self.today)
 	self.ddsizechoice = []int32{maxsize / 4, maxsize / 2, maxsize}
 	var ddsize = make([]string, 3)
 	if maxsize > 8000000 {
@@ -138,7 +138,7 @@ func (self *ServerPageConfigureWidget) SetConfType(trend *Trend, conftypename st
 	self.nbram.SetChoices(nbrams)
 
 	// disk size
-	maxramsize := Trends.Ramsize.CurrentValue(self.today)
+	maxramsize := trend.Ramsize.CurrentValue(self.today)
 	self.ramsizechoice = []int32{maxramsize / 8, maxramsize / 4, maxramsize / 2, maxramsize}
 	var ramsize = make([]string, 4)
 	if maxramsize > 16000 {

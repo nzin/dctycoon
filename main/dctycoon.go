@@ -64,36 +64,36 @@ func main() {
 	root := sws.Init(800, 600)
 
 	timer.GlobalEventPublisher = timer.NewEventPublisher(root)
-	timer.GlobalGameTimer = timer.NewGameTimer()
-	trends := supplier.TrendLoad(v["trends"].(map[string]interface{}), timer.GlobalEventPublisher, timer.GlobalGameTimer)
+	globaltimer := timer.NewGameTimer()
+	// initiate the game timer
+	globaltimer.Load(v["clock"].(map[string]interface{}))
+
+	trends := supplier.TrendLoad(v["trends"].(map[string]interface{}), timer.GlobalEventPublisher, globaltimer)
+
+	game := dctycoon.NewGame(globaltimer)
 
 	// specific to player
 	location := v["location"].(string)
-	accounting.GlobalLedger = accounting.NewLedger(timer.GlobalGameTimer, supplier.AvailableLocation[location].Taxrate, supplier.AvailableLocation[location].Bankinterestrate)
-	supplier.GlobalInventory = supplier.NewInventory(timer.GlobalGameTimer)
-
-	dc := dctycoon.NewDcWidget(root.Width(), root.Height(), root, supplier.GlobalInventory)
-	supplierwidget := dctycoon.NewMainSupplierWidget(trends, root)
-	inventorywidget := dctycoon.NewMainInventoryWidget(root)
-	accountingui := accounting.NewMainAccountingWidget(root)
-
-	// initiate the game timer
-	timer.GlobalGameTimer.Load(v["clock"].(map[string]interface{}))
-
+	player := dctycoon.NewPlayer(globaltimer, 12000.0, location)
 	// initiate the ledger
-	accounting.GlobalLedger.Load(v["ledger"].(map[string]interface{}), supplier.AvailableLocation[location].Taxrate, supplier.AvailableLocation[location].Bankinterestrate)
-	//accountingui.SetBankinterestrate(dctycoon.AvailableLocation[dctycoon.GlobalLocation].Bankinterestrate)
+	//accounting.GlobalLedger.Load(v["ledger"].(map[string]interface{}), supplier.AvailableLocation[location].Taxrate, supplier.AvailableLocation[location].Bankinterestrate)
+	//supplier.GlobalInventory.Load(v["inventory"].(map[string]interface{}))
+
+	game.RegisterActor(player)
+
+	dc := dctycoon.NewDcWidget(root.Width(), root.Height(), root, player.GetInventory())
+	supplierwidget := dctycoon.NewMainSupplierWidget(globaltimer, player.GetInventory(), player.GetLedger(), trends, root)
+	inventorywidget := dctycoon.NewMainInventoryWidget(root, player.GetInventory())
+	accountingui := accounting.NewMainAccountingWidget(root, globaltimer, player.GetLedger())
 
 	gamemap := v["map"].(map[string]interface{})
 	dc.LoadMap(gamemap)
-
-	supplier.GlobalInventory.Load(v["inventory"].(map[string]interface{}))
 
 	root.AddChild(dc)
 	root.SetFocus(dc)
 
 	// dock
-	dock := dctycoon.NewDockWidget(timer.GlobalGameTimer)
+	dock := dctycoon.NewDockWidget(globaltimer, player.GetLedger())
 	dock.Move(root.Width()-dock.Width(), 0)
 	root.AddChild(dock)
 
@@ -126,10 +126,10 @@ func main() {
 	gamefile.WriteString("{")
 	gamefile.WriteString(fmt.Sprintf(`"location": "%s",`, location) + "\n")
 	gamefile.WriteString(fmt.Sprintf(`"map": %s,`, data) + "\n")
-	gamefile.WriteString(fmt.Sprintf(`"trends": %s,`, supplier.TrendSave(supplier.Trends)) + "\n")
-	gamefile.WriteString(fmt.Sprintf(`"clock": %s,`, timer.GlobalGameTimer.Save()+"\n"))
-	gamefile.WriteString(fmt.Sprintf(`"inventory": %s,`, supplier.GlobalInventory.Save()+"\n"))
-	gamefile.WriteString(fmt.Sprintf(`"ledger": %s`, accounting.GlobalLedger.Save()+"\n"))
+	gamefile.WriteString(fmt.Sprintf(`"trends": %s,`, supplier.TrendSave(trends)) + "\n")
+	gamefile.WriteString(fmt.Sprintf(`"clock": %s,`, globaltimer.Save()+"\n"))
+	gamefile.WriteString(fmt.Sprintf(`"inventory": %s,`, player.GetInventory().Save()+"\n"))
+	gamefile.WriteString(fmt.Sprintf(`"ledger": %s`, player.GetLedger().Save()+"\n"))
 	gamefile.WriteString("}\n")
 
 	gamefile.Close()

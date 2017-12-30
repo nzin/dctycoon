@@ -216,8 +216,6 @@ type Inventory struct {
 	inventoryPoolSubscribers []InventoryPoolSubscriber
 }
 
-var GlobalInventory *Inventory
-
 func (self *Inventory) BuyCart(buydate time.Time) {
 	log.Debug("Inventory::BuyCart(", buydate, ")")
 	for _, item := range self.Cart {

@@ -420,5 +420,3 @@ func TrendSave(t *Trend) string {
 	str += "}"
 	return str
 }
-
-var Trends *Trend

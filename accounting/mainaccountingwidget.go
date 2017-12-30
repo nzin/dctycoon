@@ -1,6 +1,7 @@
 package accounting
 
 import (
+	"github.com/nzin/dctycoon/timer"
 	"github.com/nzin/sws"
 	//"github.com/veandco/go-sdl2/sdl"
 )
@@ -29,7 +30,7 @@ func (self *MainAccountingWidget) Hide() {
 //	self.bankwidget.SetBankinterestrate(rate)
 //}
 
-func NewMainAccountingWidget(root *sws.RootWidget) *MainAccountingWidget {
+func NewMainAccountingWidget(root *sws.RootWidget, timer *timer.GameTimer, ledger *Ledger) *MainAccountingWidget {
 	mainwidget := sws.NewMainWidget(650, 400, " Bank and Finance ", true, true)
 	tabwidget := sws.NewTabWidget(650, 400)
 
@@ -38,24 +39,24 @@ func NewMainAccountingWidget(root *sws.RootWidget) *MainAccountingWidget {
 		mainwidget: mainwidget,
 		tabwidget:  tabwidget,
 	}
-	ui.bankwidget = NewBankWidget(root)
+	ui.bankwidget = NewBankWidget(root, timer, ledger)
 	bankScroll := sws.NewScrollWidget(650, 400)
 	bankScroll.SetInnerWidget(ui.bankwidget)
 	bankScroll.ShowHorizontalScrollbar(false)
 	tabwidget.AddTab("Bank", bankScroll)
 
 	balanceScroll := sws.NewScrollWidget(650, 400)
-	balanceScroll.SetInnerWidget(NewBalanceWidget())
+	balanceScroll.SetInnerWidget(NewBalanceWidget(timer, ledger))
 	balanceScroll.ShowHorizontalScrollbar(false)
 	tabwidget.AddTab("Balance", balanceScroll)
 
 	liabilitiesScroll := sws.NewScrollWidget(650, 400)
-	liabilitiesScroll.SetInnerWidget(NewLiabilitiesWidget())
+	liabilitiesScroll.SetInnerWidget(NewLiabilitiesWidget(timer, ledger))
 	liabilitiesScroll.ShowHorizontalScrollbar(false)
 	tabwidget.AddTab("Liabilities", liabilitiesScroll)
 
 	assetScroll := sws.NewScrollWidget(650, 400)
-	assetScroll.SetInnerWidget(NewAssetsWidget())
+	assetScroll.SetInnerWidget(NewAssetsWidget(timer, ledger))
 	assetScroll.ShowHorizontalScrollbar(false)
 	tabwidget.AddTab("Assets", assetScroll)
 

@@ -2,6 +2,7 @@ package accounting
 
 import (
 	"fmt"
+
 	"github.com/nzin/dctycoon/timer"
 	//"github.com/veandco/go-sdl2/sdl"
 )
@@ -19,15 +20,17 @@ import (
 // = benefices/resultat net
 type BalanceWidget struct {
 	FinanceWidget
+	timer  *timer.GameTimer
+	ledger *Ledger
 }
 
-func (self *BalanceWidget) LedgerChange(ledger *Ledger) {
-	self.yearN.SetText(fmt.Sprintf("%d (est.)", timer.GlobalGameTimer.CurrentTime.Year()))
-	self.yearN1.SetText(fmt.Sprintf("%d", timer.GlobalGameTimer.CurrentTime.Year()-1))
-	yearaccountN := GlobalLedger.GetYearAccount(timer.GlobalGameTimer.CurrentTime.Year())
-	yearaccountN1 := GlobalLedger.GetYearAccount(timer.GlobalGameTimer.CurrentTime.Year() - 1)
+func (self *BalanceWidget) LedgerChange() {
+	self.yearN.SetText(fmt.Sprintf("%d (est.)", self.timer.CurrentTime.Year()))
+	self.yearN1.SetText(fmt.Sprintf("%d", self.timer.CurrentTime.Year()-1))
+	yearaccountN := self.ledger.GetYearAccount(self.timer.CurrentTime.Year())
+	yearaccountN1 := self.ledger.GetYearAccount(self.timer.CurrentTime.Year() - 1)
 	// forecast account 44
-	_, taxN := computeYearlyTaxes(yearaccountN, ledger.taxrate)
+	_, taxN := computeYearlyTaxes(yearaccountN, self.ledger.taxrate)
 
 	self.lines["70"].N.SetText(fmt.Sprintf("%.2f $", -yearaccountN["70"]))
 	self.lines["70"].N1.SetText(fmt.Sprintf("%.2f $", -yearaccountN1["70"]))
@@ -75,9 +78,11 @@ func (self *BalanceWidget) LedgerChange(ledger *Ledger) {
 	self.PostUpdate()
 }
 
-func NewBalanceWidget() *BalanceWidget {
+func NewBalanceWidget(timer *timer.GameTimer, ledger *Ledger) *BalanceWidget {
 	widget := &BalanceWidget{
 		FinanceWidget: *NewFinanceWidget(),
+		timer:         timer,
+		ledger:        ledger,
 	}
 	widget.addCategory("Revenue")
 	widget.addLine("70", "Sales")
@@ -102,6 +107,6 @@ func NewBalanceWidget() *BalanceWidget {
 	widget.addSeparator()
 	widget.addLine("income", "Net Income")
 
-	GlobalLedger.AddSubscriber(widget)
+	ledger.AddSubscriber(widget)
 	return widget
 }

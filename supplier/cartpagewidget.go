@@ -89,6 +89,7 @@ type CartPageWidget struct {
 	grandTotalL *sws.LabelWidget
 	grandTotal  *sws.LabelWidget
 	buy         *sws.ButtonWidget
+	inventory   *Inventory
 }
 
 func (self *CartPageWidget) SetBuyCallback(callback func()) {
@@ -100,7 +101,7 @@ func (self *CartPageWidget) Reset() {
 		self.vbox.RemoveChild(i)
 	}
 	self.items = make([]*CartPageItemUi, 0)
-	GlobalInventory.Cart = make([]*CartItem, 0)
+	self.inventory.Cart = make([]*CartItem, 0)
 	self.grandTotal.SetText("0 $")
 }
 
@@ -111,7 +112,7 @@ func (self *CartPageWidget) AddItem(productitem int32, conf *ServerConf, unitpri
 		Unitprice:  unitprice,
 		Nb:         nb,
 	}
-	GlobalInventory.Cart = append(GlobalInventory.Cart, item)
+	self.inventory.Cart = append(self.inventory.Cart, item)
 	var ui *CartPageItemUi
 	switch productitem {
 	case PRODUCT_SERVER:
@@ -187,14 +188,14 @@ func (self *CartPageWidget) AddItem(productitem int32, conf *ServerConf, unitpri
 
 func (self *CartPageWidget) DeleteItem(cartitem *CartItem) {
 	pos := -1
-	for i, v := range GlobalInventory.Cart {
+	for i, v := range self.inventory.Cart {
 		if v == cartitem {
 			pos = i
 		}
 	}
 
 	self.vbox.RemoveChild(self.items[pos])
-	GlobalInventory.Cart = append(GlobalInventory.Cart[:pos], GlobalInventory.Cart[pos+1:]...)
+	self.inventory.Cart = append(self.inventory.Cart[:pos], self.inventory.Cart[pos+1:]...)
 	self.items = append(self.items[:pos], self.items[pos+1:]...)
 	if len(self.items) == 0 {
 		self.grandTotal.Move(500, 180)
@@ -215,11 +216,12 @@ func (self *CartPageWidget) DeleteItem(cartitem *CartItem) {
 	}
 }
 
-func NewCartPageWidget(width, height int32) *CartPageWidget {
+func NewCartPageWidget(width, height int32, inventory *Inventory) *CartPageWidget {
 	cartpage := &CartPageWidget{
 		CoreWidget: *sws.NewCoreWidget(width, height),
 		items:      make([]*CartPageItemUi, 0),
 		vbox:       sws.NewVBoxWidget(600, 0),
+		inventory:  inventory,
 	}
 	cartpage.SetColor(0xffffffff)
 	title := sws.NewLabelWidget(200, 30, "Shopping Cart")
