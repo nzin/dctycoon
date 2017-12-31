@@ -88,6 +88,7 @@ func main() {
 
 	gamemap := v["map"].(map[string]interface{})
 	dc.LoadMap(gamemap)
+	player.GetInventory().Load(v["inventory"].(map[string]interface{}))
 
 	root.AddChild(dc)
 	root.SetFocus(dc)
@@ -112,8 +113,6 @@ func main() {
 	dock.SetInventoryCallback(func() {
 		inventorywidget.Show()
 	})
-
-	//fmt.Println(supplier.Trends.Cpuprice.CurrentValue(time.Now()))
 
 	for sws.PoolEvent() == false && quit == false {
 	}
