@@ -156,7 +156,7 @@ func (self *PriceTrend) CurrentValue(now time.Time) float64 {
 	} else if index == len(self.Noise) {
 		return (self.Noise)[index-1].Value
 	} else {
-		fmt.Println(index)
+		//fmt.Println(index)
 		interval := ((self.Noise)[index].Pit.Sub((self.Noise)[index-1].Pit)).Hours()
 		since := now.Sub((self.Noise)[index-1].Pit).Hours()
 		noise = (self.Noise)[index-1].Value*((interval-since)/interval) + (self.Noise)[index].Value*(since/interval)
