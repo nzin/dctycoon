@@ -1,13 +1,10 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"os"
 
 	"github.com/nzin/dctycoon"
-	"github.com/nzin/dctycoon/supplier"
-	"github.com/nzin/dctycoon/timer"
 	"github.com/nzin/sws"
 	log "github.com/sirupsen/logrus"
 )
@@ -46,65 +43,14 @@ func main() {
 	flag.Parse()
 	initLog(*loglevel, *logfile)
 
-	gamefile, err := os.Open("example.map")
-	if err != nil {
-		log.Error("main(): ", err.Error())
-		os.Exit(1)
-	}
-	var v map[string]interface{}
-	jsonParser := json.NewDecoder(gamefile)
-	if err = jsonParser.Decode(&v); err != nil {
-		log.Error("main(): parsing game file ", err.Error())
-		os.Exit(1)
-	}
-	gamefile.Close()
-
 	root := sws.Init(800, 600)
 
-	timer.GlobalEventPublisher = timer.NewEventPublisher(root)
-	globaltimer := timer.NewGameTimer()
-	// initiate the game timer
-	globaltimer.Load(v["clock"].(map[string]interface{}))
-
-	trends := supplier.TrendLoad(v["trends"].(map[string]interface{}), timer.GlobalEventPublisher, globaltimer)
-
-	game := dctycoon.NewGame(globaltimer)
-
-	// specific to player
-	location := v["location"].(string)
-	player := dctycoon.NewPlayer(globaltimer, 12000.0, location)
-	// initiate the ledger
-
-	game.RegisterPlayer(player)
-
-	// initialize the ui
-	gameui := dctycoon.NewGameUI(&quit, root)
-	gameui.SetGame(globaltimer, player.GetInventory(), player.GetLedger(), trends)
-	gameui.LoadGame(v)
-	//accounting.GlobalLedger.Load(v["ledger"].(map[string]interface{}), supplier.AvailableLocation[location].Taxrate, supplier.AvailableLocation[location].Bankinterestrate)
-	player.GetLedger().Load(v["ledger"].(map[string]interface{}), supplier.AvailableLocation[location].Taxrate, supplier.AvailableLocation[location].Bankinterestrate)
-	player.GetInventory().Load(v["inventory"].(map[string]interface{}))
-
-	gameui.ShowDC()
+	game := dctycoon.NewGame(&quit, root)
+	//	game.InitGame(12000, "siliconvalley")
+	game.LoadGame("example.map")
 
 	for sws.PoolEvent() == false && quit == false {
 	}
-	/*
-		data := dc.SaveMap()
-		gamefile, err = os.Create("backup.map")
-		if err != nil {
-			fmt.Println(err.Error())
-			os.Exit(1)
-		}
-		gamefile.WriteString("{")
-		gamefile.WriteString(fmt.Sprintf(`"location": "%s",`, location) + "\n")
-		gamefile.WriteString(fmt.Sprintf(`"map": %s,`, data) + "\n")
-		gamefile.WriteString(fmt.Sprintf(`"trends": %s,`, supplier.TrendSave(trends)) + "\n")
-		gamefile.WriteString(fmt.Sprintf(`"clock": %s,`, globaltimer.Save()+"\n"))
-		gamefile.WriteString(fmt.Sprintf(`"inventory": %s,`, player.GetInventory().Save()+"\n"))
-		gamefile.WriteString(fmt.Sprintf(`"ledger": %s`, player.GetLedger().Save()+"\n"))
-		gamefile.WriteString("}\n")
 
-		gamefile.Close()
-	*/
+	game.SaveGame("backup.map")
 }

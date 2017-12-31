@@ -338,7 +338,55 @@ var cpucorePriceTrend = []PriceTrendItem{ // $/core
 	PriceTrendItem{Pit: time.Date(2012, time.Month(1), 1, 0, 0, 0, 0, time.UTC), Value: 100},
 }
 
-func TrendLoad(json map[string]interface{}, publishservice timer.EventPublisherService, timer *timer.GameTimer) *Trend {
+func NewTrend() *Trend {
+	t := &Trend{
+		Corepercpu: initCorepercpu,
+		Vt:         initVt,
+		Disksize:   initDisksize,
+		Ramsize:    initRamsize,
+
+		Cpuprice:  PriceTrendListLoad(make([]interface{}, 0, 0), cpucorePriceTrend),
+		Diskprice: PriceTrendListLoad(make([]interface{}, 0, 0), diskPriceTrend),
+		Ramprice:  PriceTrendListLoad(make([]interface{}, 0, 0), ramPriceTrend),
+	}
+	return t
+}
+
+func (self *Trend) Init(publishservice timer.EventPublisherService, timer *timer.GameTimer) {
+	self.Cpuprice = PriceTrendListLoad(make([]interface{}, 0, 0), cpucorePriceTrend)
+	self.Diskprice = PriceTrendListLoad(make([]interface{}, 0, 0), diskPriceTrend)
+	self.Ramprice = PriceTrendListLoad(make([]interface{}, 0, 0), ramPriceTrend)
+
+	for _, core := range initCorepercpu {
+		c := core
+		timer.AddEvent(c.Pit, func() {
+			publishservice.Publish(c.ShortDesc, c.LongDesc)
+		})
+	}
+
+	for _, vt := range initVt {
+		v := vt
+		timer.AddEvent(v.Pit, func() {
+			publishservice.Publish(v.ShortDesc, v.LongDesc)
+		})
+	}
+
+	for _, dd := range initDisksize {
+		d := dd
+		timer.AddEvent(d.Pit, func() {
+			publishservice.Publish(d.ShortDesc, d.LongDesc)
+		})
+	}
+
+	for _, ram := range initRamsize {
+		r := ram
+		timer.AddEvent(r.Pit, func() {
+			publishservice.Publish(r.ShortDesc, r.LongDesc)
+		})
+	}
+}
+
+func (self *Trend) Load(json map[string]interface{}, publishservice timer.EventPublisherService, timer *timer.GameTimer) {
 	cpupricenoise := make([]interface{}, 0, 0)
 	diskpricenoise := make([]interface{}, 0, 0)
 	rampricenoise := make([]interface{}, 0, 0)
@@ -350,6 +398,7 @@ func TrendLoad(json map[string]interface{}, publishservice timer.EventPublisherS
 				cpupricenoise = append(cpupricenoise, s.Index(i).Interface())
 			}
 		}
+		self.Cpuprice = PriceTrendListLoad(cpupricenoise, cpucorePriceTrend)
 	}
 
 	if array, ok := json["diskpricenoise"]; ok == true {
@@ -359,6 +408,7 @@ func TrendLoad(json map[string]interface{}, publishservice timer.EventPublisherS
 				diskpricenoise = append(diskpricenoise, s.Index(i).Interface())
 			}
 		}
+		self.Diskprice = PriceTrendListLoad(diskpricenoise, diskPriceTrend)
 	}
 
 	if array, ok := json["rampricenoise"]; ok == true {
@@ -368,17 +418,7 @@ func TrendLoad(json map[string]interface{}, publishservice timer.EventPublisherS
 				rampricenoise = append(rampricenoise, s.Index(i).Interface())
 			}
 		}
-	}
-
-	t := &Trend{
-		Corepercpu: initCorepercpu,
-		Vt:         initVt,
-		Disksize:   initDisksize,
-		Ramsize:    initRamsize,
-
-		Cpuprice:  PriceTrendListLoad(cpupricenoise, cpucorePriceTrend),
-		Diskprice: PriceTrendListLoad(diskpricenoise, diskPriceTrend),
-		Ramprice:  PriceTrendListLoad(rampricenoise, ramPriceTrend),
+		self.Ramprice = PriceTrendListLoad(rampricenoise, ramPriceTrend)
 	}
 
 	for _, core := range initCorepercpu {
@@ -408,15 +448,13 @@ func TrendLoad(json map[string]interface{}, publishservice timer.EventPublisherS
 			publishservice.Publish(r.ShortDesc, r.LongDesc)
 		})
 	}
-
-	return t
 }
 
-func TrendSave(t *Trend) string {
+func (self Trend) Save() string {
 	str := "{\n"
-	str += fmt.Sprintf(`"cpupricenoise": %s,`, PriceTrendListSave(t.Cpuprice)) + "\n"
-	str += fmt.Sprintf(`"diskpricenoise": %s,`, PriceTrendListSave(t.Diskprice)) + "\n"
-	str += fmt.Sprintf(`"rampricenoise": %s`, PriceTrendListSave(t.Ramprice)) + "\n"
+	str += fmt.Sprintf(`"cpupricenoise": %s,`, PriceTrendListSave(self.Cpuprice)) + "\n"
+	str += fmt.Sprintf(`"diskpricenoise": %s,`, PriceTrendListSave(self.Diskprice)) + "\n"
+	str += fmt.Sprintf(`"rampricenoise": %s`, PriceTrendListSave(self.Ramprice)) + "\n"
 	str += "}"
 	return str
 }

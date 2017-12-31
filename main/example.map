@@ -1,5 +1,4 @@
 {
-  "location":"siliconvalley",
   "map": {
     "width": 20,
     "height": 22,
@@ -22,22 +21,25 @@
       "diskpricenoise":[],
       "rampricenoise":[]
   },
-  "ledger": {
-    "movements": [{"description":"initial opening","amount":12000,"date":"1990-01-01","from":"4561" ,"to":"5121"},
-      {"description":"sale client 1","amount":200,"date":"1995-11-01","from": "7083" ,"to":"5121"},
-      {"description":"loan","amount":2000,"date":"1995-11-01","from": "161" ,"to":"5121"}
-    ]
-  },
-  "inventory": {
-    "increment":6,
-    "items": [
-      {"Id": 0, "Typeitem": "AC", "Buydate": "1996-11-15", "Deliverydate": "1996-11-19", "Xplaced":0, "Yplaced":4},
-      {"Id": 1, "Typeitem": "GENERATOR", "Buydate": "1996-11-15", "Deliverydate": "1996-11-19", "Xplaced":1, "Yplaced":4},
-      {"Id": 2, "Typeitem": "RACK", "Buydate": "1996-11-15", "Deliverydate": "1996-11-19", "Xplaced":4, "Yplaced":4},
-      {"Id": 3, "Typeitem": "AC", "Buydate": "1996-11-15", "Deliverydate": "1996-11-19", "Xplaced":-1, "Yplaced":-1},
-      {"Id": 4, "Typeitem": "GENERATOR", "Buydate": "1996-11-15", "Deliverydate": "1996-11-19", "Xplaced":-1, "Yplaced":-1},
-      {"Id": 5, "Typeitem": "RACK", "Buydate": "1996-11-15", "Deliverydate": "1996-11-19", "Xplaced":-1, "Yplaced":-1}
-    ]
+  "player": {
+    "ledger": {
+      "movements": [{"description":"initial opening","amount":12000,"date":"1990-01-01","from":"4561" ,"to":"5121"},
+        {"description":"sale client 1","amount":200,"date":"1995-11-01","from": "7083" ,"to":"5121"},
+        {"description":"loan","amount":2000,"date":"1995-11-01","from": "161" ,"to":"5121"}
+      ]
+    },
+    "inventory": {
+      "increment":6,
+      "items": [
+        {"Id": 0, "Typeitem": "AC", "Buydate": "1996-11-15", "Deliverydate": "1996-11-19", "Xplaced":0, "Yplaced":4},
+        {"Id": 1, "Typeitem": "GENERATOR", "Buydate": "1996-11-15", "Deliverydate": "1996-11-19", "Xplaced":1, "Yplaced":4},
+        {"Id": 2, "Typeitem": "RACK", "Buydate": "1996-11-15", "Deliverydate": "1996-11-19", "Xplaced":4, "Yplaced":4},
+        {"Id": 3, "Typeitem": "AC", "Buydate": "1996-11-15", "Deliverydate": "1996-11-19", "Xplaced":-1, "Yplaced":-1},
+        {"Id": 4, "Typeitem": "GENERATOR", "Buydate": "1996-11-15", "Deliverydate": "1996-11-19", "Xplaced":-1, "Yplaced":-1},
+        {"Id": 5, "Typeitem": "RACK", "Buydate": "1996-11-15", "Deliverydate": "1996-11-19", "Xplaced":-1, "Yplaced":-1}
+      ]
+    },
+    "location":"siliconvalley"
   },
   "clock": {
     "timer": "1996-12-15"

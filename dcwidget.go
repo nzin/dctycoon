@@ -438,7 +438,7 @@ func (self *DcWidget) ItemUninstalled(item *supplier.InventoryItem) {
 //     ]
 //   }
 //
-func (self *DcWidget) LoadMap(dc map[string]interface{}) {
+func (self *DcWidget) LoadMap(dc map[string]interface{}, currenttime time.Time) {
 	width := int32(dc["width"].(float64))
 	height := int32(dc["height"].(float64))
 	self.tiles = make([][]*Tile, height)
@@ -458,6 +458,24 @@ func (self *DcWidget) LoadMap(dc map[string]interface{}) {
 		floor := tile["floor"].(string)
 		rotation := uint32(tile["rotation"].(float64))
 		self.tiles[y][x] = NewTile(wall0, wall1, floor, rotation)
+	}
+	// place everything except servers
+	for _, item := range self.inventory.Items {
+		if item.IsPlaced() && item.Typeitem != supplier.PRODUCT_SERVER {
+			self.ItemInstalled(item)
+		}
+	}
+	// place servers
+	for _, item := range self.inventory.Items {
+		if item.IsPlaced() && item.Typeitem == supplier.PRODUCT_SERVER {
+			self.ItemInstalled(item)
+		}
+	}
+	// for material not placed but in stock
+	for _, item := range self.inventory.Items {
+		if !item.IsPlaced() && item.HasArrived(currenttime) {
+			self.hc.ItemInStock(item)
+		}
 	}
 }
 
