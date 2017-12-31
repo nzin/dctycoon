@@ -444,6 +444,15 @@ func (self *Inventory) AddInventorySubscriber(subscriber InventorySubscriber) {
 	self.inventorysubscribers = append(self.inventorysubscribers, subscriber)
 }
 
+func (self *Inventory) RemoveInventorySubscriber(subscriber InventorySubscriber) {
+	for i, s := range self.inventorysubscribers {
+		if s == subscriber {
+			self.inventorysubscribers = append(self.inventorysubscribers[:i], self.inventorysubscribers[i+1:]...)
+			break
+		}
+	}
+}
+
 func (self *Inventory) AddPool(pool ServerPool) {
 	self.pools = append(self.pools, pool)
 	for _, s := range self.inventoryPoolSubscribers {

@@ -78,11 +78,11 @@ func (self *BalanceWidget) LedgerChange() {
 	self.PostUpdate()
 }
 
-func NewBalanceWidget(timer *timer.GameTimer, ledger *Ledger) *BalanceWidget {
+func NewBalanceWidget() *BalanceWidget {
 	widget := &BalanceWidget{
 		FinanceWidget: *NewFinanceWidget(),
-		timer:         timer,
-		ledger:        ledger,
+		timer:         nil,
+		ledger:        nil,
 	}
 	widget.addCategory("Revenue")
 	widget.addLine("70", "Sales")
@@ -107,6 +107,14 @@ func NewBalanceWidget(timer *timer.GameTimer, ledger *Ledger) *BalanceWidget {
 	widget.addSeparator()
 	widget.addLine("income", "Net Income")
 
-	ledger.AddSubscriber(widget)
 	return widget
+}
+
+func (self *BalanceWidget) SetGame(timer *timer.GameTimer, ledger *Ledger) {
+	self.timer = timer
+	if self.ledger != nil {
+		self.ledger.RemoveSubscriber(self)
+	}
+	self.ledger = ledger
+	ledger.AddSubscriber(self)
 }

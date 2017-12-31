@@ -7,10 +7,13 @@ import (
 )
 
 type MainAccountingWidget struct {
-	rootwidget *sws.RootWidget
-	mainwidget *sws.MainWidget
-	tabwidget  *sws.TabWidget
-	bankwidget *BankWidget
+	rootwidget        *sws.RootWidget
+	mainwidget        *sws.MainWidget
+	tabwidget         *sws.TabWidget
+	bankwidget        *BankWidget
+	balancewidget     *BalanceWidget
+	liabilitieswidget *LiabilitiesWidget
+	assetswidget      *AssetsWidget
 }
 
 func (self *MainAccountingWidget) Show() {
@@ -30,33 +33,36 @@ func (self *MainAccountingWidget) Hide() {
 //	self.bankwidget.SetBankinterestrate(rate)
 //}
 
-func NewMainAccountingWidget(root *sws.RootWidget, timer *timer.GameTimer, ledger *Ledger) *MainAccountingWidget {
+func NewMainAccountingWidget(root *sws.RootWidget) *MainAccountingWidget {
 	mainwidget := sws.NewMainWidget(650, 400, " Bank and Finance ", true, true)
 	tabwidget := sws.NewTabWidget(650, 400)
 
 	ui := &MainAccountingWidget{
-		rootwidget: root,
-		mainwidget: mainwidget,
-		tabwidget:  tabwidget,
+		rootwidget:        root,
+		mainwidget:        mainwidget,
+		tabwidget:         tabwidget,
+		balancewidget:     NewBalanceWidget(),
+		liabilitieswidget: NewLiabilitiesWidget(),
+		assetswidget:      NewAssetsWidget(),
 	}
-	ui.bankwidget = NewBankWidget(root, timer, ledger)
+	ui.bankwidget = NewBankWidget(root)
 	bankScroll := sws.NewScrollWidget(650, 400)
 	bankScroll.SetInnerWidget(ui.bankwidget)
 	bankScroll.ShowHorizontalScrollbar(false)
 	tabwidget.AddTab("Bank", bankScroll)
 
 	balanceScroll := sws.NewScrollWidget(650, 400)
-	balanceScroll.SetInnerWidget(NewBalanceWidget(timer, ledger))
+	balanceScroll.SetInnerWidget(ui.balancewidget)
 	balanceScroll.ShowHorizontalScrollbar(false)
 	tabwidget.AddTab("Balance", balanceScroll)
 
 	liabilitiesScroll := sws.NewScrollWidget(650, 400)
-	liabilitiesScroll.SetInnerWidget(NewLiabilitiesWidget(timer, ledger))
+	liabilitiesScroll.SetInnerWidget(ui.liabilitieswidget)
 	liabilitiesScroll.ShowHorizontalScrollbar(false)
 	tabwidget.AddTab("Liabilities", liabilitiesScroll)
 
 	assetScroll := sws.NewScrollWidget(650, 400)
-	assetScroll.SetInnerWidget(NewAssetsWidget(timer, ledger))
+	assetScroll.SetInnerWidget(ui.assetswidget)
 	assetScroll.ShowHorizontalScrollbar(false)
 	tabwidget.AddTab("Assets", assetScroll)
 
@@ -65,4 +71,11 @@ func NewMainAccountingWidget(root *sws.RootWidget, timer *timer.GameTimer, ledge
 	})
 	mainwidget.SetInnerWidget(tabwidget)
 	return ui
+}
+
+func (self *MainAccountingWidget) SetGame(timer *timer.GameTimer, ledger *Ledger) {
+	self.bankwidget.SetGame(timer, ledger)
+	self.balancewidget.SetGame(timer, ledger)
+	self.liabilitieswidget.SetGame(timer, ledger)
+	self.assetswidget.SetGame(timer, ledger)
 }

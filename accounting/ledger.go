@@ -183,6 +183,15 @@ func (self *Ledger) AddSubscriber(sub LedgerSubscriber) {
 	sub.LedgerChange()
 }
 
+func (self *Ledger) RemoveSubscriber(subscriber LedgerSubscriber) {
+	for i, s := range self.subscribers {
+		if s == subscriber {
+			self.subscribers = append(self.subscribers[:i], self.subscribers[i+1:]...)
+			break
+		}
+	}
+}
+
 //
 // 607 -> 2315 : product
 // 404 -> 2315 : product

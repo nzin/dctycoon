@@ -24,22 +24,32 @@ type Actor interface {
 // - load/save game functions
 type Game struct {
 	timer           *timer.GameTimer
-	actors          []Actor
+	npactors        []Actor
+	player          Actor
 	demandtemplates []*supplier.DemandTemplate
 	serverbundles   []*supplier.ServerBundle
 }
 
 //
 // RegisterActor used to register user AND NPDatacenter inventory
-func (self *Game) RegisterActor(actor Actor) {
-	log.Debug("Game::RegisterActor(", actor, ")")
+func (self *Game) RegisterNPActor(actor Actor) {
+	log.Debug("Game::RegisterNPActor(", actor, ")")
 	// check if not already present
-	for _, a := range self.actors {
+	for _, a := range self.npactors {
 		if a == actor {
 			return
 		}
 	}
-	self.actors = append(self.actors, actor)
+	self.npactors = append(self.npactors, actor)
+}
+
+//
+// RegisterActor used to register user AND NPDatacenter inventory
+func (self *Game) RegisterPlayer(actor Actor) {
+	log.Debug("Game::RegisterPlayer(", actor, ")")
+	// check if not already present
+
+	self.player = actor
 }
 
 //
@@ -50,7 +60,7 @@ func NewGame(timer *timer.GameTimer) *Game {
 
 	g := &Game{
 		timer:           timer,
-		actors:          make([]Actor, 0, 0),
+		npactors:        make([]Actor, 0, 0),
 		demandtemplates: make([]*supplier.DemandTemplate, 0, 0),
 		serverbundles:   make([]*supplier.ServerBundle, 0, 0),
 	}
@@ -87,9 +97,11 @@ func (self *Game) GenerateDemandAndFee() {
 	}
 
 	inventories := make([]*supplier.Inventory, 0, 0)
-	for _, a := range self.actors {
+	for _, a := range self.npactors {
 		inventories = append(inventories, a.GetInventory())
 	}
+	inventories = append(inventories, self.player.GetInventory())
+
 	// generate new demand
 	for _, d := range self.demandtemplates {
 		if d.Beginningdate.After(self.timer.CurrentTime) {

@@ -216,12 +216,12 @@ func (self *CartPageWidget) DeleteItem(cartitem *CartItem) {
 	}
 }
 
-func NewCartPageWidget(width, height int32, inventory *Inventory) *CartPageWidget {
+func NewCartPageWidget(width, height int32) *CartPageWidget {
 	cartpage := &CartPageWidget{
 		CoreWidget: *sws.NewCoreWidget(width, height),
 		items:      make([]*CartPageItemUi, 0),
 		vbox:       sws.NewVBoxWidget(600, 0),
-		inventory:  inventory,
+		inventory:  nil,
 	}
 	cartpage.SetColor(0xffffffff)
 	title := sws.NewLabelWidget(200, 30, "Shopping Cart")
@@ -282,4 +282,8 @@ func NewCartPageWidget(width, height int32, inventory *Inventory) *CartPageWidge
 	cartpage.Resize(600, 250)
 
 	return cartpage
+}
+
+func (self *CartPageWidget) SetGame(inventory *Inventory) {
+	self.inventory = inventory
 }

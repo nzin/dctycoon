@@ -45,14 +45,13 @@ func (self *DockWidget) LedgerChange() {
 	self.ledgerButton.SetText(fmt.Sprintf("%.2f $", accounts["51"]))
 }
 
-func NewDockWidget(timer *timer.GameTimer, ledger *accounting.Ledger) *DockWidget {
+func NewDockWidget(root *sws.RootWidget) *DockWidget {
 	corewidget := sws.NewCoreWidget(150, 125)
-	today := fmt.Sprintf("%d %s %d", timer.CurrentTime.Day(), timer.CurrentTime.Month().String(), timer.CurrentTime.Year())
 	widget := &DockWidget{
 		CoreWidget: *corewidget,
-		currentDay: sws.NewLabelWidget(150, 25, today),
-		timer:      timer,
-		ledger:     ledger,
+		currentDay: sws.NewLabelWidget(150, 25, "1 1 1990"),
+		timer:      nil,
+		ledger:     nil,
 		timerevent: nil,
 	}
 	title := sws.NewLabelWidget(150, 25, "DC Tycoon")
@@ -87,8 +86,8 @@ func NewDockWidget(timer *timer.GameTimer, ledger *accounting.Ledger) *DockWidge
 			widget.timerevent.StopRepeat()
 		}
 		widget.timerevent = sws.TimerAddEvent(time.Now().Add(2*time.Second), 2*time.Second, func(evt *sws.TimerEvent) {
-			timer.TimerClock()
-			today := fmt.Sprintf("%d %s %d", timer.CurrentTime.Day(), timer.CurrentTime.Month().String(), timer.CurrentTime.Year())
+			widget.timer.TimerClock()
+			today := fmt.Sprintf("%d %s %d", widget.timer.CurrentTime.Day(), widget.timer.CurrentTime.Month().String(), widget.timer.CurrentTime.Year())
 			widget.currentDay.SetText(today)
 		})
 	})
@@ -105,8 +104,8 @@ func NewDockWidget(timer *timer.GameTimer, ledger *accounting.Ledger) *DockWidge
 			widget.timerevent.StopRepeat()
 		}
 		widget.timerevent = sws.TimerAddEvent(time.Now().Add(time.Second/2), time.Second/2, func(evt *sws.TimerEvent) {
-			timer.TimerClock()
-			today := fmt.Sprintf("%d %s %d", timer.CurrentTime.Day(), timer.CurrentTime.Month().String(), timer.CurrentTime.Year())
+			widget.timer.TimerClock()
+			today := fmt.Sprintf("%d %s %d", widget.timer.CurrentTime.Day(), widget.timer.CurrentTime.Month().String(), widget.timer.CurrentTime.Year())
 			widget.currentDay.SetText(today)
 		})
 	})
@@ -135,7 +134,20 @@ func NewDockWidget(timer *timer.GameTimer, ledger *accounting.Ledger) *DockWidge
 	widget.ledgerButton = sws.NewFlatButtonWidget(150, 25, "")
 	widget.ledgerButton.Move(0, 100)
 	widget.AddChild(widget.ledgerButton)
-	ledger.AddSubscriber(widget)
+
+	widget.Move(root.Width()-widget.Width(), 0)
 
 	return widget
+}
+
+func (self *DockWidget) SetGame(timer *timer.GameTimer, ledger *accounting.Ledger) {
+	self.timer = timer
+	today := fmt.Sprintf("%d %s %d", timer.CurrentTime.Day(), timer.CurrentTime.Month().String(), timer.CurrentTime.Year())
+	self.currentDay.SetText(today)
+
+	if self.ledger != nil {
+		self.ledger.RemoveSubscriber(self)
+	}
+	self.ledger = ledger
+	ledger.AddSubscriber(self)
 }

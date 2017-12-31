@@ -60,11 +60,11 @@ func (self *LiabilitiesWidget) LedgerChange() {
 	self.lines["liabilities"].N1.SetText(fmt.Sprintf("%.2f $", liabN1))
 }
 
-func NewLiabilitiesWidget(timer *timer.GameTimer, ledger *Ledger) *LiabilitiesWidget {
+func NewLiabilitiesWidget() *LiabilitiesWidget {
 	widget := &LiabilitiesWidget{
 		FinanceWidget: *NewFinanceWidget(),
-		timer:         timer,
-		ledger:        ledger,
+		timer:         nil,
+		ledger:        nil,
 	}
 	widget.addCategory("Liabilities")
 	widget.addLine("45", "Capital")
@@ -73,6 +73,14 @@ func NewLiabilitiesWidget(timer *timer.GameTimer, ledger *Ledger) *LiabilitiesWi
 	widget.addSeparator()
 	widget.addLine("liabilities", "Total")
 
-	ledger.AddSubscriber(widget)
 	return widget
+}
+
+func (self *LiabilitiesWidget) SetGame(timer *timer.GameTimer, ledger *Ledger) {
+	self.timer = timer
+	if self.ledger != nil {
+		self.ledger.RemoveSubscriber(self)
+	}
+	self.ledger = ledger
+	ledger.AddSubscriber(self)
 }

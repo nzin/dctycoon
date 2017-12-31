@@ -3,11 +3,9 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
 	"os"
 
 	"github.com/nzin/dctycoon"
-	"github.com/nzin/dctycoon/accounting"
 	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/dctycoon/timer"
 	"github.com/nzin/sws"
@@ -76,60 +74,37 @@ func main() {
 	location := v["location"].(string)
 	player := dctycoon.NewPlayer(globaltimer, 12000.0, location)
 	// initiate the ledger
+
+	game.RegisterPlayer(player)
+
+	// initialize the ui
+	gameui := dctycoon.NewGameUI(&quit, root)
+	gameui.SetGame(globaltimer, player.GetInventory(), player.GetLedger(), trends)
+	gameui.LoadGame(v)
 	//accounting.GlobalLedger.Load(v["ledger"].(map[string]interface{}), supplier.AvailableLocation[location].Taxrate, supplier.AvailableLocation[location].Bankinterestrate)
-	//supplier.GlobalInventory.Load(v["inventory"].(map[string]interface{}))
-
-	game.RegisterActor(player)
-
-	dc := dctycoon.NewDcWidget(root.Width(), root.Height(), root, player.GetInventory())
-	supplierwidget := dctycoon.NewMainSupplierWidget(globaltimer, player.GetInventory(), player.GetLedger(), trends, root)
-	inventorywidget := dctycoon.NewMainInventoryWidget(root, player.GetInventory())
-	accountingui := accounting.NewMainAccountingWidget(root, globaltimer, player.GetLedger())
-
-	gamemap := v["map"].(map[string]interface{})
-	dc.LoadMap(gamemap)
+	player.GetLedger().Load(v["ledger"].(map[string]interface{}), supplier.AvailableLocation[location].Taxrate, supplier.AvailableLocation[location].Bankinterestrate)
 	player.GetInventory().Load(v["inventory"].(map[string]interface{}))
 
-	root.AddChild(dc)
-	root.SetFocus(dc)
-
-	// dock
-	dock := dctycoon.NewDockWidget(globaltimer, player.GetLedger())
-	dock.Move(root.Width()-dock.Width(), 0)
-	root.AddChild(dock)
-
-	dock.SetShopCallback(func() {
-		supplierwidget.Show()
-	})
-
-	dock.SetQuitCallback(func() {
-		quit = true
-	})
-
-	dock.SetLedgerCallback(func() {
-		accountingui.Show()
-	})
-
-	dock.SetInventoryCallback(func() {
-		inventorywidget.Show()
-	})
+	gameui.ShowDC()
 
 	for sws.PoolEvent() == false && quit == false {
 	}
-	data := dc.SaveMap()
-	gamefile, err = os.Create("backup.map")
-	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
-	}
-	gamefile.WriteString("{")
-	gamefile.WriteString(fmt.Sprintf(`"location": "%s",`, location) + "\n")
-	gamefile.WriteString(fmt.Sprintf(`"map": %s,`, data) + "\n")
-	gamefile.WriteString(fmt.Sprintf(`"trends": %s,`, supplier.TrendSave(trends)) + "\n")
-	gamefile.WriteString(fmt.Sprintf(`"clock": %s,`, globaltimer.Save()+"\n"))
-	gamefile.WriteString(fmt.Sprintf(`"inventory": %s,`, player.GetInventory().Save()+"\n"))
-	gamefile.WriteString(fmt.Sprintf(`"ledger": %s`, player.GetLedger().Save()+"\n"))
-	gamefile.WriteString("}\n")
+	/*
+		data := dc.SaveMap()
+		gamefile, err = os.Create("backup.map")
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+		gamefile.WriteString("{")
+		gamefile.WriteString(fmt.Sprintf(`"location": "%s",`, location) + "\n")
+		gamefile.WriteString(fmt.Sprintf(`"map": %s,`, data) + "\n")
+		gamefile.WriteString(fmt.Sprintf(`"trends": %s,`, supplier.TrendSave(trends)) + "\n")
+		gamefile.WriteString(fmt.Sprintf(`"clock": %s,`, globaltimer.Save()+"\n"))
+		gamefile.WriteString(fmt.Sprintf(`"inventory": %s,`, player.GetInventory().Save()+"\n"))
+		gamefile.WriteString(fmt.Sprintf(`"ledger": %s`, player.GetLedger().Save()+"\n"))
+		gamefile.WriteString("}\n")
 
-	gamefile.Close()
+		gamefile.Close()
+	*/
 }

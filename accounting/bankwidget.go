@@ -37,11 +37,11 @@ func (self *BankWidget) LedgerChange() {
 	self.PostUpdate()
 }
 
-func NewBankWidget(root *sws.RootWidget, timer *timer.GameTimer, ledger *Ledger) *BankWidget {
+func NewBankWidget(root *sws.RootWidget) *BankWidget {
 	bankwidget := &BankWidget{
 		CoreWidget: *sws.NewCoreWidget(420, 280),
-		timer:      timer,
-		ledger:     ledger,
+		timer:      nil,
+		ledger:     nil,
 	}
 
 	title := sws.NewLabelWidget(190, 25, "Your Bank account")
@@ -105,8 +105,8 @@ func NewBankWidget(root *sws.RootWidget, timer *timer.GameTimer, ledger *Ledger)
 		if asked, err := strconv.ParseFloat(value, 64); err != nil {
 			sws.ShowModalError(root, "Amount error", "resources/paper-bill.png", "The amount doesn't seems to be a number", nil)
 		} else {
-			yearaccountN := ledger.GetYearAccount(timer.CurrentTime.Year())
-			yearaccountN1 := ledger.GetYearAccount(timer.CurrentTime.Year() - 1)
+			yearaccountN := bankwidget.ledger.GetYearAccount(bankwidget.timer.CurrentTime.Year())
+			yearaccountN1 := bankwidget.ledger.GetYearAccount(bankwidget.timer.CurrentTime.Year() - 1)
 			currentDebt := -yearaccountN["16"]
 			maxAllowed := 40000.0
 			if maxAllowed < 4*-yearaccountN1["70"] {
@@ -115,7 +115,7 @@ func NewBankWidget(root *sws.RootWidget, timer *timer.GameTimer, ledger *Ledger)
 			if asked+currentDebt > maxAllowed {
 				sws.ShowModalError(root, "Amount inquiry error", "resources/paper-bill.png", "Seriously? You want to loan that amount? Kid, prove you can run a big business and we will reconsider your demand", nil)
 			} else {
-				ledger.AskLoan("bank loan", timer.CurrentTime, asked)
+				bankwidget.ledger.AskLoan("bank loan", bankwidget.timer.CurrentTime, asked)
 			}
 			bankwidget.askInput.SetText("")
 		}
@@ -146,7 +146,7 @@ func NewBankWidget(root *sws.RootWidget, timer *timer.GameTimer, ledger *Ledger)
 		if refund, err := strconv.ParseFloat(value, 64); err != nil {
 			sws.ShowModalError(root, "Amount error", "resources/paper-bill.png", "The amount doesn't seems to be a number", nil)
 		} else {
-			yearaccountN := ledger.GetYearAccount(timer.CurrentTime.Year())
+			yearaccountN := bankwidget.ledger.GetYearAccount(bankwidget.timer.CurrentTime.Year())
 			currentDebt := -yearaccountN["16"]
 			currentMoney := yearaccountN["51"]
 			if refund > currentDebt {
@@ -155,7 +155,7 @@ func NewBankWidget(root *sws.RootWidget, timer *timer.GameTimer, ledger *Ledger)
 			if refund > currentMoney {
 				sws.ShowModalError(root, "Cashflow problem", "resources/paper-bill.png", "I don't think you can afford to refund so much money, keep working on your business...", nil)
 			} else {
-				ledger.RefundLoan("payback bank debt", timer.CurrentTime, refund)
+				bankwidget.ledger.RefundLoan("payback bank debt", bankwidget.timer.CurrentTime, refund)
 			}
 			bankwidget.paybackInput.SetText("")
 		}
@@ -171,7 +171,14 @@ func NewBankWidget(root *sws.RootWidget, timer *timer.GameTimer, ledger *Ledger)
 	loanicon.Move(4, 183)
 	bankwidget.AddChild(loanicon)
 
-	ledger.AddSubscriber(bankwidget)
-
 	return bankwidget
+}
+
+func (self *BankWidget) SetGame(timer *timer.GameTimer, ledger *Ledger) {
+	self.timer = timer
+	if self.ledger != nil {
+		self.ledger.RemoveSubscriber(self)
+	}
+	self.ledger = ledger
+	ledger.AddSubscriber(self)
 }

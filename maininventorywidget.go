@@ -39,14 +39,14 @@ func (self *MainInventoryWidget) Hide() {
 }
 
 // NewMainInventoryWidget presents the pool and offer management window
-func NewMainInventoryWidget(root *sws.RootWidget, inventory *supplier.Inventory) *MainInventoryWidget {
+func NewMainInventoryWidget(root *sws.RootWidget) *MainInventoryWidget {
 	mainwidget := sws.NewMainWidget(850, 400, " Inventory Management ", true, true)
 	widget := &MainInventoryWidget{
 		rootwindow:  root,
 		mainwidget:  mainwidget,
 		tabwidget:   sws.NewTabWidget(200, 200),
-		serverpools: supplier.NewPoolManagementWidget(root, inventory),
-		offers:      supplier.NewOfferManagementWidget(root, inventory),
+		serverpools: supplier.NewPoolManagementWidget(root),
+		offers:      supplier.NewOfferManagementWidget(root),
 	}
 	widget.tabwidget.AddTab("server pools", widget.serverpools)
 	widget.tabwidget.AddTab("offers", widget.offers)
@@ -58,4 +58,9 @@ func NewMainInventoryWidget(root *sws.RootWidget, inventory *supplier.Inventory)
 	})
 
 	return widget
+}
+
+func (self *MainInventoryWidget) SetGame(inventory *supplier.Inventory) {
+	self.serverpools.SetGame(inventory)
+	self.offers.SetGame(inventory)
 }

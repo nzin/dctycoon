@@ -13,6 +13,7 @@ import (
 //
 type ServerPageConfigureWidget struct {
 	sws.CoreWidget
+	trend         *Trend
 	title         *sws.LabelWidget
 	buybutton     *sws.ButtonWidget
 	configureicon *sws.LabelWidget
@@ -184,9 +185,10 @@ func (self *ServerPageConfigureWidget) GetNbUnit() int32 {
 	return self.nbunits
 }
 
-func NewServerPageConfigureWidget(trend *Trend, width, height int32) *ServerPageConfigureWidget {
+func NewServerPageConfigureWidget(width, height int32) *ServerPageConfigureWidget {
 	serverpageconfigure := &ServerPageConfigureWidget{
 		CoreWidget: *sws.NewCoreWidget(width, height),
+		trend:      nil,
 	}
 	serverpageconfigure.SetColor(0xffeeeeee)
 
@@ -220,7 +222,7 @@ func NewServerPageConfigureWidget(trend *Trend, width, height int32) *ServerPage
 		if choice, err := strconv.Atoi(nbproc.Choices[nbproc.ActiveChoice]); err == nil {
 			serverpageconfigure.conf.NbProcessors = int32(choice)
 		}
-		serverpageconfigure.unitprice = math.Floor(serverpageconfigure.conf.Price(trend, serverpageconfigure.today))
+		serverpageconfigure.unitprice = math.Floor(serverpageconfigure.conf.Price(serverpageconfigure.trend, serverpageconfigure.today))
 		serverpageconfigure.pricevalue.SetText(strconv.FormatFloat(serverpageconfigure.unitprice, 'f', 0, 64))
 		serverpageconfigure.pricetotal.SetText(strconv.FormatFloat(serverpageconfigure.unitprice*float64(serverpageconfigure.nbunits), 'f', 0, 64))
 	})
@@ -252,7 +254,7 @@ func NewServerPageConfigureWidget(trend *Trend, width, height int32) *ServerPage
 	serverpageconfigure.nbcores = nbcores
 	nbcores.SetClicked(func() {
 		serverpageconfigure.conf.NbCore = serverpageconfigure.nbcorechoice[nbcores.ActiveChoice]
-		serverpageconfigure.unitprice = math.Floor(serverpageconfigure.conf.Price(trend, serverpageconfigure.today))
+		serverpageconfigure.unitprice = math.Floor(serverpageconfigure.conf.Price(serverpageconfigure.trend, serverpageconfigure.today))
 		serverpageconfigure.pricevalue.SetText(strconv.FormatFloat(serverpageconfigure.unitprice, 'f', 0, 64))
 		serverpageconfigure.pricetotal.SetText(strconv.FormatFloat(serverpageconfigure.unitprice*float64(serverpageconfigure.nbunits), 'f', 0, 64))
 	})
@@ -272,7 +274,7 @@ func NewServerPageConfigureWidget(trend *Trend, width, height int32) *ServerPage
 		if choice, err := strconv.Atoi(nbdisk.Choices[nbdisk.ActiveChoice]); err == nil {
 			serverpageconfigure.conf.NbDisks = int32(choice)
 		}
-		serverpageconfigure.unitprice = math.Floor(serverpageconfigure.conf.Price(trend, serverpageconfigure.today))
+		serverpageconfigure.unitprice = math.Floor(serverpageconfigure.conf.Price(serverpageconfigure.trend, serverpageconfigure.today))
 		serverpageconfigure.pricevalue.SetText(strconv.FormatFloat(serverpageconfigure.unitprice, 'f', 0, 64))
 		serverpageconfigure.pricetotal.SetText(strconv.FormatFloat(serverpageconfigure.unitprice*float64(serverpageconfigure.nbunits), 'f', 0, 64))
 	})
@@ -290,7 +292,7 @@ func NewServerPageConfigureWidget(trend *Trend, width, height int32) *ServerPage
 	serverpageconfigure.disksize = disksize
 	disksize.SetClicked(func() {
 		serverpageconfigure.conf.DiskSize = serverpageconfigure.ddsizechoice[disksize.ActiveChoice]
-		serverpageconfigure.unitprice = math.Floor(serverpageconfigure.conf.Price(trend, serverpageconfigure.today))
+		serverpageconfigure.unitprice = math.Floor(serverpageconfigure.conf.Price(serverpageconfigure.trend, serverpageconfigure.today))
 		serverpageconfigure.pricevalue.SetText(strconv.FormatFloat(serverpageconfigure.unitprice, 'f', 0, 64))
 		serverpageconfigure.pricetotal.SetText(strconv.FormatFloat(serverpageconfigure.unitprice*float64(serverpageconfigure.nbunits), 'f', 0, 64))
 	})
@@ -310,7 +312,7 @@ func NewServerPageConfigureWidget(trend *Trend, width, height int32) *ServerPage
 		if choice, err := strconv.Atoi(nbram.Choices[nbram.ActiveChoice]); err == nil {
 			serverpageconfigure.conf.NbSlotRam = int32(choice)
 		}
-		serverpageconfigure.unitprice = math.Floor(serverpageconfigure.conf.Price(trend, serverpageconfigure.today))
+		serverpageconfigure.unitprice = math.Floor(serverpageconfigure.conf.Price(serverpageconfigure.trend, serverpageconfigure.today))
 		serverpageconfigure.pricevalue.SetText(strconv.FormatFloat(serverpageconfigure.unitprice, 'f', 0, 64))
 		serverpageconfigure.pricetotal.SetText(strconv.FormatFloat(serverpageconfigure.unitprice*float64(serverpageconfigure.nbunits), 'f', 0, 64))
 	})
@@ -328,7 +330,7 @@ func NewServerPageConfigureWidget(trend *Trend, width, height int32) *ServerPage
 	serverpageconfigure.ramsize = ramsize
 	ramsize.SetClicked(func() {
 		serverpageconfigure.conf.RamSize = serverpageconfigure.ramsizechoice[ramsize.ActiveChoice]
-		serverpageconfigure.unitprice = math.Floor(serverpageconfigure.conf.Price(trend, serverpageconfigure.today))
+		serverpageconfigure.unitprice = math.Floor(serverpageconfigure.conf.Price(serverpageconfigure.trend, serverpageconfigure.today))
 		serverpageconfigure.pricevalue.SetText(strconv.FormatFloat(serverpageconfigure.unitprice, 'f', 0, 64))
 		serverpageconfigure.pricetotal.SetText(strconv.FormatFloat(serverpageconfigure.unitprice*float64(serverpageconfigure.nbunits), 'f', 0, 64))
 	})
@@ -367,7 +369,7 @@ func NewServerPageConfigureWidget(trend *Trend, width, height int32) *ServerPage
 		if choice, err := strconv.Atoi(nbunits.Choices[nbunits.ActiveChoice]); err == nil {
 			serverpageconfigure.nbunits = int32(choice)
 		}
-		serverpageconfigure.unitprice = math.Floor(serverpageconfigure.conf.Price(trend, serverpageconfigure.today))
+		serverpageconfigure.unitprice = math.Floor(serverpageconfigure.conf.Price(serverpageconfigure.trend, serverpageconfigure.today))
 		serverpageconfigure.pricevalue.SetText(strconv.FormatFloat(serverpageconfigure.unitprice, 'f', 0, 64))
 		serverpageconfigure.pricetotal.SetText(strconv.FormatFloat(serverpageconfigure.unitprice*float64(serverpageconfigure.nbunits), 'f', 0, 64))
 	})
@@ -392,4 +394,8 @@ func NewServerPageConfigureWidget(trend *Trend, width, height int32) *ServerPage
 	serverpageconfigure.buybutton = buyButton
 
 	return serverpageconfigure
+}
+
+func (self *ServerPageConfigureWidget) SetGame(trend *Trend) {
+	self.trend = trend
 }
