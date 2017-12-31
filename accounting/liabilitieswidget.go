@@ -15,15 +15,17 @@ import (
 // = passif
 type LiabilitiesWidget struct {
 	FinanceWidget
+	timer  *timer.GameTimer
+	ledger *Ledger
 }
 
-func (self *LiabilitiesWidget) LedgerChange(ledger *Ledger) {
-	self.yearN.SetText(fmt.Sprintf("%d (est.)", timer.GlobalGameTimer.CurrentTime.Year()))
-	self.yearN1.SetText(fmt.Sprintf("%d", timer.GlobalGameTimer.CurrentTime.Year()-1))
-	yearaccountN := GlobalLedger.GetYearAccount(timer.GlobalGameTimer.CurrentTime.Year())
-	yearaccountN1 := GlobalLedger.GetYearAccount(timer.GlobalGameTimer.CurrentTime.Year() - 1)
+func (self *LiabilitiesWidget) LedgerChange() {
+	self.yearN.SetText(fmt.Sprintf("%d (est.)", self.timer.CurrentTime.Year()))
+	self.yearN1.SetText(fmt.Sprintf("%d", self.timer.CurrentTime.Year()-1))
+	yearaccountN := self.ledger.GetYearAccount(self.timer.CurrentTime.Year())
+	yearaccountN1 := self.ledger.GetYearAccount(self.timer.CurrentTime.Year() - 1)
 	// forecast account 44
-	_, taxN := computeYearlyTaxes(yearaccountN, ledger.taxrate)
+	_, taxN := computeYearlyTaxes(yearaccountN, self.ledger.taxrate)
 
 	self.lines["45"].N.SetText(fmt.Sprintf("%.2f $", -yearaccountN["45"]-yearaccountN["46"]))
 	self.lines["45"].N1.SetText(fmt.Sprintf("%.2f $", -yearaccountN1["45"]-yearaccountN1["46"]))
@@ -51,8 +53,8 @@ func (self *LiabilitiesWidget) LedgerChange(ledger *Ledger) {
 	self.lines["16"].N.SetText(fmt.Sprintf("%.2f $", -yearaccountN["16"]))
 	self.lines["16"].N1.SetText(fmt.Sprintf("%.2f $", -yearaccountN1["16"]))
 
-	liabN := -yearaccountN["45"] -yearaccountN["46"] - yearaccountN["16"] + profitN
-	liabN1 := -yearaccountN1["45"] -yearaccountN1["46"]- yearaccountN1["16"] + profitN1
+	liabN := -yearaccountN["45"] - yearaccountN["46"] - yearaccountN["16"] + profitN
+	liabN1 := -yearaccountN1["45"] - yearaccountN1["46"] - yearaccountN1["16"] + profitN1
 
 	self.lines["liabilities"].N.SetText(fmt.Sprintf("%.2f $", liabN))
 	self.lines["liabilities"].N1.SetText(fmt.Sprintf("%.2f $", liabN1))
@@ -61,6 +63,8 @@ func (self *LiabilitiesWidget) LedgerChange(ledger *Ledger) {
 func NewLiabilitiesWidget() *LiabilitiesWidget {
 	widget := &LiabilitiesWidget{
 		FinanceWidget: *NewFinanceWidget(),
+		timer:         nil,
+		ledger:        nil,
 	}
 	widget.addCategory("Liabilities")
 	widget.addLine("45", "Capital")
@@ -69,6 +73,14 @@ func NewLiabilitiesWidget() *LiabilitiesWidget {
 	widget.addSeparator()
 	widget.addLine("liabilities", "Total")
 
-	GlobalLedger.AddSubscriber(widget)
 	return widget
+}
+
+func (self *LiabilitiesWidget) SetGame(timer *timer.GameTimer, ledger *Ledger) {
+	self.timer = timer
+	if self.ledger != nil {
+		self.ledger.RemoveSubscriber(self)
+	}
+	self.ledger = ledger
+	ledger.AddSubscriber(self)
 }

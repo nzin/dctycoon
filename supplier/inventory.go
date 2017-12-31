@@ -216,8 +216,6 @@ type Inventory struct {
 	inventoryPoolSubscribers []InventoryPoolSubscriber
 }
 
-var GlobalInventory *Inventory
-
 func (self *Inventory) BuyCart(buydate time.Time) {
 	log.Debug("Inventory::BuyCart(", buydate, ")")
 	for _, item := range self.Cart {
@@ -444,6 +442,15 @@ func (self *Inventory) Save() string {
 
 func (self *Inventory) AddInventorySubscriber(subscriber InventorySubscriber) {
 	self.inventorysubscribers = append(self.inventorysubscribers, subscriber)
+}
+
+func (self *Inventory) RemoveInventorySubscriber(subscriber InventorySubscriber) {
+	for i, s := range self.inventorysubscribers {
+		if s == subscriber {
+			self.inventorysubscribers = append(self.inventorysubscribers[:i], self.inventorysubscribers[i+1:]...)
+			break
+		}
+	}
 }
 
 func (self *Inventory) AddPool(pool ServerPool) {

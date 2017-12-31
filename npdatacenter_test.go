@@ -1,4 +1,4 @@
-package supplier
+package dctycoon
 
 import (
 	"encoding/json"
@@ -6,9 +6,15 @@ import (
 	"time"
 
 	"github.com/nzin/dctycoon/global"
+	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/dctycoon/timer"
 	"github.com/stretchr/testify/assert"
 )
+
+type EventPublisherServiceMock struct{}
+
+func (e *EventPublisherServiceMock) Publish(shortdesc string, longdesc string) {
+}
 
 func TestNPDatacenter(t *testing.T) {
 	gt := timer.NewGameTimer()
@@ -18,7 +24,7 @@ func TestNPDatacenter(t *testing.T) {
 		"diskpricenoise": make([]interface{}, 0, 0),
 		"rampricenoise":  make([]interface{}, 0, 0),
 	}
-	trend := TrendLoad(j, ps, gt)
+	trend := supplier.TrendLoad(j, ps, gt)
 
 	data, err := global.Asset("assets/npdatacenter/mono_r100_r200.json")
 	assert.Empty(t, err, "load mono_r100_r200 profile asset")
@@ -41,7 +47,7 @@ func TestNPDatacenterBuyout(t *testing.T) {
 		"diskpricenoise": make([]interface{}, 0, 0),
 		"rampricenoise":  make([]interface{}, 0, 0),
 	}
-	trend := TrendLoad(j, ps, gt)
+	trend := supplier.TrendLoad(j, ps, gt)
 
 	npd := NewNPDatacenter(gt, trend, 10000, "siliconvalley", "mono_r100_r200.json")
 	assert.NotEmpty(t, npd, "NPDatacenter mono_r100_r200 profile loaded")
@@ -49,6 +55,6 @@ func TestNPDatacenterBuyout(t *testing.T) {
 
 	npd.NewYearOperations()
 	assert.Equal(t, 1, len(npd.inventory.Items), "new year passed, we bought some servers")
-	assert.Equal(t, 1, len(npd.inventory.offers), "we have one offer for R100 server")
-	assert.Equal(t, float64(2700.0), npd.inventory.offers[0].Price, "R100 is priced as 2400$")
+	assert.Equal(t, 1, len(npd.inventory.GetOffers()), "we have one offer for R100 server")
+	assert.Equal(t, float64(2700.0), npd.inventory.GetOffers()[0].Price, "R100 is priced as 2400$")
 }

@@ -49,6 +49,7 @@ type TrackPageWidget struct {
 	sws.CoreWidget
 	vbox      *sws.VBoxWidget
 	intransit map[*InventoryItem]*TrackPageItemUi
+	inventory *Inventory
 }
 
 func (self *TrackPageWidget) ItemInTransit(item *InventoryItem) {
@@ -95,13 +96,13 @@ func (self *TrackPageWidget) ItemUninstalled(*InventoryItem) {
 func (self *TrackPageWidget) ItemChangedPool(*InventoryItem) {
 }
 
-func NewTrackPageWidget(width, height int32, inventory *Inventory) *TrackPageWidget {
+func NewTrackPageWidget(width, height int32) *TrackPageWidget {
 	trackpage := &TrackPageWidget{
 		CoreWidget: *sws.NewCoreWidget(width, height),
 		vbox:       sws.NewVBoxWidget(600, 0),
 		intransit:  make(map[*InventoryItem]*TrackPageItemUi),
+		inventory:  nil,
 	}
-	inventory.AddInventorySubscriber(trackpage)
 	trackpage.SetColor(0xffffffff)
 	title := sws.NewLabelWidget(200, 30, "Product Tracking")
 	title.SetColor(0xffffffff)
@@ -130,4 +131,12 @@ func NewTrackPageWidget(width, height int32, inventory *Inventory) *TrackPageWid
 	trackpage.Resize(600, 250)
 
 	return trackpage
+}
+
+func (self *TrackPageWidget) SetGame(inventory *Inventory) {
+	if self.inventory != nil {
+		self.inventory.RemoveInventorySubscriber(self)
+	}
+	self.inventory = inventory
+	inventory.AddInventorySubscriber(self)
 }

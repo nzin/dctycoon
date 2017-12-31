@@ -2,6 +2,7 @@ package accounting
 
 import (
 	"fmt"
+
 	"github.com/nzin/dctycoon/timer"
 	"github.com/nzin/sws"
 	//"github.com/veandco/go-sdl2/sdl"
@@ -22,12 +23,14 @@ type BankWidget struct {
 	currentInterest *sws.LabelWidget
 	askInput        *sws.InputWidget
 	paybackInput    *sws.InputWidget
+	timer           *timer.GameTimer
+	ledger          *Ledger
 }
 
-func (self *BankWidget) LedgerChange(ledger *Ledger) {
-	yearaccount := GlobalLedger.GetYearAccount(timer.GlobalGameTimer.CurrentTime.Year())
-	self.interestRate = ledger.loanrate
-	self.interestRateL.SetText(fmt.Sprintf("%.2f %%/y", ledger.loanrate*100))
+func (self *BankWidget) LedgerChange() {
+	yearaccount := self.ledger.GetYearAccount(self.timer.CurrentTime.Year())
+	self.interestRate = self.ledger.loanrate
+	self.interestRateL.SetText(fmt.Sprintf("%.2f %%/y", self.ledger.loanrate*100))
 	self.accountPosition.SetText(fmt.Sprintf("%.2f $", yearaccount["51"]))
 	self.accountDebt.SetText(fmt.Sprintf("%.2f $", -yearaccount["16"]))
 	self.currentInterest.SetText(fmt.Sprintf("%.2f $/y", -yearaccount["16"]*self.interestRate))
@@ -37,6 +40,8 @@ func (self *BankWidget) LedgerChange(ledger *Ledger) {
 func NewBankWidget(root *sws.RootWidget) *BankWidget {
 	bankwidget := &BankWidget{
 		CoreWidget: *sws.NewCoreWidget(420, 280),
+		timer:      nil,
+		ledger:     nil,
 	}
 
 	title := sws.NewLabelWidget(190, 25, "Your Bank account")
@@ -74,74 +79,74 @@ func NewBankWidget(root *sws.RootWidget) *BankWidget {
 	currentInterest.Move(270, 115)
 	bankwidget.AddChild(currentInterest)
 	bankwidget.currentInterest = currentInterest
-	
+
 	hr1 := sws.NewHr(460)
-	hr1.Move(10,145)
+	hr1.Move(10, 145)
 	bankwidget.AddChild(hr1)
 
-	askLabel := sws.NewLabelWidget(100,25,"Ask for a loan")
-	askLabel.Move(80,150)
+	askLabel := sws.NewLabelWidget(100, 25, "Ask for a loan")
+	askLabel.Move(80, 150)
 	bankwidget.AddChild(askLabel)
-	
-	askAmountLabel := sws.NewLabelWidget(100,25,"Amount")
-	askAmountLabel.Move(80,180)
+
+	askAmountLabel := sws.NewLabelWidget(100, 25, "Amount")
+	askAmountLabel.Move(80, 180)
 	bankwidget.AddChild(askAmountLabel)
-	
-	askInput := sws.NewInputWidget(100,25,"")
-	askInput.Move(180,180)
+
+	askInput := sws.NewInputWidget(100, 25, "")
+	askInput.Move(180, 180)
 	bankwidget.askInput = askInput
 	bankwidget.AddChild(askInput)
-	
+
 	bankwidget.askloanbutton = sws.NewButtonWidget(100, 25, "Ask")
 	bankwidget.askloanbutton.Move(290, 180)
 	bankwidget.AddChild(bankwidget.askloanbutton)
 	bankwidget.askloanbutton.SetClicked(func() {
 		value := bankwidget.askInput.GetText()
-		if asked,err := strconv.ParseFloat(value,64); err!=nil {
+		if asked, err := strconv.ParseFloat(value, 64); err != nil {
 			sws.ShowModalError(root, "Amount error", "resources/paper-bill.png", "The amount doesn't seems to be a number", nil)
 		} else {
-			yearaccountN := GlobalLedger.GetYearAccount(timer.GlobalGameTimer.CurrentTime.Year())
-			yearaccountN1 := GlobalLedger.GetYearAccount(timer.GlobalGameTimer.CurrentTime.Year()-1)
+			yearaccountN := bankwidget.ledger.GetYearAccount(bankwidget.timer.CurrentTime.Year())
+			yearaccountN1 := bankwidget.ledger.GetYearAccount(bankwidget.timer.CurrentTime.Year() - 1)
 			currentDebt := -yearaccountN["16"]
 			maxAllowed := 40000.0
-			if maxAllowed < 4 * -yearaccountN1["70"] {
+			if maxAllowed < 4*-yearaccountN1["70"] {
 				maxAllowed = 4 * -yearaccountN1["70"]
 			}
-			if asked + currentDebt > maxAllowed {
+			if asked+currentDebt > maxAllowed {
 				sws.ShowModalError(root, "Amount inquiry error", "resources/paper-bill.png", "Seriously? You want to loan that amount? Kid, prove you can run a big business and we will reconsider your demand", nil)
 			} else {
-				GlobalLedger.AskLoan("bank loan",timer.GlobalGameTimer.CurrentTime,asked)
+				bankwidget.ledger.AskLoan("bank loan", bankwidget.timer.CurrentTime, asked)
 			}
 			bankwidget.askInput.SetText("")
 		}
 	})
 
 	hr2 := sws.NewHr(390)
-	hr2.Move(80,215)
+	hr2.Move(80, 215)
 	bankwidget.AddChild(hr2)
 
-	paybackLabel := sws.NewLabelWidget(100,25,"Refund loan")
-	paybackLabel.Move(80,220)
+	paybackLabel := sws.NewLabelWidget(100, 25, "Refund loan")
+	paybackLabel.Move(80, 220)
 	bankwidget.AddChild(paybackLabel)
-	
-	paybackAmountLabel := sws.NewLabelWidget(100,25,"Amount")
-	paybackAmountLabel.Move(80,250)
+
+	paybackAmountLabel := sws.NewLabelWidget(100, 25, "Amount")
+	paybackAmountLabel.Move(80, 250)
 	bankwidget.AddChild(paybackAmountLabel)
-	
-	paybackInput := sws.NewInputWidget(100,25,"")
-	paybackInput.Move(180,250)
+
+	paybackInput := sws.NewInputWidget(100, 25, "")
+	paybackInput.Move(180, 250)
 	bankwidget.paybackInput = paybackInput
 	bankwidget.AddChild(paybackInput)
-	
+
 	bankwidget.paybackbutton = sws.NewButtonWidget(100, 25, "Payback")
 	bankwidget.paybackbutton.Move(290, 250)
 	bankwidget.AddChild(bankwidget.paybackbutton)
 	bankwidget.paybackbutton.SetClicked(func() {
 		value := bankwidget.paybackInput.GetText()
-		if refund,err := strconv.ParseFloat(value,64); err!=nil {
+		if refund, err := strconv.ParseFloat(value, 64); err != nil {
 			sws.ShowModalError(root, "Amount error", "resources/paper-bill.png", "The amount doesn't seems to be a number", nil)
 		} else {
-			yearaccountN := GlobalLedger.GetYearAccount(timer.GlobalGameTimer.CurrentTime.Year())
+			yearaccountN := bankwidget.ledger.GetYearAccount(bankwidget.timer.CurrentTime.Year())
 			currentDebt := -yearaccountN["16"]
 			currentMoney := yearaccountN["51"]
 			if refund > currentDebt {
@@ -150,23 +155,30 @@ func NewBankWidget(root *sws.RootWidget) *BankWidget {
 			if refund > currentMoney {
 				sws.ShowModalError(root, "Cashflow problem", "resources/paper-bill.png", "I don't think you can afford to refund so much money, keep working on your business...", nil)
 			} else {
-				GlobalLedger.RefundLoan("payback bank debt",timer.GlobalGameTimer.CurrentTime,refund)
+				bankwidget.ledger.RefundLoan("payback bank debt", bankwidget.timer.CurrentTime, refund)
 			}
 			bankwidget.paybackInput.SetText("")
 		}
 	})
-	
-	bankicon := sws.NewLabelWidget(64,64,"")
+
+	bankicon := sws.NewLabelWidget(64, 64, "")
 	bankicon.SetImage("resources/icon-bank.big.png")
-	bankicon.Move(4,40)
+	bankicon.Move(4, 40)
 	bankwidget.AddChild(bankicon)
 
-	loanicon := sws.NewLabelWidget(64,64,"")
+	loanicon := sws.NewLabelWidget(64, 64, "")
 	loanicon.SetImage("resources/icon-loan.big.png")
-	loanicon.Move(4,183)
+	loanicon.Move(4, 183)
 	bankwidget.AddChild(loanicon)
 
-	GlobalLedger.AddSubscriber(bankwidget)
-
 	return bankwidget
+}
+
+func (self *BankWidget) SetGame(timer *timer.GameTimer, ledger *Ledger) {
+	self.timer = timer
+	if self.ledger != nil {
+		self.ledger.RemoveSubscriber(self)
+	}
+	self.ledger = ledger
+	ledger.AddSubscriber(self)
 }

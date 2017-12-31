@@ -45,8 +45,8 @@ func NewMainInventoryWidget(root *sws.RootWidget) *MainInventoryWidget {
 		rootwindow:  root,
 		mainwidget:  mainwidget,
 		tabwidget:   sws.NewTabWidget(200, 200),
-		serverpools: supplier.NewPoolManagementWidget(root, supplier.GlobalInventory),
-		offers:      supplier.NewOfferManagementWidget(root, supplier.GlobalInventory),
+		serverpools: supplier.NewPoolManagementWidget(root),
+		offers:      supplier.NewOfferManagementWidget(root),
 	}
 	widget.tabwidget.AddTab("server pools", widget.serverpools)
 	widget.tabwidget.AddTab("offers", widget.offers)
@@ -58,4 +58,9 @@ func NewMainInventoryWidget(root *sws.RootWidget) *MainInventoryWidget {
 	})
 
 	return widget
+}
+
+func (self *MainInventoryWidget) SetGame(inventory *supplier.Inventory) {
+	self.serverpools.SetGame(inventory)
+	self.offers.SetGame(inventory)
 }

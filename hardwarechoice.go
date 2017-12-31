@@ -373,10 +373,10 @@ func (self *HardwareChoice) closeItemPanel() {
 	self.PostUpdate()
 }
 
-func NewHardwareChoice(inventory *supplier.Inventory) *HardwareChoice {
+func NewHardwareChoice() *HardwareChoice {
 	hc := &HardwareChoice{
 		CoreWidget:           *sws.NewCoreWidget(50, 0),
-		inventory:            inventory,
+		inventory:            nil,
 		currentPanelCategory: -1,
 	}
 	hc.SetColor(0)
@@ -386,7 +386,13 @@ func NewHardwareChoice(inventory *supplier.Inventory) *HardwareChoice {
 	hc.categories[CATEGORY_AC] = NewHardwareChoiceCategory(CATEGORY_AC, hc)
 	hc.categories[CATEGORY_GENERATOR] = NewHardwareChoiceCategory(CATEGORY_GENERATOR, hc)
 
-	inventory.AddInventorySubscriber(hc)
-
 	return hc
+}
+
+func (self *HardwareChoice) SetGame(inventory *supplier.Inventory) {
+	if self.inventory != nil {
+		self.inventory.RemoveInventorySubscriber(self)
+	}
+	self.inventory = inventory
+	inventory.AddInventorySubscriber(self)
 }

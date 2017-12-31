@@ -13,6 +13,7 @@ import (
 //
 type ServerPageConfigureWidget struct {
 	sws.CoreWidget
+	trend         *Trend
 	title         *sws.LabelWidget
 	buybutton     *sws.ButtonWidget
 	configureicon *sws.LabelWidget
@@ -55,7 +56,7 @@ func (self *ServerPageConfigureWidget) SetConfType(trend *Trend, conftypename st
 	self.configureicon.SetImage("resources/" + self.conftype.ServerSprite + "0.png")
 
 	vt := false
-	if Trends.Vt.CurrentValue(self.today) > 0 {
+	if trend.Vt.CurrentValue(self.today) > 0 {
 		vt = true
 	}
 	// conf
@@ -65,14 +66,14 @@ func (self *ServerPageConfigureWidget) SetConfType(trend *Trend, conftypename st
 		VtSupport:    vt,
 		NbDisks:      self.conftype.NbDisks[0],
 		NbSlotRam:    self.conftype.NbSlotRam[0],
-		DiskSize:     Trends.Disksize.CurrentValue(self.today) / 4,
-		RamSize:      Trends.Ramsize.CurrentValue(self.today) / 8,
+		DiskSize:     trend.Disksize.CurrentValue(self.today) / 4,
+		RamSize:      trend.Ramsize.CurrentValue(self.today) / 8,
 		ConfType:     self.conftype,
 	}
 	//////// configuration
 	// processors
 	var nbprocs []string
-	maxcores := Trends.Corepercpu.CurrentValue(self.today)
+	maxcores := trend.Corepercpu.CurrentValue(self.today)
 	for i := self.conftype.NbProcessors[0]; i <= self.conftype.NbProcessors[1]; i++ {
 		nbprocs = append(nbprocs, strconv.Itoa(int(i)))
 	}
@@ -112,7 +113,7 @@ func (self *ServerPageConfigureWidget) SetConfType(trend *Trend, conftypename st
 	self.nbdisk.SetChoices(nbdisks)
 
 	// disk size
-	maxsize := Trends.Disksize.CurrentValue(self.today)
+	maxsize := trend.Disksize.CurrentValue(self.today)
 	self.ddsizechoice = []int32{maxsize / 4, maxsize / 2, maxsize}
 	var ddsize = make([]string, 3)
 	if maxsize > 8000000 {
@@ -138,7 +139,7 @@ func (self *ServerPageConfigureWidget) SetConfType(trend *Trend, conftypename st
 	self.nbram.SetChoices(nbrams)
 
 	// disk size
-	maxramsize := Trends.Ramsize.CurrentValue(self.today)
+	maxramsize := trend.Ramsize.CurrentValue(self.today)
 	self.ramsizechoice = []int32{maxramsize / 8, maxramsize / 4, maxramsize / 2, maxramsize}
 	var ramsize = make([]string, 4)
 	if maxramsize > 16000 {
@@ -184,9 +185,10 @@ func (self *ServerPageConfigureWidget) GetNbUnit() int32 {
 	return self.nbunits
 }
 
-func NewServerPageConfigureWidget(trend *Trend, width, height int32) *ServerPageConfigureWidget {
+func NewServerPageConfigureWidget(width, height int32) *ServerPageConfigureWidget {
 	serverpageconfigure := &ServerPageConfigureWidget{
 		CoreWidget: *sws.NewCoreWidget(width, height),
+		trend:      nil,
 	}
 	serverpageconfigure.SetColor(0xffeeeeee)
 
@@ -220,7 +222,7 @@ func NewServerPageConfigureWidget(trend *Trend, width, height int32) *ServerPage
 		if choice, err := strconv.Atoi(nbproc.Choices[nbproc.ActiveChoice]); err == nil {
 			serverpageconfigure.conf.NbProcessors = int32(choice)
 		}
-		serverpageconfigure.unitprice = math.Floor(serverpageconfigure.conf.Price(trend, serverpageconfigure.today))
+		serverpageconfigure.unitprice = math.Floor(serverpageconfigure.conf.Price(serverpageconfigure.trend, serverpageconfigure.today))
 		serverpageconfigure.pricevalue.SetText(strconv.FormatFloat(serverpageconfigure.unitprice, 'f', 0, 64))
 		serverpageconfigure.pricetotal.SetText(strconv.FormatFloat(serverpageconfigure.unitprice*float64(serverpageconfigure.nbunits), 'f', 0, 64))
 	})
@@ -252,7 +254,7 @@ func NewServerPageConfigureWidget(trend *Trend, width, height int32) *ServerPage
 	serverpageconfigure.nbcores = nbcores
 	nbcores.SetClicked(func() {
 		serverpageconfigure.conf.NbCore = serverpageconfigure.nbcorechoice[nbcores.ActiveChoice]
-		serverpageconfigure.unitprice = math.Floor(serverpageconfigure.conf.Price(trend, serverpageconfigure.today))
+		serverpageconfigure.unitprice = math.Floor(serverpageconfigure.conf.Price(serverpageconfigure.trend, serverpageconfigure.today))
 		serverpageconfigure.pricevalue.SetText(strconv.FormatFloat(serverpageconfigure.unitprice, 'f', 0, 64))
 		serverpageconfigure.pricetotal.SetText(strconv.FormatFloat(serverpageconfigure.unitprice*float64(serverpageconfigure.nbunits), 'f', 0, 64))
 	})
@@ -272,7 +274,7 @@ func NewServerPageConfigureWidget(trend *Trend, width, height int32) *ServerPage
 		if choice, err := strconv.Atoi(nbdisk.Choices[nbdisk.ActiveChoice]); err == nil {
 			serverpageconfigure.conf.NbDisks = int32(choice)
 		}
-		serverpageconfigure.unitprice = math.Floor(serverpageconfigure.conf.Price(trend, serverpageconfigure.today))
+		serverpageconfigure.unitprice = math.Floor(serverpageconfigure.conf.Price(serverpageconfigure.trend, serverpageconfigure.today))
 		serverpageconfigure.pricevalue.SetText(strconv.FormatFloat(serverpageconfigure.unitprice, 'f', 0, 64))
 		serverpageconfigure.pricetotal.SetText(strconv.FormatFloat(serverpageconfigure.unitprice*float64(serverpageconfigure.nbunits), 'f', 0, 64))
 	})
@@ -290,7 +292,7 @@ func NewServerPageConfigureWidget(trend *Trend, width, height int32) *ServerPage
 	serverpageconfigure.disksize = disksize
 	disksize.SetClicked(func() {
 		serverpageconfigure.conf.DiskSize = serverpageconfigure.ddsizechoice[disksize.ActiveChoice]
-		serverpageconfigure.unitprice = math.Floor(serverpageconfigure.conf.Price(trend, serverpageconfigure.today))
+		serverpageconfigure.unitprice = math.Floor(serverpageconfigure.conf.Price(serverpageconfigure.trend, serverpageconfigure.today))
 		serverpageconfigure.pricevalue.SetText(strconv.FormatFloat(serverpageconfigure.unitprice, 'f', 0, 64))
 		serverpageconfigure.pricetotal.SetText(strconv.FormatFloat(serverpageconfigure.unitprice*float64(serverpageconfigure.nbunits), 'f', 0, 64))
 	})
@@ -310,7 +312,7 @@ func NewServerPageConfigureWidget(trend *Trend, width, height int32) *ServerPage
 		if choice, err := strconv.Atoi(nbram.Choices[nbram.ActiveChoice]); err == nil {
 			serverpageconfigure.conf.NbSlotRam = int32(choice)
 		}
-		serverpageconfigure.unitprice = math.Floor(serverpageconfigure.conf.Price(trend, serverpageconfigure.today))
+		serverpageconfigure.unitprice = math.Floor(serverpageconfigure.conf.Price(serverpageconfigure.trend, serverpageconfigure.today))
 		serverpageconfigure.pricevalue.SetText(strconv.FormatFloat(serverpageconfigure.unitprice, 'f', 0, 64))
 		serverpageconfigure.pricetotal.SetText(strconv.FormatFloat(serverpageconfigure.unitprice*float64(serverpageconfigure.nbunits), 'f', 0, 64))
 	})
@@ -328,7 +330,7 @@ func NewServerPageConfigureWidget(trend *Trend, width, height int32) *ServerPage
 	serverpageconfigure.ramsize = ramsize
 	ramsize.SetClicked(func() {
 		serverpageconfigure.conf.RamSize = serverpageconfigure.ramsizechoice[ramsize.ActiveChoice]
-		serverpageconfigure.unitprice = math.Floor(serverpageconfigure.conf.Price(trend, serverpageconfigure.today))
+		serverpageconfigure.unitprice = math.Floor(serverpageconfigure.conf.Price(serverpageconfigure.trend, serverpageconfigure.today))
 		serverpageconfigure.pricevalue.SetText(strconv.FormatFloat(serverpageconfigure.unitprice, 'f', 0, 64))
 		serverpageconfigure.pricetotal.SetText(strconv.FormatFloat(serverpageconfigure.unitprice*float64(serverpageconfigure.nbunits), 'f', 0, 64))
 	})
@@ -367,7 +369,7 @@ func NewServerPageConfigureWidget(trend *Trend, width, height int32) *ServerPage
 		if choice, err := strconv.Atoi(nbunits.Choices[nbunits.ActiveChoice]); err == nil {
 			serverpageconfigure.nbunits = int32(choice)
 		}
-		serverpageconfigure.unitprice = math.Floor(serverpageconfigure.conf.Price(trend, serverpageconfigure.today))
+		serverpageconfigure.unitprice = math.Floor(serverpageconfigure.conf.Price(serverpageconfigure.trend, serverpageconfigure.today))
 		serverpageconfigure.pricevalue.SetText(strconv.FormatFloat(serverpageconfigure.unitprice, 'f', 0, 64))
 		serverpageconfigure.pricetotal.SetText(strconv.FormatFloat(serverpageconfigure.unitprice*float64(serverpageconfigure.nbunits), 'f', 0, 64))
 	})
@@ -392,4 +394,8 @@ func NewServerPageConfigureWidget(trend *Trend, width, height int32) *ServerPage
 	serverpageconfigure.buybutton = buyButton
 
 	return serverpageconfigure
+}
+
+func (self *ServerPageConfigureWidget) SetGame(trend *Trend) {
+	self.trend = trend
 }

@@ -95,17 +95,18 @@ func NewRackWidgetLine(item *supplier.InventoryItem) *RackWidgetLine {
 
 type RackWidgetItems struct {
 	sws.CoreWidget
-	vbox   *sws.VBoxWidget
-	scroll *sws.ScrollWidget
+	vbox      *sws.VBoxWidget
+	scroll    *sws.ScrollWidget
+	inventory *supplier.Inventory
 }
 
-func NewRackWidgetItems(inventory *supplier.Inventory) *RackWidgetItems {
+func NewRackWidgetItems() *RackWidgetItems {
 	widgetitems := &RackWidgetItems{
 		CoreWidget: *sws.NewCoreWidget(300, 100),
 		vbox:       sws.NewVBoxWidget(300, 0),
 		scroll:     sws.NewScrollWidget(300, 300),
+		inventory:  nil,
 	}
-	inventory.AddInventorySubscriber(widgetitems)
 
 	label := sws.NewLabelWidget(300, 25, "Available server to place: ")
 	widgetitems.AddChild(label)
@@ -116,6 +117,14 @@ func NewRackWidgetItems(inventory *supplier.Inventory) *RackWidgetItems {
 	widgetitems.AddChild(widgetitems.scroll)
 
 	return widgetitems
+}
+
+func (self *RackWidgetItems) SetGame(inventory *supplier.Inventory) {
+	if self.inventory != nil {
+		self.inventory.RemoveInventorySubscriber(self)
+	}
+	self.inventory = inventory
+	inventory.AddInventorySubscriber(self)
 }
 
 func (self *RackWidgetItems) Resize(w, h int32) {
@@ -432,17 +441,24 @@ func (self *RackChassisWidget) DragDrop(x, y int32, payload sws.DragPayload) boo
 	return false
 }
 
-func NewRackChassisWidget(inventory *supplier.Inventory) *RackChassisWidget {
+func NewRackChassisWidget() *RackChassisWidget {
 	chassis := &RackChassisWidget{
 		CoreWidget: *sws.NewCoreWidget(420, 42*RACK_SIZE+10+CHASSIS_OFFSET),
-		inventory:  inventory,
+		inventory:  nil,
 		ydrag:      -1,
 		xpos:       -1,
 		ypos:       -1,
 		items:      make([]*supplier.InventoryItem, 0),
 	}
-	inventory.AddInventorySubscriber(chassis)
 	return chassis
+}
+
+func (self *RackChassisWidget) SetGame(inventory *supplier.Inventory) {
+	if self.inventory != nil {
+		inventory.RemoveInventorySubscriber(self)
+	}
+	self.inventory = inventory
+	inventory.AddInventorySubscriber(self)
 }
 
 //
@@ -453,29 +469,31 @@ func NewRackChassisWidget(inventory *supplier.Inventory) *RackChassisWidget {
 //
 type RackWidget struct {
 	sws.CoreWidget
-	mainwidget     *sws.MainWidget
-	rootwindow     *sws.RootWidget
-	inventory      *supplier.Inventory
-	xactiveElement int32
-	yactiveElement int32
-	activeElement  TileElement
-	splitview      *sws.SplitviewWidget
-	rackchassis    *RackChassisWidget
+	mainwidget      *sws.MainWidget
+	rootwindow      *sws.RootWidget
+	xactiveElement  int32
+	yactiveElement  int32
+	activeElement   TileElement
+	splitview       *sws.SplitviewWidget
+	rackchassis     *RackChassisWidget
+	rackwidgetitems *RackWidgetItems
+	inventory       *supplier.Inventory
 }
 
-func NewRackWidget(rootwindow *sws.RootWidget, inventory *supplier.Inventory) *RackWidget {
+func NewRackWidget(rootwindow *sws.RootWidget) *RackWidget {
 	mainwidget := sws.NewMainWidget(650, 400, " Rack info ", false, true)
 	svBottom := sws.NewSplitviewWidget(400, 300, true)
 
 	rack := &RackWidget{
-		mainwidget:     mainwidget,
-		rootwindow:     rootwindow,
-		inventory:      inventory,
-		xactiveElement: -1,
-		yactiveElement: -1,
-		activeElement:  nil,
-		splitview:      svBottom,
-		rackchassis:    NewRackChassisWidget(inventory),
+		mainwidget:      mainwidget,
+		rootwindow:      rootwindow,
+		inventory:       nil,
+		xactiveElement:  -1,
+		yactiveElement:  -1,
+		activeElement:   nil,
+		splitview:       svBottom,
+		rackchassis:     NewRackChassisWidget(),
+		rackwidgetitems: NewRackWidgetItems(),
 	}
 
 	sv := sws.NewSplitviewWidget(200, 200, false)
@@ -499,7 +517,7 @@ func NewRackWidget(rootwindow *sws.RootWidget, inventory *supplier.Inventory) *R
 
 	svBottom.PlaceSplitBar(300)
 	svBottom.SplitBarMovable(false)
-	svBottom.SetLeftWidget(NewRackWidgetItems(inventory))
+	svBottom.SetLeftWidget(rack.rackwidgetitems)
 
 	scrollright := sws.NewScrollWidget(320, 300)
 	scrollright.SetInnerWidget(rack.rackchassis)
@@ -511,6 +529,12 @@ func NewRackWidget(rootwindow *sws.RootWidget, inventory *supplier.Inventory) *R
 		rack.Hide()
 	})
 	return rack
+}
+
+func (self *RackWidget) SetGame(inventory *supplier.Inventory) {
+	self.inventory = inventory
+	self.rackchassis.SetGame(inventory)
+	self.rackwidgetitems.SetGame(inventory)
 }
 
 func (self *RackWidget) Show(x, y int32) {

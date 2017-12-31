@@ -491,22 +491,32 @@ func (self *DcWidget) SaveMap() string {
 	return s
 }
 
-func NewDcWidget(w, h int32, rootwindow *sws.RootWidget, inventory *supplier.Inventory) *DcWidget {
+func NewDcWidget(w, h int32, rootwindow *sws.RootWidget) *DcWidget {
 	corewidget := sws.NewCoreWidget(w, h)
-	rackwidget := NewRackWidget(rootwindow, inventory)
+	rackwidget := NewRackWidget(rootwindow)
 	widget := &DcWidget{CoreWidget: *corewidget,
 		rackwidget: rackwidget,
 		rootwindow: rootwindow,
 		tiles:      [][]*Tile{{}},
 		xRoot:      0,
 		yRoot:      0,
-		inventory:  inventory,
-		hc:         NewHardwareChoice(inventory),
+		inventory:  nil,
+		hc:         NewHardwareChoice(),
 	}
-	inventory.AddInventorySubscriber(widget)
 
 	//widget.hc.Move(0,h/2-100)
 	widget.hc.Move(0, 0)
 	widget.AddChild(widget.hc)
 	return widget
+}
+
+func (self *DcWidget) SetGame(inventory *supplier.Inventory) {
+	if self.inventory != nil {
+		self.inventory.RemoveInventorySubscriber(self)
+	}
+	self.inventory = inventory
+	inventory.AddInventorySubscriber(self)
+
+	self.rackwidget.SetGame(inventory)
+	self.hc.SetGame(inventory)
 }

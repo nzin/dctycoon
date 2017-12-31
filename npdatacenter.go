@@ -1,7 +1,11 @@
-package supplier
+package dctycoon
 
 import (
 	"encoding/json"
+	"fmt"
+
+	"github.com/nzin/dctycoon/accounting"
+	"github.com/nzin/dctycoon/supplier"
 
 	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/dctycoon/timer"
@@ -31,22 +35,34 @@ type BuyoutProfile struct {
 }
 
 type NPDatacenter struct {
-	inventory      *Inventory
-	trend          *Trend
-	timer          *timer.GameTimer
-	initialcapital float64
-	location       *LocationType
-	buyoutprofile  map[string]BuyoutProfile
+	inventory     *supplier.Inventory
+	ledger        *accounting.Ledger
+	trend         *supplier.Trend
+	timer         *timer.GameTimer
+	location      *supplier.LocationType
+	buyoutprofile map[string]BuyoutProfile
+}
+
+//
+// GetInventory is part of the Actor interface
+func (self *NPDatacenter) GetInventory() *supplier.Inventory {
+	return self.inventory
+}
+
+//
+// GetLedger is part of the Actor interface
+func (self *NPDatacenter) GetLedger() *accounting.Ledger {
+	return self.ledger
 }
 
 //
 // NewNPDatacenter() create a new NonPlayerDatacenter that will compete with the player
-func NewNPDatacenter(timer *timer.GameTimer, trend *Trend, initialcapital float64, locationid string, profilename string) *NPDatacenter {
+func NewNPDatacenter(timer *timer.GameTimer, trend *supplier.Trend, initialcapital float64, locationid string, profilename string) *NPDatacenter {
 	log.Debug("NewNPDatacenter(", timer, ",", trend, ",", initialcapital, ",", locationid, ",", profilename, ")")
 	// a default value
-	location := AvailableLocation["siliconvalley"]
+	location := supplier.AvailableLocation["siliconvalley"]
 
-	if l, ok := AvailableLocation[locationid]; ok {
+	if l, ok := supplier.AvailableLocation[locationid]; ok {
 		location = l
 	} else {
 		log.Error("NewNPDatacenter(): location " + locationid + " not found")
@@ -66,13 +82,22 @@ func NewNPDatacenter(timer *timer.GameTimer, trend *Trend, initialcapital float6
 	}
 
 	datacenter := &NPDatacenter{
-		inventory:      NewInventory(timer),
-		trend:          trend,
-		timer:          timer,
-		initialcapital: initialcapital,
-		location:       location,
-		buyoutprofile:  profile,
+		inventory:     supplier.NewInventory(timer),
+		ledger:        accounting.NewLedger(timer, location.Taxrate, location.Bankinterestrate),
+		trend:         trend,
+		timer:         timer,
+		location:      location,
+		buyoutprofile: profile,
 	}
+
+	// add some equity
+	datacenter.ledger.AddMovement(accounting.LedgerMovement{
+		Description: "initial capital",
+		Amount:      initialcapital,
+		AccountFrom: "4561",
+		AccountTo:   "5121",
+		Date:        timer.CurrentTime,
+	})
 
 	timer.AddCron(1, 1, -1, func() {
 		datacenter.NewYearOperations()
@@ -92,7 +117,6 @@ func (self *NPDatacenter) NewYearOperations() {
 	}
 
 	// loop over the buyoutprofile and buy some hardware + create the corresponding offer
-	cartitems := []*CartItem{}
 	for profilename, profile := range self.buyoutprofile {
 
 		// if the offer is a VPS and we don't have yet VT enable hardware... we skip for next year
@@ -100,8 +124,8 @@ func (self *NPDatacenter) NewYearOperations() {
 			continue
 		}
 
-		conftype := GetServerConfTypeByName(profile.Servertype)
-		var serverconf ServerConf
+		conftype := supplier.GetServerConfTypeByName(profile.Servertype)
+		var serverconf supplier.ServerConf
 		if conftype != nil {
 			switch profile.Configuration {
 			case "low":
@@ -157,19 +181,24 @@ func (self *NPDatacenter) NewYearOperations() {
 			unitprice := serverconf.Price(self.trend, self.timer.CurrentTime)
 			log.Info("NPDatacenter::NewYearOperations(): profilename", profilename, "unitprice:", unitprice, "profilemargin:", profile.Margin)
 
-			nb := int32((self.initialcapital * profile.Buyperyear) / unitprice)
+			currentCash := self.ledger.GetYearAccount(self.timer.CurrentTime.Year())["51"]
+
+			nb := int32((currentCash * profile.Buyperyear) / unitprice)
 			// if we can afford, then we buy it
 			if nb > 0 {
-				item := &CartItem{
-					Typeitem:   PRODUCT_SERVER,
+				item := &supplier.CartItem{
+					Typeitem:   supplier.PRODUCT_SERVER,
 					Serverconf: &serverconf,
 					Unitprice:  unitprice,
 					Nb:         nb,
 				}
-				cartitems = append(cartitems, item)
+				self.inventory.Cart = append(self.inventory.Cart, item)
+				self.ledger.BuyProduct(fmt.Sprintf("buying %s", profilename), self.timer.CurrentTime, item.Unitprice*float64(nb))
+				self.inventory.BuyCart(self.timer.CurrentTime)
+				self.inventory.Cart = make([]*supplier.CartItem, 0)
 
 				// create the offer
-				var pool ServerPool
+				var pool supplier.ServerPool
 				// check the first available pool
 				for _, p := range self.inventory.GetPools() {
 					if p.IsVps() == profile.Vps {
@@ -181,7 +210,7 @@ func (self *NPDatacenter) NewYearOperations() {
 					log.Error("NPDatacenter::NewYearOperations(): We didn't find a correct (default) pool!")
 					continue
 				}
-				offer := &ServerOffer{
+				offer := &supplier.ServerOffer{
 					Active:    true,
 					Name:      profilename,
 					Inventory: self.inventory,
@@ -197,6 +226,4 @@ func (self *NPDatacenter) NewYearOperations() {
 			}
 		}
 	}
-	self.inventory.Cart = cartitems
-	self.inventory.BuyCart(self.timer.CurrentTime)
 }

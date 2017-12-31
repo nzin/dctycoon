@@ -478,11 +478,11 @@ func (self *PoolManagementWidget) Resize(width, height int32) {
 	}
 }
 
-func NewPoolManagementWidget(root *sws.RootWidget, inventory *Inventory) *PoolManagementWidget {
+func NewPoolManagementWidget(root *sws.RootWidget) *PoolManagementWidget {
 	corewidget := sws.NewCoreWidget(800, 400)
 	widget := &PoolManagementWidget{
 		CoreWidget:             *corewidget,
-		inventory:              inventory,
+		inventory:              nil,
 		root:                   root,
 		instock:                make([]*InventoryItem, 0, 0),
 		searchUnassignedButton: sws.NewButtonWidget(150, 50, "Arrival"),
@@ -499,8 +499,6 @@ func NewPoolManagementWidget(root *sws.RootWidget, inventory *Inventory) *PoolMa
 	}
 	var assigned int32 = ASSIGNED_UNASSIGNED
 	widget.currentFilter.assigned = &assigned
-
-	inventory.AddInventorySubscriber(widget)
 
 	widget.searchUnassignedButton.SetClicked(func() {
 		widget.Search("assigned:unassigned")
@@ -589,4 +587,12 @@ func NewPoolManagementWidget(root *sws.RootWidget, inventory *Inventory) *PoolMa
 	})
 
 	return widget
+}
+
+func (self *PoolManagementWidget) SetGame(inventory *Inventory) {
+	if self.inventory != nil {
+		inventory.RemoveInventorySubscriber(self)
+	}
+	self.inventory = inventory
+	inventory.AddInventorySubscriber(self)
 }

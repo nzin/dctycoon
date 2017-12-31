@@ -34,6 +34,11 @@ type MainSupplierWidget struct {
 	content           sws.Widget
 	bannerwidget      *supplier.BannerWidget
 	explorewidget     *supplier.ServerPageExploreWidget
+	configurepage     *supplier.ServerPageConfigureWidget
+	trend             *supplier.Trend
+	timer             *timer.GameTimer
+	inventory         *supplier.Inventory
+	ledger            *accounting.Ledger
 }
 
 func (self *MainSupplierWidget) Show() {
@@ -56,7 +61,7 @@ func (self *MainSupplierWidget) Hide() {
 	}
 }
 
-func NewMainSupplierWidget(trend *supplier.Trend, root *sws.RootWidget) *MainSupplierWidget {
+func NewMainSupplierWidget(root *sws.RootWidget) *MainSupplierWidget {
 	mainwidget := sws.NewMainWidget(650, 400, " Your DEAL supplier", true, true)
 	scrollwidgetshop := sws.NewScrollWidget(600, 550)
 	scrollwidgetshop.SetColor(0xffffffff)
@@ -75,6 +80,11 @@ func NewMainSupplierWidget(trend *supplier.Trend, root *sws.RootWidget) *MainSup
 		scrollwidgetcart:  scrollwidgetcart,
 		scrollwidgettrack: scrollwidgettrack,
 		splitviewwidget:   sv,
+		configurepage:     supplier.NewServerPageConfigureWidget(480, 700),
+		trend:             nil,
+		timer:             nil,
+		inventory:         nil,
+		ledger:            nil,
 	}
 	mainwidget.SetCloseCallback(func() {
 		widget.Hide()
@@ -143,8 +153,7 @@ func NewMainSupplierWidget(trend *supplier.Trend, root *sws.RootWidget) *MainSup
 	bladepage.Move(120, 160)
 
 	// configure
-	configurepage := supplier.NewServerPageConfigureWidget(trend, 480, 700)
-	configurepage.Move(120, 160)
+	widget.configurepage.Move(120, 160)
 
 	// buttons callback
 
@@ -262,84 +271,77 @@ func NewMainSupplierWidget(trend *supplier.Trend, root *sws.RootWidget) *MainSup
 
 	// callback configure
 	towerpage.SetConfigureTower1Callback(func() {
-		now := timer.GlobalGameTimer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		//serverpage.RemoveChild(banners)
-		configurepage.SetConfType(trend, "T1000", now)
-		widget.content = configurepage
-		serverpage.AddChild(configurepage)
+		widget.configurepage.SetConfType(widget.trend, "T1000", widget.timer.CurrentTime)
+		widget.content = widget.configurepage
+		serverpage.AddChild(widget.configurepage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
 		//		sws.PostUpdate()
 	})
 
 	rackpage.SetConfigureRack1Callback(func() {
-		now := timer.GlobalGameTimer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		//serverpage.RemoveChild(banners)
-		configurepage.SetConfType(trend, "R100", now)
-		widget.content = configurepage
-		serverpage.AddChild(configurepage)
+		widget.configurepage.SetConfType(widget.trend, "R100", widget.timer.CurrentTime)
+		widget.content = widget.configurepage
+		serverpage.AddChild(widget.configurepage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
 		//		sws.PostUpdate()
 	})
 
 	rackpage.SetConfigureRack2Callback(func() {
-		now := timer.GlobalGameTimer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		//serverpage.RemoveChild(banners)
-		configurepage.SetConfType(trend, "R200", now)
-		widget.content = configurepage
-		serverpage.AddChild(configurepage)
+		widget.configurepage.SetConfType(widget.trend, "R200", widget.timer.CurrentTime)
+		widget.content = widget.configurepage
+		serverpage.AddChild(widget.configurepage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
 		//		sws.PostUpdate()
 	})
 
 	rackpage.SetConfigureRack4Callback(func() {
-		now := timer.GlobalGameTimer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		//serverpage.RemoveChild(banners)
-		configurepage.SetConfType(trend, "R400", now)
-		widget.content = configurepage
-		serverpage.AddChild(configurepage)
+		widget.configurepage.SetConfType(widget.trend, "R400", widget.timer.CurrentTime)
+		widget.content = widget.configurepage
+		serverpage.AddChild(widget.configurepage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
 		//		sws.PostUpdate()
 	})
 
 	rackpage.SetConfigureRack6Callback(func() {
-		now := timer.GlobalGameTimer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		//serverpage.RemoveChild(banners)
-		configurepage.SetConfType(trend, "R600", now)
-		widget.content = configurepage
-		serverpage.AddChild(configurepage)
+		widget.configurepage.SetConfType(widget.trend, "R600", widget.timer.CurrentTime)
+		widget.content = widget.configurepage
+		serverpage.AddChild(widget.configurepage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
 		//		sws.PostUpdate()
 	})
 
 	bladepage.SetConfigureBlade1Callback(func() {
-		now := timer.GlobalGameTimer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		//serverpage.RemoveChild(banners)
-		configurepage.SetConfType(trend, "B100", now)
-		widget.content = configurepage
-		serverpage.AddChild(configurepage)
+		widget.configurepage.SetConfType(widget.trend, "B100", widget.timer.CurrentTime)
+		widget.content = widget.configurepage
+		serverpage.AddChild(widget.configurepage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
 		//		sws.PostUpdate()
 	})
 
 	bladepage.SetConfigureBlade2Callback(func() {
-		now := timer.GlobalGameTimer.CurrentTime
 		serverpage.RemoveChild(widget.content)
 		//serverpage.RemoveChild(banners)
-		configurepage.SetConfType(trend, "B200", now)
-		widget.content = configurepage
-		serverpage.AddChild(configurepage)
+		widget.configurepage.SetConfType(widget.trend, "B200", widget.timer.CurrentTime)
+		widget.content = widget.configurepage
+		serverpage.AddChild(widget.configurepage)
 		scrollwidgetshop.SetHorizontalPosition(0)
 		scrollwidgetshop.SetVerticalPosition(0)
 		//		sws.PostUpdate()
@@ -354,26 +356,26 @@ func NewMainSupplierWidget(trend *supplier.Trend, root *sws.RootWidget) *MainSup
 		scrollwidgetcart.SetVerticalPosition(0)
 		//		sws.PostUpdate()
 	})
-	configurepage.SetAddCartCallback(func() {
+	widget.configurepage.SetAddCartCallback(func() {
 		sv.SetRightWidget(scrollwidgetcart)
-		widget.cartpage.AddItem(configurepage.GetProductType(), configurepage.GetConf(), configurepage.GetUnitPrice(), configurepage.GetNbUnit())
+		widget.cartpage.AddItem(widget.configurepage.GetProductType(), widget.configurepage.GetConf(), widget.configurepage.GetUnitPrice(), widget.configurepage.GetNbUnit())
 		scrollwidgetcart.Resize(scrollwidgetcart.Width(), scrollwidgetcart.Height())
 		//		sws.PostUpdate()
 	})
 
 	widget.cartpage.SetBuyCallback(func() {
 		var totalprice float64
-		for _, item := range supplier.GlobalInventory.Cart {
+		for _, item := range widget.inventory.Cart {
 			totalprice += item.Unitprice * float64(item.Nb)
 		}
-		accounts := accounting.GlobalLedger.GetYearAccount(timer.GlobalGameTimer.CurrentTime.Year())
+		accounts := widget.ledger.GetYearAccount(widget.timer.CurrentTime.Year())
 		bankAccount := accounts["51"]
 		if bankAccount < totalprice {
 			// show modal window
 			sws.ShowModalError(widget.rootwindow, "Not enough funds", "resources/icon-triangular-big.png", fmt.Sprintf("You cannot buy for %.2f $ of goods: your bank account is currently credited of %.2f $!", totalprice, bankAccount), nil)
 		} else {
 			// we buy
-			for _, item := range supplier.GlobalInventory.Cart {
+			for _, item := range widget.inventory.Cart {
 				var desc string
 				switch item.Typeitem {
 				case supplier.PRODUCT_SERVER:
@@ -385,16 +387,16 @@ func NewMainSupplierWidget(trend *supplier.Trend, root *sws.RootWidget) *MainSup
 				case supplier.PRODUCT_GENERATOR:
 					desc = fmt.Sprintf("%dx Generator", item.Nb)
 				}
-				accounting.GlobalLedger.BuyProduct(desc, timer.GlobalGameTimer.CurrentTime, item.Unitprice*float64(item.Nb))
+				widget.ledger.BuyProduct(desc, widget.timer.CurrentTime, item.Unitprice*float64(item.Nb))
 			}
-			supplier.GlobalInventory.BuyCart(timer.GlobalGameTimer.CurrentTime)
+			widget.inventory.BuyCart(widget.timer.CurrentTime)
 			// we reset the cart
 			widget.cartpage.Reset()
 			sv.SetRightWidget(scrollwidgettrack)
 		}
 	})
 
-	widget.trackpage = supplier.NewTrackPageWidget(600, 850, supplier.GlobalInventory)
+	widget.trackpage = supplier.NewTrackPageWidget(600, 850)
 	scrollwidgettrack.SetInnerWidget(widget.trackpage)
 
 	track.SetClicked(func() {
@@ -404,4 +406,14 @@ func NewMainSupplierWidget(trend *supplier.Trend, root *sws.RootWidget) *MainSup
 	})
 
 	return widget
+}
+
+func (self *MainSupplierWidget) SetGame(timer *timer.GameTimer, inventory *supplier.Inventory, ledger *accounting.Ledger, trend *supplier.Trend) {
+	self.trend = trend
+	self.timer = timer
+	self.inventory = inventory
+	self.ledger = ledger
+	self.configurepage.SetGame(trend)
+	self.cartpage.SetGame(inventory)
+	self.trackpage.SetGame(inventory)
 }

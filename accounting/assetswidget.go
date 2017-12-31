@@ -2,6 +2,7 @@ package accounting
 
 import (
 	"fmt"
+
 	//"github.com/nzin/sws"
 	"github.com/nzin/dctycoon/timer"
 	//"github.com/veandco/go-sdl2/sdl"
@@ -20,15 +21,17 @@ import (
 // Total=
 type AssetsWidget struct {
 	FinanceWidget
+	timer  *timer.GameTimer
+	ledger *Ledger
 }
 
-func (self *AssetsWidget) LedgerChange(ledger *Ledger) {
-	self.yearN.SetText(fmt.Sprintf("%d (est.)", timer.GlobalGameTimer.CurrentTime.Year()))
-	self.yearN1.SetText(fmt.Sprintf("%d", timer.GlobalGameTimer.CurrentTime.Year()-1))
-	yearaccountN := GlobalLedger.GetYearAccount(timer.GlobalGameTimer.CurrentTime.Year())
-	yearaccountN1 := GlobalLedger.GetYearAccount(timer.GlobalGameTimer.CurrentTime.Year() - 1)
+func (self *AssetsWidget) LedgerChange() {
+	self.yearN.SetText(fmt.Sprintf("%d (est.)", self.timer.CurrentTime.Year()))
+	self.yearN1.SetText(fmt.Sprintf("%d", self.timer.CurrentTime.Year()-1))
+	yearaccountN := self.ledger.GetYearAccount(self.timer.CurrentTime.Year())
+	yearaccountN1 := self.ledger.GetYearAccount(self.timer.CurrentTime.Year() - 1)
 	// forecast account 44
-	_, taxN := computeYearlyTaxes(yearaccountN, ledger.taxrate)
+	_, taxN := computeYearlyTaxes(yearaccountN, self.ledger.taxrate)
 
 	self.lines["23"].N.SetText(fmt.Sprintf("%.2f $", yearaccountN["23"]+yearaccountN["28"]))
 	self.lines["23"].N1.SetText(fmt.Sprintf("%.2f $", yearaccountN1["23"]+yearaccountN1["28"]))
@@ -49,6 +52,8 @@ func (self *AssetsWidget) LedgerChange(ledger *Ledger) {
 func NewAssetsWidget() *AssetsWidget {
 	widget := &AssetsWidget{
 		FinanceWidget: *NewFinanceWidget(),
+		timer:         nil,
+		ledger:        nil,
 	}
 	widget.addCategory("Immobilized Assets")
 	widget.addLine("23", "Immobilization")
@@ -60,6 +65,14 @@ func NewAssetsWidget() *AssetsWidget {
 	widget.addSeparator()
 	widget.addLine("assets", "Total")
 
-	GlobalLedger.AddSubscriber(widget)
 	return widget
+}
+
+func (self *AssetsWidget) SetGame(timer *timer.GameTimer, ledger *Ledger) {
+	self.timer = timer
+	if self.ledger != nil {
+		self.ledger.RemoveSubscriber(self)
+	}
+	self.ledger = ledger
+	ledger.AddSubscriber(self)
 }

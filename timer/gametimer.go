@@ -37,8 +37,6 @@ type GameTimer struct {
 	cron        []*GameCronEvent
 }
 
-var GlobalGameTimer *GameTimer
-
 //
 // NewGameTimer create a timer object starting at 1/1/1990
 func NewGameTimer() *GameTimer {
