@@ -7,6 +7,7 @@ import (
 	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/dctycoon/timer"
 	"github.com/nzin/sws"
+	log "github.com/sirupsen/logrus"
 )
 
 type GameUI struct {
@@ -54,9 +55,10 @@ func NewGameUI(quit *bool, root *sws.RootWidget) *GameUI {
 // This re-init all ledger / inventory UI.
 // Therefore you have to populate the ledger and inventory AFTER calling this method
 func (self *GameUI) InitGame(globaltimer *timer.GameTimer, inventory *supplier.Inventory, ledger *accounting.Ledger, trends *supplier.Trend) {
-	self.dc.SetGame(inventory)
+	log.Debug("GameUI::InitGame()")
+	self.dc.SetGame(inventory, globaltimer.CurrentTime)
 	self.supplierwidget.SetGame(globaltimer, inventory, ledger, trends)
-	self.inventorywidget.SetGame(inventory)
+	self.inventorywidget.SetGame(inventory, globaltimer.CurrentTime)
 	self.accountingwidget.SetGame(globaltimer, ledger)
 	self.dock.SetGame(globaltimer, ledger)
 
@@ -70,9 +72,10 @@ func (self *GameUI) InitGame(globaltimer *timer.GameTimer, inventory *supplier.I
 // This re-init all ledger / inventory UI.
 // Therefore you have to populate the ledger and inventory AFTER calling this method
 func (self *GameUI) LoadGame(v map[string]interface{}, globaltimer *timer.GameTimer, inventory *supplier.Inventory, ledger *accounting.Ledger, trends *supplier.Trend) {
-	self.dc.SetGame(inventory)
+	log.Debug("GameUI::LoadGame()")
+	self.dc.SetGame(inventory, globaltimer.CurrentTime)
 	self.supplierwidget.SetGame(globaltimer, inventory, ledger, trends)
-	self.inventorywidget.SetGame(inventory)
+	self.inventorywidget.SetGame(inventory, globaltimer.CurrentTime)
 	self.accountingwidget.SetGame(globaltimer, ledger)
 	self.dock.SetGame(globaltimer, ledger)
 

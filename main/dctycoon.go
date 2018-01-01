@@ -53,4 +53,9 @@ func main() {
 	}
 
 	game.SaveGame("backup.map")
+
+	game.LoadGame("backup.map")
+	quit = false
+	for sws.PoolEvent() == false && quit == false {
+	}
 }

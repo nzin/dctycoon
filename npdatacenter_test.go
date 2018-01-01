@@ -24,7 +24,8 @@ func TestNPDatacenter(t *testing.T) {
 		"diskpricenoise": make([]interface{}, 0, 0),
 		"rampricenoise":  make([]interface{}, 0, 0),
 	}
-	trend := supplier.TrendLoad(j, ps, gt)
+	trend := supplier.NewTrend()
+	trend.Load(j, ps, gt)
 
 	data, err := global.Asset("assets/npdatacenter/mono_r100_r200.json")
 	assert.Empty(t, err, "load mono_r100_r200 profile asset")
@@ -33,7 +34,8 @@ func TestNPDatacenter(t *testing.T) {
 	err = json.Unmarshal(data, &profile)
 	assert.Empty(t, err, "parse mono_r100_r200 profile asset")
 
-	npd := NewNPDatacenter(gt, trend, 10000, "siliconvalley", "mono_r100_r200.json")
+	npd := NewNPDatacenter()
+	npd.Init(gt, 10000, "siliconvalley", trend, "mono_r100_r200.json")
 	assert.NotEmpty(t, npd, "NPDatacenter mono_r100_r200 profile loaded")
 	assert.Equal(t, "R100", npd.buyoutprofile["R100physical"].Servertype, "check if the profile is correctly loaded")
 }
@@ -47,9 +49,11 @@ func TestNPDatacenterBuyout(t *testing.T) {
 		"diskpricenoise": make([]interface{}, 0, 0),
 		"rampricenoise":  make([]interface{}, 0, 0),
 	}
-	trend := supplier.TrendLoad(j, ps, gt)
+	trend := supplier.NewTrend()
+	trend.Load(j, ps, gt)
 
-	npd := NewNPDatacenter(gt, trend, 10000, "siliconvalley", "mono_r100_r200.json")
+	npd := NewNPDatacenter()
+	npd.Init(gt, 10000, "siliconvalley", trend, "mono_r100_r200.json")
 	assert.NotEmpty(t, npd, "NPDatacenter mono_r100_r200 profile loaded")
 	assert.Equal(t, "R100", npd.buyoutprofile["R100physical"].Servertype, "check if the profile is correctly loaded")
 

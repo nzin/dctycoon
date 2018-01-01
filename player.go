@@ -50,12 +50,12 @@ func (self *Player) Init(timer *timer.GameTimer, initialcapital float64, locatio
 
 	if l, ok := supplier.AvailableLocation[locationname]; ok {
 		location = l
-		self.locationname = locationname
 	} else {
 		log.Error("NewPlayer(): location " + locationname + " not found")
-		self.locationname = "siliconvalley"
+		locationname = "siliconvalley"
 	}
 
+	self.locationname = locationname
 	self.inventory = supplier.NewInventory(timer)
 	self.ledger = accounting.NewLedger(timer, location.Taxrate, location.Bankinterestrate)
 	self.location = location

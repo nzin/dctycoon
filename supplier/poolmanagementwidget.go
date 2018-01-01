@@ -7,6 +7,7 @@ package supplier
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/sws"
@@ -589,10 +590,18 @@ func NewPoolManagementWidget(root *sws.RootWidget) *PoolManagementWidget {
 	return widget
 }
 
-func (self *PoolManagementWidget) SetGame(inventory *Inventory) {
+func (self *PoolManagementWidget) SetGame(inventory *Inventory, currenttime time.Time) {
 	if self.inventory != nil {
 		inventory.RemoveInventorySubscriber(self)
+		self.instock = make([]*InventoryItem, 0, 0)
 	}
 	self.inventory = inventory
 	inventory.AddInventorySubscriber(self)
+	self.Search("assigned:unassigned")
+	// for material not placed but in stock
+	for _, item := range self.inventory.Items {
+		if item.HasArrived(currenttime) {
+			self.ItemInStock(item)
+		}
+	}
 }

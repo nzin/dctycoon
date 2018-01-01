@@ -17,8 +17,6 @@ import (
 type Actor interface {
 	GetInventory() *supplier.Inventory
 	GetLedger() *accounting.Ledger
-	//	Save()
-	//	Load(gametimer)
 }
 
 //
@@ -28,7 +26,7 @@ type Actor interface {
 // - load/save game functions
 type Game struct {
 	timer           *timer.GameTimer
-	npactors        []Actor
+	npactors        []*NPDatacenter
 	player          *Player
 	demandtemplates []*supplier.DemandTemplate
 	serverbundles   []*supplier.ServerBundle
@@ -46,7 +44,7 @@ func NewGame(quit *bool, root *sws.RootWidget) *Game {
 	g := &Game{
 		timer:           nil,
 		player:          nil,
-		npactors:        make([]Actor, 0, 0),
+		npactors:        make([]*NPDatacenter, 0, 0),
 		demandtemplates: make([]*supplier.DemandTemplate, 0, 0),
 		serverbundles:   make([]*supplier.ServerBundle, 0, 0),
 		cronevent:       nil,
@@ -105,6 +103,7 @@ func (self *Game) LoadGame(filename string) {
 }
 
 func (self *Game) SaveGame(filename string) {
+	log.Debug("Game::SaveGame(", filename, ")")
 	gamefile, err := os.Create(filename)
 	if err != nil {
 		log.Error("Not able to create savegame: ", err.Error())

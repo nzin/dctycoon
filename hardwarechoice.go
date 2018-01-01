@@ -267,7 +267,7 @@ func (self *HardwareChoice) addItem(item *supplier.InventoryItem) {
 	self.categories[category].addItem(item)
 }
 
-func (self *HardwareChoice) removeItem(item *supplier.InventoryItem) {
+func (self *HardwareChoice) removeItem(item *supplier.InventoryItem, fadeeffect bool) {
 	var category int
 	switch item.Typeitem {
 	case supplier.PRODUCT_RACK:
@@ -286,26 +286,38 @@ func (self *HardwareChoice) removeItem(item *supplier.InventoryItem) {
 	self.categories[category].removeItem(item)
 
 	if len(self.categories[category].items) == 0 {
-		var fadein = 0
-		sws.TimerAddEvent(time.Now(), 100*time.Millisecond, func(evt *sws.TimerEvent) {
-			myfadein := &fadein
-			mycategory := category
-			*myfadein++
-			self.categories[mycategory].SetAlphaMod(uint8(255 * (5 - *myfadein) / 5))
-			self.categories[mycategory].PostUpdate()
-			if *myfadein == 5 {
-				evt.StopRepeat()
-				self.RemoveChild(self.categories[mycategory])
-				self.Resize(50, self.Height()-75)
+		if fadeeffect {
+			var fadein = 0
+			sws.TimerAddEvent(time.Now(), 100*time.Millisecond, func(evt *sws.TimerEvent) {
+				myfadein := &fadein
+				mycategory := category
+				*myfadein++
+				self.categories[mycategory].SetAlphaMod(uint8(255 * (5 - *myfadein) / 5))
+				self.categories[mycategory].PostUpdate()
+				if *myfadein == 5 {
+					evt.StopRepeat()
+					self.RemoveChild(self.categories[mycategory])
+					self.Resize(50, self.Height()-75)
 
-				for i, c := range self.GetChildren() {
-					c.Move(0, int32(i)*75)
+					for i, c := range self.GetChildren() {
+						c.Move(0, int32(i)*75)
+					}
+					if self.currentPanel != nil {
+						self.currentPanel.Move(50, self.categories[self.currentPanelCategory].Y())
+					}
 				}
-				if self.currentPanel != nil {
-					self.currentPanel.Move(50, self.categories[self.currentPanelCategory].Y())
-				}
+			})
+		} else {
+			self.RemoveChild(self.categories[category])
+			self.Resize(50, self.Height()-75)
+
+			for i, c := range self.GetChildren() {
+				c.Move(0, int32(i)*75)
 			}
-		})
+			if self.currentPanel != nil {
+				self.currentPanel.Move(50, self.categories[self.currentPanelCategory].Y())
+			}
+		}
 	}
 }
 
@@ -317,7 +329,7 @@ func (self *HardwareChoice) ItemInStock(item *supplier.InventoryItem) {
 }
 
 func (self *HardwareChoice) ItemRemoveFromStock(item *supplier.InventoryItem) {
-	self.removeItem(item)
+	self.removeItem(item, true)
 }
 
 func (self *HardwareChoice) ItemInstalled(item *supplier.InventoryItem) {
@@ -389,10 +401,19 @@ func NewHardwareChoice() *HardwareChoice {
 	return hc
 }
 
-func (self *HardwareChoice) SetGame(inventory *supplier.Inventory) {
+func (self *HardwareChoice) SetGame(inventory *supplier.Inventory, currenttime time.Time) {
 	if self.inventory != nil {
 		self.inventory.RemoveInventorySubscriber(self)
+		for _, i := range self.inventory.Items {
+			self.removeItem(i, false)
+		}
 	}
 	self.inventory = inventory
 	inventory.AddInventorySubscriber(self)
+	// for material not placed but in stock
+	for _, item := range self.inventory.Items {
+		if !item.IsPlaced() && item.HasArrived(currenttime) {
+			self.ItemInStock(item)
+		}
+	}
 }

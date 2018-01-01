@@ -40,7 +40,10 @@ type NPDatacenter struct {
 	trend         *supplier.Trend
 	timer         *timer.GameTimer
 	location      *supplier.LocationType
+	locationname  string
 	buyoutprofile map[string]BuyoutProfile
+	profilename   string
+	cronevent     *timer.GameCronEvent
 }
 
 //
@@ -57,41 +60,66 @@ func (self *NPDatacenter) GetLedger() *accounting.Ledger {
 
 //
 // NewNPDatacenter() create a new NonPlayerDatacenter that will compete with the player
-func NewNPDatacenter(timer *timer.GameTimer, trend *supplier.Trend, initialcapital float64, locationid string, profilename string) *NPDatacenter {
-	log.Debug("NewNPDatacenter(", timer, ",", trend, ",", initialcapital, ",", locationid, ",", profilename, ")")
+func NewNPDatacenter() *NPDatacenter {
+	log.Debug("NewNPDatacenter()")
 	// a default value
 	location := supplier.AvailableLocation["siliconvalley"]
 
-	if l, ok := supplier.AvailableLocation[locationid]; ok {
+	datacenter := &NPDatacenter{
+		inventory:     nil,
+		ledger:        nil,
+		trend:         nil,
+		timer:         nil,
+		location:      location,
+		locationname:  "siliconvalley",
+		buyoutprofile: nil,
+		profilename:   "",
+		cronevent:     nil,
+	}
+
+	return datacenter
+}
+
+func (self *NPDatacenter) Init(timer *timer.GameTimer, initialcapital float64, locationname string, trend *supplier.Trend, profilename string) {
+	log.Debug("NPDatacenter::Init(", timer, ",", initialcapital, ",", locationname, ",", trend, ",", profilename, ")")
+
+	if self.cronevent != nil {
+		self.timer.RemoveCron(self.cronevent)
+	}
+
+	location := supplier.AvailableLocation["siliconvalley"]
+
+	if l, ok := supplier.AvailableLocation[locationname]; ok {
 		location = l
 	} else {
-		log.Error("NewNPDatacenter(): location " + locationid + " not found")
+		log.Error("NewPlayer(): location " + locationname + " not found")
+		locationname = "siliconvalley"
 	}
 
 	// load buyout profile
 	data, err := global.Asset("assets/npdatacenter/" + profilename)
 	if err != nil {
 		log.Error("NewNPDatacenter(): asset assets/npdatacenter/" + profilename + " not found")
-		return nil
+		return
 	}
 	profile := make(map[string]BuyoutProfile)
 	err = json.Unmarshal(data, &profile)
 	if err != nil {
 		log.Error("NewNPDatacenter(): asset assets/npdatacenter/" + profilename + " not json compatible")
-		return nil
+		return
 	}
 
-	datacenter := &NPDatacenter{
-		inventory:     supplier.NewInventory(timer),
-		ledger:        accounting.NewLedger(timer, location.Taxrate, location.Bankinterestrate),
-		trend:         trend,
-		timer:         timer,
-		location:      location,
-		buyoutprofile: profile,
-	}
+	self.timer = timer
+	self.locationname = locationname
+	self.inventory = supplier.NewInventory(timer)
+	self.ledger = accounting.NewLedger(timer, location.Taxrate, location.Bankinterestrate)
+	self.location = location
+	self.trend = trend
+	self.profilename = profilename
+	self.buyoutprofile = profile
 
 	// add some equity
-	datacenter.ledger.AddMovement(accounting.LedgerMovement{
+	self.ledger.AddMovement(accounting.LedgerMovement{
 		Description: "initial capital",
 		Amount:      initialcapital,
 		AccountFrom: "4561",
@@ -99,10 +127,64 @@ func NewNPDatacenter(timer *timer.GameTimer, trend *supplier.Trend, initialcapit
 		Date:        timer.CurrentTime,
 	})
 
-	timer.AddCron(1, 1, -1, func() {
-		datacenter.NewYearOperations()
+	self.cronevent = timer.AddCron(1, 1, -1, func() {
+		self.NewYearOperations()
 	})
-	return datacenter
+}
+
+func (self *NPDatacenter) LoadGame(timer *timer.GameTimer, trend *supplier.Trend, v map[string]interface{}) {
+	log.Debug("NPDatacenter::LoadGame(", timer, ",", trend, ",", v, ")")
+	if self.cronevent != nil {
+		self.timer.RemoveCron(self.cronevent)
+	}
+
+	locationname := v["location"].(string)
+	location := supplier.AvailableLocation["siliconvalley"]
+
+	if l, ok := supplier.AvailableLocation[locationname]; ok {
+		location = l
+	} else {
+		log.Error("NewPlayer(): location " + locationname + " not found")
+		locationname = "siliconvalley"
+	}
+
+	profilename := v["profile"].(string)
+	// load buyout profile
+	data, err := global.Asset("assets/npdatacenter/" + profilename)
+	if err != nil {
+		log.Error("NewNPDatacenter(): asset assets/npdatacenter/" + profilename + " not found")
+		return
+	}
+	profile := make(map[string]BuyoutProfile)
+	err = json.Unmarshal(data, &profile)
+	if err != nil {
+		log.Error("NewNPDatacenter(): asset assets/npdatacenter/" + profilename + " not json compatible")
+		return
+	}
+
+	self.timer = timer
+	self.inventory = supplier.NewInventory(timer)
+	self.ledger = accounting.NewLedger(timer, location.Taxrate, location.Bankinterestrate)
+	self.location = location
+	self.locationname = locationname
+	self.trend = trend
+	self.profilename = profilename
+	self.buyoutprofile = profile
+
+	self.ledger.Load(v["ledger"].(map[string]interface{}), location.Taxrate, location.Bankinterestrate)
+	self.inventory.Load(v["inventory"].(map[string]interface{}))
+
+	self.cronevent = timer.AddCron(1, 1, -1, func() {
+		self.NewYearOperations()
+	})
+}
+
+func (self *NPDatacenter) Save() string {
+	save := fmt.Sprintf(`"location": "%s",`, self.locationname) + "\n"
+	save += fmt.Sprintf(`"profile": "%s",`, self.profilename) + "\n"
+	save += fmt.Sprintf(`"inventory": %s,`, self.inventory.Save()) + "\n"
+	save += fmt.Sprintf(`"ledger": %s`, self.ledger.Save()) + "\n"
+	return save
 }
 
 //
