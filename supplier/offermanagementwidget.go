@@ -314,6 +314,7 @@ func NewOfferManagementWidget(root *sws.RootWidget) *OfferManagementWidget {
 
 func (self *OfferManagementWidget) SetGame(inventory *Inventory) {
 	log.Debug("OfferManagementWidget::SetGame(", inventory, ")")
+	self.newofferwindow.SetGame(inventory)
 	if self.inventory != nil {
 		for _, o := range self.vbox.GetChildren() {
 			line := o.(*OfferManagementLineWidget)
@@ -339,6 +340,10 @@ func (self *OfferManagementWidget) SetGame(inventory *Inventory) {
 		// Inventory add offer
 		o.Pool.AddPoolSubscriber(offerline)
 	}
+}
+
+func (self *OfferManagementNewOfferWidget) SetGame(inventory *Inventory) {
+	self.inventory = inventory
 }
 
 func (self *OfferManagementNewOfferWidget) Show(offer *ServerOffer) {
@@ -547,6 +552,7 @@ func (self *OfferManagementNewOfferWidget) UpdateHowManyFit() {
 // save to the self.offer with the correct values
 func (self *OfferManagementNewOfferWidget) save() {
 	offer := self.offer
+	offer.Active = true
 	offer.Name = self.Name.GetText()
 	offer.Vps = self.Vps.Selected
 	offer.Nbcores = self.Nbcores.ActiveChoice + 1

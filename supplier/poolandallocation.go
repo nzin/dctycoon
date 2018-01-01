@@ -324,6 +324,22 @@ func (self *ServerOffer) Release(item *InventoryItem) {
 	self.Pool.Release(item, self.Nbcores, self.Ramsize, self.Disksize)
 }
 
+func (self *ServerOffer) Save() string {
+	active := "true"
+	if self.Active == false {
+		active = "false"
+	}
+	vps := "true"
+	if self.Vps == false {
+		vps = "false"
+	}
+	vt := "true"
+	if self.Vt == false {
+		vt = "false"
+	}
+	return fmt.Sprintf(`{"active": %s, "name":"%s", "vps":%s, "nbcores": %d, "ramsize":%d, "disksize":%d, "vt":%s, "price":%f }`, active, self.Name, vps, self.Nbcores, self.Ramsize, self.Disksize, vt, self.Price)
+}
+
 //
 //json: demand: {
 // "spec":{

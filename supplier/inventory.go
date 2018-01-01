@@ -397,6 +397,38 @@ func (self *Inventory) LoadItem(product map[string]interface{}) {
 	})
 }
 
+func (self *Inventory) LoadOffer(offer map[string]interface{}) {
+	log.Debug("Inventory::LoadOffer(", offer, ")")
+	vps := offer["vps"].(bool)
+
+	var pool ServerPool
+	for _, p := range self.pools {
+		if p.IsVps() == vps {
+			pool = p
+			break
+		}
+	}
+
+	nbcores := int32(offer["nbcores"].(float64))
+	ramsize := int32(offer["ramsize"].(float64))
+	disksize := int32(offer["disksize"].(float64))
+	price, _ := offer["price"].(float64)
+
+	o := &ServerOffer{
+		Active:    offer["active"].(bool),
+		Name:      offer["name"].(string),
+		Inventory: self,
+		Pool:      pool,
+		Vps:       vps,
+		Nbcores:   nbcores,
+		Ramsize:   ramsize,
+		Disksize:  disksize,
+		Vt:        offer["vt"].(bool),
+		Price:     price,
+	}
+	self.AddOffer(o)
+}
+
 func (self *Inventory) LoadPublishItems() {
 	log.Debug("Inventory::LoadPublishItems()")
 	// placed first RACK, AC, GENERATOR
@@ -453,9 +485,17 @@ func (self *Inventory) Load(conf map[string]interface{}) {
 	log.Debug("Inventory::Load(", conf, ")")
 	self.increment = int32(conf["increment"].(float64))
 	self.Items = make(map[int32]*InventoryItem)
-	items := conf["items"].([]interface{})
-	for _, item := range items {
-		self.LoadItem(item.(map[string]interface{}))
+	if itemsinterface, ok := conf["items"]; ok {
+		items := itemsinterface.([]interface{})
+		for _, item := range items {
+			self.LoadItem(item.(map[string]interface{}))
+		}
+	}
+	if offersinterface, ok := conf["offers"]; ok {
+		offers := offersinterface.([]interface{})
+		for _, offer := range offers {
+			self.LoadOffer(offer.(map[string]interface{}))
+		}
 	}
 	self.LoadPublishItems()
 }
@@ -464,8 +504,19 @@ func (self *Inventory) Save() string {
 	log.Debug("Inventory::Save()")
 	str := "{"
 	str += fmt.Sprintf(`"increment":%d,`, self.increment)
-	str += `"items":[`
+	str += `"offers":[`
 	firstitem := true
+	for _, offer := range self.offers {
+		if firstitem == true {
+			firstitem = false
+		} else {
+			str += ",\n"
+		}
+		str += offer.Save()
+	}
+	str += "],"
+	str += `"items":[`
+	firstitem = true
 	for _, item := range self.Items {
 		if firstitem == true {
 			firstitem = false
