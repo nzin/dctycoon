@@ -15,6 +15,7 @@ import (
 
 	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/sws"
+	log "github.com/sirupsen/logrus"
 )
 
 type OfferManagementLineWidget struct {
@@ -312,6 +313,36 @@ func NewOfferManagementWidget(root *sws.RootWidget) *OfferManagementWidget {
 }
 
 func (self *OfferManagementWidget) SetGame(inventory *Inventory) {
+	log.Debug("OfferManagementWidget::SetGame(", inventory, ")")
+	self.newofferwindow.SetGame(inventory)
+	if self.inventory != nil {
+		for _, o := range self.vbox.GetChildren() {
+			line := o.(*OfferManagementLineWidget)
+
+			self.vbox.RemoveChild(line)
+			//unsubscribe pool
+			line.offer.Pool.RemovePoolSubscriber(line)
+			// Inventory remove offer
+		}
+		self.RemoveChild(self.scrolllisting)
+		self.highlight = nil
+	}
+	self.inventory = inventory
+
+	for _, o := range self.inventory.offers {
+		offerline := NewOfferManagementLineWidget(o)
+		offerline.Checkbox.SetClicked(func() {
+			self.HighlightLine(offerline, offerline.Checkbox.Selected)
+		})
+		self.vbox.AddChild(offerline)
+		self.AddChild(self.scrolllisting)
+		self.scrolllisting.PostUpdate()
+		// Inventory add offer
+		o.Pool.AddPoolSubscriber(offerline)
+	}
+}
+
+func (self *OfferManagementNewOfferWidget) SetGame(inventory *Inventory) {
 	self.inventory = inventory
 }
 
@@ -521,6 +552,7 @@ func (self *OfferManagementNewOfferWidget) UpdateHowManyFit() {
 // save to the self.offer with the correct values
 func (self *OfferManagementNewOfferWidget) save() {
 	offer := self.offer
+	offer.Active = true
 	offer.Name = self.Name.GetText()
 	offer.Vps = self.Vps.Selected
 	offer.Nbcores = self.Nbcores.ActiveChoice + 1

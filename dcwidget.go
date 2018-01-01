@@ -7,6 +7,7 @@ import (
 	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/sws"
+	log "github.com/sirupsen/logrus"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -438,7 +439,8 @@ func (self *DcWidget) ItemUninstalled(item *supplier.InventoryItem) {
 //     ]
 //   }
 //
-func (self *DcWidget) LoadMap(dc map[string]interface{}) {
+func (self *DcWidget) LoadMap(dc map[string]interface{}, currenttime time.Time) {
+	log.Debug("DcWidget::LoadMap(", dc, ",", currenttime, ")")
 	width := int32(dc["width"].(float64))
 	height := int32(dc["height"].(float64))
 	self.tiles = make([][]*Tile, height)
@@ -458,6 +460,18 @@ func (self *DcWidget) LoadMap(dc map[string]interface{}) {
 		floor := tile["floor"].(string)
 		rotation := uint32(tile["rotation"].(float64))
 		self.tiles[y][x] = NewTile(wall0, wall1, floor, rotation)
+	}
+	// place everything except servers
+	for _, item := range self.inventory.Items {
+		if item.IsPlaced() && item.Typeitem != supplier.PRODUCT_SERVER {
+			self.ItemInstalled(item)
+		}
+	}
+	// place servers
+	for _, item := range self.inventory.Items {
+		if item.IsPlaced() && item.Typeitem == supplier.PRODUCT_SERVER {
+			self.ItemInstalled(item)
+		}
 	}
 }
 
@@ -510,13 +524,14 @@ func NewDcWidget(w, h int32, rootwindow *sws.RootWidget) *DcWidget {
 	return widget
 }
 
-func (self *DcWidget) SetGame(inventory *supplier.Inventory) {
+func (self *DcWidget) SetGame(inventory *supplier.Inventory, currenttime time.Time) {
+	log.Debug("DcWidget::SetGame()")
 	if self.inventory != nil {
 		self.inventory.RemoveInventorySubscriber(self)
 	}
 	self.inventory = inventory
 	inventory.AddInventorySubscriber(self)
 
-	self.rackwidget.SetGame(inventory)
-	self.hc.SetGame(inventory)
+	self.rackwidget.SetGame(inventory, currenttime)
+	self.hc.SetGame(inventory, currenttime)
 }

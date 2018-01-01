@@ -162,7 +162,7 @@ func (self *Ledger) GetYearAccount(year int) AccountYearly {
 	if account, ok := self.accounts[year]; ok {
 		return account
 	}
-	self.runLedger()
+	self.accounts = self.runLedger()
 
 	return self.accounts[year]
 }
@@ -355,18 +355,21 @@ func (self *Ledger) Load(game map[string]interface{}, taxrate, loanrate float64)
 	self.Movements = btree.New(10)
 	self.taxrate = taxrate
 	self.loanrate = loanrate
+	self.autoinc = 0
 
 	for _, event := range game["movements"].([]interface{}) {
 		e := event.(map[string]interface{})
 		var year, month, day int
 		fmt.Sscanf(e["date"].(string), "%d-%d-%d", &year, &month, &day)
 		le := &LedgerMovement{
+			Id:          self.autoinc,
 			Description: e["description"].(string),
 			Amount:      e["amount"].(float64),
 			AccountFrom: e["from"].(string),
 			AccountTo:   e["to"].(string),
 			Date:        time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC),
 		}
+		self.autoinc++
 		self.Movements.ReplaceOrInsert(le)
 	}
 	self.accounts = self.runLedger()

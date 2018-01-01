@@ -71,8 +71,6 @@ type EventPublisher struct {
 	events map[*EventPublished]int32
 }
 
-var GlobalEventPublisher *EventPublisher
-
 func (self *EventPublisher) Publish(shortdesc string, longdesc string) {
 	log.Debug("EventPublisher::Publish(", shortdesc, ",", longdesc, ")")
 	var pos int32

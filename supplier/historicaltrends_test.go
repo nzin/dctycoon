@@ -39,13 +39,14 @@ func TestTrendLoad(t *testing.T) {
 		"diskpricenoise": make([]interface{}, 0, 0),
 		"rampricenoise":  make([]interface{}, 0, 0),
 	}
-	trend := TrendLoad(json, ps, gt)
+	trend := NewTrend()
+	trend.Load(json, ps, gt)
 
 	assert.Equal(t, int32(2), trend.Corepercpu.CurrentValue(time.Date(2006, 2, 1, 0, 0, 0, 0, time.UTC)), " cores per CPU in 2006")
 	assert.Equal(t, int32(1), trend.Vt.CurrentValue(time.Date(2006, 2, 1, 0, 0, 0, 0, time.UTC)), "VT in 2006")
 
 	badjson := map[string]interface{}{}
-	trend = TrendLoad(badjson, ps, gt)
+	trend.Load(badjson, ps, gt)
 	assert.Equal(t, 0, len(trend.Cpuprice.Noise), " empty trends noise loaded")
 
 	badjson2 := map[string]interface{}{
@@ -53,7 +54,7 @@ func TestTrendLoad(t *testing.T) {
 		"diskpricenoise": 2,
 		"rampricenoise":  3,
 	}
-	trend = TrendLoad(badjson2, ps, gt)
+	trend.Load(badjson2, ps, gt)
 	assert.Equal(t, 0, len(trend.Cpuprice.Noise), " empty trends noise loaded")
 
 	badjson3 := map[string]interface{}{
@@ -61,7 +62,7 @@ func TestTrendLoad(t *testing.T) {
 		"diskpricenoise": []int{2},
 		"rampricenoise":  []int{3},
 	}
-	trend = TrendLoad(badjson3, ps, gt)
+	trend.Load(badjson3, ps, gt)
 	assert.Equal(t, 0, len(trend.Cpuprice.Noise), " empty trends noise loaded")
 
 	goodjson := map[string]interface{}{
@@ -69,6 +70,6 @@ func TestTrendLoad(t *testing.T) {
 		"diskpricenoise": []map[string]interface{}{{"pit": "1999-9-9", "value": 0.4}},
 		"rampricenoise":  []map[string]interface{}{{"pit": "1999-9-9", "value": 0.4}},
 	}
-	trend = TrendLoad(goodjson, ps, gt)
+	trend.Load(goodjson, ps, gt)
 	assert.Equal(t, 1, len(trend.Cpuprice.Noise), " not empty trends noise loaded")
 }

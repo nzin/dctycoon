@@ -415,5 +415,5 @@ func (self *MainSupplierWidget) SetGame(timer *timer.GameTimer, inventory *suppl
 	self.ledger = ledger
 	self.configurepage.SetGame(trend)
 	self.cartpage.SetGame(inventory)
-	self.trackpage.SetGame(inventory)
+	self.trackpage.SetGame(inventory, timer.CurrentTime)
 }

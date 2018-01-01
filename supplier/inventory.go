@@ -99,7 +99,15 @@ func (self *InventoryItem) Save() string {
 	str := "{"
 	switch self.Typeitem {
 	case PRODUCT_SERVER:
-		str += fmt.Sprintf(`"Id": %d, "Typeitem": "SERVER", "Buydate": "%d-%d-%d", "Deliverydate": "%d-%d-%d", "Xplaced":%d, "Yplaced":%d, "Zplaced":%d, "Coresallocated": %d, "Ramallocated": %d, "Diskallocated":%d, "NbProcessors":%d, "NbCore":%d, "VtSupport": "%t", "NbDisks":%d, "NbSlotRam":%d, "DiskSize":%d, "RamSize":%d, "ConfType": "%s"`,
+		poolservertype := "none"
+		if self.Pool != nil {
+			if self.Pool.IsVps() {
+				poolservertype = "vps"
+			} else {
+				poolservertype = "hardware"
+			}
+		}
+		str += fmt.Sprintf(`"Id": %d, "Typeitem": "SERVER", "Buydate": "%d-%d-%d", "Deliverydate": "%d-%d-%d", "Xplaced":%d, "Yplaced":%d, "Zplaced":%d, "Coresallocated": %d, "Ramallocated": %d, "Diskallocated":%d, "NbProcessors":%d, "NbCore":%d, "VtSupport": "%t", "NbDisks":%d, "NbSlotRam":%d, "DiskSize":%d, "RamSize":%d, "ConfType": "%s", "pooltype": "%s"`,
 			self.Id,
 			self.Buydate.Year(), self.Buydate.Month(), self.Buydate.Day(),
 			self.Deliverydate.Year(), self.Deliverydate.Month(), self.Deliverydate.Day(),
@@ -115,6 +123,7 @@ func (self *InventoryItem) Save() string {
 			self.Serverconf.DiskSize,
 			self.Serverconf.RamSize,
 			self.Serverconf.ConfType.ServerName,
+			poolservertype,
 		)
 	case PRODUCT_RACK:
 		str += fmt.Sprintf(`"Id": %d, "Typeitem": "RACK", "Buydate": "%d-%d-%d", "Deliverydate": "%d-%d-%d", "Xplaced":%d, "Yplaced":%d`,
@@ -233,12 +242,14 @@ func (self *Inventory) BuyCart(buydate time.Time) {
 			self.increment++
 			self.Items[inventoryitem.Id] = inventoryitem
 			for _, sub := range self.inventorysubscribers {
-				instocksub := sub
 				sub.ItemInTransit(inventoryitem)
-				self.globaltimer.AddEvent(inventoryitem.Deliverydate, func() {
-					instocksub.ItemInStock(inventoryitem)
-				})
 			}
+			self.globaltimer.AddEvent(inventoryitem.Deliverydate, func() {
+				for _, sub := range self.inventorysubscribers {
+					sub.ItemInStock(inventoryitem)
+				}
+			})
+
 		}
 	}
 	//self.Cart=make([]*CartItem,0) // done in CarpPageWidget.Reset()
@@ -346,6 +357,24 @@ func (self *Inventory) LoadItem(product map[string]interface{}) {
 			RamSize:      int32(product["RamSize"].(float64)),
 			ConfType:     GetServerConfTypeByName(product["ConfType"].(string)),
 		}
+		switch product["pooltype"] {
+		case "hardware":
+			for _, p := range self.pools {
+				if p.IsVps() == false {
+					item.Pool = p
+					break
+				}
+			}
+			break
+		case "vps":
+			for _, p := range self.pools {
+				if p.IsVps() == true {
+					item.Pool = p
+					break
+				}
+			}
+			break
+		}
 
 	case "RACK":
 		item.Typeitem = PRODUCT_RACK
@@ -357,6 +386,47 @@ func (self *Inventory) LoadItem(product map[string]interface{}) {
 
 	// now we store it
 	self.Items[item.Id] = item
+
+	for _, sub := range self.inventorysubscribers {
+		sub.ItemInTransit(item)
+	}
+	self.globaltimer.AddEvent(item.Deliverydate, func() {
+		for _, sub := range self.inventorysubscribers {
+			sub.ItemInStock(item)
+		}
+	})
+}
+
+func (self *Inventory) LoadOffer(offer map[string]interface{}) {
+	log.Debug("Inventory::LoadOffer(", offer, ")")
+	vps := offer["vps"].(bool)
+
+	var pool ServerPool
+	for _, p := range self.pools {
+		if p.IsVps() == vps {
+			pool = p
+			break
+		}
+	}
+
+	nbcores := int32(offer["nbcores"].(float64))
+	ramsize := int32(offer["ramsize"].(float64))
+	disksize := int32(offer["disksize"].(float64))
+	price, _ := offer["price"].(float64)
+
+	o := &ServerOffer{
+		Active:    offer["active"].(bool),
+		Name:      offer["name"].(string),
+		Inventory: self,
+		Pool:      pool,
+		Vps:       vps,
+		Nbcores:   nbcores,
+		Ramsize:   ramsize,
+		Disksize:  disksize,
+		Vt:        offer["vt"].(bool),
+		Price:     price,
+	}
+	self.AddOffer(o)
 }
 
 func (self *Inventory) LoadPublishItems() {
@@ -415,9 +485,17 @@ func (self *Inventory) Load(conf map[string]interface{}) {
 	log.Debug("Inventory::Load(", conf, ")")
 	self.increment = int32(conf["increment"].(float64))
 	self.Items = make(map[int32]*InventoryItem)
-	items := conf["items"].([]interface{})
-	for _, item := range items {
-		self.LoadItem(item.(map[string]interface{}))
+	if itemsinterface, ok := conf["items"]; ok {
+		items := itemsinterface.([]interface{})
+		for _, item := range items {
+			self.LoadItem(item.(map[string]interface{}))
+		}
+	}
+	if offersinterface, ok := conf["offers"]; ok {
+		offers := offersinterface.([]interface{})
+		for _, offer := range offers {
+			self.LoadOffer(offer.(map[string]interface{}))
+		}
 	}
 	self.LoadPublishItems()
 }
@@ -426,8 +504,19 @@ func (self *Inventory) Save() string {
 	log.Debug("Inventory::Save()")
 	str := "{"
 	str += fmt.Sprintf(`"increment":%d,`, self.increment)
-	str += `"items":[`
+	str += `"offers":[`
 	firstitem := true
+	for _, offer := range self.offers {
+		if firstitem == true {
+			firstitem = false
+		} else {
+			str += ",\n"
+		}
+		str += offer.Save()
+	}
+	str += "],"
+	str += `"items":[`
+	firstitem = true
 	for _, item := range self.Items {
 		if firstitem == true {
 			firstitem = false

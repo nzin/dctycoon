@@ -2,6 +2,7 @@ package dctycoon
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/dctycoon/supplier"
@@ -119,12 +120,22 @@ func NewRackWidgetItems() *RackWidgetItems {
 	return widgetitems
 }
 
-func (self *RackWidgetItems) SetGame(inventory *supplier.Inventory) {
+func (self *RackWidgetItems) SetGame(inventory *supplier.Inventory, currenttime time.Time) {
 	if self.inventory != nil {
 		self.inventory.RemoveInventorySubscriber(self)
+		for _, elt := range self.vbox.GetChildren() {
+			self.vbox.RemoveChild(elt)
+		}
 	}
 	self.inventory = inventory
 	inventory.AddInventorySubscriber(self)
+
+	// for material not placed but in stock
+	for _, item := range self.inventory.Items {
+		if !item.IsPlaced() && item.HasArrived(currenttime) {
+			self.ItemInStock(item)
+		}
+	}
 }
 
 func (self *RackWidgetItems) Resize(w, h int32) {
@@ -531,10 +542,10 @@ func NewRackWidget(rootwindow *sws.RootWidget) *RackWidget {
 	return rack
 }
 
-func (self *RackWidget) SetGame(inventory *supplier.Inventory) {
+func (self *RackWidget) SetGame(inventory *supplier.Inventory, currenttime time.Time) {
 	self.inventory = inventory
 	self.rackchassis.SetGame(inventory)
-	self.rackwidgetitems.SetGame(inventory)
+	self.rackwidgetitems.SetGame(inventory, currenttime)
 }
 
 func (self *RackWidget) Show(x, y int32) {

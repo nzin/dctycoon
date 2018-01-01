@@ -12,6 +12,8 @@ package dctycoon
 //
 
 import (
+	"time"
+
 	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/sws"
 )
@@ -60,7 +62,7 @@ func NewMainInventoryWidget(root *sws.RootWidget) *MainInventoryWidget {
 	return widget
 }
 
-func (self *MainInventoryWidget) SetGame(inventory *supplier.Inventory) {
-	self.serverpools.SetGame(inventory)
+func (self *MainInventoryWidget) SetGame(inventory *supplier.Inventory, currenttime time.Time) {
+	self.serverpools.SetGame(inventory, currenttime)
 	self.offers.SetGame(inventory)
 }
