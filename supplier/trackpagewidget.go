@@ -133,10 +133,21 @@ func NewTrackPageWidget(width, height int32) *TrackPageWidget {
 	return trackpage
 }
 
-func (self *TrackPageWidget) SetGame(inventory *Inventory) {
+func (self *TrackPageWidget) SetGame(inventory *Inventory, currenttime time.Time) {
 	if self.inventory != nil {
 		self.inventory.RemoveInventorySubscriber(self)
+		for item, _ := range self.intransit {
+			self.vbox.RemoveChild(self.intransit[item])
+			delete(self.intransit, item)
+		}
+		self.Resize(600, 80)
 	}
 	self.inventory = inventory
 	inventory.AddInventorySubscriber(self)
+	// for material in transit
+	for _, item := range self.inventory.Items {
+		if !item.HasArrived(currenttime) {
+			self.ItemInTransit(item)
+		}
+	}
 }

@@ -99,7 +99,15 @@ func (self *InventoryItem) Save() string {
 	str := "{"
 	switch self.Typeitem {
 	case PRODUCT_SERVER:
-		str += fmt.Sprintf(`"Id": %d, "Typeitem": "SERVER", "Buydate": "%d-%d-%d", "Deliverydate": "%d-%d-%d", "Xplaced":%d, "Yplaced":%d, "Zplaced":%d, "Coresallocated": %d, "Ramallocated": %d, "Diskallocated":%d, "NbProcessors":%d, "NbCore":%d, "VtSupport": "%t", "NbDisks":%d, "NbSlotRam":%d, "DiskSize":%d, "RamSize":%d, "ConfType": "%s"`,
+		poolservertype := "none"
+		if self.Pool != nil {
+			if self.Pool.IsVps() {
+				poolservertype = "vps"
+			} else {
+				poolservertype = "hardware"
+			}
+		}
+		str += fmt.Sprintf(`"Id": %d, "Typeitem": "SERVER", "Buydate": "%d-%d-%d", "Deliverydate": "%d-%d-%d", "Xplaced":%d, "Yplaced":%d, "Zplaced":%d, "Coresallocated": %d, "Ramallocated": %d, "Diskallocated":%d, "NbProcessors":%d, "NbCore":%d, "VtSupport": "%t", "NbDisks":%d, "NbSlotRam":%d, "DiskSize":%d, "RamSize":%d, "ConfType": "%s", "pooltype": "%s"`,
 			self.Id,
 			self.Buydate.Year(), self.Buydate.Month(), self.Buydate.Day(),
 			self.Deliverydate.Year(), self.Deliverydate.Month(), self.Deliverydate.Day(),
@@ -115,6 +123,7 @@ func (self *InventoryItem) Save() string {
 			self.Serverconf.DiskSize,
 			self.Serverconf.RamSize,
 			self.Serverconf.ConfType.ServerName,
+			poolservertype,
 		)
 	case PRODUCT_RACK:
 		str += fmt.Sprintf(`"Id": %d, "Typeitem": "RACK", "Buydate": "%d-%d-%d", "Deliverydate": "%d-%d-%d", "Xplaced":%d, "Yplaced":%d`,
@@ -233,12 +242,14 @@ func (self *Inventory) BuyCart(buydate time.Time) {
 			self.increment++
 			self.Items[inventoryitem.Id] = inventoryitem
 			for _, sub := range self.inventorysubscribers {
-				instocksub := sub
 				sub.ItemInTransit(inventoryitem)
-				self.globaltimer.AddEvent(inventoryitem.Deliverydate, func() {
-					instocksub.ItemInStock(inventoryitem)
-				})
 			}
+			self.globaltimer.AddEvent(inventoryitem.Deliverydate, func() {
+				for _, sub := range self.inventorysubscribers {
+					sub.ItemInStock(inventoryitem)
+				}
+			})
+
 		}
 	}
 	//self.Cart=make([]*CartItem,0) // done in CarpPageWidget.Reset()
@@ -346,6 +357,24 @@ func (self *Inventory) LoadItem(product map[string]interface{}) {
 			RamSize:      int32(product["RamSize"].(float64)),
 			ConfType:     GetServerConfTypeByName(product["ConfType"].(string)),
 		}
+		switch product["pooltype"] {
+		case "hardware":
+			for _, p := range self.pools {
+				if p.IsVps() == false {
+					item.Pool = p
+					break
+				}
+			}
+			break
+		case "vps":
+			for _, p := range self.pools {
+				if p.IsVps() == true {
+					item.Pool = p
+					break
+				}
+			}
+			break
+		}
 
 	case "RACK":
 		item.Typeitem = PRODUCT_RACK
@@ -357,6 +386,15 @@ func (self *Inventory) LoadItem(product map[string]interface{}) {
 
 	// now we store it
 	self.Items[item.Id] = item
+
+	for _, sub := range self.inventorysubscribers {
+		sub.ItemInTransit(item)
+	}
+	self.globaltimer.AddEvent(item.Deliverydate, func() {
+		for _, sub := range self.inventorysubscribers {
+			sub.ItemInStock(item)
+		}
+	})
 }
 
 func (self *Inventory) LoadPublishItems() {
