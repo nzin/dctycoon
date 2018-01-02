@@ -3,6 +3,8 @@ package global
 import (
 	"regexp"
 	"strconv"
+	"strings"
+	"unsafe"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/veandco/go-sdl2/img"
@@ -75,4 +77,17 @@ func ParseMega(str string) int32 {
 		return 2147483647
 	}
 	return int32(value)
+}
+
+//
+// To load an SDL (PNG) image directly from assets
+func LoadImageAsset(filename string) (*sdl.Surface, error) {
+	data, err := Asset(filename)
+	if err != nil {
+		return nil, err
+	}
+	src := sdl.RWFromMem(unsafe.Pointer(&data[0]), len(data))
+	imagetype := strings.ToUpper(filename[len(filename)-3:])
+
+	return img.LoadTypedRW(src, false, imagetype)
 }

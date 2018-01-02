@@ -49,10 +49,15 @@ func NewGame(quit *bool, root *sws.RootWidget) *Game {
 		serverbundles:   make([]*supplier.ServerBundle, 0, 0),
 		cronevent:       nil,
 		trends:          supplier.NewTrend(),
-		gameui:          NewGameUI(quit, root),
+		gameui:          nil,
 	}
+	g.gameui = NewGameUI(quit, root, g)
 
 	return g
+}
+
+func (self *Game) ShowOpening() {
+	self.gameui.ShowOpening()
 }
 
 func (self *Game) InitGame(initialcapital float64, location string) {

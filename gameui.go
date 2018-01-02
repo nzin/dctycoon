@@ -13,6 +13,7 @@ import (
 type GameUI struct {
 	rootwindow       *sws.RootWidget
 	dc               *DcWidget
+	opening          *MainOpening
 	supplierwidget   *MainSupplierWidget
 	inventorywidget  *MainInventoryWidget
 	accountingwidget *accounting.MainAccountingWidget
@@ -20,10 +21,12 @@ type GameUI struct {
 	eventpublisher   *timer.EventPublisher
 }
 
-func NewGameUI(quit *bool, root *sws.RootWidget) *GameUI {
+func NewGameUI(quit *bool, root *sws.RootWidget, game *Game) *GameUI {
+	gamemenu := NewMainGameMenu(game, root, quit)
 	gameui := &GameUI{
 		rootwindow:       root,
 		dc:               NewDcWidget(root.Width(), root.Height(), root),
+		opening:          NewMainOpening(root.Width(), root.Height(), root, gamemenu),
 		supplierwidget:   NewMainSupplierWidget(root),
 		inventorywidget:  NewMainInventoryWidget(root),
 		accountingwidget: accounting.NewMainAccountingWidget(root),
@@ -91,14 +94,19 @@ func (self *GameUI) SaveGame() string {
 }
 
 func (self *GameUI) ShowDC() {
+	self.rootwindow.RemoveChild(self.opening)
+
 	self.rootwindow.AddChild(self.dc)
 	self.rootwindow.AddChild(self.dock)
-
 	self.rootwindow.SetFocus(self.dc)
 }
 
-func (self *GameUI) ShowGameMenu() {
+func (self *GameUI) ShowOpening() {
+	self.rootwindow.RemoveChild(self.dc)
+	self.rootwindow.RemoveChild(self.dock)
 
+	self.rootwindow.AddChild(self.opening)
+	self.rootwindow.SetFocus(self.opening)
 }
 
 func (self *GameUI) ShowHeatmap() {
