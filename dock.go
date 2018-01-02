@@ -45,7 +45,7 @@ func (self *DockWidget) LedgerChange() {
 	self.ledgerButton.SetText(fmt.Sprintf("%.2f $", accounts["51"]))
 }
 
-func NewDockWidget(root *sws.RootWidget) *DockWidget {
+func NewDockWidget(root *sws.RootWidget, gamemenu *MainGameMenu) *DockWidget {
 	corewidget := sws.NewCoreWidget(150, 125)
 	widget := &DockWidget{
 		CoreWidget: *corewidget,
@@ -125,6 +125,16 @@ func NewDockWidget(root *sws.RootWidget) *DockWidget {
 	save.Move(75, 75)
 	save.SetImage("resources/icon-blank-file.png")
 	widget.AddChild(save)
+	save.SetClicked(func() {
+		gamemenu.ShowSave()
+		root.AddChild(gamemenu)
+		gamemenu.SetCancelCallback(func() {
+			root.RemoveChild(gamemenu)
+		})
+		if widget.timerevent != nil {
+			widget.timerevent.StopRepeat()
+		}
+	})
 
 	widget.quit = sws.NewFlatButtonWidget(25, 25, "")
 	widget.quit.Move(100, 75)

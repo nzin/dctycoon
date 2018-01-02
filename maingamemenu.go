@@ -8,26 +8,30 @@ import (
 	"github.com/nzin/sws"
 )
 
+//
+// MainGameMenu is the main game window (new/load/save/quit...)
 type MainGameMenu struct {
 	sws.CoreWidget
-	game       *Game
-	newbutton  *sws.ButtonWidget
-	loadbutton *sws.ButtonWidget
-	savebutton *sws.ButtonWidget
-	quitbutton *sws.ButtonWidget
-	loadwidget *MainGameMenuLoad
+	game         *Game
+	newbutton    *sws.ButtonWidget
+	loadbutton   *sws.ButtonWidget
+	savebutton   *sws.ButtonWidget
+	cancelbutton *sws.ButtonWidget
+	quitbutton   *sws.ButtonWidget
+	loadwidget   *MainGameMenuLoad
 }
 
 func NewMainGameMenu(game *Game, root *sws.RootWidget, quit *bool) *MainGameMenu {
-	corewidget := sws.NewCoreWidget(600, 300)
+	corewidget := sws.NewCoreWidget(600, 350)
 	widget := &MainGameMenu{
-		CoreWidget: *corewidget,
-		game:       game,
-		newbutton:  sws.NewButtonWidget(300, 50, "New Game"),
-		loadbutton: sws.NewButtonWidget(300, 50, "Load Game"),
-		savebutton: sws.NewButtonWidget(300, 50, "Save Game"),
-		quitbutton: sws.NewButtonWidget(300, 50, "Quit"),
-		loadwidget: NewMainGameMenuLoad(),
+		CoreWidget:   *corewidget,
+		game:         game,
+		newbutton:    sws.NewButtonWidget(300, 50, "New Game"),
+		loadbutton:   sws.NewButtonWidget(300, 50, "Load Game"),
+		savebutton:   sws.NewButtonWidget(300, 50, "Save Game"),
+		quitbutton:   sws.NewButtonWidget(300, 50, "Quit"),
+		cancelbutton: sws.NewButtonWidget(150, 30, "Cancel"),
+		loadwidget:   NewMainGameMenuLoad(),
 	}
 
 	widget.newbutton.Move(150, 50)
@@ -64,9 +68,19 @@ func (self *MainGameMenu) ShowSave() {
 	self.newbutton.Move(150, 50)
 	self.loadbutton.Move(150, 110)
 	self.savebutton.Move(150, 170)
+	self.AddChild(self.savebutton)
 	self.quitbutton.Move(150, 230)
+	self.cancelbutton.Move(300, 290)
+	self.AddChild(self.cancelbutton)
 }
 
+func (self *MainGameMenu) SetCancelCallback(callback func()) {
+	self.cancelbutton.SetClicked(callback)
+}
+
+//
+// MainGameMenuLoad is the load game window.
+// Used by MainGameMenu
 type MainGameMenuLoad struct {
 	sws.CoreWidget
 	vbox         *sws.VBoxWidget
