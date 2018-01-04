@@ -75,6 +75,7 @@ type MainGameMenu struct {
 	cancelbutton *sws.ButtonWidget
 	quitbutton   *sws.ButtonWidget
 	loadwidget   *MainGameMenuLoad
+	savewidget   *MainGameMenuSave
 }
 
 func NewMainGameMenu(game *Game, root *sws.RootWidget, quit *bool) *MainGameMenu {
@@ -88,6 +89,7 @@ func NewMainGameMenu(game *Game, root *sws.RootWidget, quit *bool) *MainGameMenu
 		quitbutton:   sws.NewButtonWidget(300, 50, "Quit"),
 		cancelbutton: sws.NewButtonWidget(150, 30, "Cancel"),
 		loadwidget:   NewMainGameMenuLoad(),
+		savewidget:   NewMainGameMenuSave(),
 	}
 
 	widget.newbutton.Move(150, 50)
@@ -117,6 +119,22 @@ func NewMainGameMenu(game *Game, root *sws.RootWidget, quit *bool) *MainGameMenu
 		game.LoadGame(filename)
 	})
 
+	widget.savewidget.Move((root.Width()-widget.savewidget.Width())/2, (root.Height()-widget.savewidget.Height())/2)
+	widget.savebutton.SetClicked(func() {
+		widget.savewidget.Loadfiles()
+		root.AddChild(widget.savewidget)
+		root.SetFocus(widget.savewidget.filenameinput)
+	})
+
+	widget.savewidget.SetCancelCallback(func() {
+		root.RemoveChild(widget.savewidget)
+	})
+
+	widget.savewidget.SetSaveCallback(func(filename string) {
+		root.RemoveChild(widget.savewidget)
+		game.SaveGame(filename)
+	})
+
 	return widget
 }
 
@@ -140,6 +158,8 @@ func (self *MainGameMenu) SetCancelCallback(callback func()) {
 // Used by MainGameMenu
 type MainGameMenuLoad struct {
 	StaticWidget
+	loadlabel    *sws.LabelWidget
+	hr           *sws.Hr
 	listwidget   *sws.ListWidget
 	loadbutton   *sws.ButtonWidget
 	cancelbutton *sws.ButtonWidget
@@ -150,12 +170,21 @@ func NewMainGameMenuLoad() *MainGameMenuLoad {
 	corewidget := NewStaticWidget(400, 500)
 	widget := &MainGameMenuLoad{
 		StaticWidget: *corewidget,
-		listwidget:   sws.NewListWidget(360, 400),
+		loadlabel:    sws.NewLabelWidget(360, 25, "Load game"),
+		hr:           sws.NewHr(360),
+		listwidget:   sws.NewListWidget(360, 380),
 		cancelbutton: sws.NewButtonWidget(100, 25, "Cancel"),
 		loadbutton:   sws.NewButtonWidget(100, 25, "Load"),
 	}
 
-	widget.listwidget.Move(20, 50)
+	widget.loadlabel.Move(20, 20)
+	widget.loadlabel.SetCentered(true)
+	widget.AddChild(widget.loadlabel)
+
+	widget.hr.Move(20, 50)
+	widget.AddChild(widget.hr)
+
+	widget.listwidget.Move(20, 70)
 	widget.AddChild(widget.listwidget)
 
 	widget.cancelbutton.Move(280, 460)
@@ -195,5 +224,95 @@ func (self *MainGameMenuLoad) SetLoadCallback(callback func(filename string)) {
 }
 
 func (self *MainGameMenuLoad) SetCancelCallback(callback func()) {
+	self.cancelbutton.SetClicked(callback)
+}
+
+//
+// MainGameMenuSave is the save game window.
+// Used by MainGameMenu
+type MainGameMenuSave struct {
+	StaticWidget
+	savelabel     *sws.LabelWidget
+	hr            *sws.Hr
+	filenamelabel *sws.LabelWidget
+	filenameinput *sws.InputWidget
+	listwidget    *sws.ListWidget
+	savebutton    *sws.ButtonWidget
+	cancelbutton  *sws.ButtonWidget
+	savecallback  func(filename string)
+}
+
+func NewMainGameMenuSave() *MainGameMenuSave {
+	corewidget := NewStaticWidget(400, 500)
+	widget := &MainGameMenuSave{
+		StaticWidget:  *corewidget,
+		savelabel:     sws.NewLabelWidget(360, 25, "Save game"),
+		hr:            sws.NewHr(360),
+		filenamelabel: sws.NewLabelWidget(100, 25, "Filename:"),
+		filenameinput: sws.NewInputWidget(260, 25, ""),
+		listwidget:    sws.NewListWidget(360, 350),
+		cancelbutton:  sws.NewButtonWidget(100, 25, "Cancel"),
+		savebutton:    sws.NewButtonWidget(100, 25, "Save"),
+	}
+
+	widget.savelabel.Move(20, 20)
+	widget.savelabel.SetCentered(true)
+	widget.AddChild(widget.savelabel)
+
+	widget.hr.Move(20, 50)
+	widget.AddChild(widget.hr)
+
+	widget.filenamelabel.Move(20, 65)
+	widget.AddChild(widget.filenamelabel)
+
+	widget.filenameinput.Move(120, 65)
+	widget.AddChild(widget.filenameinput)
+
+	widget.listwidget.Move(20, 100)
+	widget.AddChild(widget.listwidget)
+	widget.listwidget.SetCallbackValueChanged(func() {
+		currentitem := widget.listwidget.GetCurrentItem()
+		if currentitem != nil {
+			widget.filenameinput.SetText(currentitem.GetText())
+		}
+	})
+
+	widget.cancelbutton.Move(280, 460)
+	widget.AddChild(widget.cancelbutton)
+
+	widget.savebutton.Move(20, 460)
+	widget.AddChild(widget.savebutton)
+	widget.savebutton.SetClicked(func() {
+		currentitem := widget.listwidget.GetCurrentItem()
+		if currentitem != nil {
+			widget.savecallback(currentitem.GetText() + ".map")
+		}
+	})
+
+	return widget
+}
+
+func (self *MainGameMenuSave) Loadfiles() {
+	for _, c := range self.listwidget.GetItems() {
+		self.listwidget.RemoveItem(c)
+	}
+
+	// check in the working directory all files in ".map"
+	files, err := ioutil.ReadDir(".")
+	if err == nil {
+		for _, f := range files {
+			filename := f.Name()
+			if strings.HasSuffix(filename, ".map") {
+				self.listwidget.AddItem(filename[:len(filename)-4])
+			}
+		}
+	}
+}
+
+func (self *MainGameMenuSave) SetSaveCallback(callback func(filename string)) {
+	self.savecallback = callback
+}
+
+func (self *MainGameMenuSave) SetCancelCallback(callback func()) {
 	self.cancelbutton.SetClicked(callback)
 }

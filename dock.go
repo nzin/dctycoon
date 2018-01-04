@@ -131,6 +131,9 @@ func NewDockWidget(root *sws.RootWidget, gamemenu *MainGameMenu) *DockWidget {
 		gamemenu.SetCancelCallback(func() {
 			root.RemoveChild(gamemenu)
 		})
+		widget.pause.SetColor(0xffdddddd)
+		widget.play.SetColor(0xff8888ff)
+		widget.forward.SetColor(0xffdddddd)
 		if widget.timerevent != nil {
 			widget.timerevent.StopRepeat()
 		}
