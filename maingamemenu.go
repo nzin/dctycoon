@@ -144,7 +144,6 @@ type MainGameMenuLoad struct {
 	loadbutton   *sws.ButtonWidget
 	cancelbutton *sws.ButtonWidget
 	loadcallback func(filename string)
-	currentfile  string
 }
 
 func NewMainGameMenuLoad() *MainGameMenuLoad {
@@ -157,9 +156,6 @@ func NewMainGameMenuLoad() *MainGameMenuLoad {
 	}
 
 	widget.listwidget.Move(20, 50)
-	widget.listwidget.SetCallbackValueChanged(func() {
-		widget.currentfile = widget.listwidget.GetCurrentItem().GetText() + ".map"
-	})
 	widget.AddChild(widget.listwidget)
 
 	widget.cancelbutton.Move(280, 460)
@@ -167,6 +163,12 @@ func NewMainGameMenuLoad() *MainGameMenuLoad {
 
 	widget.loadbutton.Move(20, 460)
 	widget.AddChild(widget.loadbutton)
+	widget.loadbutton.SetClicked(func() {
+		currentitem := widget.listwidget.GetCurrentItem()
+		if currentitem != nil {
+			widget.loadcallback(currentitem.GetText() + ".map")
+		}
+	})
 
 	return widget
 }
@@ -175,7 +177,6 @@ func (self *MainGameMenuLoad) Loadfiles() {
 	for _, c := range self.listwidget.GetItems() {
 		self.listwidget.RemoveItem(c)
 	}
-	self.currentfile = ""
 
 	// check in the working directory all files in ".map"
 	files, err := ioutil.ReadDir(".")
