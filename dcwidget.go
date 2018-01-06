@@ -234,7 +234,8 @@ func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 			m.AddItem(sws.NewMenuItemLabel("Uninstall", func() {
 				rackelement := activeTile.TileElement().(*RackElement)
 				if len(rackelement.items) > 0 {
-					sws.ShowModalError(self.rootwindow, "Uninstall action", "resources/icon-triangular-big.png", "It is not possible to uninstall a rack unless it is empty", nil)
+					iconsurface, _ := global.LoadImageAsset("assets/ui/icon-triangular-big.png")
+					sws.ShowModalErrorSurfaceicon(self.rootwindow, "Uninstall action", iconsurface, "It is not possible to uninstall a rack unless it is empty", nil)
 				} else {
 					self.inventory.UninstallItem(rackelement.InventoryItem())
 				}
@@ -480,9 +481,7 @@ func (self *DcWidget) InitMap(assetdcmap string) {
 	log.Debug("DcWidget::InitMap(", assetdcmap, ")")
 	if data, err := global.Asset("assets/dcmap/" + assetdcmap); err == nil {
 		var dcmap map[string]interface{}
-		fmt.Println("debug0")
 		if json.Unmarshal(data, &dcmap) == nil {
-			fmt.Println("debug1")
 			width := int32(dcmap["width"].(float64))
 			height := int32(dcmap["height"].(float64))
 			self.tiles = make([][]*Tile, height)

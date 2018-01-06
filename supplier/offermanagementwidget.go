@@ -255,7 +255,8 @@ func NewOfferManagementWidget(root *sws.RootWidget) *OfferManagementWidget {
 
 	widget.removeoffer.Move(160, 5)
 	widget.removeoffer.SetClicked(func() {
-		sws.ShowModalYesNo(root, "Remove Offer", "resources/icon-triangular-big.png", "Are you sure you want to remove this offer?", func() {
+		iconsurface, _ := global.LoadImageAsset("assets/ui/icon-triangular-big.png")
+		sws.ShowModalYesNoSurfaceicon(root, "Remove Offer", iconsurface, "Are you sure you want to remove this offer?", func() {
 			widget.HighlightLine(widget.highlight, false)
 			widget.vbox.RemoveChild(widget.highlight)
 			//unsubscribe pool

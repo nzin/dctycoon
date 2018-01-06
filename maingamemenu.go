@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"strings"
 
+	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/dctycoon/supplier"
 	"github.com/veandco/go-sdl2/sdl"
 
@@ -385,7 +386,8 @@ func (self *MainGameMenuNew) SetNewGameCallback(callback func(location string, d
 		if self.currentlocation != "" {
 			callback(self.currentlocation, self.difficulty.ActiveChoice)
 		} else {
-			sws.ShowModalError(self.root, "No location selected", "resources/icon-triangular-big.png", "You must select a location where you want to be based", nil)
+			iconsurface, _ := global.LoadImageAsset("assets/ui/icon-triangular-big.png")
+			sws.ShowModalErrorSurfaceicon(self.root, "No location selected", iconsurface, "You must select a location where you want to be based", nil)
 		}
 	})
 }

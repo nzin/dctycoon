@@ -11,14 +11,14 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-func GlowImage(spritepath string, color uint32) *sdl.Surface {
-	log.Debug("GlowImage(", spritepath, ",", color, ")")
+func GlowImage(spriteassetpath string, color uint32) *sdl.Surface {
+	log.Debug("GlowImage(", spriteassetpath, ",", color, ")")
 	red := byte((color & 0xff0000) >> 16)
 	green := byte((color & 0x00ff00) >> 8)
 	blue := byte(color & 0x0000ff)
 
-	if image, err := img.Load(spritepath); err == nil {
-		if image2, err := img.Load(spritepath); err == nil {
+	if image, err := LoadImageAsset(spriteassetpath); err == nil {
+		if image2, err := LoadImageAsset(spriteassetpath); err == nil {
 			if image2.Format.BytesPerPixel == 4 {
 				pixels := image.Pixels()
 				pixels2 := image2.Pixels()

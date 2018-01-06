@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/nzin/dctycoon/accounting"
+	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/dctycoon/timer"
 	"github.com/nzin/sws"
@@ -97,7 +98,9 @@ func NewMainSupplierWidget(root *sws.RootWidget) *MainSupplierWidget {
 	sv.SetLeftWidget(banner)
 	widgeticon := sws.NewLabelWidget(100, 50, "")
 	widgeticon.SetColor(0xff0684dc)
-	widgeticon.SetImage("resources/deal.small2.png")
+	if icon, err := global.LoadImageAsset("assets/ui/deal.small2.png"); err == nil {
+		widgeticon.SetImageSurface(icon)
+	}
 	banner.AddChild(widgeticon)
 
 	shop := sws.NewFlatButtonWidget(100, 50, "Shop")
@@ -120,7 +123,9 @@ func NewMainSupplierWidget(root *sws.RootWidget) *MainSupplierWidget {
 
 	cart := sws.NewFlatButtonWidget(100, 50, "")
 	cart.SetColor(0xff0684dc)
-	cart.SetImage("resources/cart.small.png")
+	if icon, err := global.LoadImageAsset("assets/ui/cart.small.png"); err == nil {
+		cart.SetImageSurface(icon)
+	}
 	cart.Move(400, 0)
 	banner.AddChild(cart)
 
@@ -372,7 +377,8 @@ func NewMainSupplierWidget(root *sws.RootWidget) *MainSupplierWidget {
 		bankAccount := accounts["51"]
 		if bankAccount < totalprice {
 			// show modal window
-			sws.ShowModalError(widget.rootwindow, "Not enough funds", "resources/icon-triangular-big.png", fmt.Sprintf("You cannot buy for %.2f $ of goods: your bank account is currently credited of %.2f $!", totalprice, bankAccount), nil)
+			iconsurface, _ := global.LoadImageAsset("assets/ui/icon-triangular-big.png")
+			sws.ShowModalErrorSurfaceicon(widget.rootwindow, "Not enough funds", iconsurface, fmt.Sprintf("You cannot buy for %.2f $ of goods: your bank account is currently credited of %.2f $!", totalprice, bankAccount), nil)
 		} else {
 			// we buy
 			for _, item := range widget.inventory.Cart {

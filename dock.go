@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/nzin/dctycoon/accounting"
+	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/dctycoon/timer"
 	"github.com/nzin/sws"
 )
@@ -64,7 +65,9 @@ func NewDockWidget(root *sws.RootWidget, gamemenu *MainGameMenu) *DockWidget {
 	widget.pause = sws.NewFlatButtonWidget(25, 25, "")
 	widget.pause.SetColor(0xff8888ff)
 	widget.pause.Move(25, 50)
-	widget.pause.SetImage("resources/icon-pause-symbol.png")
+	if icon, err := global.LoadImageAsset("assets/ui/icon-pause-symbol.png"); err == nil {
+		widget.pause.SetImageSurface(icon)
+	}
 	widget.pause.SetClicked(func() {
 		widget.pause.SetColor(0xff8888ff)
 		widget.play.SetColor(0xffdddddd)
@@ -77,7 +80,9 @@ func NewDockWidget(root *sws.RootWidget, gamemenu *MainGameMenu) *DockWidget {
 
 	widget.play = sws.NewFlatButtonWidget(25, 25, "")
 	widget.play.Move(50, 50)
-	widget.play.SetImage("resources/icon-arrowhead-pointing-to-the-right.png")
+	if icon, err := global.LoadImageAsset("assets/ui/icon-arrowhead-pointing-to-the-right.png"); err == nil {
+		widget.play.SetImageSurface(icon)
+	}
 	widget.play.SetClicked(func() {
 		widget.pause.SetColor(0xffdddddd)
 		widget.play.SetColor(0xff8888ff)
@@ -95,7 +100,9 @@ func NewDockWidget(root *sws.RootWidget, gamemenu *MainGameMenu) *DockWidget {
 
 	widget.forward = sws.NewFlatButtonWidget(25, 25, "")
 	widget.forward.Move(75, 50)
-	widget.forward.SetImage("resources/icon-forward-button.png")
+	if icon, err := global.LoadImageAsset("assets/ui/icon-forward-button.png"); err == nil {
+		widget.forward.SetImageSurface(icon)
+	}
 	widget.forward.SetClicked(func() {
 		widget.pause.SetColor(0xffdddddd)
 		widget.play.SetColor(0xffdddddd)
@@ -113,17 +120,23 @@ func NewDockWidget(root *sws.RootWidget, gamemenu *MainGameMenu) *DockWidget {
 
 	widget.shop = sws.NewFlatButtonWidget(25, 25, "")
 	widget.shop.Move(25, 75)
-	widget.shop.SetImage("resources/icon-shopping-cart-black-shape.png")
+	if icon, err := global.LoadImageAsset("assets/ui/icon-shopping-cart-black-shape.png"); err == nil {
+		widget.shop.SetImageSurface(icon)
+	}
 	widget.AddChild(widget.shop)
 
 	widget.inventory = sws.NewFlatButtonWidget(25, 25, "")
 	widget.inventory.Move(50, 75)
-	widget.inventory.SetImage("resources/icon-dropbox-logo.png")
+	if icon, err := global.LoadImageAsset("assets/ui/icon-dropbox-logo.png"); err == nil {
+		widget.inventory.SetImageSurface(icon)
+	}
 	widget.AddChild(widget.inventory)
 
 	save := sws.NewFlatButtonWidget(25, 25, "")
 	save.Move(75, 75)
-	save.SetImage("resources/icon-blank-file.png")
+	if icon, err := global.LoadImageAsset("assets/ui/icon-blank-file.png"); err == nil {
+		save.SetImageSurface(icon)
+	}
 	widget.AddChild(save)
 	save.SetClicked(func() {
 		gamemenu.ShowSave()
@@ -141,7 +154,9 @@ func NewDockWidget(root *sws.RootWidget, gamemenu *MainGameMenu) *DockWidget {
 
 	widget.quit = sws.NewFlatButtonWidget(25, 25, "")
 	widget.quit.Move(100, 75)
-	widget.quit.SetImage("resources/icon-power-button-off.png")
+	if icon, err := global.LoadImageAsset("assets/ui/icon-power-button-off.png"); err == nil {
+		widget.quit.SetImageSurface(icon)
+	}
 	widget.AddChild(widget.quit)
 
 	widget.ledgerButton = sws.NewFlatButtonWidget(150, 25, "")
