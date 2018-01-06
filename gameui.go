@@ -68,6 +68,7 @@ func (self *GameUI) InitGame(globaltimer *timer.GameTimer, inventory *supplier.I
 	self.supplierwidget.Hide()
 	self.inventorywidget.Hide()
 	self.accountingwidget.Hide()
+	self.dc.InitMap()
 }
 
 //
@@ -86,7 +87,7 @@ func (self *GameUI) LoadGame(v map[string]interface{}, globaltimer *timer.GameTi
 	self.inventorywidget.Hide()
 	self.accountingwidget.Hide()
 	gamemap := v["map"].(map[string]interface{})
-	self.dc.LoadMap(gamemap, globaltimer.CurrentTime)
+	self.dc.LoadMap(gamemap)
 }
 
 func (self *GameUI) SaveGame() string {

@@ -107,8 +107,9 @@ func NewMainGameMenu(game *Game, root *sws.RootWidget, quit *bool) *MainGameMenu
 	widget.newwidget.SetCancelCallback(func() {
 		root.RemoveChild(widget.newwidget)
 	})
-	widget.newwidget.SetNewGameCallback(func(location *supplier.LocationType, nbopponents int32) {
+	widget.newwidget.SetNewGameCallback(func(location string, difficulty int32) {
 		root.RemoveChild(widget.newwidget)
+		game.InitGame(location, difficulty)
 	})
 
 	widget.loadbutton.Move(150, 110)
@@ -338,30 +339,32 @@ func (self *MainGameMenuSave) SetCancelCallback(callback func()) {
 // Used by MainGameMenu
 type MainGameMenuNew struct {
 	StaticWidget
+	root            *sws.RootWidget
 	worldmap        *WorldmapWidget
 	locationname    *sws.LabelWidget
-	currentlocation *supplier.LocationType
+	currentlocation string
 	bankrate        *sws.LabelWidget
 	taxrate         *sws.LabelWidget
-	nbopponents     *sws.DropdownWidget
+	difficulty      *sws.DropdownWidget
 	createbutton    *sws.ButtonWidget
 	cancelbutton    *sws.ButtonWidget
 }
 
 func (self *MainGameMenuNew) Reset() {
-	self.nbopponents.SetActiveChoice(0)
+	self.difficulty.SetActiveChoice(0)
 	self.worldmap.Reset()
-	self.SetLocation(nil, nil)
+	self.SetLocation("", "")
 }
 
-func (self *MainGameMenuNew) SetLocation(selected, hotspot *supplier.LocationType) {
+func (self *MainGameMenuNew) SetLocation(selected, hotspot string) {
 	var location *supplier.LocationType
-	if hotspot != nil {
-		location = hotspot
+	if hotspot != "" {
+		location = supplier.AvailableLocation[hotspot]
+		self.currentlocation = hotspot
 	} else {
-		location = selected
+		location = supplier.AvailableLocation[selected]
+		self.currentlocation = selected
 	}
-	self.currentlocation = location
 	if location != nil {
 		self.locationname.SetText(location.Name)
 		self.bankrate.SetText(fmt.Sprintf("%.2f %%", location.Bankinterestrate*100))
@@ -377,10 +380,12 @@ func (self *MainGameMenuNew) SetCancelCallback(callback func()) {
 	self.cancelbutton.SetClicked(callback)
 }
 
-func (self *MainGameMenuNew) SetNewGameCallback(callback func(location *supplier.LocationType, nbopponents int32)) {
+func (self *MainGameMenuNew) SetNewGameCallback(callback func(location string, difficulty int32)) {
 	self.createbutton.SetClicked(func() {
-		if self.currentlocation != nil {
-			callback(self.currentlocation, self.nbopponents.ActiveChoice+1)
+		if self.currentlocation != "" {
+			callback(self.currentlocation, self.difficulty.ActiveChoice)
+		} else {
+			sws.ShowModalError(self.root, "No location selected", "resources/icon-triangular-big.png", "You must select a location where you want to be based", nil)
 		}
 	})
 }
@@ -389,11 +394,12 @@ func NewMainGameMenuNew(root *sws.RootWidget) *MainGameMenuNew {
 	corewidget := NewStaticWidget(root.Width()-200, root.Height()-200)
 	widget := &MainGameMenuNew{
 		StaticWidget: *corewidget,
+		root:         root,
 		worldmap:     NewWorldmapWidget(root.Width()-400, root.Height()-200),
 		locationname: sws.NewLabelWidget(100, 25, ""),
 		bankrate:     sws.NewLabelWidget(100, 25, ""),
 		taxrate:      sws.NewLabelWidget(100, 25, ""),
-		nbopponents:  sws.NewDropdownWidget(50, 25, []string{"1", "2", "3", "4", "5"}),
+		difficulty:   sws.NewDropdownWidget(70, 25, []string{"Easy", "Medium", "Hard"}),
 		createbutton: sws.NewButtonWidget(100, 40, "Create"),
 		cancelbutton: sws.NewButtonWidget(100, 40, "Cancel"),
 	}
@@ -401,7 +407,7 @@ func NewMainGameMenuNew(root *sws.RootWidget) *MainGameMenuNew {
 
 	widget.AddChild(widget.worldmap)
 	widget.Move(100, 100)
-	widget.worldmap.SetLocationCallback(func(selected, hotspot *supplier.LocationType) {
+	widget.worldmap.SetLocationCallback(func(selected, hotspot string) {
 		widget.SetLocation(selected, hotspot)
 	})
 
@@ -446,14 +452,14 @@ func NewMainGameMenuNew(root *sws.RootWidget) *MainGameMenuNew {
 	hr.Move(root.Width()-370, 110)
 	widget.AddChild(hr)
 
-	nbopponents := sws.NewLabelWidget(120, 25, "Nb competitors: ")
-	nbopponents.Move(root.Width()-390, 125)
-	nbopponents.SetTextColor(sdl.Color{0xff, 0xff, 0xff, 0xff})
-	nbopponents.SetColor(0xff000000)
-	widget.AddChild(nbopponents)
-	widget.nbopponents.Move(root.Width()-260, 125)
-	widget.nbopponents.SetColor(0xff000000)
-	widget.AddChild(widget.nbopponents)
+	difficulty := sws.NewLabelWidget(90, 25, "Difficulty: ")
+	difficulty.Move(root.Width()-390, 125)
+	difficulty.SetTextColor(sdl.Color{0xff, 0xff, 0xff, 0xff})
+	difficulty.SetColor(0xff000000)
+	widget.AddChild(difficulty)
+	widget.difficulty.Move(root.Width()-290, 125)
+	widget.difficulty.SetColor(0xff000000)
+	widget.AddChild(widget.difficulty)
 
 	widget.createbutton.Move(root.Width()-350, root.Height()-330)
 	widget.createbutton.SetColor(0xff000000)

@@ -13,23 +13,23 @@ import (
 // where you can select a Location (see supplier.LocationType and supplier.AvailableLocation)
 type WorldmapWidget struct {
 	sws.CoreWidget
-	selected        *supplier.LocationType
-	hotspot         *supplier.LocationType
+	selected        string
+	hotspot         string
 	background      *sdl.Surface
 	xshift          int32
 	yshift          int32
 	scale           float64
-	hotspotcallback func(selected, hotspot *supplier.LocationType)
+	hotspotcallback func(selected, hotspot string)
 }
 
 func (self *WorldmapWidget) MouseMove(x, y, xrel, yrel int32) {
-	var currenthotspot *supplier.LocationType
-	for _, l := range supplier.AvailableLocation {
+	var currenthotspot string
+	for locationid, l := range supplier.AvailableLocation {
 		xlocation := float64(l.Xmap)*self.scale + float64(self.xshift)
 		ylocation := float64(l.Ymap)*self.scale + float64(self.yshift)
 
 		if math.Abs((float64(x)-xlocation)*(float64(x)-xlocation)+(float64(y)-ylocation)*(float64(y)-ylocation)) < 200.0 {
-			currenthotspot = l
+			currenthotspot = locationid
 		}
 	}
 	if currenthotspot != self.hotspot {
@@ -52,15 +52,15 @@ func (self *WorldmapWidget) Repaint() {
 	self.background.Blit(&sdl.Rect{X: 0, Y: 0, W: self.background.W, H: self.background.H}, self.Surface(), &sdl.Rect{X: 0, Y: 0, W: self.background.W, H: self.background.H})
 
 	// different spots
-	for _, l := range supplier.AvailableLocation {
+	for locationid, l := range supplier.AvailableLocation {
 		x := int32(float64(l.Xmap)*self.scale) + self.xshift
 		y := int32(float64(l.Ymap)*self.scale) + self.yshift
 
 		self.SetDrawColor(0x46, 0xc8, 0xe8, 255)
-		if l == self.hotspot {
+		if locationid == self.hotspot {
 			self.SetDrawColor(0xff, 0xa0, 0xa0, 255)
 		}
-		if l == self.selected {
+		if locationid == self.selected {
 			self.SetDrawColor(0xff, 0x20, 0x20, 255)
 		}
 		for dy := y - 3; dy < y+3; dy++ {
@@ -78,13 +78,13 @@ func (self *WorldmapWidget) Repaint() {
 	}
 }
 
-func (self *WorldmapWidget) SetLocationCallback(callback func(selected, hotspot *supplier.LocationType)) {
+func (self *WorldmapWidget) SetLocationCallback(callback func(selected, hotspot string)) {
 	self.hotspotcallback = callback
 }
 
 func (self *WorldmapWidget) Reset() {
-	self.selected = nil
-	self.hotspot = nil
+	self.selected = ""
+	self.hotspot = ""
 }
 
 func NewWorldmapWidget(w, h int32) *WorldmapWidget {

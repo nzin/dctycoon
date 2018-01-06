@@ -439,8 +439,8 @@ func (self *DcWidget) ItemUninstalled(item *supplier.InventoryItem) {
 //     ]
 //   }
 //
-func (self *DcWidget) LoadMap(dc map[string]interface{}, currenttime time.Time) {
-	log.Debug("DcWidget::LoadMap(", dc, ",", currenttime, ")")
+func (self *DcWidget) LoadMap(dc map[string]interface{}) {
+	log.Debug("DcWidget::LoadMap(", dc, ")")
 	width := int32(dc["width"].(float64))
 	height := int32(dc["height"].(float64))
 	self.tiles = make([][]*Tile, height)
@@ -471,6 +471,19 @@ func (self *DcWidget) LoadMap(dc map[string]interface{}, currenttime time.Time) 
 	for _, item := range self.inventory.Items {
 		if item.IsPlaced() && item.Typeitem == supplier.PRODUCT_SERVER {
 			self.ItemInstalled(item)
+		}
+	}
+}
+
+func (self *DcWidget) InitMap() {
+	log.Debug("DcWidget::InitMap()")
+	width := 32
+	height := 32
+	self.tiles = make([][]*Tile, height)
+	for y := range self.tiles {
+		self.tiles[y] = make([]*Tile, width)
+		for x := range self.tiles[y] {
+			self.tiles[y][x] = NewGrassTile()
 		}
 	}
 }
