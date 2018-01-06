@@ -1,8 +1,11 @@
 package dctycoon
 
 import (
+	"fmt"
 	"io/ioutil"
 	"strings"
+
+	"github.com/nzin/dctycoon/supplier"
 
 	"github.com/nzin/sws"
 )
@@ -76,6 +79,7 @@ type MainGameMenu struct {
 	quitbutton   *sws.ButtonWidget
 	loadwidget   *MainGameMenuLoad
 	savewidget   *MainGameMenuSave
+	newwidget    *MainGameMenuNew
 }
 
 func NewMainGameMenu(game *Game, root *sws.RootWidget, quit *bool) *MainGameMenu {
@@ -90,10 +94,21 @@ func NewMainGameMenu(game *Game, root *sws.RootWidget, quit *bool) *MainGameMenu
 		cancelbutton: sws.NewButtonWidget(150, 30, "Cancel"),
 		loadwidget:   NewMainGameMenuLoad(),
 		savewidget:   NewMainGameMenuSave(),
+		newwidget:    NewMainGameMenuNew(root),
 	}
 
 	widget.newbutton.Move(150, 50)
 	widget.AddChild(widget.newbutton)
+	widget.newbutton.SetClicked(func() {
+		root.AddChild(widget.newwidget)
+		widget.newwidget.SetLocation(nil, nil)
+	})
+	widget.newwidget.SetCancelCallback(func() {
+		root.RemoveChild(widget.newwidget)
+	})
+	widget.newwidget.SetNewGameCallback(func(location *supplier.LocationType, nbopponents int32) {
+		root.RemoveChild(widget.newwidget)
+	})
 
 	widget.loadbutton.Move(150, 110)
 	widget.AddChild(widget.loadbutton)
@@ -315,4 +330,105 @@ func (self *MainGameMenuSave) SetSaveCallback(callback func(filename string)) {
 
 func (self *MainGameMenuSave) SetCancelCallback(callback func()) {
 	self.cancelbutton.SetClicked(callback)
+}
+
+//
+// MainGameMenuNew is the 'new' game window.
+// Used by MainGameMenu
+type MainGameMenuNew struct {
+	StaticWidget
+	worldmap        *WorldmapWidget
+	locationname    *sws.LabelWidget
+	currentlocation *supplier.LocationType
+	bankrate        *sws.LabelWidget
+	taxrate         *sws.LabelWidget
+	nbopponents     *sws.DropdownWidget
+	createbutton    *sws.ButtonWidget
+	cancelbutton    *sws.ButtonWidget
+}
+
+func (self *MainGameMenuNew) SetLocation(selected, hotspot *supplier.LocationType) {
+	var location *supplier.LocationType
+	if hotspot != nil {
+		location = hotspot
+	} else {
+		location = selected
+	}
+	self.currentlocation = location
+	if location != nil {
+		self.locationname.SetText(location.Name)
+		self.bankrate.SetText(fmt.Sprintf("%.2f %%", location.Bankinterestrate*100))
+		self.taxrate.SetText(fmt.Sprintf("%.2f %%", location.Taxrate*100))
+	} else {
+		self.locationname.SetText("")
+		self.bankrate.SetText("- %")
+		self.taxrate.SetText("- %")
+	}
+}
+
+func (self *MainGameMenuNew) SetCancelCallback(callback func()) {
+	self.cancelbutton.SetClicked(callback)
+}
+
+func (self *MainGameMenuNew) SetNewGameCallback(callback func(location *supplier.LocationType, nbopponents int32)) {
+	self.createbutton.SetClicked(func() {
+		if self.currentlocation != nil {
+			callback(self.currentlocation, self.nbopponents.ActiveChoice+1)
+		}
+	})
+}
+
+func NewMainGameMenuNew(root *sws.RootWidget) *MainGameMenuNew {
+	corewidget := NewStaticWidget(root.Width()-200, root.Height()-200)
+	widget := &MainGameMenuNew{
+		StaticWidget: *corewidget,
+		worldmap:     NewWorldmapWidget(root.Width()-400, root.Height()-200),
+		locationname: sws.NewLabelWidget(100, 25, ""),
+		bankrate:     sws.NewLabelWidget(100, 25, ""),
+		taxrate:      sws.NewLabelWidget(100, 25, ""),
+		nbopponents:  sws.NewDropdownWidget(50, 25, []string{"1", "2", "3", "4", "5"}),
+		createbutton: sws.NewButtonWidget(100, 40, "Create"),
+		cancelbutton: sws.NewButtonWidget(100, 40, "Cancel"),
+	}
+
+	widget.AddChild(widget.worldmap)
+	widget.Move(100, 100)
+	widget.worldmap.SetLocationCallback(func(selected, hotspot *supplier.LocationType) {
+		widget.SetLocation(selected, hotspot)
+	})
+
+	name := sws.NewLabelWidget(80, 25, "Location:")
+	name.Move(root.Width()-390, 25)
+	widget.AddChild(name)
+	widget.locationname.Move(root.Width()-310, 25)
+	widget.AddChild(widget.locationname)
+
+	bankrate := sws.NewLabelWidget(80, 25, "Bank rate:")
+	bankrate.Move(root.Width()-390, 50)
+	widget.AddChild(bankrate)
+	widget.bankrate.Move(root.Width()-310, 50)
+	widget.AddChild(widget.bankrate)
+
+	taxrate := sws.NewLabelWidget(80, 25, "Tax rate:")
+	taxrate.Move(root.Width()-390, 75)
+	widget.AddChild(taxrate)
+	widget.taxrate.Move(root.Width()-310, 75)
+	widget.AddChild(widget.taxrate)
+
+	hr := sws.NewHr(100)
+	hr.Move(root.Width()-350, 100)
+
+	nbopponents := sws.NewLabelWidget(120, 25, "Nb competitors: ")
+	nbopponents.Move(root.Width()-390, 125)
+	widget.AddChild(nbopponents)
+	widget.nbopponents.Move(root.Width()-260, 125)
+	widget.AddChild(widget.nbopponents)
+
+	widget.createbutton.Move(root.Width()-350, root.Height()-330)
+	widget.AddChild(widget.createbutton)
+
+	widget.cancelbutton.Move(root.Width()-350, root.Height()-280)
+	widget.AddChild(widget.cancelbutton)
+
+	return widget
 }

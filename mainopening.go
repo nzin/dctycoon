@@ -9,7 +9,7 @@ import (
 type MainOpening struct {
 	sws.CoreWidget
 	rootwindow *sws.RootWidget
-	worldmap   *sdl.Surface
+	background *sdl.Surface
 	gamemenu   *MainGameMenu
 }
 
@@ -17,7 +17,7 @@ func (self *MainOpening) Repaint() {
 
 	// background image
 	self.FillRect(0, 0, self.Width(), self.Height(), 0xff000000)
-	self.worldmap.Blit(&sdl.Rect{X: 0, Y: 0, W: self.worldmap.W, H: self.worldmap.H}, self.Surface(), &sdl.Rect{X: 0, Y: 0, W: self.worldmap.W, H: self.worldmap.H})
+	self.background.Blit(&sdl.Rect{X: 0, Y: 0, W: self.background.W, H: self.background.H}, self.Surface(), &sdl.Rect{X: 0, Y: 0, W: self.background.W, H: self.background.H})
 
 	// children
 	for _, child := range self.GetChildren() {
@@ -34,14 +34,14 @@ func NewMainOpening(w, h int32, rootwindow *sws.RootWidget, gamemenu *MainGameMe
 	widget := &MainOpening{
 		CoreWidget: *corewidget,
 		rootwindow: rootwindow,
-		worldmap:   nil,
+		background: nil,
 		gamemenu:   gamemenu,
 	}
 	surface, err := sdl.CreateRGBSurface(0, w, h, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000)
 	if err != nil {
 		panic(err)
 	}
-	widget.worldmap = surface
+	widget.background = surface
 
 	if image, err := global.LoadImageAsset("assets/ui/opening.jpg"); err == nil {
 		dstw := w
@@ -53,7 +53,7 @@ func NewMainOpening(w, h int32, rootwindow *sws.RootWidget, gamemenu *MainGameMe
 			dsth = image.H * w / image.W
 			//	dstw = image.W * h / image.H
 		}
-		image.BlitScaled(&sdl.Rect{X: 0, Y: 0, W: image.W, H: image.H}, widget.worldmap, &sdl.Rect{X: (w - dstw) / 2, Y: (h - dsth) / 2, W: dstw, H: dsth})
+		image.BlitScaled(&sdl.Rect{X: 0, Y: 0, W: image.W, H: image.H}, widget.background, &sdl.Rect{X: (w - dstw) / 2, Y: (h - dsth) / 2, W: dstw, H: dsth})
 	} else {
 		panic(err)
 	}
