@@ -405,6 +405,13 @@ func NewMainGameMenuNew(root *sws.RootWidget) *MainGameMenuNew {
 		widget.SetLocation(selected, hotspot)
 	})
 
+	selectyourlocation := sws.NewLabelWidget(300, 30, "Select your location on the map:")
+	selectyourlocation.SetFont(sws.LatoRegular20)
+	selectyourlocation.SetColor(0x00000000)
+	selectyourlocation.SetTextColor(sdl.Color{0xff, 0xff, 0xff, 0xff})
+	selectyourlocation.Move(20, 20)
+	widget.AddChild(selectyourlocation)
+
 	name := sws.NewLabelWidget(80, 25, "Location:")
 	name.Move(root.Width()-390, 25)
 	name.SetTextColor(sdl.Color{0xff, 0xff, 0xff, 0xff})
