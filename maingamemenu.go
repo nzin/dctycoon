@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/nzin/dctycoon/supplier"
+	"github.com/veandco/go-sdl2/sdl"
 
 	"github.com/nzin/sws"
 )
@@ -101,7 +102,7 @@ func NewMainGameMenu(game *Game, root *sws.RootWidget, quit *bool) *MainGameMenu
 	widget.AddChild(widget.newbutton)
 	widget.newbutton.SetClicked(func() {
 		root.AddChild(widget.newwidget)
-		widget.newwidget.SetLocation(nil, nil)
+		widget.newwidget.Reset()
 	})
 	widget.newwidget.SetCancelCallback(func() {
 		root.RemoveChild(widget.newwidget)
@@ -347,6 +348,12 @@ type MainGameMenuNew struct {
 	cancelbutton    *sws.ButtonWidget
 }
 
+func (self *MainGameMenuNew) Reset() {
+	self.nbopponents.SetActiveChoice(0)
+	self.worldmap.Reset()
+	self.SetLocation(nil, nil)
+}
+
 func (self *MainGameMenuNew) SetLocation(selected, hotspot *supplier.LocationType) {
 	var location *supplier.LocationType
 	if hotspot != nil {
@@ -390,6 +397,7 @@ func NewMainGameMenuNew(root *sws.RootWidget) *MainGameMenuNew {
 		createbutton: sws.NewButtonWidget(100, 40, "Create"),
 		cancelbutton: sws.NewButtonWidget(100, 40, "Cancel"),
 	}
+	widget.SetColor(0xff000000)
 
 	widget.AddChild(widget.worldmap)
 	widget.Move(100, 100)
@@ -399,35 +407,53 @@ func NewMainGameMenuNew(root *sws.RootWidget) *MainGameMenuNew {
 
 	name := sws.NewLabelWidget(80, 25, "Location:")
 	name.Move(root.Width()-390, 25)
+	name.SetTextColor(sdl.Color{0xff, 0xff, 0xff, 0xff})
+	name.SetColor(0xff000000)
 	widget.AddChild(name)
 	widget.locationname.Move(root.Width()-310, 25)
+	widget.locationname.SetTextColor(sdl.Color{0xff, 0xff, 0xff, 0xff})
+	widget.locationname.SetColor(0xff000000)
 	widget.AddChild(widget.locationname)
 
 	bankrate := sws.NewLabelWidget(80, 25, "Bank rate:")
 	bankrate.Move(root.Width()-390, 50)
+	bankrate.SetTextColor(sdl.Color{0xff, 0xff, 0xff, 0xff})
+	bankrate.SetColor(0xff000000)
 	widget.AddChild(bankrate)
 	widget.bankrate.Move(root.Width()-310, 50)
+	widget.bankrate.SetTextColor(sdl.Color{0xff, 0xff, 0xff, 0xff})
+	widget.bankrate.SetColor(0xff000000)
 	widget.AddChild(widget.bankrate)
 
 	taxrate := sws.NewLabelWidget(80, 25, "Tax rate:")
 	taxrate.Move(root.Width()-390, 75)
+	taxrate.SetTextColor(sdl.Color{0xff, 0xff, 0xff, 0xff})
+	taxrate.SetColor(0xff000000)
 	widget.AddChild(taxrate)
 	widget.taxrate.Move(root.Width()-310, 75)
+	widget.taxrate.SetTextColor(sdl.Color{0xff, 0xff, 0xff, 0xff})
+	widget.taxrate.SetColor(0xff000000)
 	widget.AddChild(widget.taxrate)
 
-	hr := sws.NewHr(100)
-	hr.Move(root.Width()-350, 100)
+	hr := sws.NewHr(140)
+	hr.Move(root.Width()-370, 110)
+	widget.AddChild(hr)
 
 	nbopponents := sws.NewLabelWidget(120, 25, "Nb competitors: ")
 	nbopponents.Move(root.Width()-390, 125)
+	nbopponents.SetTextColor(sdl.Color{0xff, 0xff, 0xff, 0xff})
+	nbopponents.SetColor(0xff000000)
 	widget.AddChild(nbopponents)
 	widget.nbopponents.Move(root.Width()-260, 125)
+	widget.nbopponents.SetColor(0xff000000)
 	widget.AddChild(widget.nbopponents)
 
 	widget.createbutton.Move(root.Width()-350, root.Height()-330)
+	widget.createbutton.SetColor(0xff000000)
 	widget.AddChild(widget.createbutton)
 
 	widget.cancelbutton.Move(root.Width()-350, root.Height()-280)
+	widget.cancelbutton.SetColor(0xff000000)
 	widget.AddChild(widget.cancelbutton)
 
 	return widget

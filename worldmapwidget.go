@@ -82,6 +82,11 @@ func (self *WorldmapWidget) SetLocationCallback(callback func(selected, hotspot 
 	self.hotspotcallback = callback
 }
 
+func (self *WorldmapWidget) Reset() {
+	self.selected = nil
+	self.hotspot = nil
+}
+
 func NewWorldmapWidget(w, h int32) *WorldmapWidget {
 	corewidget := sws.NewCoreWidget(w, h)
 	widget := &WorldmapWidget{
