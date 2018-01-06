@@ -1,6 +1,7 @@
 package dctycoon
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -475,15 +476,33 @@ func (self *DcWidget) LoadMap(dc map[string]interface{}) {
 	}
 }
 
-func (self *DcWidget) InitMap() {
-	log.Debug("DcWidget::InitMap()")
-	width := 32
-	height := 32
-	self.tiles = make([][]*Tile, height)
-	for y := range self.tiles {
-		self.tiles[y] = make([]*Tile, width)
-		for x := range self.tiles[y] {
-			self.tiles[y][x] = NewGrassTile()
+func (self *DcWidget) InitMap(assetdcmap string) {
+	log.Debug("DcWidget::InitMap(", assetdcmap, ")")
+	if data, err := global.Asset("assets/dcmap/" + assetdcmap); err == nil {
+		var dcmap map[string]interface{}
+		fmt.Println("debug0")
+		if json.Unmarshal(data, &dcmap) == nil {
+			fmt.Println("debug1")
+			width := int32(dcmap["width"].(float64))
+			height := int32(dcmap["height"].(float64))
+			self.tiles = make([][]*Tile, height)
+			for y := range self.tiles {
+				self.tiles[y] = make([]*Tile, width)
+				for x := range self.tiles[y] {
+					self.tiles[y][x] = NewGrassTile()
+				}
+			}
+			tiles := dcmap["tiles"].([]interface{})
+			for _, t := range tiles {
+				tile := t.(map[string]interface{})
+				x := int32(tile["x"].(float64))
+				y := int32(tile["y"].(float64))
+				wall0 := tile["wall0"].(string)
+				wall1 := tile["wall1"].(string)
+				floor := tile["floor"].(string)
+				rotation := uint32(tile["rotation"].(float64))
+				self.tiles[y][x] = NewTile(wall0, wall1, floor, rotation)
+			}
 		}
 	}
 }

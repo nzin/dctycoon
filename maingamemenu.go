@@ -399,7 +399,7 @@ func NewMainGameMenuNew(root *sws.RootWidget) *MainGameMenuNew {
 		locationname: sws.NewLabelWidget(100, 25, ""),
 		bankrate:     sws.NewLabelWidget(100, 25, ""),
 		taxrate:      sws.NewLabelWidget(100, 25, ""),
-		difficulty:   sws.NewDropdownWidget(70, 25, []string{"Easy", "Medium", "Hard"}),
+		difficulty:   sws.NewDropdownWidget(90, 25, []string{"Easy", "Medium", "Hard"}),
 		createbutton: sws.NewButtonWidget(100, 40, "Create"),
 		cancelbutton: sws.NewButtonWidget(100, 40, "Cancel"),
 	}
@@ -419,7 +419,7 @@ func NewMainGameMenuNew(root *sws.RootWidget) *MainGameMenuNew {
 	widget.AddChild(selectyourlocation)
 
 	name := sws.NewLabelWidget(80, 25, "Location:")
-	name.Move(root.Width()-390, 25)
+	name.Move(root.Width()-410, 25)
 	name.SetTextColor(sdl.Color{0xff, 0xff, 0xff, 0xff})
 	name.SetColor(0xff000000)
 	widget.AddChild(name)
@@ -429,7 +429,7 @@ func NewMainGameMenuNew(root *sws.RootWidget) *MainGameMenuNew {
 	widget.AddChild(widget.locationname)
 
 	bankrate := sws.NewLabelWidget(80, 25, "Bank rate:")
-	bankrate.Move(root.Width()-390, 50)
+	bankrate.Move(root.Width()-410, 50)
 	bankrate.SetTextColor(sdl.Color{0xff, 0xff, 0xff, 0xff})
 	bankrate.SetColor(0xff000000)
 	widget.AddChild(bankrate)
@@ -439,7 +439,7 @@ func NewMainGameMenuNew(root *sws.RootWidget) *MainGameMenuNew {
 	widget.AddChild(widget.bankrate)
 
 	taxrate := sws.NewLabelWidget(80, 25, "Tax rate:")
-	taxrate.Move(root.Width()-390, 75)
+	taxrate.Move(root.Width()-410, 75)
 	taxrate.SetTextColor(sdl.Color{0xff, 0xff, 0xff, 0xff})
 	taxrate.SetColor(0xff000000)
 	widget.AddChild(taxrate)
@@ -448,16 +448,16 @@ func NewMainGameMenuNew(root *sws.RootWidget) *MainGameMenuNew {
 	widget.taxrate.SetColor(0xff000000)
 	widget.AddChild(widget.taxrate)
 
-	hr := sws.NewHr(140)
-	hr.Move(root.Width()-370, 110)
+	hr := sws.NewHr(160)
+	hr.Move(root.Width()-390, 110)
 	widget.AddChild(hr)
 
 	difficulty := sws.NewLabelWidget(90, 25, "Difficulty: ")
-	difficulty.Move(root.Width()-390, 125)
+	difficulty.Move(root.Width()-410, 125)
 	difficulty.SetTextColor(sdl.Color{0xff, 0xff, 0xff, 0xff})
 	difficulty.SetColor(0xff000000)
 	widget.AddChild(difficulty)
-	widget.difficulty.Move(root.Width()-290, 125)
+	widget.difficulty.Move(root.Width()-310, 125)
 	widget.difficulty.SetColor(0xff000000)
 	widget.AddChild(widget.difficulty)
 
