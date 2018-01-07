@@ -62,9 +62,10 @@ func (self *RackWidgetLine) MousePressDown(x, y int32, button uint8) {
 		if self.item.Pool.IsVps() == false {
 			color = global.PHYSICAL_COLOR
 		}
-		sws.NewDragEventSprite(x, y, global.GlowImage("resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", color), payload)
+		sws.NewDragEventSprite(x, y, global.GlowImage("assets/ui/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", color), payload)
 	} else {
-		sws.NewDragEvent(x, y, "resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", payload)
+		sprite, _ := global.LoadImageAsset("assets/ui/" + self.item.Serverconf.ConfType.ServerSprite + "0.png")
+		sws.NewDragEventSprite(x, y, sprite, payload)
 	}
 }
 
@@ -74,15 +75,15 @@ func (self *RackWidgetLine) UpdateSprite() {
 		if self.item.Pool.IsVps() == false {
 			color = global.PHYSICAL_COLOR
 		}
-		self.LabelWidget.SetImageSurface(global.GlowImage("resources/"+self.item.Serverconf.ConfType.ServerSprite+"half.png", color))
+		self.LabelWidget.SetImageSurface(global.GlowImage("assets/ui/"+self.item.Serverconf.ConfType.ServerSprite+"half.png", color))
 	} else {
-		self.LabelWidget.SetImage("resources/" + self.item.Serverconf.ConfType.ServerSprite + "half.png")
+		sprite, _ := global.LoadImageAsset("assets/ui/" + self.item.Serverconf.ConfType.ServerSprite + "half.png")
+		self.LabelWidget.SetImageSurface(sprite)
 	}
 }
 
 func NewRackWidgetLine(item *supplier.InventoryItem) *RackWidgetLine {
 	label := sws.NewLabelWidget(300, 45, item.ShortDescription())
-	//	label.SetImage("resources/" + item.Serverconf.ConfType.ServerSprite + "half.png")
 	label.AlignImageLeft(true)
 	label.SetColor(0xffffffff)
 
@@ -379,9 +380,10 @@ func (self *RackChassisWidget) MousePressDown(x, y int32, button uint8) {
 				if item.Pool.IsVps() == false {
 					color = global.PHYSICAL_COLOR
 				}
-				sws.NewDragEventSprite(x, y, global.GlowImage("resources/"+item.Serverconf.ConfType.ServerSprite+"0.png", color), payload)
+				sws.NewDragEventSprite(x, y, global.GlowImage("assets/ui/"+item.Serverconf.ConfType.ServerSprite+"0.png", color), payload)
 			} else {
-				sws.NewDragEvent(x, y, "resources/"+item.Serverconf.ConfType.ServerSprite+"0.png", payload)
+				sprite, _ := global.LoadImageAsset("assets/ui/" + item.Serverconf.ConfType.ServerSprite + "0.png")
+				sws.NewDragEventSprite(x, y, sprite, payload)
 			}
 		}
 	}

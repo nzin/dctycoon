@@ -1,6 +1,7 @@
 package supplier
 
 import (
+	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/sws"
 	"github.com/veandco/go-sdl2/sdl"
 )
@@ -40,7 +41,9 @@ func NewServerPageBladeWidget(width, height int32) *ServerPageBladeWidget {
 	serverpageblade.AddChild(title)
 
 	blade1Icon := sws.NewFlatButtonWidget(150, 100, "")
-	blade1Icon.SetImage("resources/server.blade.8u0.png")
+	if img, err := global.LoadImageAsset("assets/ui/server.blade.8u0.png"); err == nil {
+		blade1Icon.SetImageSurface(img)
+	}
 	blade1Icon.SetColor(0xffeeeeee)
 	blade1Icon.SetCentered(true)
 	blade1Icon.Move(0, 20)
@@ -67,7 +70,9 @@ func NewServerPageBladeWidget(width, height int32) *ServerPageBladeWidget {
 	serverpageblade.configureblade1 = blade1Button
 
 	blade2Icon := sws.NewFlatButtonWidget(150, 100, "")
-	blade2Icon.SetImage("resources/server.blade.8u0.png")
+	if img, err := global.LoadImageAsset("assets/ui/server.blade.8u0.png"); err == nil {
+		blade2Icon.SetImageSurface(img)
+	}
 	blade2Icon.SetColor(0xffeeeeee)
 	blade2Icon.SetCentered(true)
 	blade2Icon.Move(150, 20)

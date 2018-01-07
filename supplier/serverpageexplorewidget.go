@@ -1,6 +1,7 @@
 package supplier
 
 import (
+	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/sws"
 	"github.com/veandco/go-sdl2/sdl"
 )
@@ -68,7 +69,9 @@ func NewServerPageExploreWidget(width, height int32) *ServerPageExploreWidget {
 	serverpageexplore.AddChild(title)
 
 	towerIcon := sws.NewFlatButtonWidget(150, 100, "")
-	towerIcon.SetImage("resources/tower0.png")
+	if img, err := global.LoadImageAsset("assets/ui/tower0.png"); err == nil {
+		towerIcon.SetImageSurface(img)
+	}
 	towerIcon.SetColor(0xffeeeeee)
 	towerIcon.SetCentered(true)
 	towerIcon.Move(0, 20)
@@ -95,7 +98,9 @@ func NewServerPageExploreWidget(width, height int32) *ServerPageExploreWidget {
 	serverpageexplore.AddChild(towerButton)
 
 	rackserverIcon := sws.NewFlatButtonWidget(150, 100, "")
-	rackserverIcon.SetImage("resources/server.2u0.png")
+	if img, err := global.LoadImageAsset("assets/ui/server.2u0.png"); err == nil {
+		rackserverIcon.SetImageSurface(img)
+	}
 	rackserverIcon.SetColor(0xffeeeeee)
 	rackserverIcon.SetCentered(true)
 	rackserverIcon.Move(150, 20)
@@ -122,7 +127,9 @@ func NewServerPageExploreWidget(width, height int32) *ServerPageExploreWidget {
 	serverpageexplore.AddChild(rackserverButton)
 
 	bladeIcon := sws.NewFlatButtonWidget(150, 100, "")
-	bladeIcon.SetImage("resources/server.blade.8u0.png")
+	if img, err := global.LoadImageAsset("assets/ui/server.blade.8u0.png"); err == nil {
+		bladeIcon.SetImageSurface(img)
+	}
 	bladeIcon.SetColor(0xffeeeeee)
 	bladeIcon.SetCentered(true)
 	bladeIcon.Move(300, 20)
@@ -151,7 +158,9 @@ func NewServerPageExploreWidget(width, height int32) *ServerPageExploreWidget {
 	// next stage + 340
 
 	acIcon := sws.NewFlatButtonWidget(150, 100, "")
-	acIcon.SetImage("resources/ac0.100.png")
+	if img, err := global.LoadImageAsset("assets/ui/ac0.100.png"); err == nil {
+		acIcon.SetImageSurface(img)
+	}
 	acIcon.SetColor(0xffeeeeee)
 	acIcon.SetCentered(true)
 	acIcon.Move(0, 360)
@@ -178,7 +187,9 @@ func NewServerPageExploreWidget(width, height int32) *ServerPageExploreWidget {
 	serverpageexplore.AddChild(acButton)
 
 	rackIcon := sws.NewFlatButtonWidget(150, 100, "")
-	rackIcon.SetImage("resources/rack0.100.png")
+	if img, err := global.LoadImageAsset("assets/ui/rack0.100.png"); err == nil {
+		rackIcon.SetImageSurface(img)
+	}
 	rackIcon.SetColor(0xffeeeeee)
 	rackIcon.SetCentered(true)
 	rackIcon.Move(150, 360)
@@ -205,7 +216,9 @@ func NewServerPageExploreWidget(width, height int32) *ServerPageExploreWidget {
 	serverpageexplore.AddChild(rackButton)
 
 	generatorIcon := sws.NewFlatButtonWidget(150, 100, "")
-	generatorIcon.SetImage("resources/generator0.100.png")
+	if img, err := global.LoadImageAsset("assets/ui/generator0.100.png"); err == nil {
+		generatorIcon.SetImageSurface(img)
+	}
 	generatorIcon.SetColor(0xffeeeeee)
 	generatorIcon.SetCentered(true)
 	generatorIcon.Move(300, 360)

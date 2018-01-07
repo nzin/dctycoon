@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/sws"
 )
 
@@ -14,7 +15,7 @@ type TrackPageItemUi struct {
 	delivery *sws.LabelWidget
 }
 
-func NewTrackPageItemUi(icon, desc string, deliveryDate time.Time) *TrackPageItemUi {
+func NewTrackPageItemUi(asseticon, desc string, deliveryDate time.Time) *TrackPageItemUi {
 	trackitem := &TrackPageItemUi{
 		CoreWidget: *sws.NewCoreWidget(600, 100),
 		icon:       sws.NewLabelWidget(100, 100, ""),
@@ -23,7 +24,9 @@ func NewTrackPageItemUi(icon, desc string, deliveryDate time.Time) *TrackPageIte
 	}
 
 	trackitem.SetColor(0xffffffff)
-	trackitem.icon.SetImage(icon)
+	if img, err := global.LoadImageAsset(asseticon); err == nil {
+		trackitem.icon.SetImageSurface(img)
+	}
 	trackitem.icon.SetColor(0xffffffff)
 
 	trackitem.desc.Move(100, 0)
@@ -61,16 +64,16 @@ func (self *TrackPageWidget) ItemInTransit(item *InventoryItem) {
 		if item.Serverconf.NbSlotRam*item.Serverconf.RamSize >= 2048 {
 			ramSizeText = fmt.Sprintf("%d Go", item.Serverconf.NbSlotRam*item.Serverconf.RamSize/1024)
 		}
-		icon = "resources/" + item.Serverconf.ConfType.ServerSprite + "0.png"
+		icon = "assets/ui/" + item.Serverconf.ConfType.ServerSprite + "0.png"
 		desc = fmt.Sprintf("%dx %d cores\n%s RAM\n%d disks", item.Serverconf.NbProcessors, item.Serverconf.NbCore, ramSizeText, item.Serverconf.NbDisks)
 	case PRODUCT_AC:
-		icon = "resources/ac0.100.png"
+		icon = "assets/ui/ac0.100.png"
 		desc = "Air climatiser"
 	case PRODUCT_RACK:
-		icon = "resources/rack0.100.png"
+		icon = "assets/ui/rack0.100.png"
 		desc = "Rack chassis"
 	case PRODUCT_GENERATOR:
-		icon = "resources/generator0.100.png"
+		icon = "assets/ui/generator0.100.png"
 		desc = "Generator"
 	}
 	self.intransit[item] = NewTrackPageItemUi(icon, desc, item.Deliverydate)

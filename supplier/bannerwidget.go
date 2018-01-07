@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/sws"
 )
 
@@ -27,7 +28,9 @@ func NewBannerWidget(width, height int32) *BannerWidget {
 
 	for i := 1; i <= 3; i++ {
 		banner := sws.NewLabelWidget(width, 100, "")
-		banner.SetImage("resources/banner" + strconv.Itoa(i) + ".png")
+		if img, err := global.LoadImageAsset("assets/ui/banner" + strconv.Itoa(i) + ".png"); err == nil {
+			banner.SetImageSurface(img)
+		}
 		banner.SetColor(0xffffffff)
 		banner.Move((width-400)/2, (height-100)/2)
 		widget.banners = append(widget.banners, banner)

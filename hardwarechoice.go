@@ -7,7 +7,6 @@ import (
 	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/sws"
-	"github.com/veandco/go-sdl2/img"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -44,9 +43,11 @@ func (self *HardwareChoiceItem) UpdateSprite() {
 		if self.item.Pool.IsVps() == false {
 			color = global.PHYSICAL_COLOR
 		}
-		self.LabelWidget.SetImageSurface(global.GlowImage("resources/icon."+self.item.GetSprite()+".png", color))
+		self.LabelWidget.SetImageSurface(global.GlowImage("assets/ui/icon."+self.item.GetSprite()+".png", color))
 	} else {
-		self.LabelWidget.SetImage("resources/icon." + self.item.GetSprite() + ".png")
+		if icon, err := global.LoadImageAsset("assets/ui/icon." + self.item.GetSprite() + ".png"); err == nil {
+			self.LabelWidget.SetImageSurface(icon)
+		}
 	}
 }
 
@@ -81,15 +82,17 @@ func (self *HardwareChoiceItem) MousePressDown(x, y int32, button uint8) {
 			if self.item.Pool.IsVps() == false {
 				color = global.PHYSICAL_COLOR
 			}
-			sws.NewDragEventSprite(x, y, global.GlowImage("resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", color), payload)
+			sws.NewDragEventSprite(x, y, global.GlowImage("assets/ui/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", color), payload)
 		} else {
-			sws.NewDragEvent(x, y, "resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", payload)
+			if icon, err := global.LoadImageAsset("assets/ui/" + self.item.Serverconf.ConfType.ServerSprite + "0.png"); err == nil {
+				sws.NewDragEventSprite(x, y, icon, payload)
+			}
 		}
 	} else { // tower
 		payload := &ElementDragPayload{
 			item: self.item,
 		}
-		if img, err := img.Load("resources/" + self.item.Serverconf.ConfType.ServerSprite + "0.png"); err == nil {
+		if img, err := global.LoadImageAsset("assets/ui/" + self.item.Serverconf.ConfType.ServerSprite + "0.png"); err == nil {
 			payload.imageheight = img.H
 		}
 		var parent sws.Widget
@@ -104,9 +107,11 @@ func (self *HardwareChoiceItem) MousePressDown(x, y int32, button uint8) {
 			if self.item.Pool.IsVps() == false {
 				color = global.PHYSICAL_COLOR
 			}
-			sws.NewDragEventSprite(x, y, global.GlowImage("resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", color), payload)
+			sws.NewDragEventSprite(x, y, global.GlowImage("assets/ui/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", color), payload)
 		} else {
-			sws.NewDragEvent(x, y, "resources/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", payload)
+			if icon, err := global.LoadImageAsset("assets/ui/" + self.item.Serverconf.ConfType.ServerSprite + "0.png"); err == nil {
+				sws.NewDragEventSprite(x, y, icon, payload)
+			}
 		}
 	}
 }
@@ -134,15 +139,25 @@ func NewHardwareChoiceCategory(category int32, main *HardwareChoice) *HardwareCh
 	c.SetCentered(true)
 	switch category {
 	case CATEGORY_SERVER_TOWER:
-		c.SetImage("resources/icon.tower.png")
+		if icon, err := global.LoadImageAsset("assets/ui/icon.tower.png"); err == nil {
+			c.SetImageSurface(icon)
+		}
 	case CATEGORY_SERVER_RACK:
-		c.SetImage("resources/icon.rackserver.png")
+		if icon, err := global.LoadImageAsset("assets/ui/icon.rackserver.png"); err == nil {
+			c.SetImageSurface(icon)
+		}
 	case CATEGORY_RACK:
-		c.SetImage("resources/icon.rack.png")
+		if icon, err := global.LoadImageAsset("assets/ui/icon.rack.png"); err == nil {
+			c.SetImageSurface(icon)
+		}
 	case CATEGORY_AC:
-		c.SetImage("resources/icon.ac.png")
+		if icon, err := global.LoadImageAsset("assets/ui/icon.ac.png"); err == nil {
+			c.SetImageSurface(icon)
+		}
 	case CATEGORY_GENERATOR:
-		c.SetImage("resources/icon.generator.png")
+		if icon, err := global.LoadImageAsset("assets/ui/icon.generator.png"); err == nil {
+			c.SetImageSurface(icon)
+		}
 	}
 	c.subpanel.SetInnerWidget(c.vbox)
 	c.subpanel.ShowHorizontalScrollbar(false)
@@ -194,7 +209,7 @@ func (self *HardwareChoiceCategory) MousePressDown(x, y int32, button uint8) {
 		payload := &ElementDragPayload{
 			item: item,
 		}
-		if img, err := img.Load("resources/" + item.GetSprite() + "0.png"); err == nil {
+		if img, err := global.LoadImageAsset("assets/ui/" + item.GetSprite() + "0.png"); err == nil {
 			payload.imageheight = img.H
 		}
 		var parent sws.Widget
@@ -204,7 +219,9 @@ func (self *HardwareChoiceCategory) MousePressDown(x, y int32, button uint8) {
 			y += parent.Y()
 			parent = parent.Parent()
 		}
-		sws.NewDragEvent(x, y, "resources/"+item.GetSprite()+"0.png", payload)
+		if img, err := global.LoadImageAsset("assets/ui/" + item.GetSprite() + "0.png"); err == nil {
+			sws.NewDragEventSprite(x, y, img, payload)
+		}
 	}
 }
 
