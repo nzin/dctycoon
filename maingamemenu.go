@@ -205,10 +205,10 @@ func NewMainGameMenuLoad() *MainGameMenuLoad {
 	widget.listwidget.Move(20, 70)
 	widget.AddChild(widget.listwidget)
 
-	widget.cancelbutton.Move(280, 460)
+	widget.cancelbutton.Move(20, 460)
 	widget.AddChild(widget.cancelbutton)
 
-	widget.loadbutton.Move(20, 460)
+	widget.loadbutton.Move(280, 460)
 	widget.AddChild(widget.loadbutton)
 	widget.loadbutton.SetClicked(func() {
 		currentitem := widget.listwidget.GetCurrentItem()
@@ -295,10 +295,10 @@ func NewMainGameMenuSave() *MainGameMenuSave {
 		}
 	})
 
-	widget.cancelbutton.Move(280, 460)
+	widget.cancelbutton.Move(20, 460)
 	widget.AddChild(widget.cancelbutton)
 
-	widget.savebutton.Move(20, 460)
+	widget.savebutton.Move(280, 460)
 	widget.AddChild(widget.savebutton)
 	widget.savebutton.SetClicked(func() {
 		currentitem := widget.listwidget.GetCurrentItem()
@@ -463,11 +463,11 @@ func NewMainGameMenuNew(root *sws.RootWidget) *MainGameMenuNew {
 	widget.difficulty.SetColor(0xff000000)
 	widget.AddChild(widget.difficulty)
 
-	widget.createbutton.Move(root.Width()-350, root.Height()-330)
+	widget.createbutton.Move(root.Width()-350, root.Height()-280)
 	widget.createbutton.SetColor(0xff000000)
 	widget.AddChild(widget.createbutton)
 
-	widget.cancelbutton.Move(root.Width()-350, root.Height()-280)
+	widget.cancelbutton.Move(20, root.Height()-280)
 	widget.cancelbutton.SetColor(0xff000000)
 	widget.AddChild(widget.cancelbutton)
 
