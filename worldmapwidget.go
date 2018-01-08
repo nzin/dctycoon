@@ -59,7 +59,7 @@ func (self *WorldmapWidget) Repaint() {
 		x := int32(float64(l.Xmap)*self.scale) + self.xshift
 		y := int32(float64(l.Ymap)*self.scale) + self.yshift
 
-		alpha := self.spotzoomeffect*10 - (l.Xmap / 5)
+		alpha := self.spotzoomeffect*10 - (l.Xmap / 8)
 		if alpha < 0 {
 			alpha = 0
 		}
