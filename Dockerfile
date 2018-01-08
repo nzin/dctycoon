@@ -1,4 +1,5 @@
 FROM golang:1.9-alpine3.7
+MAINTAINER Jordi Riera <kender.jr@gmail.com>
 
 RUN apk add --no-cache \
     git \
