@@ -21,6 +21,7 @@
       "diskpricenoise":[],
       "rampricenoise":[]
   },
+  "opponents":[],
   "player": {
     "ledger": {
       "movements": [{"description":"initial opening","amount":12000,"date":"1990-01-01","from":"4561" ,"to":"5121"},

@@ -301,9 +301,9 @@ func NewMainGameMenuSave() *MainGameMenuSave {
 	widget.savebutton.Move(280, 460)
 	widget.AddChild(widget.savebutton)
 	widget.savebutton.SetClicked(func() {
-		currentitem := widget.listwidget.GetCurrentItem()
-		if currentitem != nil {
-			widget.savecallback(currentitem.GetText() + ".map")
+		filename := widget.filenameinput.GetText()
+		if filename != "" {
+			widget.savecallback(filename + ".map")
 		}
 	})
 

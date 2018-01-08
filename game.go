@@ -6,6 +6,8 @@ import (
 	"math/rand"
 	"os"
 
+	"github.com/nzin/dctycoon/global"
+
 	"github.com/nzin/dctycoon/accounting"
 	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/dctycoon/timer"
@@ -64,17 +66,17 @@ func (self *Game) InitGame(locationid string, difficulty int32) {
 	log.Debug("Game::InitGame(", locationid, ",", difficulty, ")")
 
 	var initialcapital float64
-	//	var nbopponents int32
+	var nbopponents int32
 	switch difficulty {
 	case 1:
 		initialcapital = 10000.0
-		//		nbopponents = 5
+		nbopponents = 5
 	case 2:
 		initialcapital = 5000.0
-		//		nbopponents = 7
+		nbopponents = 7
 	default:
 		initialcapital = 20000.0
-		//		nbopponents = 3
+		nbopponents = 3
 	}
 	if self.cronevent != nil {
 		self.timer.RemoveCron(self.cronevent)
@@ -87,6 +89,28 @@ func (self *Game) InitGame(locationid string, difficulty int32) {
 	self.player = NewPlayer()
 	self.player.Init(self.timer, initialcapital, locationid)
 	self.gameui.InitGame(self.timer, self.player.GetInventory(), self.player.GetLedger(), self.trends)
+
+	// opponents
+	self.npactors = make([]*NPDatacenter, 0, 0)
+	for nb := int32(0); nb < nbopponents; nb++ {
+		opponent := NewNPDatacenter()
+
+		var locationarray []string
+		for k, _ := range supplier.AvailableLocation {
+			locationarray = append(locationarray, k)
+		}
+		locationid := locationarray[rand.Int()%len(locationarray)]
+
+		var profile string
+		if profilesarray, err := global.AssetDir("assets/npdatacenter"); err != nil {
+			profile = "mono_r100_r200.json"
+		} else {
+			profile = profilesarray[rand.Int()%len(profilesarray)]
+		}
+
+		opponent.Init(self.timer, 20000, locationid, self.trends, profile)
+		self.npactors = append(self.npactors, opponent)
+	}
 	self.gameui.ShowDC()
 }
 
@@ -118,6 +142,16 @@ func (self *Game) LoadGame(filename string) {
 	self.player = NewPlayer()
 	self.player.LoadGame(self.timer, v["player"].(map[string]interface{}))
 	self.gameui.LoadGame(v, self.timer, self.player.GetInventory(), self.player.GetLedger(), self.trends)
+
+	opponents := v["opponents"].([]interface{})
+	// opponents
+	self.npactors = make([]*NPDatacenter, 0, 0)
+	for _, o := range opponents {
+		opponent := NewNPDatacenter()
+		opponent.LoadGame(self.timer, self.trends, o.(map[string]interface{}))
+		self.npactors = append(self.npactors, opponent)
+	}
+
 	self.gameui.ShowDC()
 }
 
@@ -133,7 +167,15 @@ func (self *Game) SaveGame(filename string) {
 	gamefile.WriteString(fmt.Sprintf(`%s,`, data) + "\n")
 	gamefile.WriteString(fmt.Sprintf(`"trends": %s,`, self.trends.Save()) + "\n")
 	gamefile.WriteString(fmt.Sprintf(`"clock": %s,`, self.timer.Save()) + "\n")
-	gamefile.WriteString(fmt.Sprintf(`"player": { %s }`, self.player.Save()) + "\n")
+	gamefile.WriteString(fmt.Sprintf(`"player": { %s },`, self.player.Save()) + "\n")
+	gamefile.WriteString(`"opponents": [`)
+	for i, o := range self.npactors {
+		if i > 0 {
+			gamefile.WriteString(",\n")
+		}
+		gamefile.WriteString(o.Save())
+	}
+	gamefile.WriteString("]")
 	gamefile.WriteString("}\n")
 
 	gamefile.Close()
