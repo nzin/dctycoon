@@ -150,7 +150,7 @@ func (self *InventoryItem) Save() string {
 	return str + "}"
 }
 
-func (self *InventoryItem) UltraShortDescription() string {
+func (self *InventoryItem) ShortDescription(condensed bool) string {
 	switch self.Typeitem {
 	case PRODUCT_RACK:
 		return "rack"
@@ -171,39 +171,18 @@ func (self *InventoryItem) UltraShortDescription() string {
 			diskText = fmt.Sprintf("%d To", self.Serverconf.NbDisks*self.Serverconf.DiskSize/(1024*1024))
 		}
 
-		return fmt.Sprintf("%d cores/%s/%s",
-			self.Serverconf.NbProcessors*self.Serverconf.NbCore,
-			ramText,
-			diskText)
-	}
-	return "undefined"
-}
+		if condensed == false {
+			return fmt.Sprintf("%d cores %s RAM %s disks",
+				self.Serverconf.NbProcessors*self.Serverconf.NbCore,
+				ramText,
+				diskText)
+		} else {
+			return fmt.Sprintf("%d cores/%s/%s",
+				self.Serverconf.NbProcessors*self.Serverconf.NbCore,
+				ramText,
+				diskText)
 
-func (self *InventoryItem) ShortDescription() string {
-	switch self.Typeitem {
-	case PRODUCT_RACK:
-		return "rack"
-	case PRODUCT_AC:
-		return "Air Conditionner"
-	case PRODUCT_GENERATOR:
-		return "Generator"
-	case PRODUCT_SERVER:
-		ramText := fmt.Sprintf("%d Mo", self.Serverconf.NbSlotRam*self.Serverconf.RamSize)
-		if self.Serverconf.NbSlotRam*self.Serverconf.RamSize >= 2048 {
-			ramText = fmt.Sprintf("%d Go", self.Serverconf.NbSlotRam*self.Serverconf.RamSize/1024)
 		}
-		diskText := fmt.Sprintf("%d Mo", self.Serverconf.NbDisks*self.Serverconf.DiskSize)
-		if self.Serverconf.NbDisks*self.Serverconf.DiskSize > 4096 {
-			diskText = fmt.Sprintf("%d Go", self.Serverconf.NbDisks*self.Serverconf.DiskSize/1024)
-		}
-		if self.Serverconf.NbDisks*self.Serverconf.DiskSize > 4*1024*1024 {
-			diskText = fmt.Sprintf("%d To", self.Serverconf.NbDisks*self.Serverconf.DiskSize/(1024*1024))
-		}
-
-		return fmt.Sprintf("%d cores %s RAM %s disks",
-			self.Serverconf.NbProcessors*self.Serverconf.NbCore,
-			ramText,
-			diskText)
 	}
 	return "undefined"
 }

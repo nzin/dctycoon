@@ -53,7 +53,7 @@ func (self *HardwareChoiceItem) UpdateSprite() {
 
 func NewHardwareChoiceItem(item *supplier.InventoryItem) *HardwareChoiceItem {
 	i := &HardwareChoiceItem{
-		LabelWidget: *sws.NewLabelWidget(200, 50, item.UltraShortDescription()),
+		LabelWidget: *sws.NewLabelWidget(200, 50, item.ShortDescription(true)),
 		item:        item,
 	}
 	i.AlignImageLeft(true)
