@@ -83,7 +83,7 @@ func (self *RackWidgetLine) UpdateSprite() {
 }
 
 func NewRackWidgetLine(item *supplier.InventoryItem) *RackWidgetLine {
-	label := sws.NewLabelWidget(300, 45, item.ShortDescription())
+	label := sws.NewLabelWidget(300, 45, item.ShortDescription(false))
 	label.AlignImageLeft(true)
 	label.SetColor(0xffffffff)
 
@@ -325,7 +325,7 @@ func (self *RackChassisWidget) Repaint() {
 		self.FillRect(80, CHASSIS_OFFSET+(i.Zplaced+nbu-1)*RACK_SIZE+5, 5, 5, servercolor)
 		self.FillRect(90, CHASSIS_OFFSET+(i.Zplaced+nbu-1)*RACK_SIZE+5, 5, 5, servercolor)
 
-		self.WriteText(120, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE, i.ShortDescription(), sdl.Color{0, 0, 0, 255})
+		self.WriteText(120, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE, i.ShortDescription(false), sdl.Color{0, 0, 0, 255})
 	}
 
 	if self.ydrag != -1 {

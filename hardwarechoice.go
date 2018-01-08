@@ -53,7 +53,7 @@ func (self *HardwareChoiceItem) UpdateSprite() {
 
 func NewHardwareChoiceItem(item *supplier.InventoryItem) *HardwareChoiceItem {
 	i := &HardwareChoiceItem{
-		LabelWidget: *sws.NewLabelWidget(200, 50, item.UltraShortDescription()),
+		LabelWidget: *sws.NewLabelWidget(200, 50, item.ShortDescription(true)),
 		item:        item,
 	}
 	i.AlignImageLeft(true)
@@ -65,53 +65,39 @@ func NewHardwareChoiceItem(item *supplier.InventoryItem) *HardwareChoiceItem {
 // if we are selecting from an hardware subcategory, i.e. rack or towers
 //
 func (self *HardwareChoiceItem) MousePressDown(x, y int32, button uint8) {
+	var payload sws.DragPayload
+
 	// if we are dealing with a rack server
 	if self.item.Serverconf.ConfType.NbU > 0 {
-		payload := &ServerDragPayload{
+		payload = &ServerDragPayload{
 			item: self.item,
 		}
-		var parent sws.Widget
-		parent = self
-		for parent != nil {
-			x += parent.X()
-			y += parent.Y()
-			parent = parent.Parent()
-		}
-		if self.item.Pool != nil {
-			color := uint32(global.VPS_COLOR)
-			if self.item.Pool.IsVps() == false {
-				color = global.PHYSICAL_COLOR
-			}
-			sws.NewDragEventSprite(x, y, global.GlowImage("assets/ui/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", color), payload)
-		} else {
-			if icon, err := global.LoadImageAsset("assets/ui/" + self.item.Serverconf.ConfType.ServerSprite + "0.png"); err == nil {
-				sws.NewDragEventSprite(x, y, icon, payload)
-			}
-		}
 	} else { // tower
-		payload := &ElementDragPayload{
+		elementPayload := &ElementDragPayload{
 			item: self.item,
 		}
 		if img, err := global.LoadImageAsset("assets/ui/" + self.item.Serverconf.ConfType.ServerSprite + "0.png"); err == nil {
-			payload.imageheight = img.H
+			elementPayload.imageheight = img.H
 		}
-		var parent sws.Widget
-		parent = self
-		for parent != nil {
-			x += parent.X()
-			y += parent.Y()
-			parent = parent.Parent()
+		payload = elementPayload
+	}
+
+	var parent sws.Widget
+	parent = self
+	for parent != nil {
+		x += parent.X()
+		y += parent.Y()
+		parent = parent.Parent()
+	}
+	if self.item.Pool != nil {
+		color := uint32(global.VPS_COLOR)
+		if self.item.Pool.IsVps() == false {
+			color = global.PHYSICAL_COLOR
 		}
-		if self.item.Pool != nil {
-			color := uint32(global.VPS_COLOR)
-			if self.item.Pool.IsVps() == false {
-				color = global.PHYSICAL_COLOR
-			}
-			sws.NewDragEventSprite(x, y, global.GlowImage("assets/ui/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", color), payload)
-		} else {
-			if icon, err := global.LoadImageAsset("assets/ui/" + self.item.Serverconf.ConfType.ServerSprite + "0.png"); err == nil {
-				sws.NewDragEventSprite(x, y, icon, payload)
-			}
+		sws.NewDragEventSprite(x, y, global.GlowImage("assets/ui/"+self.item.Serverconf.ConfType.ServerSprite+"0.png", color), payload)
+	} else {
+		if icon, err := global.LoadImageAsset("assets/ui/" + self.item.Serverconf.ConfType.ServerSprite + "0.png"); err == nil {
+			sws.NewDragEventSprite(x, y, icon, payload)
 		}
 	}
 }
