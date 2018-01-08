@@ -217,14 +217,18 @@ func (self *VpsServerPool) removeInventoryItem(item *InventoryItem) {
 	}
 }
 
+func (self *VpsServerPool) remainingSpace(v *InventoryItem, nbcores, ramsize, disksize int32) bool {
+	return (v.Serverconf.VtSupport == true) &&
+		float64(v.Serverconf.NbProcessors*v.Serverconf.NbCore)*self.cpuoverallocation-float64(v.Coresallocated) >= float64(nbcores) &&
+		float64(v.Serverconf.NbSlotRam*v.Serverconf.RamSize)*self.ramoverallocation-float64(v.Ramallocated) >= float64(ramsize) &&
+		v.Serverconf.NbDisks*v.Serverconf.DiskSize-v.Diskallocated >= disksize
+}
+
 func (self *VpsServerPool) Allocate(nbcores, ramsize, disksize int32, vt bool) *InventoryItem {
 	log.Debug("VpsServerPool::Allocate(", nbcores, ",", ramsize, ",", disksize, ",", vt, ")")
 	var selected *InventoryItem
 	for _, v := range self.pool {
-		if (v.Serverconf.VtSupport == true) &&
-			float64(v.Serverconf.NbProcessors*v.Serverconf.NbCore)*self.cpuoverallocation-float64(v.Coresallocated) >= float64(nbcores) &&
-			float64(v.Serverconf.NbSlotRam*v.Serverconf.RamSize)*self.ramoverallocation-float64(v.Ramallocated) >= float64(ramsize) &&
-			v.Serverconf.NbDisks*v.Serverconf.DiskSize-v.Diskallocated >= disksize {
+		if self.remainingSpace(v, nbcores, ramsize, disksize) {
 			if selected == nil {
 				selected = v
 			} else { // try to find the closest
@@ -255,10 +259,7 @@ func (self *VpsServerPool) Allocate(nbcores, ramsize, disksize int32, vt bool) *
 func (self *VpsServerPool) HowManyFit(nbcores, ramsize, disksize int32, vt bool) int32 {
 	var howmany int32
 	for _, v := range self.pool {
-		if (v.Serverconf.VtSupport == true) &&
-			float64(v.Serverconf.NbProcessors*v.Serverconf.NbCore)*self.cpuoverallocation-float64(v.Coresallocated) >= float64(nbcores) &&
-			float64(v.Serverconf.NbSlotRam*v.Serverconf.RamSize)*self.ramoverallocation-float64(v.Ramallocated) >= float64(ramsize) &&
-			v.Serverconf.NbDisks*v.Serverconf.DiskSize-v.Diskallocated >= disksize {
+		if self.remainingSpace(v, nbcores, ramsize, disksize) {
 			cpuX := int32(float64(v.Serverconf.NbProcessors*v.Serverconf.NbCore)*self.cpuoverallocation - float64(v.Coresallocated)/float64(nbcores))
 			ramX := int32(float64(v.Serverconf.NbSlotRam*v.Serverconf.RamSize)*self.ramoverallocation - float64(v.Ramallocated)/float64(ramsize))
 			diskX := int32(v.Serverconf.NbDisks*v.Serverconf.DiskSize - v.Diskallocated/disksize)
