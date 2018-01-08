@@ -86,15 +86,19 @@ func (self *HardwareServerPool) removeInventoryItem(item *InventoryItem) {
 	}
 }
 
+func (self *HardwareServerPool) remainingSpace(v *InventoryItem, nbcores, ramsize, disksize int32, vt bool) bool {
+	return v.Coresallocated == 0 &&
+		(v.Serverconf.VtSupport == true || v.Serverconf.VtSupport == vt) &&
+		v.Serverconf.NbProcessors*v.Serverconf.NbCore >= nbcores &&
+		v.Serverconf.NbSlotRam*v.Serverconf.RamSize >= ramsize &&
+		v.Serverconf.NbDisks*v.Serverconf.DiskSize >= disksize
+}
+
 func (self *HardwareServerPool) Allocate(nbcores, ramsize, disksize int32, vt bool) *InventoryItem {
 	log.Debug("HardwareServerPool::Allocate(", nbcores, ",", ramsize, ",", disksize, ",", vt, ")")
 	var selected *InventoryItem
 	for _, v := range self.pool {
-		if v.Coresallocated == 0 &&
-			(v.Serverconf.VtSupport == true || v.Serverconf.VtSupport == vt) &&
-			v.Serverconf.NbProcessors*v.Serverconf.NbCore >= nbcores &&
-			v.Serverconf.NbSlotRam*v.Serverconf.RamSize >= ramsize &&
-			v.Serverconf.NbDisks*v.Serverconf.DiskSize >= disksize {
+		if self.remainingSpace(v, nbcores, ramsize, disksize, vt) {
 			if selected == nil {
 				selected = v
 			} else { // try to find the closest
@@ -125,11 +129,7 @@ func (self *HardwareServerPool) Allocate(nbcores, ramsize, disksize int32, vt bo
 func (self *HardwareServerPool) HowManyFit(nbcores, ramsize, disksize int32, vt bool) int32 {
 	var howmany int32
 	for _, v := range self.pool {
-		if v.Coresallocated == 0 &&
-			(v.Serverconf.VtSupport == true || v.Serverconf.VtSupport == vt) &&
-			v.Serverconf.NbProcessors*v.Serverconf.NbCore >= nbcores &&
-			v.Serverconf.NbSlotRam*v.Serverconf.RamSize >= ramsize &&
-			v.Serverconf.NbDisks*v.Serverconf.DiskSize >= disksize {
+		if self.remainingSpace(v, nbcores, ramsize, disksize, vt) {
 			howmany++
 		}
 	}
