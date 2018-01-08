@@ -150,7 +150,7 @@ func (self *InventoryItem) Save() string {
 	return str + "}"
 }
 
-func (self *InventoryItem) UltraShortDescription() string {
+func (self *InventoryItem) ShortDescription(condensed bool) string {
 	switch self.Typeitem {
 	case PRODUCT_RACK:
 		return "rack"
@@ -171,39 +171,18 @@ func (self *InventoryItem) UltraShortDescription() string {
 			diskText = fmt.Sprintf("%d To", self.Serverconf.NbDisks*self.Serverconf.DiskSize/(1024*1024))
 		}
 
-		return fmt.Sprintf("%d cores/%s/%s",
-			self.Serverconf.NbProcessors*self.Serverconf.NbCore,
-			ramText,
-			diskText)
-	}
-	return "undefined"
-}
+		if condensed == false {
+			return fmt.Sprintf("%d cores %s RAM %s disks",
+				self.Serverconf.NbProcessors*self.Serverconf.NbCore,
+				ramText,
+				diskText)
+		} else {
+			return fmt.Sprintf("%d cores/%s/%s",
+				self.Serverconf.NbProcessors*self.Serverconf.NbCore,
+				ramText,
+				diskText)
 
-func (self *InventoryItem) ShortDescription() string {
-	switch self.Typeitem {
-	case PRODUCT_RACK:
-		return "rack"
-	case PRODUCT_AC:
-		return "Air Conditionner"
-	case PRODUCT_GENERATOR:
-		return "Generator"
-	case PRODUCT_SERVER:
-		ramText := fmt.Sprintf("%d Mo", self.Serverconf.NbSlotRam*self.Serverconf.RamSize)
-		if self.Serverconf.NbSlotRam*self.Serverconf.RamSize >= 2048 {
-			ramText = fmt.Sprintf("%d Go", self.Serverconf.NbSlotRam*self.Serverconf.RamSize/1024)
 		}
-		diskText := fmt.Sprintf("%d Mo", self.Serverconf.NbDisks*self.Serverconf.DiskSize)
-		if self.Serverconf.NbDisks*self.Serverconf.DiskSize > 4096 {
-			diskText = fmt.Sprintf("%d Go", self.Serverconf.NbDisks*self.Serverconf.DiskSize/1024)
-		}
-		if self.Serverconf.NbDisks*self.Serverconf.DiskSize > 4*1024*1024 {
-			diskText = fmt.Sprintf("%d To", self.Serverconf.NbDisks*self.Serverconf.DiskSize/(1024*1024))
-		}
-
-		return fmt.Sprintf("%d cores %s RAM %s disks",
-			self.Serverconf.NbProcessors*self.Serverconf.NbCore,
-			ramText,
-			diskText)
 	}
 	return "undefined"
 }
@@ -223,6 +202,8 @@ type Inventory struct {
 	offers                   []*ServerOffer
 	inventorysubscribers     []InventorySubscriber
 	inventoryPoolSubscribers []InventoryPoolSubscriber
+	defaultPhysicalPool      ServerPool
+	defaultVpsPool           ServerPool
 }
 
 func (self *Inventory) BuyCart(buydate time.Time) {
@@ -429,53 +410,24 @@ func (self *Inventory) LoadOffer(offer map[string]interface{}) {
 	self.AddOffer(o)
 }
 
-func (self *Inventory) LoadPublishItems() {
-	log.Debug("Inventory::LoadPublishItems()")
-	// placed first RACK, AC, GENERATOR
-	for _, item := range self.Items {
-		if item.Typeitem == PRODUCT_RACK || item.Typeitem == PRODUCT_AC || item.Typeitem == PRODUCT_GENERATOR {
-			if item.Xplaced != -1 {
-				for _, sub := range self.inventorysubscribers {
-					sub.ItemInstalled(item)
-				}
-			} else {
-				if self.globaltimer.CurrentTime.Before(item.Deliverydate) {
-					for _, sub := range self.inventorysubscribers {
-						instocksub := sub
-						sub.ItemInTransit(item)
-						self.globaltimer.AddEvent(item.Deliverydate, func() {
-							instocksub.ItemInStock(item)
-						})
-					}
-				} else {
-					for _, sub := range self.inventorysubscribers {
-						sub.ItemInStock(item)
-					}
-				}
-			}
+// called by Load() for a given item to publish it to subscribers
+func (self *Inventory) loadPublishItem(item *InventoryItem) {
+	if item.Xplaced != -1 {
+		for _, sub := range self.inventorysubscribers {
+			sub.ItemInstalled(item)
 		}
-	}
-	// placed second SERVERS (especially rack servers!)
-	for _, item := range self.Items {
-		if item.Typeitem == PRODUCT_SERVER {
-			if item.Xplaced != -1 {
-				for _, sub := range self.inventorysubscribers {
-					sub.ItemInstalled(item)
-				}
-			} else {
-				if self.globaltimer.CurrentTime.Before(item.Deliverydate) {
-					for _, sub := range self.inventorysubscribers {
-						instocksub := sub
-						sub.ItemInTransit(item)
-						self.globaltimer.AddEvent(item.Deliverydate, func() {
-							instocksub.ItemInStock(item)
-						})
-					}
-				} else {
-					for _, sub := range self.inventorysubscribers {
-						sub.ItemInStock(item)
-					}
-				}
+	} else {
+		if self.globaltimer.CurrentTime.Before(item.Deliverydate) {
+			for _, sub := range self.inventorysubscribers {
+				instocksub := sub
+				sub.ItemInTransit(item)
+				self.globaltimer.AddEvent(item.Deliverydate, func() {
+					instocksub.ItemInStock(item)
+				})
+			}
+		} else {
+			for _, sub := range self.inventorysubscribers {
+				sub.ItemInStock(item)
 			}
 		}
 	}
@@ -497,7 +449,19 @@ func (self *Inventory) Load(conf map[string]interface{}) {
 			self.LoadOffer(offer.(map[string]interface{}))
 		}
 	}
-	self.LoadPublishItems()
+
+	// placed first RACK, AC, GENERATOR
+	for _, item := range self.Items {
+		if item.Typeitem == PRODUCT_RACK || item.Typeitem == PRODUCT_AC || item.Typeitem == PRODUCT_GENERATOR {
+			self.loadPublishItem(item)
+		}
+	}
+	// placed second SERVERS (especially rack servers!)
+	for _, item := range self.Items {
+		if item.Typeitem == PRODUCT_SERVER {
+			self.loadPublishItem(item)
+		}
+	}
 }
 
 func (self *Inventory) Save() string {
@@ -596,6 +560,14 @@ func (self *Inventory) GetOffers() []*ServerOffer {
 	return self.offers
 }
 
+func (self *Inventory) GetDefaultPhysicalPool() ServerPool {
+	return self.defaultPhysicalPool
+}
+
+func (self *Inventory) GetDefaultVpsPool() ServerPool {
+	return self.defaultVpsPool
+}
+
 func NewInventory(globaltimer *timer.GameTimer) *Inventory {
 	log.Debug("NewInventory(", globaltimer, ")")
 	inventory := &Inventory{
@@ -606,10 +578,12 @@ func NewInventory(globaltimer *timer.GameTimer) *Inventory {
 		pools:                make([]ServerPool, 0),
 		offers:               make([]*ServerOffer, 0),
 		inventorysubscribers: make([]InventorySubscriber, 0),
+		defaultPhysicalPool:  NewHardwareServerPool("default"),
+		defaultVpsPool:       NewVpsServerPool("default", 1.2, 1.0),
 	}
 
-	inventory.AddPool(NewHardwareServerPool("default"))
-	inventory.AddPool(NewVpsServerPool("default", 1.0, 1.0))
+	inventory.AddPool(inventory.defaultPhysicalPool)
+	inventory.AddPool(inventory.defaultVpsPool)
 
 	return inventory
 }

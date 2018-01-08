@@ -200,52 +200,10 @@ func (self *PoolManagementWidget) SelectLine(line *PoolManagementLineWidget, sel
 	}
 }
 
-func (self *PoolManagementWidget) callbackToPhysical() {
-	var pool ServerPool
-	for _, p := range self.inventory.GetPools() {
-		if p.GetName() == "default" && p.IsVps() == false {
-			pool = p
-		}
-	}
-	if pool != nil {
-		for l, lSelected := range self.selected {
-			if lSelected {
-				self.inventory.AssignPool(l.item, pool)
-
-				l.UpdateBgColor()
-				self.updateLineInSearch(l.item)
-				self.SelectLine(l, false)
-				self.selectallButton.SetSelected(false)
-			}
-		}
-	}
-}
-
-func (self *PoolManagementWidget) callbackToVps() {
-	var pool ServerPool
-	for _, p := range self.inventory.GetPools() {
-		if p.GetName() == "default" && p.IsVps() == true {
-			pool = p
-		}
-	}
-	if pool != nil {
-		for l, lSelected := range self.selected {
-			if lSelected {
-				self.inventory.AssignPool(l.item, pool)
-
-				l.UpdateBgColor()
-				self.updateLineInSearch(l.item)
-				self.SelectLine(l, false)
-				self.selectallButton.SetSelected(false)
-			}
-		}
-	}
-}
-
-func (self *PoolManagementWidget) callbackToUnallocated() {
+func (self *PoolManagementWidget) callbackToPool(pool ServerPool) {
 	for l, lSelected := range self.selected {
 		if lSelected {
-			self.inventory.AssignPool(l.item, nil)
+			self.inventory.AssignPool(l.item, pool)
 
 			l.UpdateBgColor()
 			self.updateLineInSearch(l.item)
@@ -572,19 +530,19 @@ func NewPoolManagementWidget(root *sws.RootWidget) *PoolManagementWidget {
 	widget.addToPhysical.Move(640, 100)
 	widget.addToPhysical.SetCentered(false)
 	widget.addToPhysical.SetClicked(func() {
-		widget.callbackToPhysical()
+		widget.callbackToPool(widget.inventory.GetDefaultPhysicalPool())
 	})
 
 	widget.addToVps.Move(640, 130)
 	widget.addToVps.SetCentered(false)
 	widget.addToVps.SetClicked(func() {
-		widget.callbackToVps()
+		widget.callbackToPool(widget.inventory.GetDefaultVpsPool())
 	})
 
 	widget.addToUnallocated.Move(640, 160)
 	widget.addToUnallocated.SetCentered(false)
 	widget.addToUnallocated.SetClicked(func() {
-		widget.callbackToUnallocated()
+		widget.callbackToPool(nil)
 	})
 
 	return widget

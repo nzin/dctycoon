@@ -113,21 +113,16 @@ func (self *CriteriaFilterPrice) Filter(offers []*ServerOffer) []*ServerOffer {
 	return result
 }
 
-type PriorityPrice struct {
+//
+// PriorityAbstract is a base class for PriorityPrice, PriorityDisk, PriorityRam, ...
+type PriorityAbstract struct {
 	weight int32
 }
 
-func NewPriorityPrice(value int32) PriorityPoint {
-	priority := &PriorityPrice{
-		weight: value,
-	}
-	return priority
-}
-
-func (self *PriorityPrice) Score(offer []*ServerOffer, points *map[*ServerOffer]float64) {
+func (self *PriorityAbstract) sortWeight(offer []*ServerOffer, getOfferValue func(offer *ServerOffer) float64, points *map[*ServerOffer]float64) {
 	s := make(SortedOffers, 0)
 	for _, o := range offer {
-		s = append(s, &SortedOffer{offer: o, value: o.Price})
+		s = append(s, &SortedOffer{offer: o, value: getOfferValue(o)})
 	}
 	sort.Sort(s)
 	weight := float64(self.weight)
@@ -135,79 +130,74 @@ func (self *PriorityPrice) Score(offer []*ServerOffer, points *map[*ServerOffer]
 		(*points)[s[i].offer] = weight
 		weight -= float64(self.weight) / float64(len(offer))
 	}
-	return
+}
+
+type PriorityPrice struct {
+	PriorityAbstract
+}
+
+func NewPriorityPrice(value int32) PriorityPoint {
+	priority := &PriorityPrice{
+		PriorityAbstract: PriorityAbstract{
+			weight: value,
+		},
+	}
+	return priority
+}
+
+func (self *PriorityPrice) Score(offer []*ServerOffer, points *map[*ServerOffer]float64) {
+	self.sortWeight(offer, func(offer *ServerOffer) float64 { return offer.Price }, points)
 }
 
 type PriorityDisk struct {
-	weight int32
+	PriorityAbstract
 }
 
 func NewPriorityDisk(value int32) PriorityPoint {
 	priority := &PriorityDisk{
-		weight: value,
+		PriorityAbstract: PriorityAbstract{
+			weight: value,
+		},
 	}
 	return priority
 }
 
 func (self *PriorityDisk) Score(offer []*ServerOffer, points *map[*ServerOffer]float64) {
-	s := make(SortedOffers, 0)
-	for _, o := range offer {
-		s = append(s, &SortedOffer{offer: o, value: float64(o.Disksize)})
-	}
-	sort.Sort(s)
-	weight := float64(self.weight)
-	for i := len(offer) - 1; i >= 0; i-- {
-		(*points)[s[i].offer] = weight
-		weight -= float64(self.weight) / float64(len(offer))
-	}
+	self.sortWeight(offer, func(offer *ServerOffer) float64 { return float64(offer.Disksize) }, points)
 }
 
 type PriorityRam struct {
-	weight int32
+	PriorityAbstract
 }
 
 func NewPriorityRam(value int32) PriorityPoint {
 	priority := &PriorityRam{
-		weight: value,
+		PriorityAbstract: PriorityAbstract{
+			weight: value,
+		},
 	}
 	return priority
 }
 
 func (self *PriorityRam) Score(offer []*ServerOffer, points *map[*ServerOffer]float64) {
-	s := make(SortedOffers, 0)
-	for _, o := range offer {
-		s = append(s, &SortedOffer{offer: o, value: float64(o.Ramsize)})
-	}
-	sort.Sort(s)
-	weight := float64(self.weight)
-	for i := len(offer) - 1; i >= 0; i-- {
-		(*points)[s[i].offer] = weight
-		weight -= float64(self.weight) / float64(len(offer))
-	}
+	self.sortWeight(offer, func(offer *ServerOffer) float64 { return float64(offer.Ramsize) }, points)
 }
 
 type PriorityNbcores struct {
-	weight int32
+	PriorityAbstract
 }
 
 func NewPriorityNbcores(value int32) PriorityPoint {
 	priority := &PriorityNbcores{
-		weight: value,
+		PriorityAbstract: PriorityAbstract{
+			weight: value,
+		},
 	}
 	return priority
 }
 
 func (self *PriorityNbcores) Score(offer []*ServerOffer, points *map[*ServerOffer]float64) {
-	s := make(SortedOffers, 0)
-	for _, o := range offer {
-		s = append(s, &SortedOffer{offer: o, value: float64(o.Nbcores)})
-	}
-	sort.Sort(s)
-	weight := float64(self.weight)
-	for i := len(offer) - 1; i >= 0; i-- {
-		(*points)[s[i].offer] = weight
-		weight -= float64(self.weight) / float64(len(offer))
-	}
+	self.sortWeight(offer, func(offer *ServerOffer) float64 { return float64(offer.Nbcores) }, points)
 }
 
 func ServerDemandParsingNumbers(m map[string]interface{}) [2]int32 {

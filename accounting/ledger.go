@@ -407,6 +407,40 @@ func computeYearlyTaxes(accounts AccountYearly, taxrate float64) (profitlost, ta
 	return ebt - taxes, taxes
 }
 
+func (self *Ledger) runLedgerMonth(accounts map[int]AccountYearly, currentYear *int, currentMonth *int) {
+	// compute loan for the month
+	loanAmount := -accounts[*currentYear]["16"] * self.loanrate / 12
+	accounts[*currentYear]["51"] -= loanAmount
+	accounts[*currentYear]["66"] += loanAmount
+
+	*currentMonth++
+	if *currentMonth > 12 {
+		*currentMonth = 1
+
+		previousYear := *currentYear
+		*currentYear++
+
+		//fmt.Println("compute taxes for ", currentyear)
+		profitlost, taxes := computeYearlyTaxes(accounts[previousYear], self.taxrate)
+		accounts[previousYear]["44"] = taxes
+
+		// 51: current balance, 44: taxes
+		accounts[previousYear]["51"] -= accounts[previousYear]["44"]
+		accounts[*currentYear] = make(AccountYearly)
+		// copy from previous year, accounts 1 to 5 (except 44 => 0)
+		for k, v := range accounts[previousYear] {
+			if k[0] == '1' || k[0] == '2' || k[0] == '3' || k[0] == '4' || k[0] == '5' {
+				accounts[*currentYear][k] = v
+			}
+		}
+		accounts[*currentYear]["44"] = 0
+		accounts[*currentYear]["45"] -= profitlost
+		accounts[*currentYear]["46"] += accounts[previousYear]["66"]
+		//accounts[currentyear]["23"] -= accounts[previousYear]["28"]
+		accounts[*currentYear]["28"] = 0
+	}
+}
+
 //
 // runLedger() computes all movement and returns the result.
 // it does not store the result in the Ledger object
@@ -427,37 +461,7 @@ func (self *Ledger) runLedger() (accounts map[int]AccountYearly) {
 			accounts[currentyear] = make(AccountYearly)
 		}
 		for !(currentyear == ev.Date.Year() && currentMonth == int(ev.Date.Month())) { // we must close the month (and eventually the year)
-			// compute loan for the month
-			loanAmount := -accounts[currentyear]["16"] * self.loanrate / 12
-			accounts[currentyear]["51"] -= loanAmount
-			accounts[currentyear]["66"] += loanAmount
-
-			currentMonth++
-			if currentMonth > 12 {
-				currentMonth = 1
-
-				previousYear := currentyear
-				currentyear++
-
-				//fmt.Println("compute taxes for ", currentyear)
-				profitlost, taxes := computeYearlyTaxes(accounts[previousYear], self.taxrate)
-				accounts[previousYear]["44"] = taxes
-
-				// 51: current balance, 44: taxes
-				accounts[previousYear]["51"] -= accounts[previousYear]["44"]
-				accounts[currentyear] = make(AccountYearly)
-				// copy from previous year, accounts 1 to 5 (except 44 => 0)
-				for k, v := range accounts[previousYear] {
-					if k[0] == '1' || k[0] == '2' || k[0] == '3' || k[0] == '4' || k[0] == '5' {
-						accounts[currentyear][k] = v
-					}
-				}
-				accounts[currentyear]["44"] = 0
-				accounts[currentyear]["45"] -= profitlost
-				accounts[currentyear]["46"] += accounts[previousYear]["66"]
-				//accounts[currentyear]["23"] -= accounts[previousYear]["28"]
-				accounts[currentyear]["28"] = 0
-			}
+			self.runLedgerMonth(accounts, &currentyear, &currentMonth)
 		}
 
 		accounts[currentyear][from] = accounts[currentyear][from] - ev.Amount
@@ -475,37 +479,7 @@ func (self *Ledger) runLedger() (accounts map[int]AccountYearly) {
 	// in case of we have no movement from "current year" until today
 	//
 	for !(currentyear == self.timer.CurrentTime.Year() && currentMonth == int(self.timer.CurrentTime.Month())) { // we must close the month until self.timer.CurrentTime
-		// compute loan for the month
-		loanAmount := -accounts[currentyear]["16"] * self.loanrate / 12
-		accounts[currentyear]["51"] -= loanAmount
-		accounts[currentyear]["66"] += loanAmount
-
-		currentMonth++
-		if currentMonth > 12 {
-			currentMonth = 1
-
-			previousYear := currentyear
-			currentyear++
-
-			//fmt.Println("compute taxes for ", currentyear)
-			profitlost, taxes := computeYearlyTaxes(accounts[previousYear], self.taxrate)
-			accounts[previousYear]["44"] = taxes
-
-			// 51: current balance, 44: taxes
-			accounts[previousYear]["51"] -= accounts[previousYear]["44"]
-			accounts[currentyear] = make(AccountYearly)
-			// copy from previous year, accounts 1 to 5 (except 44 => 0)
-			for k, v := range accounts[previousYear] {
-				if k[0] == '1' || k[0] == '2' || k[0] == '3' || k[0] == '4' || k[0] == '5' {
-					accounts[currentyear][k] = v
-				}
-			}
-			accounts[currentyear]["44"] = 0
-			accounts[currentyear]["45"] -= profitlost
-			accounts[currentyear]["46"] += accounts[previousYear]["66"]
-			//accounts[currentyear]["23"] -= accounts[previousYear]["28"]
-			accounts[currentyear]["28"] = 0
-		}
+		self.runLedgerMonth(accounts, &currentyear, &currentMonth)
 	}
 
 	return accounts
