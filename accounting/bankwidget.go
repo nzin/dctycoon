@@ -3,6 +3,7 @@ package accounting
 import (
 	"fmt"
 
+	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/dctycoon/timer"
 	"github.com/nzin/sws"
 	//"github.com/veandco/go-sdl2/sdl"
@@ -103,7 +104,8 @@ func NewBankWidget(root *sws.RootWidget) *BankWidget {
 	bankwidget.askloanbutton.SetClicked(func() {
 		value := bankwidget.askInput.GetText()
 		if asked, err := strconv.ParseFloat(value, 64); err != nil {
-			sws.ShowModalError(root, "Amount error", "resources/paper-bill.png", "The amount doesn't seems to be a number", nil)
+			iconsurface, _ := global.LoadImageAsset("assets/ui/paper-bill.png")
+			sws.ShowModalErrorSurfaceicon(root, "Amount error", iconsurface, "The amount doesn't seems to be a number", nil)
 		} else {
 			yearaccountN := bankwidget.ledger.GetYearAccount(bankwidget.timer.CurrentTime.Year())
 			yearaccountN1 := bankwidget.ledger.GetYearAccount(bankwidget.timer.CurrentTime.Year() - 1)
@@ -113,7 +115,8 @@ func NewBankWidget(root *sws.RootWidget) *BankWidget {
 				maxAllowed = 4 * -yearaccountN1["70"]
 			}
 			if asked+currentDebt > maxAllowed {
-				sws.ShowModalError(root, "Amount inquiry error", "resources/paper-bill.png", "Seriously? You want to loan that amount? Kid, prove you can run a big business and we will reconsider your demand", nil)
+				iconsurface, _ := global.LoadImageAsset("assets/ui/paper-bill.png")
+				sws.ShowModalErrorSurfaceicon(root, "Amount inquiry error", iconsurface, "Seriously? You want to loan that amount? Kid, prove you can run a big business and we will reconsider your demand", nil)
 			} else {
 				bankwidget.ledger.AskLoan("bank loan", bankwidget.timer.CurrentTime, asked)
 			}
@@ -144,7 +147,8 @@ func NewBankWidget(root *sws.RootWidget) *BankWidget {
 	bankwidget.paybackbutton.SetClicked(func() {
 		value := bankwidget.paybackInput.GetText()
 		if refund, err := strconv.ParseFloat(value, 64); err != nil {
-			sws.ShowModalError(root, "Amount error", "resources/paper-bill.png", "The amount doesn't seems to be a number", nil)
+			iconsurface, _ := global.LoadImageAsset("assets/ui/paper-bill.png")
+			sws.ShowModalErrorSurfaceicon(root, "Amount error", iconsurface, "The amount doesn't seems to be a number", nil)
 		} else {
 			yearaccountN := bankwidget.ledger.GetYearAccount(bankwidget.timer.CurrentTime.Year())
 			currentDebt := -yearaccountN["16"]
@@ -153,7 +157,8 @@ func NewBankWidget(root *sws.RootWidget) *BankWidget {
 				refund = currentDebt
 			}
 			if refund > currentMoney {
-				sws.ShowModalError(root, "Cashflow problem", "resources/paper-bill.png", "I don't think you can afford to refund so much money, keep working on your business...", nil)
+				iconsurface, _ := global.LoadImageAsset("assets/ui/paper-bill.png")
+				sws.ShowModalErrorSurfaceicon(root, "Cashflow problem", iconsurface, "I don't think you can afford to refund so much money, keep working on your business...", nil)
 			} else {
 				bankwidget.ledger.RefundLoan("payback bank debt", bankwidget.timer.CurrentTime, refund)
 			}
@@ -162,12 +167,16 @@ func NewBankWidget(root *sws.RootWidget) *BankWidget {
 	})
 
 	bankicon := sws.NewLabelWidget(64, 64, "")
-	bankicon.SetImage("resources/icon-bank.big.png")
+	if icon, err := global.LoadImageAsset("assets/ui/icon-bank.big.png"); err == nil {
+		bankicon.SetImageSurface(icon)
+	}
 	bankicon.Move(4, 40)
 	bankwidget.AddChild(bankicon)
 
 	loanicon := sws.NewLabelWidget(64, 64, "")
-	loanicon.SetImage("resources/icon-loan.big.png")
+	if icon, err := global.LoadImageAsset("assets/ui/icon-loan.big.png"); err == nil {
+		loanicon.SetImageSurface(icon)
+	}
 	loanicon.Move(4, 183)
 	bankwidget.AddChild(loanicon)
 

@@ -1,6 +1,7 @@
 package timer
 
 import (
+	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/sws"
 	log "github.com/sirupsen/logrus"
 )
@@ -16,7 +17,9 @@ func NewEventMessageWidget(root *sws.RootWidget, longdesc string) *sws.MainWidge
 	}
 
 	label := sws.NewLabelWidget(50, 50, "")
-	label.SetImage("resources/icon-information-symbol.png")
+	if img, err := global.LoadImageAsset("assets/ui/icon-information-symbol.png"); err == nil {
+		label.SetImageSurface(img)
+	}
 	label.SetCentered(true)
 	widget.AddChild(label)
 

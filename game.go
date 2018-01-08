@@ -49,14 +49,33 @@ func NewGame(quit *bool, root *sws.RootWidget) *Game {
 		serverbundles:   make([]*supplier.ServerBundle, 0, 0),
 		cronevent:       nil,
 		trends:          supplier.NewTrend(),
-		gameui:          NewGameUI(quit, root),
+		gameui:          nil,
 	}
+	g.gameui = NewGameUI(quit, root, g)
 
 	return g
 }
 
-func (self *Game) InitGame(initialcapital float64, location string) {
-	log.Debug("Game::InitGame(", initialcapital, ")")
+func (self *Game) ShowOpening() {
+	self.gameui.ShowOpening()
+}
+
+func (self *Game) InitGame(locationid string, difficulty int32) {
+	log.Debug("Game::InitGame(", locationid, ",", difficulty, ")")
+
+	var initialcapital float64
+	//	var nbopponents int32
+	switch difficulty {
+	case 1:
+		initialcapital = 10000.0
+		//		nbopponents = 5
+	case 2:
+		initialcapital = 5000.0
+		//		nbopponents = 7
+	default:
+		initialcapital = 20000.0
+		//		nbopponents = 3
+	}
 	if self.cronevent != nil {
 		self.timer.RemoveCron(self.cronevent)
 	}
@@ -66,7 +85,7 @@ func (self *Game) InitGame(initialcapital float64, location string) {
 	})
 	self.trends.Init(self.gameui.eventpublisher, self.timer)
 	self.player = NewPlayer()
-	self.player.Init(self.timer, initialcapital, location)
+	self.player.Init(self.timer, initialcapital, locationid)
 	self.gameui.InitGame(self.timer, self.player.GetInventory(), self.player.GetLedger(), self.trends)
 	self.gameui.ShowDC()
 }

@@ -1,12 +1,13 @@
 package dctycoon
 
 import (
-	"fmt"
-	"github.com/nzin/dctycoon/supplier"
-	"github.com/veandco/go-sdl2/img"
-	"github.com/veandco/go-sdl2/sdl"
 	"sort"
 	"strconv"
+
+	"github.com/nzin/dctycoon/global"
+	"github.com/nzin/dctycoon/supplier"
+	log "github.com/sirupsen/logrus"
+	"github.com/veandco/go-sdl2/sdl"
 )
 
 const (
@@ -18,10 +19,10 @@ const (
 // base "class" for all tiles
 type TileElement interface {
 	// should be passive, rack, ...
-	ElementType() int32                // which type sit on: PRODUCT_RACK, PRODUCT_AC, ...
+	ElementType() int32                     // which type sit on: PRODUCT_RACK, PRODUCT_AC, ...
 	InventoryItem() *supplier.InventoryItem // if there is one
-	Draw(rotation uint32) *sdl.Surface // face can be 0,1,2,3 (i.e. 0, 90, 180, 270)
-	Power() float64                    // ampere
+	Draw(rotation uint32) *sdl.Surface      // face can be 0,1,2,3 (i.e. 0, 90, 180, 270)
+	Power() float64                         // ampere
 }
 
 type ItemInventoryArray []*supplier.InventoryItem
@@ -67,7 +68,7 @@ func (self *RackElement) Draw(rotation uint32) *sdl.Surface {
 	}
 	if self.surface == nil {
 		var err error
-		bottom := getSprite("resources/rack.bottom" + strconv.Itoa(int(rotation)) + ".png")
+		bottom := getSprite("assets/ui/rack.bottom" + strconv.Itoa(int(rotation)) + ".png")
 		self.surface, err = sdl.CreateRGBSurface(0, bottom.W, bottom.H, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000)
 		if err != nil {
 			panic(err)
@@ -77,13 +78,13 @@ func (self *RackElement) Draw(rotation uint32) *sdl.Surface {
 		bottom.Blit(&rectSrc, self.surface, &rectDst)
 
 		for _, item := range self.items {
-			img := getSprite("resources/" + item.Serverconf.ConfType.ServerSprite + strconv.Itoa(int(rotation)) + ".png")
+			img := getSprite("assets/ui/" + item.Serverconf.ConfType.ServerSprite + strconv.Itoa(int(rotation)) + ".png")
 			rectSrc := sdl.Rect{0, 0, img.W, img.H}
 			rectDst := sdl.Rect{0, TILE_HEIGHT - img.H - ((42-item.Zplaced)-item.Serverconf.ConfType.NbU+2)*4, img.W, img.H}
 			img.Blit(&rectSrc, self.surface, &rectDst)
 		}
 
-		top := getSprite("resources/rack.top" + strconv.Itoa(int(rotation)) + ".png")
+		top := getSprite("assets/ui/rack.top" + strconv.Itoa(int(rotation)) + ".png")
 		rectSrc = sdl.Rect{0, 0, top.W, top.H}
 		rectDst = sdl.Rect{0, TILE_HEIGHT - top.H, top.W, top.H}
 		top.Blit(&rectSrc, self.surface, &rectDst)
@@ -105,7 +106,7 @@ func (self *RackElement) Power() float64 {
 func NewRackElement(item *supplier.InventoryItem) *RackElement {
 	r := &RackElement{
 		surface: nil,
-		item: item,
+		item:    item,
 		items:   make([]*supplier.InventoryItem, 0),
 	}
 	return r
@@ -133,7 +134,7 @@ func (self *SimpleElement) Draw(rotation uint32) *sdl.Surface {
 		self.surface = nil
 	}
 	if self.surface == nil {
-		self.surface = getSprite("resources/" + self.inventoryitem.GetSprite() + strconv.Itoa(int(rotation)) + ".png")
+		self.surface = getSprite("assets/ui/" + self.inventoryitem.GetSprite() + strconv.Itoa(int(rotation)) + ".png")
 		self.previousrotation = rotation
 	}
 	return self.surface
@@ -233,24 +234,24 @@ func (self *Tile) IsElementAt(x, y int32) bool {
 func (self *Tile) Draw() *sdl.Surface {
 	if self.surface == nil {
 		self.surface, _ = sdl.CreateRGBSurface(0, 105, TILE_HEIGHT, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000)
-		floor := getSprite("resources/" + self.floor + strconv.Itoa(int(self.rotation)) + ".png")
+		floor := getSprite("assets/ui/" + self.floor + strconv.Itoa(int(self.rotation)) + ".png")
 		rectSrc := sdl.Rect{0, 0, floor.W, floor.H}
 		rectDst := sdl.Rect{0, TILE_HEIGHT - floor.H, floor.W, floor.H}
 		floor.Blit(&rectSrc, self.surface, &rectDst)
 		if (self.wall[0] != "") || (self.wall[1] != "") {
-			wall := getSprite("resources/wallX.png")
+			wall := getSprite("assets/ui/wallX.png")
 			rectSrc := sdl.Rect{0, 0, wall.W, wall.H}
 			rectDst := sdl.Rect{0, TILE_HEIGHT - wall.H, wall.W, wall.H}
 			wall.Blit(&rectSrc, self.surface, &rectDst)
 		}
 		if self.wall[0] != "" {
-			wall := getSprite("resources/" + self.wall[0] + "L.png")
+			wall := getSprite("assets/ui/" + self.wall[0] + "L.png")
 			rectSrc := sdl.Rect{0, 0, wall.W, wall.H}
 			rectDst := sdl.Rect{0, TILE_HEIGHT - wall.H, wall.W, wall.H}
 			wall.Blit(&rectSrc, self.surface, &rectDst)
 		}
 		if self.wall[1] != "" {
-			wall := getSprite("resources/" + self.wall[1] + "R.png")
+			wall := getSprite("assets/ui/" + self.wall[1] + "R.png")
 			rectSrc := sdl.Rect{0, 0, wall.W, wall.H}
 			rectDst := sdl.Rect{0, TILE_HEIGHT - wall.H, wall.W, wall.H}
 			wall.Blit(&rectSrc, self.surface, &rectDst)
@@ -313,9 +314,10 @@ func getSprite(image string) *sdl.Surface {
 	sprite := spritecache[image]
 	if sprite == nil {
 		var err error
-		sprite, err = img.Load(image)
+		//		sprite, err = img.Load(image)
+		sprite, err = global.LoadImageAsset(image)
 		if sprite == nil || err != nil {
-			fmt.Println("Error loading ", image, err)
+			log.Error("Error loading ", image, err)
 			panic(err)
 		}
 		spritecache[image] = sprite

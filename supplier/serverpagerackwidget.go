@@ -1,6 +1,7 @@
 package supplier
 
 import (
+	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/sws"
 	"github.com/veandco/go-sdl2/sdl"
 )
@@ -54,7 +55,9 @@ func NewServerPageRackWidget(width, height int32) *ServerPageRackWidget {
 	serverpagerack.AddChild(title)
 
 	rack1Icon := sws.NewFlatButtonWidget(150, 100, "")
-	rack1Icon.SetImage("resources/server.1u0.png")
+	if img, err := global.LoadImageAsset("assets/ui/server.1u0.png"); err == nil {
+		rack1Icon.SetImageSurface(img)
+	}
 	rack1Icon.SetColor(0xffeeeeee)
 	rack1Icon.SetCentered(true)
 	rack1Icon.Move(0, 20)
@@ -81,7 +84,9 @@ func NewServerPageRackWidget(width, height int32) *ServerPageRackWidget {
 	serverpagerack.configurerack1 = rack1Button
 
 	rack2Icon := sws.NewFlatButtonWidget(150, 100, "")
-	rack2Icon.SetImage("resources/server.2u0.png")
+	if img, err := global.LoadImageAsset("assets/ui/server.2u0.png"); err == nil {
+		rack2Icon.SetImageSurface(img)
+	}
 	rack2Icon.SetColor(0xffeeeeee)
 	rack2Icon.SetCentered(true)
 	rack2Icon.Move(150, 20)
@@ -108,7 +113,9 @@ func NewServerPageRackWidget(width, height int32) *ServerPageRackWidget {
 	serverpagerack.configurerack2 = rack2Button
 
 	rack4Icon := sws.NewFlatButtonWidget(150, 100, "")
-	rack4Icon.SetImage("resources/server.4u0.png")
+	if img, err := global.LoadImageAsset("assets/ui/server.4u0.png"); err == nil {
+		rack4Icon.SetImageSurface(img)
+	}
 	rack4Icon.SetColor(0xffeeeeee)
 	rack4Icon.SetCentered(true)
 	rack4Icon.Move(300, 20)
@@ -135,7 +142,9 @@ func NewServerPageRackWidget(width, height int32) *ServerPageRackWidget {
 	serverpagerack.configurerack4 = rack4Button
 
 	rack6Icon := sws.NewFlatButtonWidget(150, 100, "")
-	rack6Icon.SetImage("resources/server.4u0.png")
+	if img, err := global.LoadImageAsset("assets/ui/server.4u0.png"); err == nil {
+		rack6Icon.SetImageSurface(img)
+	}
 	rack6Icon.SetColor(0xffeeeeee)
 	rack6Icon.SetCentered(true)
 	rack6Icon.Move(0, 360)

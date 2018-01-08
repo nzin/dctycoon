@@ -3,6 +3,7 @@ package supplier
 import (
 	"fmt"
 
+	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/sws"
 	//	"github.com/veandco/go-sdl2/sdl"
 	"strconv"
@@ -21,7 +22,7 @@ type CartPageItemUi struct {
 	totalchanged func()
 }
 
-func NewCartPageItemUi(icon, desc string, price float64, qty int32, totalcallback func()) *CartPageItemUi {
+func NewCartPageItemUi(iconasset, desc string, price float64, qty int32, totalcallback func()) *CartPageItemUi {
 	choices := make([]string, 10)
 	for i := 1; i <= 10; i++ {
 		choices[i-1] = fmt.Sprintf("%d", i)
@@ -41,7 +42,9 @@ func NewCartPageItemUi(icon, desc string, price float64, qty int32, totalcallbac
 	cartitem.qtyD.SetActiveChoice(qty - 1)
 
 	cartitem.SetColor(0xffffffff)
-	cartitem.icon.SetImage(icon)
+	if icon, err := global.LoadImageAsset(iconasset); err == nil {
+		cartitem.icon.SetImageSurface(icon)
+	}
 	cartitem.icon.SetColor(0xffffffff)
 
 	cartitem.desc.Move(100, 0)
@@ -121,7 +124,7 @@ func (self *CartPageWidget) AddItem(productitem int32, conf *ServerConf, unitpri
 			ramSizeText = fmt.Sprintf("%d Go", conf.NbSlotRam*conf.RamSize/1024)
 		}
 
-		ui = NewCartPageItemUi("resources/"+conf.ConfType.ServerSprite+"0.png",
+		ui = NewCartPageItemUi("assets/ui/"+conf.ConfType.ServerSprite+"0.png",
 			fmt.Sprintf("%dx %d cores\n%s RAM\n%d disks", conf.NbProcessors, conf.NbCore, ramSizeText, conf.NbDisks),
 			unitprice,
 			nb, func() {
@@ -133,7 +136,7 @@ func (self *CartPageWidget) AddItem(productitem int32, conf *ServerConf, unitpri
 				self.grandTotal.SetText(fmt.Sprintf("%.2f $", totalprice))
 			})
 	case PRODUCT_RACK:
-		ui = NewCartPageItemUi("resources/rack0.100.png",
+		ui = NewCartPageItemUi("assets/ui/rack0.100.png",
 			"Rack",
 			unitprice,
 			nb, func() {
@@ -145,7 +148,7 @@ func (self *CartPageWidget) AddItem(productitem int32, conf *ServerConf, unitpri
 				self.grandTotal.SetText(fmt.Sprintf("%.2f $", totalprice))
 			})
 	case PRODUCT_AC:
-		ui = NewCartPageItemUi("resources/ac0.100.png",
+		ui = NewCartPageItemUi("assets/ui/ac0.100.png",
 			"Air Climatizer",
 			unitprice,
 			nb, func() {
@@ -157,7 +160,7 @@ func (self *CartPageWidget) AddItem(productitem int32, conf *ServerConf, unitpri
 				self.grandTotal.SetText(fmt.Sprintf("%.2f $", totalprice))
 			})
 	case PRODUCT_GENERATOR:
-		ui = NewCartPageItemUi("resources/generator0.100.png",
+		ui = NewCartPageItemUi("assets/ui/generator0.100.png",
 			"Generator",
 			unitprice,
 			nb, func() {

@@ -1,6 +1,7 @@
 package dctycoon
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -233,7 +234,8 @@ func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 			m.AddItem(sws.NewMenuItemLabel("Uninstall", func() {
 				rackelement := activeTile.TileElement().(*RackElement)
 				if len(rackelement.items) > 0 {
-					sws.ShowModalError(self.rootwindow, "Uninstall action", "resources/icon-triangular-big.png", "It is not possible to uninstall a rack unless it is empty", nil)
+					iconsurface, _ := global.LoadImageAsset("assets/ui/icon-triangular-big.png")
+					sws.ShowModalErrorSurfaceicon(self.rootwindow, "Uninstall action", iconsurface, "It is not possible to uninstall a rack unless it is empty", nil)
 				} else {
 					self.inventory.UninstallItem(rackelement.InventoryItem())
 				}
@@ -439,8 +441,8 @@ func (self *DcWidget) ItemUninstalled(item *supplier.InventoryItem) {
 //     ]
 //   }
 //
-func (self *DcWidget) LoadMap(dc map[string]interface{}, currenttime time.Time) {
-	log.Debug("DcWidget::LoadMap(", dc, ",", currenttime, ")")
+func (self *DcWidget) LoadMap(dc map[string]interface{}) {
+	log.Debug("DcWidget::LoadMap(", dc, ")")
 	width := int32(dc["width"].(float64))
 	height := int32(dc["height"].(float64))
 	self.tiles = make([][]*Tile, height)
@@ -471,6 +473,35 @@ func (self *DcWidget) LoadMap(dc map[string]interface{}, currenttime time.Time) 
 	for _, item := range self.inventory.Items {
 		if item.IsPlaced() && item.Typeitem == supplier.PRODUCT_SERVER {
 			self.ItemInstalled(item)
+		}
+	}
+}
+
+func (self *DcWidget) InitMap(assetdcmap string) {
+	log.Debug("DcWidget::InitMap(", assetdcmap, ")")
+	if data, err := global.Asset("assets/dcmap/" + assetdcmap); err == nil {
+		var dcmap map[string]interface{}
+		if json.Unmarshal(data, &dcmap) == nil {
+			width := int32(dcmap["width"].(float64))
+			height := int32(dcmap["height"].(float64))
+			self.tiles = make([][]*Tile, height)
+			for y := range self.tiles {
+				self.tiles[y] = make([]*Tile, width)
+				for x := range self.tiles[y] {
+					self.tiles[y][x] = NewGrassTile()
+				}
+			}
+			tiles := dcmap["tiles"].([]interface{})
+			for _, t := range tiles {
+				tile := t.(map[string]interface{})
+				x := int32(tile["x"].(float64))
+				y := int32(tile["y"].(float64))
+				wall0 := tile["wall0"].(string)
+				wall1 := tile["wall1"].(string)
+				floor := tile["floor"].(string)
+				rotation := uint32(tile["rotation"].(float64))
+				self.tiles[y][x] = NewTile(wall0, wall1, floor, rotation)
+			}
 		}
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/sws"
 )
 
@@ -53,7 +54,9 @@ func (self *ServerPageConfigureWidget) SetConfType(trend *Trend, conftypename st
 	}
 
 	self.today = today
-	self.configureicon.SetImage("resources/" + self.conftype.ServerSprite + "0.png")
+	if img, err := global.LoadImageAsset("assets/ui/" + self.conftype.ServerSprite + "0.png"); err == nil {
+		self.configureicon.SetImageSurface(img)
+	}
 
 	vt := false
 	if trend.Vt.CurrentValue(self.today) > 0 {

@@ -1,6 +1,7 @@
 package supplier
 
 import (
+	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/sws"
 	"github.com/veandco/go-sdl2/sdl"
 )
@@ -33,7 +34,9 @@ func NewServerPageTowerWidget(width, height int32) *ServerPageTowerWidget {
 	serverpagetower.AddChild(title)
 
 	towerIcon := sws.NewFlatButtonWidget(150, 100, "")
-	towerIcon.SetImage("resources/tower0.png")
+	if img, err := global.LoadImageAsset("assets/ui/tower0.png"); err == nil {
+		towerIcon.SetImageSurface(img)
+	}
 	towerIcon.SetColor(0xffeeeeee)
 	towerIcon.SetCentered(true)
 	towerIcon.Move(0, 20)

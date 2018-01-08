@@ -3,20 +3,22 @@ package global
 import (
 	"regexp"
 	"strconv"
+	"strings"
+	"unsafe"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/veandco/go-sdl2/img"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-func GlowImage(spritepath string, color uint32) *sdl.Surface {
-	log.Debug("GlowImage(", spritepath, ",", color, ")")
+func GlowImage(spriteassetpath string, color uint32) *sdl.Surface {
+	log.Debug("GlowImage(", spriteassetpath, ",", color, ")")
 	red := byte((color & 0xff0000) >> 16)
 	green := byte((color & 0x00ff00) >> 8)
 	blue := byte(color & 0x0000ff)
 
-	if image, err := img.Load(spritepath); err == nil {
-		if image2, err := img.Load(spritepath); err == nil {
+	if image, err := LoadImageAsset(spriteassetpath); err == nil {
+		if image2, err := LoadImageAsset(spriteassetpath); err == nil {
 			if image2.Format.BytesPerPixel == 4 {
 				pixels := image.Pixels()
 				pixels2 := image2.Pixels()
@@ -75,4 +77,17 @@ func ParseMega(str string) int32 {
 		return 2147483647
 	}
 	return int32(value)
+}
+
+//
+// To load an SDL (PNG) image directly from assets
+func LoadImageAsset(filename string) (*sdl.Surface, error) {
+	data, err := Asset(filename)
+	if err != nil {
+		return nil, err
+	}
+	src := sdl.RWFromMem(unsafe.Pointer(&data[0]), len(data))
+	imagetype := strings.ToUpper(filename[len(filename)-3:])
+
+	return img.LoadTypedRW(src, false, imagetype)
 }
