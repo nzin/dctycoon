@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"time"
 
 	"github.com/nzin/dctycoon/global"
 
@@ -15,10 +16,21 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	SPEED_STOP        = iota
+	SPEED_FORWARD     = iota
+	SPEED_FASTFORWARD = iota
+)
+
 // Actor -> Player or NPDatacenter
 type Actor interface {
 	GetInventory() *supplier.Inventory
 	GetLedger() *accounting.Ledger
+}
+
+type GameTimerSubscriber interface {
+	ChangeSpeed(speed int)
+	NewDay(timer *timer.GameTimer)
 }
 
 //
@@ -27,14 +39,16 @@ type Actor interface {
 // - marketplace items (DemandTemplate, ServerBundle)
 // - load/save game functions
 type Game struct {
-	timer           *timer.GameTimer
-	npactors        []*NPDatacenter
-	player          *Player
-	demandtemplates []*supplier.DemandTemplate
-	serverbundles   []*supplier.ServerBundle
-	cronevent       *timer.GameCronEvent
-	trends          *supplier.Trend
-	gameui          *GameUI
+	timer            *timer.GameTimer
+	npactors         []*NPDatacenter
+	player           *Player
+	demandtemplates  []*supplier.DemandTemplate
+	serverbundles    []*supplier.ServerBundle
+	cronevent        *timer.GameCronEvent
+	trends           *supplier.Trend
+	gameui           *GameUI
+	timerevent       *sws.TimerEvent
+	timersubscribers []GameTimerSubscriber
 }
 
 //
@@ -44,14 +58,16 @@ func NewGame(quit *bool, root *sws.RootWidget) *Game {
 	log.Debug("NewGame()")
 
 	g := &Game{
-		timer:           nil,
-		player:          nil,
-		npactors:        make([]*NPDatacenter, 0, 0),
-		demandtemplates: make([]*supplier.DemandTemplate, 0, 0),
-		serverbundles:   make([]*supplier.ServerBundle, 0, 0),
-		cronevent:       nil,
-		trends:          supplier.NewTrend(),
-		gameui:          nil,
+		timer:            nil,
+		player:           nil,
+		npactors:         make([]*NPDatacenter, 0, 0),
+		demandtemplates:  make([]*supplier.DemandTemplate, 0, 0),
+		serverbundles:    make([]*supplier.ServerBundle, 0, 0),
+		cronevent:        nil,
+		trends:           supplier.NewTrend(),
+		gameui:           nil,
+		timerevent:       nil,
+		timersubscribers: make([]GameTimerSubscriber, 0, 0),
 	}
 	g.gameui = NewGameUI(quit, root, g)
 
@@ -81,6 +97,11 @@ func (self *Game) InitGame(locationid string, difficulty int32) {
 	if self.cronevent != nil {
 		self.timer.RemoveCron(self.cronevent)
 	}
+	if self.timerevent != nil {
+		self.timerevent.StopRepeat()
+	}
+	self.timerevent = nil
+
 	self.timer = timer.NewGameTimer()
 	self.cronevent = self.timer.AddCron(-1, -1, -1, func() {
 		self.GenerateDemandAndFee()
@@ -111,6 +132,9 @@ func (self *Game) InitGame(locationid string, difficulty int32) {
 		opponent.Init(self.timer, 20000, locationid, self.trends, profile)
 		self.npactors = append(self.npactors, opponent)
 	}
+	for _, s := range self.timersubscribers {
+		s.NewDay(self.timer)
+	}
 	self.gameui.ShowDC()
 }
 
@@ -132,6 +156,10 @@ func (self *Game) LoadGame(filename string) {
 	if self.cronevent != nil {
 		self.timer.RemoveCron(self.cronevent)
 	}
+	if self.timerevent != nil {
+		self.timerevent.StopRepeat()
+	}
+	self.timerevent = nil
 
 	self.timer = timer.NewGameTimer()
 	self.cronevent = self.timer.AddCron(-1, -1, -1, func() {
@@ -151,7 +179,9 @@ func (self *Game) LoadGame(filename string) {
 		opponent.LoadGame(self.timer, self.trends, o.(map[string]interface{}))
 		self.npactors = append(self.npactors, opponent)
 	}
-
+	for _, s := range self.timersubscribers {
+		s.NewDay(self.timer)
+	}
 	self.gameui.ShowDC()
 }
 
@@ -223,5 +253,45 @@ func (self *Game) GenerateDemandAndFee() {
 				}
 			}
 		}
+	}
+}
+
+func (self *Game) AddGameTimerSubscriber(subscriber GameTimerSubscriber) {
+	for _, s := range self.timersubscribers {
+		if s == subscriber {
+			return
+		}
+	}
+	self.timersubscribers = append(self.timersubscribers, subscriber)
+}
+
+func (self *Game) RemoveGameTimerSubscriber(subscriber GameTimerSubscriber) {
+	for i, s := range self.timersubscribers {
+		if s == subscriber {
+			self.timersubscribers = append(self.timersubscribers[:i], self.timersubscribers[i+1:]...)
+			break
+		}
+	}
+}
+
+func (self *Game) ChangeGameSpeed(speed int) {
+	if self.timerevent != nil {
+		self.timerevent.StopRepeat()
+	}
+	for _, s := range self.timersubscribers {
+		s.ChangeSpeed(speed)
+	}
+
+	if speed == SPEED_FORWARD || speed == SPEED_FASTFORWARD {
+		tick := 2 * time.Second
+		if speed == SPEED_FASTFORWARD {
+			tick = time.Second / 2
+		}
+		self.timerevent = sws.TimerAddEvent(time.Now().Add(tick), tick, func(evt *sws.TimerEvent) {
+			self.timer.TimerClock()
+			for _, s := range self.timersubscribers {
+				s.NewDay(self.timer)
+			}
+		})
 	}
 }

@@ -30,7 +30,7 @@ func NewGameUI(quit *bool, root *sws.RootWidget, game *Game) *GameUI {
 		supplierwidget:   NewMainSupplierWidget(root),
 		inventorywidget:  NewMainInventoryWidget(root),
 		accountingwidget: accounting.NewMainAccountingWidget(root),
-		dock:             NewDockWidget(root, gamemenu),
+		dock:             NewDockWidget(root, game, gamemenu),
 		eventpublisher:   timer.NewEventPublisher(root),
 	}
 
