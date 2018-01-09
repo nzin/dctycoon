@@ -221,9 +221,7 @@ func NewMainGameMenuLoad() *MainGameMenuLoad {
 }
 
 func (self *MainGameMenuLoad) Loadfiles() {
-	for _, c := range self.listwidget.GetItems() {
-		self.listwidget.RemoveItem(c)
-	}
+	self.listwidget.RemoveAllItems()
 
 	// check in the working directory all files in ".map"
 	files, err := ioutil.ReadDir(".")
@@ -311,9 +309,7 @@ func NewMainGameMenuSave() *MainGameMenuSave {
 }
 
 func (self *MainGameMenuSave) Loadfiles() {
-	for _, c := range self.listwidget.GetItems() {
-		self.listwidget.RemoveItem(c)
-	}
+	self.listwidget.RemoveAllItems()
 
 	// check in the working directory all files in ".map"
 	files, err := ioutil.ReadDir(".")
