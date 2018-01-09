@@ -45,6 +45,7 @@ func (self *DockWidget) LedgerChange() {
 	self.ledgerButton.SetText(fmt.Sprintf("%.2f $", accounts["51"]))
 }
 
+// from GameTimerSubscriber interface
 func (self *DockWidget) ChangeSpeed(speed int) {
 	self.pause.SetColor(0xffdddddd)
 	self.play.SetColor(0xffdddddd)
@@ -61,6 +62,7 @@ func (self *DockWidget) ChangeSpeed(speed int) {
 	}
 }
 
+// from GameTimerSubscriber interface
 func (self *DockWidget) NewDay(timer *timer.GameTimer) {
 	today := fmt.Sprintf("%d %s %d", timer.CurrentTime.Day(), timer.CurrentTime.Month().String(), timer.CurrentTime.Year())
 	self.currentDay.SetText(today)
@@ -156,8 +158,6 @@ func NewDockWidget(root *sws.RootWidget, game *Game, gamemenu *MainGameMenu) *Do
 
 func (self *DockWidget) SetGame(timer *timer.GameTimer, ledger *accounting.Ledger) {
 	self.timer = timer
-	//	today := fmt.Sprintf("%d %s %d", timer.CurrentTime.Day(), timer.CurrentTime.Month().String(), timer.CurrentTime.Year())
-	//	self.currentDay.SetText(today)
 
 	if self.ledger != nil {
 		self.ledger.RemoveSubscriber(self)
