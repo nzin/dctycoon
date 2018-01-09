@@ -49,6 +49,7 @@ type Game struct {
 	gameui           *GameUI
 	timerevent       *sws.TimerEvent
 	timersubscribers []GameTimerSubscriber
+	currentSpeed     int
 }
 
 //
@@ -68,6 +69,7 @@ func NewGame(quit *bool, root *sws.RootWidget) *Game {
 		gameui:           nil,
 		timerevent:       nil,
 		timersubscribers: make([]GameTimerSubscriber, 0, 0),
+		currentSpeed:     SPEED_STOP,
 	}
 	g.gameui = NewGameUI(quit, root, g)
 
@@ -278,6 +280,7 @@ func (self *Game) ChangeGameSpeed(speed int) {
 	if self.timerevent != nil {
 		self.timerevent.StopRepeat()
 	}
+	self.currentSpeed = speed
 	for _, s := range self.timersubscribers {
 		s.ChangeSpeed(speed)
 	}
@@ -294,4 +297,8 @@ func (self *Game) ChangeGameSpeed(speed int) {
 			}
 		})
 	}
+}
+
+func (self *Game) GetCurrentSpeed() int {
+	return self.currentSpeed
 }

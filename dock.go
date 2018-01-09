@@ -136,11 +136,6 @@ func NewDockWidget(root *sws.RootWidget, game *Game, gamemenu *MainGameMenu) *Do
 	widget.AddChild(save)
 	save.SetClicked(func() {
 		gamemenu.ShowSave()
-		root.AddChild(gamemenu)
-		gamemenu.SetCancelCallback(func() {
-			root.RemoveChild(gamemenu)
-		})
-		game.ChangeGameSpeed(SPEED_STOP)
 	})
 
 	widget.quit = sws.NewFlatButtonWidget(25, 25, "")

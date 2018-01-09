@@ -73,30 +73,34 @@ func (self *StaticWidget) Repaint() {
 // MainGameMenu is the main game window (new/load/save/quit...)
 type MainGameMenu struct {
 	StaticWidget
-	game         *Game
-	newbutton    *sws.ButtonWidget
-	loadbutton   *sws.ButtonWidget
-	savebutton   *sws.ButtonWidget
-	cancelbutton *sws.ButtonWidget
-	quitbutton   *sws.ButtonWidget
-	loadwidget   *MainGameMenuLoad
-	savewidget   *MainGameMenuSave
-	newwidget    *MainGameMenuNew
+	root          *sws.RootWidget
+	game          *Game
+	newbutton     *sws.ButtonWidget
+	loadbutton    *sws.ButtonWidget
+	savebutton    *sws.ButtonWidget
+	cancelbutton  *sws.ButtonWidget
+	quitbutton    *sws.ButtonWidget
+	loadwidget    *MainGameMenuLoad
+	savewidget    *MainGameMenuSave
+	newwidget     *MainGameMenuNew
+	previousSpeed int
 }
 
 func NewMainGameMenu(game *Game, root *sws.RootWidget, quit *bool) *MainGameMenu {
 	corewidget := NewStaticWidget(600, 250)
 	widget := &MainGameMenu{
-		StaticWidget: *corewidget,
-		game:         game,
-		newbutton:    sws.NewButtonWidget(300, 50, "New Game"),
-		loadbutton:   sws.NewButtonWidget(300, 50, "Load Game"),
-		savebutton:   sws.NewButtonWidget(300, 50, "Save Game"),
-		quitbutton:   sws.NewButtonWidget(300, 50, "Quit"),
-		cancelbutton: sws.NewButtonWidget(150, 30, "Cancel"),
-		loadwidget:   NewMainGameMenuLoad(),
-		savewidget:   NewMainGameMenuSave(),
-		newwidget:    NewMainGameMenuNew(root),
+		StaticWidget:  *corewidget,
+		root:          root,
+		game:          game,
+		newbutton:     sws.NewButtonWidget(300, 50, "New Game"),
+		loadbutton:    sws.NewButtonWidget(300, 50, "Load Game"),
+		savebutton:    sws.NewButtonWidget(300, 50, "Save Game"),
+		quitbutton:    sws.NewButtonWidget(300, 50, "Quit"),
+		cancelbutton:  sws.NewButtonWidget(150, 30, "Cancel"),
+		loadwidget:    NewMainGameMenuLoad(),
+		savewidget:    NewMainGameMenuSave(),
+		newwidget:     NewMainGameMenuNew(root),
+		previousSpeed: SPEED_STOP,
 	}
 
 	widget.newbutton.Move(150, 50)
@@ -165,6 +169,14 @@ func (self *MainGameMenu) ShowSave() {
 	self.quitbutton.Move(150, 230)
 	self.cancelbutton.Move(300, 290)
 	self.AddChild(self.cancelbutton)
+
+	self.previousSpeed = self.game.GetCurrentSpeed()
+	self.game.ChangeGameSpeed(SPEED_STOP)
+	self.root.AddChild(self)
+	self.SetCancelCallback(func() {
+		self.root.RemoveChild(self)
+		self.game.ChangeGameSpeed(self.previousSpeed)
+	})
 }
 
 func (self *MainGameMenu) SetCancelCallback(callback func()) {
