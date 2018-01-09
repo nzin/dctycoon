@@ -2,7 +2,6 @@ package dctycoon
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/nzin/dctycoon/accounting"
 	"github.com/nzin/dctycoon/global"
@@ -46,7 +45,30 @@ func (self *DockWidget) LedgerChange() {
 	self.ledgerButton.SetText(fmt.Sprintf("%.2f $", accounts["51"]))
 }
 
-func NewDockWidget(root *sws.RootWidget, gamemenu *MainGameMenu) *DockWidget {
+// from GameTimerSubscriber interface
+func (self *DockWidget) ChangeSpeed(speed int) {
+	self.pause.SetColor(0xffdddddd)
+	self.play.SetColor(0xffdddddd)
+	self.forward.SetColor(0xffdddddd)
+	switch speed {
+	case SPEED_STOP:
+		self.pause.SetColor(0xff8888ff)
+
+	case SPEED_FORWARD:
+		self.play.SetColor(0xff8888ff)
+
+	case SPEED_FASTFORWARD:
+		self.forward.SetColor(0xff8888ff)
+	}
+}
+
+// from GameTimerSubscriber interface
+func (self *DockWidget) NewDay(timer *timer.GameTimer) {
+	today := fmt.Sprintf("%d %s %d", timer.CurrentTime.Day(), timer.CurrentTime.Month().String(), timer.CurrentTime.Year())
+	self.currentDay.SetText(today)
+}
+
+func NewDockWidget(root *sws.RootWidget, game *Game, gamemenu *MainGameMenu) *DockWidget {
 	corewidget := sws.NewCoreWidget(150, 125)
 	widget := &DockWidget{
 		CoreWidget: *corewidget,
@@ -55,6 +77,7 @@ func NewDockWidget(root *sws.RootWidget, gamemenu *MainGameMenu) *DockWidget {
 		ledger:     nil,
 		timerevent: nil,
 	}
+	game.AddGameTimerSubscriber(widget)
 	title := sws.NewLabelWidget(150, 25, "DC Tycoon")
 	title.SetCentered(true)
 	widget.AddChild(title)
@@ -69,12 +92,7 @@ func NewDockWidget(root *sws.RootWidget, gamemenu *MainGameMenu) *DockWidget {
 		widget.pause.SetImageSurface(icon)
 	}
 	widget.pause.SetClicked(func() {
-		widget.pause.SetColor(0xff8888ff)
-		widget.play.SetColor(0xffdddddd)
-		widget.forward.SetColor(0xffdddddd)
-		if widget.timerevent != nil {
-			widget.timerevent.StopRepeat()
-		}
+		game.ChangeGameSpeed(SPEED_STOP)
 	})
 	widget.AddChild(widget.pause)
 
@@ -84,17 +102,7 @@ func NewDockWidget(root *sws.RootWidget, gamemenu *MainGameMenu) *DockWidget {
 		widget.play.SetImageSurface(icon)
 	}
 	widget.play.SetClicked(func() {
-		widget.pause.SetColor(0xffdddddd)
-		widget.play.SetColor(0xff8888ff)
-		widget.forward.SetColor(0xffdddddd)
-		if widget.timerevent != nil {
-			widget.timerevent.StopRepeat()
-		}
-		widget.timerevent = sws.TimerAddEvent(time.Now().Add(2*time.Second), 2*time.Second, func(evt *sws.TimerEvent) {
-			widget.timer.TimerClock()
-			today := fmt.Sprintf("%d %s %d", widget.timer.CurrentTime.Day(), widget.timer.CurrentTime.Month().String(), widget.timer.CurrentTime.Year())
-			widget.currentDay.SetText(today)
-		})
+		game.ChangeGameSpeed(SPEED_FORWARD)
 	})
 	widget.AddChild(widget.play)
 
@@ -104,17 +112,7 @@ func NewDockWidget(root *sws.RootWidget, gamemenu *MainGameMenu) *DockWidget {
 		widget.forward.SetImageSurface(icon)
 	}
 	widget.forward.SetClicked(func() {
-		widget.pause.SetColor(0xffdddddd)
-		widget.play.SetColor(0xffdddddd)
-		widget.forward.SetColor(0xff8888ff)
-		if widget.timerevent != nil {
-			widget.timerevent.StopRepeat()
-		}
-		widget.timerevent = sws.TimerAddEvent(time.Now().Add(time.Second/2), time.Second/2, func(evt *sws.TimerEvent) {
-			widget.timer.TimerClock()
-			today := fmt.Sprintf("%d %s %d", widget.timer.CurrentTime.Day(), widget.timer.CurrentTime.Month().String(), widget.timer.CurrentTime.Year())
-			widget.currentDay.SetText(today)
-		})
+		game.ChangeGameSpeed(SPEED_FASTFORWARD)
 	})
 	widget.AddChild(widget.forward)
 
@@ -140,16 +138,6 @@ func NewDockWidget(root *sws.RootWidget, gamemenu *MainGameMenu) *DockWidget {
 	widget.AddChild(save)
 	save.SetClicked(func() {
 		gamemenu.ShowSave()
-		root.AddChild(gamemenu)
-		gamemenu.SetCancelCallback(func() {
-			root.RemoveChild(gamemenu)
-		})
-		widget.pause.SetColor(0xffdddddd)
-		widget.play.SetColor(0xff8888ff)
-		widget.forward.SetColor(0xffdddddd)
-		if widget.timerevent != nil {
-			widget.timerevent.StopRepeat()
-		}
 	})
 
 	widget.quit = sws.NewFlatButtonWidget(25, 25, "")
@@ -170,8 +158,6 @@ func NewDockWidget(root *sws.RootWidget, gamemenu *MainGameMenu) *DockWidget {
 
 func (self *DockWidget) SetGame(timer *timer.GameTimer, ledger *accounting.Ledger) {
 	self.timer = timer
-	today := fmt.Sprintf("%d %s %d", timer.CurrentTime.Day(), timer.CurrentTime.Month().String(), timer.CurrentTime.Year())
-	self.currentDay.SetText(today)
 
 	if self.ledger != nil {
 		self.ledger.RemoveSubscriber(self)

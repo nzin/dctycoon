@@ -180,10 +180,10 @@ func (self *NPDatacenter) LoadGame(timer *timer.GameTimer, trend *supplier.Trend
 }
 
 func (self *NPDatacenter) Save() string {
-	save := fmt.Sprintf(`"location": "%s",`, self.locationname) + "\n"
+	save := fmt.Sprintf(`{"location": "%s",`, self.locationname) + "\n"
 	save += fmt.Sprintf(`"profile": "%s",`, self.profilename) + "\n"
 	save += fmt.Sprintf(`"inventory": %s,`, self.inventory.Save()) + "\n"
-	save += fmt.Sprintf(`"ledger": %s`, self.ledger.Save()) + "\n"
+	save += fmt.Sprintf(`"ledger": %s`, self.ledger.Save()) + "}\n"
 	return save
 }
 

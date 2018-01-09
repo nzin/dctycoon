@@ -2,6 +2,7 @@ package dctycoon
 
 import (
 	"math"
+	"time"
 
 	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/dctycoon/supplier"
@@ -13,13 +14,17 @@ import (
 // where you can select a Location (see supplier.LocationType and supplier.AvailableLocation)
 type WorldmapWidget struct {
 	sws.CoreWidget
-	selected        string
-	hotspot         string
-	background      *sdl.Surface
-	xshift          int32
-	yshift          int32
-	scale           float64
-	hotspotcallback func(selected, hotspot string)
+	selected             string
+	hotspot              string
+	background           *sdl.Surface
+	xshift               int32
+	yshift               int32
+	scale                float64
+	hotspotcallback      func(selected, hotspot string)
+	spotzoomeffect       int32
+	evtspotzoomeffect    *sws.TimerEvent
+	hotspotzoomeffect    int32
+	evthotspotzoomeffect *sws.TimerEvent
 }
 
 func (self *WorldmapWidget) MouseMove(x, y, xrel, yrel int32) {
@@ -37,6 +42,19 @@ func (self *WorldmapWidget) MouseMove(x, y, xrel, yrel int32) {
 		if self.hotspotcallback != nil {
 			self.hotspotcallback(self.selected, self.hotspot)
 		}
+
+		self.hotspotzoomeffect = 0
+		if self.evthotspotzoomeffect != nil {
+			self.evthotspotzoomeffect.StopRepeat()
+			self.evthotspotzoomeffect = nil
+		}
+		self.evthotspotzoomeffect = sws.TimerAddEvent(time.Now(), 30*time.Millisecond, func(evt *sws.TimerEvent) {
+			self.hotspotzoomeffect++
+			if self.hotspotzoomeffect > 10 {
+				evt.StopRepeat()
+			}
+			self.PostUpdate()
+		})
 	}
 	self.PostUpdate()
 }
@@ -56,15 +74,40 @@ func (self *WorldmapWidget) Repaint() {
 		x := int32(float64(l.Xmap)*self.scale) + self.xshift
 		y := int32(float64(l.Ymap)*self.scale) + self.yshift
 
-		self.SetDrawColor(0x46, 0xc8, 0xe8, 255)
+		alpha := self.spotzoomeffect*10 - (l.Xmap / 8)
+		if alpha < 0 {
+			alpha = 0
+		}
+		if alpha > 255 {
+			alpha = 255
+		}
+		self.SetDrawColor(0x46, 0xc8, 0xe8, uint8(alpha))
 		if locationid == self.hotspot {
 			self.SetDrawColor(0xff, 0xa0, 0xa0, 255)
 		}
 		if locationid == self.selected {
 			self.SetDrawColor(0xff, 0x20, 0x20, 255)
 		}
-		for dy := y - 3; dy < y+3; dy++ {
-			self.DrawLine(x-3, dy, x+3, dy)
+		//		for dy := y - 3; dy < y+3; dy++ {
+		//			self.DrawLine(x-3, dy, x+3, dy)
+		//		}
+		stretch := (255 - alpha) / 20
+		for dy := int32(0); dy < 4; dy++ {
+			self.DrawLine(x-dy-stretch, y-dy-stretch, x+dy+stretch, y-dy-stretch)
+			self.DrawLine(x-dy-stretch, y+dy+stretch, x+dy+stretch, y+dy+stretch)
+
+			self.DrawLine(x-dy-stretch, y-dy-stretch, x-dy-stretch, y+dy+stretch)
+			self.DrawLine(x+dy+stretch, y-dy-stretch, x+dy+stretch, y+dy+stretch)
+		}
+		if self.hotspotzoomeffect > 0 && locationid == self.hotspot && self.hotspotzoomeffect < 10 {
+			self.SetDrawColor(0xff, 0xa0, 0xa0, 255-uint8(20*self.hotspotzoomeffect))
+			for dy := int32(0); dy < 4; dy++ {
+				self.DrawLine(x-dy-self.hotspotzoomeffect, y-dy-self.hotspotzoomeffect, x+dy+self.hotspotzoomeffect, y-dy-self.hotspotzoomeffect)
+				self.DrawLine(x-dy-self.hotspotzoomeffect, y+dy+self.hotspotzoomeffect, x+dy+self.hotspotzoomeffect, y+dy+self.hotspotzoomeffect)
+
+				self.DrawLine(x-dy-self.hotspotzoomeffect, y-dy-self.hotspotzoomeffect, x-dy-self.hotspotzoomeffect, y+dy+self.hotspotzoomeffect)
+				self.DrawLine(x+dy+self.hotspotzoomeffect, y-dy-self.hotspotzoomeffect, x+dy+self.hotspotzoomeffect, y+dy+self.hotspotzoomeffect)
+			}
 		}
 	}
 
@@ -85,6 +128,19 @@ func (self *WorldmapWidget) SetLocationCallback(callback func(selected, hotspot 
 func (self *WorldmapWidget) Reset() {
 	self.selected = ""
 	self.hotspot = ""
+
+	self.spotzoomeffect = 0
+	if self.evtspotzoomeffect != nil {
+		self.evtspotzoomeffect.StopRepeat()
+		self.evtspotzoomeffect = nil
+	}
+	self.evtspotzoomeffect = sws.TimerAddEvent(time.Now(), 15*time.Millisecond, func(evt *sws.TimerEvent) {
+		self.spotzoomeffect++
+		if self.spotzoomeffect > 100 {
+			evt.StopRepeat()
+		}
+		self.PostUpdate()
+	})
 }
 
 func NewWorldmapWidget(w, h int32) *WorldmapWidget {
