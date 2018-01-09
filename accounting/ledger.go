@@ -275,6 +275,16 @@ func (self *Ledger) BuyProduct(desc string, t time.Time, price float64) {
 	}
 }
 
+func (self *Ledger) PayServerRenting(price float64, t time.Time, desc string) {
+	self.AddMovement(LedgerMovement{
+		Description: desc,
+		Amount:      price,
+		Date:        t,
+		AccountFrom: "7083",
+		AccountTo:   "5121",
+	})
+}
+
 //
 // 161 (capital/debt) -> 5121 (current bank account)
 // every year (every month?) interest rate: 5121 -> 46 (fictious bank account for interest)

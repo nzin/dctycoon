@@ -7,6 +7,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/nzin/dctycoon/accounting"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -400,16 +401,16 @@ func (self *DemandTemplate) InstanciateDemand() *DemandInstance {
 // we should check across the inventory of different competitors
 //  and from these inventory checks across all the offers
 //
-func (self *DemandInstance) FindOffer(inventories []*Inventory, now time.Time) *ServerBundle {
-	log.Debug("DemandInstance::FindOffer(", inventories, ",", now, ")")
-	selection := make(map[*Inventory]map[string]*ServerOffer)
-	for _, inventory := range inventories {
+func (self *DemandInstance) FindOffer(actors []Actor, now time.Time) *ServerBundle {
+	log.Debug("DemandInstance::FindOffer(", actors, ",", now, ")")
+	selection := make(map[Actor]map[string]*ServerOffer)
+	for _, actor := range actors {
 		// for a given inventory we try to create the apps
 		selectedoffers := make(map[string]*ServerOffer)
 		nooffer := false
 		for appname, app := range self.template.Specs {
 			// we filter
-			offers := inventory.offers
+			offers := actor.GetInventory().GetOffers()
 			for _, filter := range app.filters {
 				offers = filter.Filter(offers)
 			}
@@ -476,13 +477,13 @@ func (self *DemandInstance) FindOffer(inventories []*Inventory, now time.Time) *
 			}
 		}
 		if nooffer == false {
-			selection[inventory] = selectedoffers
+			selection[actor] = selectedoffers
 		}
 	}
 
 	// pass 2: we sort serverconf by inventory score
 
-	prioInventory := make(map[*Inventory]float64)
+	prioInventory := make(map[Actor]float64)
 	for appname, app := range self.template.Specs {
 		points := make(map[*ServerOffer]float64)
 		offers := make([]*ServerOffer, 0)
@@ -493,29 +494,29 @@ func (self *DemandInstance) FindOffer(inventories []*Inventory, now time.Time) *
 		for _, prio := range app.priorities {
 			prio.Score(offers, &points)
 		}
-		for inventory, invSelection := range selection {
-			prioInventory[inventory] += points[invSelection[appname]] * float64(self.nb[appname])
+		for actor, invSelection := range selection {
+			prioInventory[actor] += points[invSelection[appname]] * float64(self.nb[appname])
 		}
 	}
-	var selectedInventory *Inventory
+	var selectedActor Actor
 	var points float64
-	for _, inventory := range inventories {
-		if prioInventory[inventory] > points {
-			selectedInventory = inventory
-			points = prioInventory[inventory]
+	for _, actor := range actors {
+		if prioInventory[actor] > points {
+			selectedActor = actor
+			points = prioInventory[actor]
 		}
 	}
 
 	// pass 3: we create the contracts
 
-	if selectedInventory == nil {
+	if selectedActor == nil {
 		return nil
 	}
 
 	var allocated []*ServerContract
 	for appname, _ := range self.template.Specs {
 		for i := 0; i < int(self.nb[appname]); i++ {
-			serveroffer := selection[selectedInventory][appname]
+			serveroffer := selection[selectedActor][appname]
 			allocated = append(allocated, &ServerContract{
 				Item:      serveroffer.Allocate(),
 				OfferName: serveroffer.Name,
@@ -529,6 +530,7 @@ func (self *DemandInstance) FindOffer(inventories []*Inventory, now time.Time) *
 		}
 	}
 	return &ServerBundle{
+		Actor:       selectedActor,
 		Contracts:   allocated,
 		Renewalrate: self.template.Renewalfactor,
 		Date:        now,
@@ -546,10 +548,23 @@ type ServerContract struct {
 	Price     float64 // per month
 }
 
+// Actor -> Player or NPDatacenter
+type Actor interface {
+	GetInventory() *Inventory
+	GetLedger() *accounting.Ledger
+}
+
 type ServerBundle struct {
+	Actor       Actor
 	Contracts   []*ServerContract
 	Renewalrate float64
 	Date        time.Time
+}
+
+func (self *ServerBundle) PayMontlyFee(t time.Time) {
+	for _, contract := range self.Contracts {
+		self.Actor.GetLedger().PayServerRenting(contract.Price, t, fmt.Sprintf("paying leasing for %s", contract.OfferName))
+	}
 }
 
 type CriteriaFilter interface {

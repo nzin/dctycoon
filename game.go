@@ -9,7 +9,6 @@ import (
 
 	"github.com/nzin/dctycoon/global"
 
-	"github.com/nzin/dctycoon/accounting"
 	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/dctycoon/timer"
 	"github.com/nzin/sws"
@@ -21,12 +20,6 @@ const (
 	SPEED_FORWARD     = iota
 	SPEED_FASTFORWARD = iota
 )
-
-// Actor -> Player or NPDatacenter
-type Actor interface {
-	GetInventory() *supplier.Inventory
-	GetLedger() *accounting.Ledger
-}
 
 type GameTimerSubscriber interface {
 	ChangeSpeed(speed int)
@@ -222,8 +215,7 @@ func (self *Game) GenerateDemandAndFee() {
 		//
 		if sb.Date.Day() == self.timer.CurrentTime.Day() {
 			// pay monthly fee
-
-			// TBD
+			sb.PayMontlyFee(self.timer.CurrentTime)
 		}
 
 		if sb.Date.Month() == self.timer.CurrentTime.Month() &&
@@ -237,11 +229,11 @@ func (self *Game) GenerateDemandAndFee() {
 		}
 	}
 
-	inventories := make([]*supplier.Inventory, 0, 0)
+	actors := make([]supplier.Actor, 0, 0)
 	for _, a := range self.npactors {
-		inventories = append(inventories, a.GetInventory())
+		actors = append(actors, a)
 	}
-	inventories = append(inventories, self.player.GetInventory())
+	actors = append(actors, self.player)
 
 	// generate new demand
 	for _, d := range self.demandtemplates {
@@ -249,9 +241,10 @@ func (self *Game) GenerateDemandAndFee() {
 			if rand.Float64() >= (365.0-float64(d.Howoften))/365.0 {
 				// here we will generate a new server demand (and see if it is fulfill)
 				demand := d.InstanciateDemand()
-				serverbundle := demand.FindOffer(inventories, self.timer.CurrentTime)
+				serverbundle := demand.FindOffer(actors, self.timer.CurrentTime)
 				if serverbundle != nil {
 					self.serverbundles = append(self.serverbundles, serverbundle)
+					serverbundle.PayMontlyFee(self.timer.CurrentTime)
 				}
 			}
 		}
