@@ -43,7 +43,7 @@ func NewGameTimer() *GameTimer {
 	log.Debug("NewGameTimer()")
 	timer := &GameTimer{
 		autoinc:     0,
-		CurrentTime: time.Date(1990, time.Month(01), 01, 0, 0, 0, 0, time.UTC),
+		CurrentTime: time.Date(1995, time.Month(01), 01, 0, 0, 0, 0, time.UTC),
 		events:      btree.New(10),
 		cron:        make([]*GameCronEvent, 0),
 	}

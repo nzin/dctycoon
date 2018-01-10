@@ -9,7 +9,6 @@ import (
 
 	"github.com/nzin/dctycoon/global"
 
-	"github.com/nzin/dctycoon/accounting"
 	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/dctycoon/timer"
 	"github.com/nzin/sws"
@@ -22,11 +21,11 @@ const (
 	SPEED_FASTFORWARD = iota
 )
 
-// Actor -> Player or NPDatacenter
-type Actor interface {
-	GetInventory() *supplier.Inventory
-	GetLedger() *accounting.Ledger
-}
+const (
+	DIFFICULTY_EASY   = 0
+	DIFFICULTY_MEDIUM = 1
+	DIFFICULTY_HARD   = 2
+)
 
 type GameTimerSubscriber interface {
 	ChangeSpeed(speed int)
@@ -73,6 +72,20 @@ func NewGame(quit *bool, root *sws.RootWidget) *Game {
 	}
 	g.gameui = NewGameUI(quit, root, g)
 
+	// load demand templates
+	if templatesarray, err := global.AssetDir("assets/demandtemplates"); err != nil {
+		log.Error("Unable to load demand templates!")
+	} else {
+		for _, assetname := range templatesarray {
+			template := supplier.DemandTemplateAssetLoad(assetname)
+			if template == nil {
+				log.Error("Error loading demand templates %s", assetname)
+			} else {
+				g.demandtemplates = append(g.demandtemplates, template)
+			}
+		}
+	}
+
 	return g
 }
 
@@ -86,10 +99,10 @@ func (self *Game) InitGame(locationid string, difficulty int32) {
 	var initialcapital float64
 	var nbopponents int32
 	switch difficulty {
-	case 1:
+	case DIFFICULTY_MEDIUM:
 		initialcapital = 10000.0
 		nbopponents = 5
-	case 2:
+	case DIFFICULTY_HARD:
 		initialcapital = 5000.0
 		nbopponents = 7
 	default:
@@ -222,8 +235,7 @@ func (self *Game) GenerateDemandAndFee() {
 		//
 		if sb.Date.Day() == self.timer.CurrentTime.Day() {
 			// pay monthly fee
-
-			// TBD
+			sb.PayMontlyFee(self.timer.CurrentTime)
 		}
 
 		if sb.Date.Month() == self.timer.CurrentTime.Month() &&
@@ -237,21 +249,30 @@ func (self *Game) GenerateDemandAndFee() {
 		}
 	}
 
-	inventories := make([]*supplier.Inventory, 0, 0)
-	for _, a := range self.npactors {
-		inventories = append(inventories, a.GetInventory())
+	// check if we are the 1st of January
+	if self.timer.CurrentTime.Day() == 1 && self.timer.CurrentTime.Month() == 1 {
+		for _, np := range self.npactors {
+			np.NewYearOperations()
+		}
 	}
-	inventories = append(inventories, self.player.GetInventory())
+
+	actors := make([]supplier.Actor, 0, 0)
+	for _, a := range self.npactors {
+		actors = append(actors, a)
+	}
+	actors = append(actors, self.player)
 
 	// generate new demand
 	for _, d := range self.demandtemplates {
-		if d.Beginningdate.After(self.timer.CurrentTime) {
+		if !d.Beginningdate.After(self.timer.CurrentTime) { // before or equals
 			if rand.Float64() >= (365.0-float64(d.Howoften))/365.0 {
 				// here we will generate a new server demand (and see if it is fulfill)
 				demand := d.InstanciateDemand()
-				serverbundle := demand.FindOffer(inventories, self.timer.CurrentTime)
+				log.Debug("Game::GenerateDemandAndFee(): A new demand has been created: ", demand.ToString())
+				serverbundle := demand.FindOffer(actors, self.timer.CurrentTime)
 				if serverbundle != nil {
 					self.serverbundles = append(self.serverbundles, serverbundle)
+					serverbundle.PayMontlyFee(self.timer.CurrentTime)
 				}
 			}
 		}

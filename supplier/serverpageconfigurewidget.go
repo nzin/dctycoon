@@ -70,7 +70,7 @@ func (self *ServerPageConfigureWidget) SetConfType(trend *Trend, conftypename st
 		NbDisks:      self.conftype.NbDisks[0],
 		NbSlotRam:    self.conftype.NbSlotRam[0],
 		DiskSize:     trend.Disksize.CurrentValue(self.today) / 4,
-		RamSize:      trend.Ramsize.CurrentValue(self.today) / 8,
+		RamSize:      trend.Ramsize.CurrentValue(self.today) / 4,
 		ConfType:     self.conftype,
 	}
 	//////// configuration
@@ -119,19 +119,9 @@ func (self *ServerPageConfigureWidget) SetConfType(trend *Trend, conftypename st
 	maxsize := trend.Disksize.CurrentValue(self.today)
 	self.ddsizechoice = []int32{maxsize / 4, maxsize / 2, maxsize}
 	var ddsize = make([]string, 3)
-	if maxsize > 8000000 {
-		ddsize[0] = strconv.Itoa(int(maxsize/4000000)) + " To"
-		ddsize[1] = strconv.Itoa(int(maxsize/2000000)) + " To"
-		ddsize[2] = strconv.Itoa(int(maxsize/1000000)) + " To"
-	} else if maxsize > 8000 {
-		ddsize[0] = strconv.Itoa(int(maxsize/4000)) + " Go"
-		ddsize[1] = strconv.Itoa(int(maxsize/2000)) + " Go"
-		ddsize[2] = strconv.Itoa(int(maxsize/1000)) + " Go"
-	} else {
-		ddsize[0] = strconv.Itoa(int(maxsize/4)) + " Mo"
-		ddsize[1] = strconv.Itoa(int(maxsize/2)) + " Mo"
-		ddsize[2] = strconv.Itoa(int(maxsize/1)) + " Mo"
-	}
+	ddsize[0] = global.AdjustMega(maxsize / 4)
+	ddsize[1] = global.AdjustMega(maxsize / 2)
+	ddsize[2] = global.AdjustMega(maxsize)
 	self.disksize.SetChoices(ddsize)
 
 	// nb slot ram
@@ -141,21 +131,13 @@ func (self *ServerPageConfigureWidget) SetConfType(trend *Trend, conftypename st
 	}
 	self.nbram.SetChoices(nbrams)
 
-	// disk size
+	// ram size
 	maxramsize := trend.Ramsize.CurrentValue(self.today)
-	self.ramsizechoice = []int32{maxramsize / 8, maxramsize / 4, maxramsize / 2, maxramsize}
-	var ramsize = make([]string, 4)
-	if maxramsize > 16000 {
-		ramsize[0] = strconv.Itoa(int(maxramsize/8000)) + " Go"
-		ramsize[1] = strconv.Itoa(int(maxramsize/4000)) + " Go"
-		ramsize[2] = strconv.Itoa(int(maxramsize/2000)) + " Go"
-		ramsize[3] = strconv.Itoa(int(maxramsize/1000)) + " Go"
-	} else {
-		ramsize[0] = strconv.Itoa(int(maxramsize/8)) + " Mo"
-		ramsize[1] = strconv.Itoa(int(maxramsize/4)) + " Mo"
-		ramsize[2] = strconv.Itoa(int(maxramsize/2)) + " Mo"
-		ramsize[3] = strconv.Itoa(int(maxramsize)) + " Mo"
-	}
+	self.ramsizechoice = []int32{maxramsize / 4, maxramsize / 2, maxramsize}
+	var ramsize = make([]string, 3)
+	ramsize[0] = global.AdjustMega(maxramsize / 4)
+	ramsize[1] = global.AdjustMega(maxramsize / 2)
+	ramsize[2] = global.AdjustMega(maxramsize)
 	self.ramsize.SetChoices(ramsize)
 
 	// price
