@@ -1,6 +1,7 @@
 package supplier
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"reflect"
@@ -8,6 +9,7 @@ import (
 	"time"
 
 	"github.com/nzin/dctycoon/accounting"
+	"github.com/nzin/dctycoon/global"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -414,7 +416,6 @@ func (self *DemandInstance) FindOffer(actors []Actor, now time.Time) *ServerBund
 			for _, filter := range app.filters {
 				offers = filter.Filter(offers)
 			}
-
 			// we score it
 			points := make(map[*ServerOffer]float64)
 			for _, prio := range app.priorities {
@@ -699,4 +700,18 @@ func DemandParsing(j map[string]interface{}) *DemandTemplate {
 	}
 
 	return template
+}
+
+func DemandTemplateAssetLoad(assetname string) *DemandTemplate {
+	log.Debug("DemandTemplateAssetLoad(", assetname, ")")
+	data, err := global.Asset("assets/demandtemplates/" + assetname)
+	if err != nil {
+		return nil
+	}
+	raw := make(map[string]interface{})
+	err = json.Unmarshal(data, &raw)
+	if err != nil {
+		return nil
+	}
+	return DemandParsing(raw)
 }

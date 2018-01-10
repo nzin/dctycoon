@@ -206,8 +206,9 @@ type Inventory struct {
 	defaultVpsPool           ServerPool
 }
 
-func (self *Inventory) BuyCart(buydate time.Time) {
+func (self *Inventory) BuyCart(buydate time.Time) []*InventoryItem {
 	log.Debug("Inventory::BuyCart(", buydate, ")")
+	items := make([]*InventoryItem, 0, 0)
 	for _, item := range self.Cart {
 		for i := 0; i < int(item.Nb); i++ {
 			inventoryitem := &InventoryItem{
@@ -230,10 +231,11 @@ func (self *Inventory) BuyCart(buydate time.Time) {
 					sub.ItemInStock(inventoryitem)
 				}
 			})
-
+			items = append(items, inventoryitem)
 		}
 	}
 	//self.Cart=make([]*CartItem,0) // done in CarpPageWidget.Reset()
+	return items
 }
 
 func (self *Inventory) InstallItem(item *InventoryItem, x, y, z int32) bool {

@@ -276,22 +276,29 @@ func (self *NPDatacenter) NewYearOperations() {
 				}
 				self.inventory.Cart = append(self.inventory.Cart, item)
 				self.ledger.BuyProduct(fmt.Sprintf("buying %s", profilename), self.timer.CurrentTime, item.Unitprice*float64(nb))
-				self.inventory.BuyCart(self.timer.CurrentTime)
+				items := self.inventory.BuyCart(self.timer.CurrentTime)
 				self.inventory.Cart = make([]*supplier.CartItem, 0)
 
 				// create the offer
 				var pool supplier.ServerPool
 				// check the first available pool
-				for _, p := range self.inventory.GetPools() {
-					if p.IsVps() == profile.Vps {
-						pool = p
-						break
-					}
+				if profile.Vps {
+					pool = self.inventory.GetDefaultVpsPool()
+				} else {
+					pool = self.inventory.GetDefaultPhysicalPool()
 				}
+
+				// it shouldn't happen...
 				if pool == nil {
 					log.Error("NPDatacenter::NewYearOperations(): We didn't find a correct (default) pool!")
 					continue
 				}
+
+				// add newly create InventoryItem to the pool
+				for _, i := range items {
+					self.inventory.AssignPool(i, pool)
+				}
+
 				offer := &supplier.ServerOffer{
 					Active:    true,
 					Name:      profilename,
@@ -307,5 +314,12 @@ func (self *NPDatacenter) NewYearOperations() {
 				self.inventory.AddOffer(offer)
 			}
 		}
+	}
+
+	// hack: we (re)place all servers
+	for i, item := range self.inventory.Items {
+		item.Xplaced = 1
+		item.Yplaced = 1
+		item.Zplaced = i
 	}
 }

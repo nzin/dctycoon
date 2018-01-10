@@ -21,6 +21,12 @@ const (
 	SPEED_FASTFORWARD = iota
 )
 
+const (
+	DIFFICULTY_EASY   = 0
+	DIFFICULTY_MEDIUM = 1
+	DIFFICULTY_HARD   = 2
+)
+
 type GameTimerSubscriber interface {
 	ChangeSpeed(speed int)
 	NewDay(timer *timer.GameTimer)
@@ -66,6 +72,20 @@ func NewGame(quit *bool, root *sws.RootWidget) *Game {
 	}
 	g.gameui = NewGameUI(quit, root, g)
 
+	// load demand templates
+	if templatesarray, err := global.AssetDir("assets/demandtemplates"); err != nil {
+		log.Error("Unable to load demand templates!")
+	} else {
+		for _, assetname := range templatesarray {
+			template := supplier.DemandTemplateAssetLoad(assetname)
+			if template == nil {
+				log.Error("Error loading demand templates %s", assetname)
+			} else {
+				g.demandtemplates = append(g.demandtemplates, template)
+			}
+		}
+	}
+
 	return g
 }
 
@@ -79,10 +99,10 @@ func (self *Game) InitGame(locationid string, difficulty int32) {
 	var initialcapital float64
 	var nbopponents int32
 	switch difficulty {
-	case 1:
+	case DIFFICULTY_MEDIUM:
 		initialcapital = 10000.0
 		nbopponents = 5
-	case 2:
+	case DIFFICULTY_HARD:
 		initialcapital = 5000.0
 		nbopponents = 7
 	default:
@@ -229,6 +249,13 @@ func (self *Game) GenerateDemandAndFee() {
 		}
 	}
 
+	// check if we are the 1st of January
+	if self.timer.CurrentTime.Day() == 1 && self.timer.CurrentTime.Month() == 1 {
+		for _, np := range self.npactors {
+			np.NewYearOperations()
+		}
+	}
+
 	actors := make([]supplier.Actor, 0, 0)
 	for _, a := range self.npactors {
 		actors = append(actors, a)
@@ -237,7 +264,7 @@ func (self *Game) GenerateDemandAndFee() {
 
 	// generate new demand
 	for _, d := range self.demandtemplates {
-		if d.Beginningdate.After(self.timer.CurrentTime) {
+		if !d.Beginningdate.After(self.timer.CurrentTime) { // before or equals
 			if rand.Float64() >= (365.0-float64(d.Howoften))/365.0 {
 				// here we will generate a new server demand (and see if it is fulfill)
 				demand := d.InstanciateDemand()
