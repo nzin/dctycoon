@@ -268,6 +268,7 @@ func (self *Game) GenerateDemandAndFee() {
 			if rand.Float64() >= (365.0-float64(d.Howoften))/365.0 {
 				// here we will generate a new server demand (and see if it is fulfill)
 				demand := d.InstanciateDemand()
+				log.Debug("Game::GenerateDemandAndFee(): A new demand has been created: ", demand.ToString())
 				serverbundle := demand.FindOffer(actors, self.timer.CurrentTime)
 				if serverbundle != nil {
 					self.serverbundles = append(self.serverbundles, serverbundle)

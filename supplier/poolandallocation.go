@@ -381,6 +381,17 @@ type DemandInstance struct {
 	nb       map[string]int32 // number of instance per specs
 }
 
+func (self *DemandInstance) ToString() string {
+	str := ""
+	for k, v := range self.nb {
+		if str != "" {
+			str += ", "
+		}
+		str += fmt.Sprintf("%dx %s", v, k)
+	}
+	return str
+}
+
 //
 // this function is called every "howoften" per year
 //
