@@ -143,18 +143,16 @@ func (self *ServerPageConfigureWidget) SetConfType(trend *Trend, conftypename st
 
 	// disk size
 	maxramsize := trend.Ramsize.CurrentValue(self.today)
-	self.ramsizechoice = []int32{maxramsize / 8, maxramsize / 4, maxramsize / 2, maxramsize}
-	var ramsize = make([]string, 4)
+	self.ramsizechoice = []int32{maxramsize / 4, maxramsize / 2, maxramsize}
+	var ramsize = make([]string, 3)
 	if maxramsize > 16000 {
-		ramsize[0] = strconv.Itoa(int(maxramsize/8000)) + " Go"
-		ramsize[1] = strconv.Itoa(int(maxramsize/4000)) + " Go"
-		ramsize[2] = strconv.Itoa(int(maxramsize/2000)) + " Go"
-		ramsize[3] = strconv.Itoa(int(maxramsize/1000)) + " Go"
+		ramsize[0] = strconv.Itoa(int(maxramsize/4000)) + " Go"
+		ramsize[1] = strconv.Itoa(int(maxramsize/3000)) + " Go"
+		ramsize[2] = strconv.Itoa(int(maxramsize/1000)) + " Go"
 	} else {
-		ramsize[0] = strconv.Itoa(int(maxramsize/8)) + " Mo"
-		ramsize[1] = strconv.Itoa(int(maxramsize/4)) + " Mo"
-		ramsize[2] = strconv.Itoa(int(maxramsize/2)) + " Mo"
-		ramsize[3] = strconv.Itoa(int(maxramsize)) + " Mo"
+		ramsize[0] = strconv.Itoa(int(maxramsize/4)) + " Mo"
+		ramsize[1] = strconv.Itoa(int(maxramsize/2)) + " Mo"
+		ramsize[2] = strconv.Itoa(int(maxramsize/1)) + " Mo"
 	}
 	self.ramsize.SetChoices(ramsize)
 
