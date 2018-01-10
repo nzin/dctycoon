@@ -79,6 +79,16 @@ func ParseMega(str string) int32 {
 	return int32(value)
 }
 
+func AdjustMega(mega int32) string {
+	if mega >= 2000000 {
+		return strconv.Itoa(int(mega/1000000)) + " To"
+	}
+	if mega >= 2000 {
+		return strconv.Itoa(int(mega/1000)) + " Go"
+	}
+	return strconv.Itoa(int(mega)) + " Mo"
+}
+
 //
 // To load an SDL (PNG) image directly from assets
 func LoadImageAsset(filename string) (*sdl.Surface, error) {
