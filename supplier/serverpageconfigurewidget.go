@@ -70,7 +70,7 @@ func (self *ServerPageConfigureWidget) SetConfType(trend *Trend, conftypename st
 		NbDisks:      self.conftype.NbDisks[0],
 		NbSlotRam:    self.conftype.NbSlotRam[0],
 		DiskSize:     trend.Disksize.CurrentValue(self.today) / 4,
-		RamSize:      trend.Ramsize.CurrentValue(self.today) / 8,
+		RamSize:      trend.Ramsize.CurrentValue(self.today) / 4,
 		ConfType:     self.conftype,
 	}
 	//////// configuration
@@ -141,7 +141,7 @@ func (self *ServerPageConfigureWidget) SetConfType(trend *Trend, conftypename st
 	}
 	self.nbram.SetChoices(nbrams)
 
-	// disk size
+	// ram size
 	maxramsize := trend.Ramsize.CurrentValue(self.today)
 	self.ramsizechoice = []int32{maxramsize / 4, maxramsize / 2, maxramsize}
 	var ramsize = make([]string, 3)
