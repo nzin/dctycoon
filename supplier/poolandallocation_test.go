@@ -5,9 +5,22 @@ import (
 	"testing"
 	"time"
 
+	"github.com/nzin/dctycoon/accounting"
 	"github.com/nzin/dctycoon/timer"
 	"github.com/stretchr/testify/assert"
 )
+
+type ActorMock struct {
+	inventory *Inventory
+}
+
+func (self *ActorMock) GetInventory() *Inventory {
+	return self.inventory
+}
+
+func (self *ActorMock) GetLedger() *accounting.Ledger {
+	return nil
+}
 
 func TestPool(t *testing.T) {
 	gt := timer.NewGameTimer()
@@ -131,8 +144,11 @@ func TestPool(t *testing.T) {
 	assert.Equal(t, 2, len(demandtemplate.Specs), "2 servers asked ")
 
 	demand := demandtemplate.InstanciateDemand()
-	inventories := []*Inventory{inventory}
-	bundlecontracts := demand.FindOffer(inventories, time.Date(1999, 1, 1, 0, 0, 0, 0, time.UTC))
+	actor := &ActorMock{
+		inventory: inventory,
+	}
+	actors := []Actor{actor}
+	bundlecontracts := demand.FindOffer(actors, time.Date(1999, 1, 1, 0, 0, 0, 0, time.UTC))
 	assert.Empty(t, bundlecontracts, "we didn't found servers fitting the demand")
 
 	bigpayload2 := `{
@@ -172,12 +188,12 @@ func TestPool(t *testing.T) {
 	assert.Equal(t, 2, len(demandtemplate2.Specs), "2 servers asked ")
 
 	demand2 := demandtemplate2.InstanciateDemand()
-	bundlecontracts2 := demand2.FindOffer(inventories, time.Date(1999, 1, 1, 0, 0, 0, 0, time.UTC))
+	bundlecontracts2 := demand2.FindOffer(actors, time.Date(1999, 1, 1, 0, 0, 0, 0, time.UTC))
 	assert.NotEmpty(t, bundlecontracts2, "we found servers fitting the demand")
 	assert.Equal(t, 2, len(bundlecontracts2.Contracts), "2 servers allocated")
 
 	assert.Equal(t, int32(1), bundlecontracts2.Contracts[0].Item.Coresallocated, "1st server allocated")
 
-	bundlecontracts3 := demand2.FindOffer(inventories, time.Date(1999, 1, 1, 0, 0, 0, 0, time.UTC))
+	bundlecontracts3 := demand2.FindOffer(actors, time.Date(1999, 1, 1, 0, 0, 0, 0, time.UTC))
 	assert.Empty(t, bundlecontracts3, "no server left fitting the demand")
 }

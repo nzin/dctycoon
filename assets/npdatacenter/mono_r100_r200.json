@@ -3,14 +3,14 @@
     "servertype": "R100",
     "vps": false,
     "buyperyear": 0.2,
-    "margin": 1.5,
+    "margin": 0.045,
     "configuration": "low"
   },
   "R200phyisical": {
     "servertype": "R200",
     "vps": false,
     "buyperyear": 0.2,
-    "margin": 2.0,
+    "margin": 0.09,
     "configuration": "medium"
   }
 }

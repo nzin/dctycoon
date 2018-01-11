@@ -23,21 +23,21 @@ func TestLedger(t *testing.T) {
 		Amount:      12000,
 		AccountFrom: "4561",
 		AccountTo:   "5121",
-		Date:        time.Date(1991, 1, 1, 0, 0, 0, 0, time.UTC),
+		Date:        time.Date(1996, 1, 1, 0, 0, 0, 0, time.UTC),
 	})
 
 	accounts = ledger1.runLedger()
-	// timer is in 1990, so we just have one year: 1990, without equity
+	// timer is in 1995, so we just have one year: 1990, without equity
 	assert.Equal(t, 1, len(accounts), "empty ledger shouldn't have populated years")
-	assert.Equal(t, 0.0, accounts[1990]["51"], "ledger equity is not yet 12000")
-	assert.Equal(t, 0.0, accounts[1990]["45"], "ledger equity is not yet 12000")
+	assert.Equal(t, 0.0, accounts[1995]["51"], "ledger equity is not yet 12000")
+	assert.Equal(t, 0.0, accounts[1995]["45"], "ledger equity is not yet 12000")
 
-	// now we will jump to 1994, we have equity poured in 1991
-	timer.CurrentTime = time.Date(1994, 1, 1, 0, 0, 0, 0, time.UTC)
+	// now we will jump to 1994, we have equity poured in 1996
+	timer.CurrentTime = time.Date(1999, 1, 1, 0, 0, 0, 0, time.UTC)
 	accounts = ledger1.runLedger()
 	assert.Equal(t, 4, len(accounts), "empty ledger shouldn't have populated years")
-	assert.Equal(t, 12000.0, accounts[1993]["51"], "ledger equity is not yet 12000")
-	assert.Equal(t, -12000.0, accounts[1993]["45"], "ledger equity is not yet 12000")
+	assert.Equal(t, 12000.0, accounts[1998]["51"], "ledger equity is not yet 12000")
+	assert.Equal(t, -12000.0, accounts[1998]["45"], "ledger equity is not yet 12000")
 
 }
 
