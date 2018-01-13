@@ -1,0 +1,34 @@
+{
+	"specs": {
+		"web": {
+			"filters": {
+				"diskfilter": { "mindisk": 20000},
+				"ramfilter": { "minram": 1024}
+			},
+			"priorities": {
+				"price": 1,
+				"disk": 1,
+				"network":2,
+				"image":2,
+				"captive":1
+			},
+			"numbers": { "low": 1, "high": 3}
+		},
+		"db": {
+			"filters": {
+				"diskfilter": { "mindisk": 40000},
+				"ramfilter": { "minram": 256}
+			},
+			"priorities": {
+				"price": 1,
+				"disk": 2,
+				"network":1,
+				"image":2,
+				"captive":1
+			},
+			"numbers": { "low": 1, "high": 2}
+		}
+	},
+	"beginningdate": "1997-01-01",
+	"howoften": 10
+}

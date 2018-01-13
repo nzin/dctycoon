@@ -2,14 +2,12 @@
 	"specs": {
 		"web": {
 			"filters": {
-				"diskfilter": { "mindisk": 10}
+				"diskfilter": { "mindisk": 5000}
 			},
 			"priorities": {
 				"price": 2,
 				"disk": 1,
-				"network":1,
-				"image":2,
-				"captive":1
+				"network":1
 			},
 			"numbers": { "low": 1, "high": 1}
 		}

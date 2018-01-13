@@ -1,0 +1,48 @@
+{
+	"specs": {
+		"reverse": {
+			"filters": {
+				"diskfilter": { "mindisk": 20000}
+			},
+			"priorities": {
+				"price": 2,
+				"disk": 1,
+				"network":2
+			},
+			"numbers": { "low": 2, "high": 2}
+		},
+		"app": {
+			"filters": {
+				"diskfilter": { "mindisk": 50000},
+				"ramfilter": { "minram": 2048},
+				"cpufilter": { "mincpu": 2}
+			},
+			"priorities": {
+				"price": 1,
+				"cpu": 2,
+				"disk": 1,
+				"network":1,
+				"image":1,
+				"captive":1
+			},
+			"numbers": { "low": 2, "high": 5}
+		},
+		"db": {
+			"filters": {
+				"diskfilter": { "mindisk": 50000},
+				"ramfilter": { "minram": 256},
+				"cpufilter": { "mincpu": 2}
+			},
+			"priorities": {
+				"price": 1,
+				"disk": 2,
+				"network":1,
+				"image":2,
+				"captive":1
+			},
+			"numbers": { "low": 2, "high": 2}
+		}
+	},
+	"beginningdate": "1998-01-01",
+	"howoften": 4
+}

@@ -1,0 +1,20 @@
+{
+	"specs": {
+		"web": {
+			"filters": {
+				"diskfilter": { "mindisk": 200000},
+				"ramfilter": { "minram": 4000},
+				"cpufilter": { "mincpu": 8}
+			},
+			"priorities": {
+				"disk": 1,
+				"ram": 2,
+				"cpu": 2,
+				"network":1
+			},
+			"numbers": { "low": 4, "high": 8}
+		}
+	},
+	"beginningdate": "1999-01-01",
+	"howoften": 2
+}

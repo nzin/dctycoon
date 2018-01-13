@@ -1,0 +1,17 @@
+{
+	"specs": {
+		"web": {
+			"filters": {
+				"diskfilter": { "mindisk": 200000}
+			},
+			"priorities": {
+				"price": 1,
+				"disk": 2,
+				"network":2
+			},
+			"numbers": { "low": 4, "high": 8}
+		}
+	},
+	"beginningdate": "1995-01-01",
+	"howoften": 2
+}

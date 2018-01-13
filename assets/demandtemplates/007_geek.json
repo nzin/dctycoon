@@ -1,0 +1,16 @@
+{
+	"specs": {
+		"personal": {
+			"filters": {
+				"diskfilter": { "mindisk": 4000},
+				"ramfilter": { "minram": 256}
+			},
+			"priorities": {
+				"price": 1
+			},
+			"numbers": { "low": 1, "high": 1}
+		}
+	},
+	"beginningdate": "1996-01-01",
+	"howoften": 4
+}
