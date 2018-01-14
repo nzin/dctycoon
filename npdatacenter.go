@@ -293,7 +293,6 @@ func (self *NPDatacenter) NewYearOperations() {
 			currentCash := self.ledger.GetYearAccount(self.timer.CurrentTime.Year())["51"]
 
 			nb := int32((currentCash * profile.Buyperyear) / unitprice)
-			fmt.Println("currentcash=", currentCash, "nb: ", nb)
 			// if we can afford, then we buy it
 			if nb > 0 {
 				item := &supplier.CartItem{

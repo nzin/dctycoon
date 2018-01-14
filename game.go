@@ -102,13 +102,13 @@ func (self *Game) InitGame(locationid string, difficulty int32) {
 	var nbopponents int32
 	switch difficulty {
 	case DIFFICULTY_MEDIUM:
-		initialcapital = 10000.0
+		initialcapital = 100000.0
 		nbopponents = 5
 	case DIFFICULTY_HARD:
-		initialcapital = 5000.0
+		initialcapital = 50000.0
 		nbopponents = 7
 	default:
-		initialcapital = 20000.0
+		initialcapital = 200000.0
 		nbopponents = 3
 	}
 	if self.cronevent != nil {
@@ -147,7 +147,8 @@ func (self *Game) InitGame(locationid string, difficulty int32) {
 			profile = profilesarray[rand.Int()%len(profilesarray)]
 		}
 
-		opponent.Init(self.timer, 20000, locationid, self.trends, profile)
+		opponent.Init(self.timer, 200000, locationid, self.trends, profile)
+		opponent.NewYearOperations()
 		self.npactors = append(self.npactors, opponent)
 	}
 	for _, s := range self.timersubscribers {
