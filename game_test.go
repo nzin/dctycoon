@@ -3,6 +3,7 @@ package dctycoon
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/sws"
@@ -20,9 +21,12 @@ func TestDemandAttribution(t *testing.T) {
 	assert.Equal(t, 3, len(game.npactors), "3 NPC created")
 	assert.NotEmpty(t, game.player, "1 player created")
 
+	// change time
+	game.timer.CurrentTime = time.Date(1997, time.Month(01), 01, 0, 0, 0, 0, time.UTC)
+
 	// reduce to one opponent
 	opponent := NewNPDatacenter()
-	opponent.Init(game.timer, 30000, "siliconvalley", game.trends, "mono_r100_r200.json")
+	opponent.Init(game.timer, 30000, "siliconvalley", game.trends, "mono_r100_r200.json", "John Doe", true)
 	game.npactors = make([]*NPDatacenter, 1, 1)
 	game.npactors[0] = opponent
 

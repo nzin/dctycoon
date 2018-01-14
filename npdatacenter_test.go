@@ -35,7 +35,7 @@ func TestNPDatacenter(t *testing.T) {
 	assert.Empty(t, err, "parse mono_r100_r200 profile asset")
 
 	npd := NewNPDatacenter()
-	npd.Init(gt, 10000, "siliconvalley", trend, "mono_r100_r200.json")
+	npd.Init(gt, 10000, "siliconvalley", trend, "mono_r100_r200.json", "John Doe", true)
 	assert.NotEmpty(t, npd, "NPDatacenter mono_r100_r200 profile loaded")
 	assert.Equal(t, "R100", npd.buyoutprofile["R100physical"].Servertype, "check if the profile is correctly loaded")
 }
@@ -53,7 +53,7 @@ func TestNPDatacenterBuyout(t *testing.T) {
 	trend.Load(j, ps, gt)
 
 	npd := NewNPDatacenter()
-	npd.Init(gt, 20000, "siliconvalley", trend, "mono_r100_r200.json")
+	npd.Init(gt, 20000, "siliconvalley", trend, "mono_r100_r200.json", "John Doe", true)
 	assert.NotEmpty(t, npd, "NPDatacenter mono_r100_r200 profile loaded")
 	assert.Equal(t, "R100", npd.buyoutprofile["R100physical"].Servertype, "check if the profile is correctly loaded")
 
