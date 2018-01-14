@@ -3,6 +3,7 @@ package dctycoon
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 
 	"github.com/nzin/dctycoon/accounting"
 	"github.com/nzin/dctycoon/supplier"
@@ -44,6 +45,7 @@ type NPDatacenter struct {
 	buyoutprofile map[string]BuyoutProfile
 	profilename   string
 	cronevent     *timer.GameCronEvent
+	name          string
 }
 
 //
@@ -56,6 +58,10 @@ func (self *NPDatacenter) GetInventory() *supplier.Inventory {
 // GetLedger is part of the Actor interface
 func (self *NPDatacenter) GetLedger() *accounting.Ledger {
 	return self.ledger
+}
+
+func (self *NPDatacenter) GetName() string {
+	return self.name
 }
 
 //
@@ -75,6 +81,7 @@ func NewNPDatacenter() *NPDatacenter {
 		buyoutprofile: nil,
 		profilename:   "",
 		cronevent:     nil,
+		name:          "",
 	}
 
 	return datacenter
@@ -117,6 +124,7 @@ func (self *NPDatacenter) Init(timer *timer.GameTimer, initialcapital float64, l
 	self.trend = trend
 	self.profilename = profilename
 	self.buyoutprofile = profile
+	self.name = self.GenerateName()
 
 	// add some equity
 	self.ledger.AddMovement(accounting.LedgerMovement{
@@ -130,6 +138,23 @@ func (self *NPDatacenter) Init(timer *timer.GameTimer, initialcapital float64, l
 	self.cronevent = timer.AddCron(1, 1, -1, func() {
 		self.NewYearOperations()
 	})
+}
+
+func (self *NPDatacenter) GenerateName() string {
+	firstnames := []string{
+		"John",
+		"Bobby",
+		"Emma",
+		"Suzy",
+	}
+	lastnames := []string{
+		"Doe",
+		"Maximus",
+		"Bilbao",
+		"Rasputin",
+	}
+
+	return firstnames[rand.Int()%len(firstnames)] + " " + lastnames[rand.Int()%len(lastnames)]
 }
 
 func (self *NPDatacenter) LoadGame(timer *timer.GameTimer, trend *supplier.Trend, v map[string]interface{}) {
@@ -170,6 +195,7 @@ func (self *NPDatacenter) LoadGame(timer *timer.GameTimer, trend *supplier.Trend
 	self.trend = trend
 	self.profilename = profilename
 	self.buyoutprofile = profile
+	self.name = v["name"].(string)
 
 	self.ledger.Load(v["ledger"].(map[string]interface{}), location.Taxrate, location.Bankinterestrate)
 	self.inventory.Load(v["inventory"].(map[string]interface{}))
@@ -182,6 +208,7 @@ func (self *NPDatacenter) LoadGame(timer *timer.GameTimer, trend *supplier.Trend
 func (self *NPDatacenter) Save() string {
 	save := fmt.Sprintf(`{"location": "%s",`, self.locationname) + "\n"
 	save += fmt.Sprintf(`"profile": "%s",`, self.profilename) + "\n"
+	save += fmt.Sprintf(`"name": "%s",`, self.name) + "\n"
 	save += fmt.Sprintf(`"inventory": %s,`, self.inventory.Save()) + "\n"
 	save += fmt.Sprintf(`"ledger": %s`, self.ledger.Save()) + "}\n"
 	return save
@@ -266,6 +293,7 @@ func (self *NPDatacenter) NewYearOperations() {
 			currentCash := self.ledger.GetYearAccount(self.timer.CurrentTime.Year())["51"]
 
 			nb := int32((currentCash * profile.Buyperyear) / unitprice)
+			fmt.Println("currentcash=", currentCash, "nb: ", nb)
 			// if we can afford, then we buy it
 			if nb > 0 {
 				item := &supplier.CartItem{

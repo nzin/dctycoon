@@ -22,7 +22,7 @@ func TestDemandAttribution(t *testing.T) {
 
 	// reduce to one opponent
 	opponent := NewNPDatacenter()
-	opponent.Init(game.timer, 20000, "siliconvalley", game.trends, "mono_r100_r200.json")
+	opponent.Init(game.timer, 30000, "siliconvalley", game.trends, "mono_r100_r200.json")
 	game.npactors = make([]*NPDatacenter, 1, 1)
 	game.npactors[0] = opponent
 
@@ -48,5 +48,5 @@ func TestDemandAttribution(t *testing.T) {
 	fmt.Println(game.timer.CurrentTime)
 	fmt.Println(opponent.inventory.GetOffers()[0])
 	serverbundle = demand.FindOffer(actors, game.timer.CurrentTime)
-	assert.NotEmpty(t, serverbundle, "demand created and atributed")
+	assert.NotEmpty(t, serverbundle, "demand created and attributed")
 }

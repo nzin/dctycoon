@@ -49,6 +49,7 @@ type Game struct {
 	timerevent       *sws.TimerEvent
 	timersubscribers []GameTimerSubscriber
 	currentSpeed     int
+	gamestats        *GameStats
 }
 
 //
@@ -69,6 +70,7 @@ func NewGame(quit *bool, root *sws.RootWidget) *Game {
 		timerevent:       nil,
 		timersubscribers: make([]GameTimerSubscriber, 0, 0),
 		currentSpeed:     SPEED_STOP,
+		gamestats:        NewGameStats(),
 	}
 	g.gameui = NewGameUI(quit, root, g)
 
@@ -121,10 +123,11 @@ func (self *Game) InitGame(locationid string, difficulty int32) {
 	self.cronevent = self.timer.AddCron(-1, -1, -1, func() {
 		self.GenerateDemandAndFee()
 	})
+	self.gamestats.InitGame()
+
 	self.trends.Init(self.gameui.eventpublisher, self.timer)
 	self.player = NewPlayer()
 	self.player.Init(self.timer, initialcapital, locationid)
-	self.gameui.InitGame(self.timer, self.player.GetInventory(), self.player.GetLedger(), self.trends)
 
 	// opponents
 	self.npactors = make([]*NPDatacenter, 0, 0)
@@ -150,6 +153,7 @@ func (self *Game) InitGame(locationid string, difficulty int32) {
 	for _, s := range self.timersubscribers {
 		s.NewDay(self.timer)
 	}
+	self.gameui.InitGame(self.timer, self.player.GetInventory(), self.player.GetLedger(), self.trends)
 	self.gameui.ShowDC()
 }
 
@@ -180,11 +184,12 @@ func (self *Game) LoadGame(filename string) {
 	self.cronevent = self.timer.AddCron(-1, -1, -1, func() {
 		self.GenerateDemandAndFee()
 	})
+	self.gamestats.LoadGame(v["stats"].(map[string]interface{}))
+
 	self.timer.Load(v["clock"].(map[string]interface{}))
 	self.trends.Load(v["trends"].(map[string]interface{}), self.gameui.eventpublisher, self.timer)
 	self.player = NewPlayer()
 	self.player.LoadGame(self.timer, v["player"].(map[string]interface{}))
-	self.gameui.LoadGame(v, self.timer, self.player.GetInventory(), self.player.GetLedger(), self.trends)
 
 	opponents := v["opponents"].([]interface{})
 	// opponents
@@ -197,6 +202,7 @@ func (self *Game) LoadGame(filename string) {
 	for _, s := range self.timersubscribers {
 		s.NewDay(self.timer)
 	}
+	self.gameui.LoadGame(v, self.timer, self.player.GetInventory(), self.player.GetLedger(), self.trends)
 	self.gameui.ShowDC()
 }
 
@@ -212,6 +218,7 @@ func (self *Game) SaveGame(filename string) {
 	gamefile.WriteString(fmt.Sprintf(`%s,`, data) + "\n")
 	gamefile.WriteString(fmt.Sprintf(`"trends": %s,`, self.trends.Save()) + "\n")
 	gamefile.WriteString(fmt.Sprintf(`"clock": %s,`, self.timer.Save()) + "\n")
+	gamefile.WriteString(fmt.Sprintf(`"stats": %s,`, self.gamestats.Save()) + "\n")
 	gamefile.WriteString(fmt.Sprintf(`"player": { %s },`, self.player.Save()) + "\n")
 	gamefile.WriteString(`"opponents": [`)
 	for i, o := range self.npactors {
@@ -274,6 +281,7 @@ func (self *Game) GenerateDemandAndFee() {
 					self.serverbundles = append(self.serverbundles, serverbundle)
 					serverbundle.PayMontlyFee(self.timer.CurrentTime)
 				}
+				self.gamestats.TriggerDemandStat(self.timer.CurrentTime, demand, serverbundle)
 			}
 		}
 	}
@@ -297,6 +305,7 @@ func (self *Game) RemoveGameTimerSubscriber(subscriber GameTimerSubscriber) {
 	}
 }
 
+// ChangeGameSpeed() allows to pause, or resume game speed. 3 values allowed: SPEED_STOP, SPEED_FORWARD, SPEED_FASTFORWARD
 func (self *Game) ChangeGameSpeed(speed int) {
 	if self.timerevent != nil {
 		self.timerevent.StopRepeat()
@@ -320,6 +329,22 @@ func (self *Game) ChangeGameSpeed(speed int) {
 	}
 }
 
+// GetCurrentSpeed() returns the current speed, i.e SPEED_STOP, SPEED_FORWARD, SPEED_FASTFORWARD
 func (self *Game) GetCurrentSpeed() int {
 	return self.currentSpeed
+}
+
+// GetNPActors() returns the list of opponents in this play
+func (self *Game) GetNPActors() []*NPDatacenter {
+	return self.npactors
+}
+
+// GetPlayer() returns the player info, nothing fancy here
+func (self *Game) GetPlayer() *Player {
+	return self.player
+}
+
+// GetPlayer() returns the stats central repo
+func (self *Game) GetGameStats() *GameStats {
+	return self.gamestats
 }

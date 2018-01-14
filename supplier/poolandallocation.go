@@ -364,7 +364,7 @@ func (self *ServerOffer) Save() string {
 //}
 //
 type ServerDemandTemplate struct {
-	filters    []CriteriaFilter
+	Filters    []CriteriaFilter
 	priorities []PriorityPoint
 	nb         [2]int32 // low, high
 }
@@ -377,13 +377,13 @@ type DemandTemplate struct {
 }
 
 type DemandInstance struct {
-	template *DemandTemplate
-	nb       map[string]int32 // number of instance per specs
+	Template *DemandTemplate
+	Nb       map[string]int32 // number of instance per specs
 }
 
 func (self *DemandInstance) ToString() string {
 	str := ""
-	for k, v := range self.nb {
+	for k, v := range self.Nb {
 		if str != "" {
 			str += ", "
 		}
@@ -397,14 +397,14 @@ func (self *DemandInstance) ToString() string {
 //
 func (self *DemandTemplate) InstanciateDemand() *DemandInstance {
 	instance := &DemandInstance{
-		template: self,
-		nb:       make(map[string]int32),
+		Template: self,
+		Nb:       make(map[string]int32),
 	}
 	for appname, app := range self.Specs {
 		if app.nb[1] > app.nb[0] {
-			instance.nb[appname] = app.nb[0] + rand.Int31()%(app.nb[1]-app.nb[0])
+			instance.Nb[appname] = app.nb[0] + rand.Int31()%(app.nb[1]-app.nb[0])
 		} else {
-			instance.nb[appname] = app.nb[0]
+			instance.Nb[appname] = app.nb[0]
 		}
 	}
 	return instance
@@ -421,10 +421,10 @@ func (self *DemandInstance) FindOffer(actors []Actor, now time.Time) *ServerBund
 		// for a given inventory we try to create the apps
 		selectedoffers := make(map[string]*ServerOffer)
 		nooffer := false
-		for appname, app := range self.template.Specs {
+		for appname, app := range self.Template.Specs {
 			// we filter
 			offers := actor.GetInventory().GetOffers()
-			for _, filter := range app.filters {
+			for _, filter := range app.Filters {
 				offers = filter.Filter(offers)
 			}
 			// we score it
@@ -452,7 +452,7 @@ func (self *DemandInstance) FindOffer(actors []Actor, now time.Time) *ServerBund
 			var offer *ServerOffer
 			for _, kv := range ss {
 				allocated = make([]*ServerContract, 0)
-				nb := self.nb[appname]
+				nb := self.Nb[appname]
 				filled := true
 				offer = kv.Offer
 
@@ -496,7 +496,7 @@ func (self *DemandInstance) FindOffer(actors []Actor, now time.Time) *ServerBund
 	// pass 2: we sort serverconf by inventory score
 
 	prioInventory := make(map[Actor]float64)
-	for appname, app := range self.template.Specs {
+	for appname, app := range self.Template.Specs {
 		points := make(map[*ServerOffer]float64)
 		offers := make([]*ServerOffer, 0)
 		for _, invSelection := range selection {
@@ -507,7 +507,7 @@ func (self *DemandInstance) FindOffer(actors []Actor, now time.Time) *ServerBund
 			prio.Score(offers, &points)
 		}
 		for actor, invSelection := range selection {
-			prioInventory[actor] += points[invSelection[appname]] * float64(self.nb[appname])
+			prioInventory[actor] += points[invSelection[appname]] * float64(self.Nb[appname])
 		}
 	}
 	var selectedActor Actor
@@ -526,8 +526,8 @@ func (self *DemandInstance) FindOffer(actors []Actor, now time.Time) *ServerBund
 	}
 
 	var allocated []*ServerContract
-	for appname, _ := range self.template.Specs {
-		for i := 0; i < int(self.nb[appname]); i++ {
+	for appname, _ := range self.Template.Specs {
+		for i := 0; i < int(self.Nb[appname]); i++ {
 			serveroffer := selection[selectedActor][appname]
 			allocated = append(allocated, &ServerContract{
 				Item:      serveroffer.Allocate(),
@@ -544,7 +544,7 @@ func (self *DemandInstance) FindOffer(actors []Actor, now time.Time) *ServerBund
 	return &ServerBundle{
 		Actor:       selectedActor,
 		Contracts:   allocated,
-		Renewalrate: self.template.Renewalfactor,
+		Renewalrate: self.Template.Renewalfactor,
 		Date:        now,
 	}
 }
@@ -564,6 +564,7 @@ type ServerContract struct {
 type Actor interface {
 	GetInventory() *Inventory
 	GetLedger() *accounting.Ledger
+	GetName() string
 }
 
 type ServerBundle struct {
@@ -605,7 +606,7 @@ type PriorityPoint interface {
 //			}
 func serverDemandParsing(json map[string]interface{}) *ServerDemandTemplate {
 	template := &ServerDemandTemplate{
-		filters:    make([]CriteriaFilter, 0, 0),
+		Filters:    make([]CriteriaFilter, 0, 0),
 		priorities: make([]PriorityPoint, 0, 0),
 	}
 	for k, v := range json {
@@ -614,7 +615,7 @@ func serverDemandParsing(json map[string]interface{}) *ServerDemandTemplate {
 			if reflect.TypeOf(v).Kind() == reflect.Map {
 				if reflect.TypeOf(v).Key().Kind() == reflect.String {
 					// see criteriapriority.go
-					template.filters = ServerDemandParsingFilters(v.(map[string]interface{}))
+					template.Filters = ServerDemandParsingFilters(v.(map[string]interface{}))
 				}
 			}
 			break
