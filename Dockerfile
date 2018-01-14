@@ -20,6 +20,7 @@ COPY . .
 RUN go get -u github.com/golang/lint/golint && \
     go get -u github.com/jteeuwen/go-bindata/... && \
     go get -u github.com/stretchr/testify/assert && \
+    go get github.com/axw/gocov/gocov && \
     curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter && \
     chmod +x ./cc-test-reporter
 
