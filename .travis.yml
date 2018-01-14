@@ -1,11 +1,17 @@
 language: go
 
+addons:
+  apt:
+    packages:
+    - libsdl2-mixer-dev
+    - libsdl2-image-dev
+    - libsdl2-ttf-dev
+    
 env:
   global:
     - CC_TEST_REPORTER_ID=bacedd92b18dc3389348470c6d536f7250336e28f571f389a302c67b68a3096d
 
 before_script:
-  - apt-get install libsdl2{,-mixer,-image,-ttf,-gfx}-dev
   - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
   - chmod +x ./cc-test-reporter
   - ./cc-test-reporter before-build
