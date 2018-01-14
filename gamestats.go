@@ -104,22 +104,27 @@ func (self *GameStats) TriggerDemandStat(t time.Time, demand *supplier.DemandIns
 		}
 	}
 	for templatename, templatevalue := range demand.Template.Specs {
-		ds := &ServerDemandStat{
+		sds := &ServerDemandStat{
 			nb: demand.Nb[templatename],
 		}
 		for _, filter := range templatevalue.Filters {
 			if reflect.TypeOf(filter) == reflect.TypeOf((*supplier.CriteriaFilterDisk)(nil)).Elem() {
-				ds.disksize = (filter.(*supplier.CriteriaFilterDisk)).Disksize
+				sds.disksize = (filter.(*supplier.CriteriaFilterDisk)).Disksize
 			}
 			if reflect.TypeOf(filter) == reflect.TypeOf((*supplier.CriteriaFilterRam)(nil)).Elem() {
-				ds.ramsize = (filter.(*supplier.CriteriaFilterRam)).Ramsize
+				sds.ramsize = (filter.(*supplier.CriteriaFilterRam)).Ramsize
 			}
 			if reflect.TypeOf(filter) == reflect.TypeOf((*supplier.CriteriaFilterNbcores)(nil)).Elem() {
-				ds.disksize = (filter.(*supplier.CriteriaFilterNbcores)).Nbcores
+				sds.disksize = (filter.(*supplier.CriteriaFilterNbcores)).Nbcores
 			}
 		}
+		stat.serverdemands = append(stat.serverdemands, sds)
 	}
 	self.demandsstats = append(self.demandsstats, stat)
+
+	for _, s := range self.demandstatsubscribers {
+		s.NewDemandStat(stat)
+	}
 }
 
 func NewGameStats() *GameStats {
