@@ -16,7 +16,7 @@ RUN apk add --no-cache \
 WORKDIR /go/src/github.com/nzin/dctycoon/
 COPY . .
 RUN go get -u github.com/golang/lint/golint && \
-    go get -u github.com/jteeuwen/go-bindata/...
+    go get -u github.com/jteeuwen/go-bindata/... && \
     go get -u github.com/stretchr/testify/assert && \
     apt install libsdl2{,-mixer,-image,-ttf,-gfx}-dev && \
     go get ./...
