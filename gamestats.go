@@ -108,13 +108,13 @@ func (self *GameStats) TriggerDemandStat(t time.Time, demand *supplier.DemandIns
 			nb: demand.Nb[templatename],
 		}
 		for _, filter := range templatevalue.Filters {
-			if reflect.TypeOf(filter) == reflect.TypeOf((*supplier.CriteriaFilterDisk)(nil)).Elem() {
+			if reflect.TypeOf(filter) == reflect.TypeOf((**supplier.CriteriaFilterDisk)(nil)).Elem() {
 				sds.disksize = (filter.(*supplier.CriteriaFilterDisk)).Disksize
 			}
-			if reflect.TypeOf(filter) == reflect.TypeOf((*supplier.CriteriaFilterRam)(nil)).Elem() {
+			if reflect.TypeOf(filter) == reflect.TypeOf((**supplier.CriteriaFilterRam)(nil)).Elem() {
 				sds.ramsize = (filter.(*supplier.CriteriaFilterRam)).Ramsize
 			}
-			if reflect.TypeOf(filter) == reflect.TypeOf((*supplier.CriteriaFilterNbcores)(nil)).Elem() {
+			if reflect.TypeOf(filter) == reflect.TypeOf((**supplier.CriteriaFilterNbcores)(nil)).Elem() {
 				sds.disksize = (filter.(*supplier.CriteriaFilterNbcores)).Nbcores
 			}
 		}

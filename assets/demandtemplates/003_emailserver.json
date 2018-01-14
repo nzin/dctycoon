@@ -16,7 +16,7 @@
 		},
 		"storage": {
 			"filters": {
-				"diskfilter": { "mindisk": 200000}
+				"diskfilter": { "mindisk": 50000}
 			},
 			"priorities": {
 				"price": 1,

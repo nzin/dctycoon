@@ -176,13 +176,16 @@ func (self *OpponentStatWidget) SetGame(game *Game) {
 
 type DemandStatWidgetLine struct {
 	sws.CoreWidget
-	date      *sws.LabelWidget
-	price     *sws.LabelWidget
-	nbservers *sws.LabelWidget
-	buyer     *sws.LabelWidget
+	details     *sws.FlatButtonWidget
+	date        *sws.LabelWidget
+	price       *sws.LabelWidget
+	nbservers   *sws.LabelWidget
+	buyer       *sws.LabelWidget
+	showdetails bool
+	yoffset     int32
 }
 
-func NewDemandStatWidgetLine(stat *DemandStat) *DemandStatWidgetLine {
+func NewDemandStatWidgetLine(container *sws.VBoxWidget, stat *DemandStat) *DemandStatWidgetLine {
 	corewidget := sws.NewCoreWidget(525, 25)
 	nbservers := int32(0)
 	for _, s := range stat.serverdemands {
@@ -196,12 +199,38 @@ func NewDemandStatWidgetLine(stat *DemandStat) *DemandStatWidgetLine {
 	}
 
 	line := &DemandStatWidgetLine{
-		CoreWidget: *corewidget,
-		date:       sws.NewLabelWidget(100, 25, fmt.Sprintf("%d-%d-%d", stat.date.Day(), stat.date.Month(), stat.date.Year())),
-		price:      sws.NewLabelWidget(100, 25, price),
-		nbservers:  sws.NewLabelWidget(100, 25, fmt.Sprintf("%d", nbservers)),
-		buyer:      sws.NewLabelWidget(200, 25, stat.buyer),
+		CoreWidget:  *corewidget,
+		details:     sws.NewFlatButtonWidget(25, 25, ""),
+		date:        sws.NewLabelWidget(100, 25, fmt.Sprintf("%d-%d-%d", stat.date.Day(), stat.date.Month(), stat.date.Year())),
+		price:       sws.NewLabelWidget(100, 25, price),
+		nbservers:   sws.NewLabelWidget(100, 25, fmt.Sprintf("%d", nbservers)),
+		buyer:       sws.NewLabelWidget(200, 25, stat.buyer),
+		showdetails: false,
+		yoffset:     25,
 	}
+	line.SetColor(bgcolor)
+	line.details.SetColor(bgcolor)
+	if surface, err := global.LoadImageAsset("assets/ui/icon-arrowhead-pointing-to-the-right.png"); err == nil {
+		line.details.SetImageSurface(surface)
+	}
+	line.details.SetClicked(func() {
+		if line.showdetails == false {
+			if surface, err := global.LoadImageAsset("assets/ui/icon-sort-down.png"); err == nil {
+				line.details.SetImageSurface(surface)
+				line.Resize(525, line.yoffset)
+				container.Rebox()
+			}
+		} else {
+			if surface, err := global.LoadImageAsset("assets/ui/icon-arrowhead-pointing-to-the-right.png"); err == nil {
+				line.details.SetImageSurface(surface)
+				line.Resize(525, 25)
+				container.Rebox()
+			}
+		}
+		line.showdetails = !line.showdetails
+	})
+	line.AddChild(line.details)
+
 	line.date.Move(25, 0)
 	line.date.SetColor(bgcolor)
 	line.AddChild(line.date)
@@ -218,6 +247,29 @@ func NewDemandStatWidgetLine(stat *DemandStat) *DemandStatWidgetLine {
 	line.buyer.SetColor(bgcolor)
 	line.AddChild(line.buyer)
 
+	for _, s := range stat.serverdemands {
+		nb := sws.NewLabelWidget(50, 25, fmt.Sprintf("%d x", s.nb))
+		nb.Move(25, line.yoffset)
+		nb.SetColor(bgcolor)
+		line.AddChild(nb)
+
+		ram := sws.NewLabelWidget(150, 25, fmt.Sprintf("min ram = "+global.AdjustMega(s.ramsize)))
+		ram.Move(75, line.yoffset)
+		ram.SetColor(bgcolor)
+		line.AddChild(ram)
+
+		disk := sws.NewLabelWidget(150, 25, fmt.Sprintf("min disk = "+global.AdjustMega(s.disksize)))
+		disk.Move(225, line.yoffset)
+		disk.SetColor(bgcolor)
+		line.AddChild(disk)
+
+		cpu := sws.NewLabelWidget(150, 25, fmt.Sprintf("min nb cpus = %d", s.nbcores))
+		cpu.Move(375, line.yoffset)
+		cpu.SetColor(bgcolor)
+		line.AddChild(cpu)
+
+		line.yoffset += 25
+	}
 	return line
 }
 
@@ -269,8 +321,8 @@ func NewDemandStatWidget(w, h int32, gamestats *GameStats) *DemandStatWidget {
 // NewDemandStat is part of DemandStatSubscriber interface
 func (self *DemandStatWidget) NewDemandStat(ds *DemandStat) {
 	log.Debug("DemandStatWidget::NewDemandStat(", ds, ")")
-	line := NewDemandStatWidgetLine(ds)
-	self.vbox.AddChild(line)
+	line := NewDemandStatWidgetLine(self.vbox, ds)
+	self.vbox.AddChildTop(line)
 	self.scroll.Resize(self.Width(), self.Height()-25)
 }
 
@@ -284,8 +336,8 @@ func (self *DemandStatWidget) SetGame(gamestats *GameStats) {
 	self.vbox.RemoveAllChildren()
 
 	for _, ds := range gamestats.demandsstats {
-		line := NewDemandStatWidgetLine(ds)
-		self.vbox.AddChild(line)
+		line := NewDemandStatWidgetLine(self.vbox, ds)
+		self.vbox.AddChildTop(line)
 	}
 	self.scroll.Resize(self.Width(), self.Height()-25)
 }
