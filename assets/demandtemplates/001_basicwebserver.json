@@ -2,7 +2,7 @@
 	"specs": {
 		"web": {
 			"filters": {
-				"diskfilter": { "mindisk": 5000}
+				"diskfilter": { "mindisk": 500}
 			},
 			"priorities": {
 				"price": 2,

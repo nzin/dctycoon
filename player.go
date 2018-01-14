@@ -29,6 +29,12 @@ func (p *Player) GetLedger() *accounting.Ledger {
 }
 
 //
+// GetName is part of the Actor interface
+func (p *Player) GetName() string {
+	return "you"
+}
+
+//
 // NewPlayer create a new player representation
 func NewPlayer() *Player {
 	log.Debug("NewPlayer()")

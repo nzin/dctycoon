@@ -64,6 +64,8 @@ func (self *MainSupplierWidget) Hide() {
 
 func NewMainSupplierWidget(root *sws.RootWidget) *MainSupplierWidget {
 	mainwidget := sws.NewMainWidget(650, 400, " Your DEAL supplier", true, true)
+	mainwidget.Center(root)
+
 	scrollwidgetshop := sws.NewScrollWidget(600, 550)
 	scrollwidgetshop.SetColor(0xffffffff)
 	scrollwidgetcart := sws.NewScrollWidget(600, 550)

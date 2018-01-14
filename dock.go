@@ -18,14 +18,14 @@ type DockWidget struct {
 	forward      *sws.FlatButtonWidget
 	shop         *sws.FlatButtonWidget
 	inventory    *sws.FlatButtonWidget
-	quit         *sws.FlatButtonWidget
+	stats        *sws.FlatButtonWidget
 	ledgerButton *sws.FlatButtonWidget
 	timerevent   *sws.TimerEvent
 	ledger       *accounting.Ledger
 }
 
-func (self *DockWidget) SetQuitCallback(callback func()) {
-	self.quit.SetClicked(callback)
+func (self *DockWidget) SetStatsCallback(callback func()) {
+	self.stats.SetClicked(callback)
 }
 
 func (self *DockWidget) SetShopCallback(callback func()) {
@@ -140,12 +140,12 @@ func NewDockWidget(root *sws.RootWidget, game *Game, gamemenu *MainGameMenu) *Do
 		gamemenu.ShowSave()
 	})
 
-	widget.quit = sws.NewFlatButtonWidget(25, 25, "")
-	widget.quit.Move(100, 75)
-	if icon, err := global.LoadImageAsset("assets/ui/icon-power-button-off.png"); err == nil {
-		widget.quit.SetImageSurface(icon)
+	widget.stats = sws.NewFlatButtonWidget(25, 25, "")
+	widget.stats.Move(100, 75)
+	if icon, err := global.LoadImageAsset("assets/ui/icon-graph.png"); err == nil {
+		widget.stats.SetImageSurface(icon)
 	}
-	widget.AddChild(widget.quit)
+	widget.AddChild(widget.stats)
 
 	widget.ledgerButton = sws.NewFlatButtonWidget(150, 25, "")
 	widget.ledgerButton.Move(0, 100)

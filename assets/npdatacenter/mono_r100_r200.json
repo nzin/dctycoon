@@ -4,13 +4,6 @@
     "vps": false,
     "buyperyear": 0.2,
     "margin": 0.045,
-    "configuration": "low"
-  },
-  "R200phyisical": {
-    "servertype": "R200",
-    "vps": false,
-    "buyperyear": 0.2,
-    "margin": 0.09,
-    "configuration": "medium"
+    "configuration": "high"
   }
 }

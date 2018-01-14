@@ -43,6 +43,8 @@ func (self *MainInventoryWidget) Hide() {
 // NewMainInventoryWidget presents the pool and offer management window
 func NewMainInventoryWidget(root *sws.RootWidget) *MainInventoryWidget {
 	mainwidget := sws.NewMainWidget(850, 400, " Inventory Management ", true, true)
+	mainwidget.Center(root)
+
 	widget := &MainInventoryWidget{
 		rootwindow:  root,
 		mainwidget:  mainwidget,

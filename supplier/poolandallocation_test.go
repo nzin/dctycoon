@@ -22,6 +22,10 @@ func (self *ActorMock) GetLedger() *accounting.Ledger {
 	return nil
 }
 
+func (self *ActorMock) GetName() string {
+	return "mock"
+}
+
 func TestPool(t *testing.T) {
 	gt := timer.NewGameTimer()
 	inventory := NewInventory(gt)
@@ -104,7 +108,7 @@ func TestPool(t *testing.T) {
 	err := json.Unmarshal([]byte(payload), &j)
 	assert.Empty(t, err, "correct JSON payload format")
 	serverspecs := serverDemandParsing(j)
-	assert.Equal(t, 1, len(serverspecs.filters), "only one filter accepted (disk) ")
+	assert.Equal(t, 1, len(serverspecs.Filters), "only one filter accepted (disk) ")
 	assert.Equal(t, 2, len(serverspecs.priorities), "only 2 priorities accepted (disk,price) ")
 
 	bigpayload := `{

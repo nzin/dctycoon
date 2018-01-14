@@ -35,7 +35,7 @@ func TestNPDatacenter(t *testing.T) {
 	assert.Empty(t, err, "parse mono_r100_r200 profile asset")
 
 	npd := NewNPDatacenter()
-	npd.Init(gt, 10000, "siliconvalley", trend, "mono_r100_r200.json")
+	npd.Init(gt, 10000, "siliconvalley", trend, "mono_r100_r200.json", "John Doe", true)
 	assert.NotEmpty(t, npd, "NPDatacenter mono_r100_r200 profile loaded")
 	assert.Equal(t, "R100", npd.buyoutprofile["R100physical"].Servertype, "check if the profile is correctly loaded")
 }
@@ -53,12 +53,12 @@ func TestNPDatacenterBuyout(t *testing.T) {
 	trend.Load(j, ps, gt)
 
 	npd := NewNPDatacenter()
-	npd.Init(gt, 10000, "siliconvalley", trend, "mono_r100_r200.json")
+	npd.Init(gt, 20000, "siliconvalley", trend, "mono_r100_r200.json", "John Doe", true)
 	assert.NotEmpty(t, npd, "NPDatacenter mono_r100_r200 profile loaded")
 	assert.Equal(t, "R100", npd.buyoutprofile["R100physical"].Servertype, "check if the profile is correctly loaded")
 
 	npd.NewYearOperations()
 	assert.Equal(t, 1, len(npd.inventory.Items), "new year passed, we bought some servers")
 	assert.Equal(t, 1, len(npd.inventory.GetOffers()), "we have one offer for R100 server")
-	assert.Equal(t, float64(81.0), npd.inventory.GetOffers()[0].Price, "offer is priced as 81$")
+	assert.Equal(t, float64(126.49499999999999), npd.inventory.GetOffers()[0].Price, "offer is priced as 81$")
 }

@@ -16,6 +16,7 @@ type GameUI struct {
 	opening          *MainOpening
 	supplierwidget   *MainSupplierWidget
 	inventorywidget  *MainInventoryWidget
+	statswidget      *MainStatsWidget
 	accountingwidget *accounting.MainAccountingWidget
 	dock             *DockWidget
 	eventpublisher   *timer.EventPublisher
@@ -29,6 +30,7 @@ func NewGameUI(quit *bool, root *sws.RootWidget, game *Game) *GameUI {
 		opening:          NewMainOpening(root.Width(), root.Height(), root, gamemenu),
 		supplierwidget:   NewMainSupplierWidget(root),
 		inventorywidget:  NewMainInventoryWidget(root),
+		statswidget:      NewMainStatsWidget(root, game),
 		accountingwidget: accounting.NewMainAccountingWidget(root),
 		dock:             NewDockWidget(root, game, gamemenu),
 		eventpublisher:   timer.NewEventPublisher(root),
@@ -38,8 +40,8 @@ func NewGameUI(quit *bool, root *sws.RootWidget, game *Game) *GameUI {
 		gameui.supplierwidget.Show()
 	})
 
-	gameui.dock.SetQuitCallback(func() {
-		*quit = true
+	gameui.dock.SetStatsCallback(func() {
+		gameui.statswidget.Show()
 	})
 
 	gameui.dock.SetLedgerCallback(func() {
@@ -64,6 +66,7 @@ func (self *GameUI) InitGame(globaltimer *timer.GameTimer, inventory *supplier.I
 	self.inventorywidget.SetGame(inventory, globaltimer.CurrentTime)
 	self.accountingwidget.SetGame(globaltimer, ledger)
 	self.dock.SetGame(globaltimer, ledger)
+	self.statswidget.SetGame()
 
 	self.supplierwidget.Hide()
 	self.inventorywidget.Hide()
@@ -82,6 +85,7 @@ func (self *GameUI) LoadGame(v map[string]interface{}, globaltimer *timer.GameTi
 	self.inventorywidget.SetGame(inventory, globaltimer.CurrentTime)
 	self.accountingwidget.SetGame(globaltimer, ledger)
 	self.dock.SetGame(globaltimer, ledger)
+	self.statswidget.LoadGame()
 
 	self.supplierwidget.Hide()
 	self.inventorywidget.Hide()

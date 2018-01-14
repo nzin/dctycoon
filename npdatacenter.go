@@ -3,6 +3,7 @@ package dctycoon
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 
 	"github.com/nzin/dctycoon/accounting"
 	"github.com/nzin/dctycoon/supplier"
@@ -44,6 +45,8 @@ type NPDatacenter struct {
 	buyoutprofile map[string]BuyoutProfile
 	profilename   string
 	cronevent     *timer.GameCronEvent
+	name          string
+	picture       string
 }
 
 //
@@ -56,6 +59,14 @@ func (self *NPDatacenter) GetInventory() *supplier.Inventory {
 // GetLedger is part of the Actor interface
 func (self *NPDatacenter) GetLedger() *accounting.Ledger {
 	return self.ledger
+}
+
+func (self *NPDatacenter) GetName() string {
+	return self.name
+}
+
+func (self *NPDatacenter) GetPicture() string {
+	return self.picture
 }
 
 //
@@ -75,13 +86,15 @@ func NewNPDatacenter() *NPDatacenter {
 		buyoutprofile: nil,
 		profilename:   "",
 		cronevent:     nil,
+		name:          "",
+		picture:       "",
 	}
 
 	return datacenter
 }
 
-func (self *NPDatacenter) Init(timer *timer.GameTimer, initialcapital float64, locationname string, trend *supplier.Trend, profilename string) {
-	log.Debug("NPDatacenter::Init(", timer, ",", initialcapital, ",", locationname, ",", trend, ",", profilename, ")")
+func (self *NPDatacenter) Init(timer *timer.GameTimer, initialcapital float64, locationname string, trend *supplier.Trend, profilename string, name string, male bool) {
+	log.Debug("NPDatacenter::Init(", timer, ",", initialcapital, ",", locationname, ",", trend, ",", profilename, ",", name, ",", male, ")")
 
 	if self.cronevent != nil {
 		self.timer.RemoveCron(self.cronevent)
@@ -117,6 +130,8 @@ func (self *NPDatacenter) Init(timer *timer.GameTimer, initialcapital float64, l
 	self.trend = trend
 	self.profilename = profilename
 	self.buyoutprofile = profile
+	self.name = name
+	self.picture = self.findPicture(male)
 
 	// add some equity
 	self.ledger.AddMovement(accounting.LedgerMovement{
@@ -130,6 +145,17 @@ func (self *NPDatacenter) Init(timer *timer.GameTimer, initialcapital float64, l
 	self.cronevent = timer.AddCron(1, 1, -1, func() {
 		self.NewYearOperations()
 	})
+}
+
+func (self *NPDatacenter) findPicture(male bool) string {
+	sex := "male"
+	if male == false {
+		sex = "female"
+	}
+	if pictures, err := global.AssetDir("assets/faces/" + sex); err == nil {
+		return sex + "/" + pictures[rand.Int()%len(pictures)]
+	}
+	return ""
 }
 
 func (self *NPDatacenter) LoadGame(timer *timer.GameTimer, trend *supplier.Trend, v map[string]interface{}) {
@@ -170,6 +196,8 @@ func (self *NPDatacenter) LoadGame(timer *timer.GameTimer, trend *supplier.Trend
 	self.trend = trend
 	self.profilename = profilename
 	self.buyoutprofile = profile
+	self.name = v["name"].(string)
+	self.picture = v["picture"].(string)
 
 	self.ledger.Load(v["ledger"].(map[string]interface{}), location.Taxrate, location.Bankinterestrate)
 	self.inventory.Load(v["inventory"].(map[string]interface{}))
@@ -182,6 +210,8 @@ func (self *NPDatacenter) LoadGame(timer *timer.GameTimer, trend *supplier.Trend
 func (self *NPDatacenter) Save() string {
 	save := fmt.Sprintf(`{"location": "%s",`, self.locationname) + "\n"
 	save += fmt.Sprintf(`"profile": "%s",`, self.profilename) + "\n"
+	save += fmt.Sprintf(`"name": "%s",`, self.name) + "\n"
+	save += fmt.Sprintf(`"picture": "%s",`, self.picture) + "\n"
 	save += fmt.Sprintf(`"inventory": %s,`, self.inventory.Save()) + "\n"
 	save += fmt.Sprintf(`"ledger": %s`, self.ledger.Save()) + "}\n"
 	return save
