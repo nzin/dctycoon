@@ -15,3 +15,6 @@
 
 # backup file for debug.
 backup.map
+
+# JetBrain
+.idea
