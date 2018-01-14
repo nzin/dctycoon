@@ -62,7 +62,7 @@ func NewDemandStat(v map[string]interface{}) *DemandStat {
 	return ds
 }
 
-// mainly used by the MainStatsWidget
+// DemandStatSubscriber is mainly used by the MainStatsWidget
 type DemandStatSubscriber interface {
 	NewDemandStat(*DemandStat)
 }

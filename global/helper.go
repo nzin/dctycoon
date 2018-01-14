@@ -11,6 +11,8 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
+//
+// GlowImage takes a asset path, load it, and add a glow effect around it
 func GlowImage(spriteassetpath string, color uint32) *sdl.Surface {
 	log.Debug("GlowImage(", spriteassetpath, ",", color, ")")
 	red := byte((color & 0xff0000) >> 16)
@@ -46,7 +48,7 @@ func GlowImage(spriteassetpath string, color uint32) *sdl.Surface {
 }
 
 //
-// parse a string like 100M and translate it into
+// ParseMega parse a string like 100M and translate it into
 // a int32 in Megabytes
 func ParseMega(str string) int32 {
 	log.Debug("ParseMega(", str, ")")
@@ -79,6 +81,8 @@ func ParseMega(str string) int32 {
 	return int32(value)
 }
 
+//
+// AdjustMega get a number in megabyte, reduce it in GB, TB and return the string result
 func AdjustMega(mega int32) string {
 	if mega >= 2000000 {
 		return strconv.Itoa(int(mega/1000000)) + " To"
@@ -90,7 +94,7 @@ func AdjustMega(mega int32) string {
 }
 
 //
-// To load an SDL (PNG) image directly from assets
+// LoadImageAsset load an SDL (PNG) image directly from assets
 func LoadImageAsset(filename string) (*sdl.Surface, error) {
 	data, err := Asset(filename)
 	if err != nil {
@@ -102,6 +106,7 @@ func LoadImageAsset(filename string) (*sdl.Surface, error) {
 	return img.LoadTypedRW(src, false, imagetype)
 }
 
+// AdjustImage will resize an image to fit into w x h surface image
 func AdjustImage(image *sdl.Surface, w, h int32) (*sdl.Surface, error) {
 	dst, err := sdl.CreateRGBSurface(0, w, h, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000)
 	if err != nil {

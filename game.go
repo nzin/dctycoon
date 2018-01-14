@@ -33,7 +33,7 @@ type GameTimerSubscriber interface {
 }
 
 //
-// the global picture of the game, i.e.
+// Game contains the global picture of the game, i.e.
 // - npactors (nonplayer) + player
 // - marketplace items (DemandTemplate, ServerBundle)
 // - load/save game functions
@@ -313,7 +313,7 @@ func (self *Game) RemoveGameTimerSubscriber(subscriber GameTimerSubscriber) {
 	}
 }
 
-// ChangeGameSpeed() allows to pause, or resume game speed. 3 values allowed: SPEED_STOP, SPEED_FORWARD, SPEED_FASTFORWARD
+// ChangeGameSpeed allows to pause, or resume game speed. 3 values allowed: SPEED_STOP, SPEED_FORWARD, SPEED_FASTFORWARD
 func (self *Game) ChangeGameSpeed(speed int) {
 	if self.timerevent != nil {
 		self.timerevent.StopRepeat()
@@ -337,22 +337,22 @@ func (self *Game) ChangeGameSpeed(speed int) {
 	}
 }
 
-// GetCurrentSpeed() returns the current speed, i.e SPEED_STOP, SPEED_FORWARD, SPEED_FASTFORWARD
+// GetCurrentSpeed returns the current speed, i.e SPEED_STOP, SPEED_FORWARD, SPEED_FASTFORWARD
 func (self *Game) GetCurrentSpeed() int {
 	return self.currentSpeed
 }
 
-// GetNPActors() returns the list of opponents in this play
+// GetNPActors returns the list of opponents in this play
 func (self *Game) GetNPActors() []*NPDatacenter {
 	return self.npactors
 }
 
-// GetPlayer() returns the player info, nothing fancy here
+// GetPlayer returns the player info, nothing fancy here
 func (self *Game) GetPlayer() *Player {
 	return self.player
 }
 
-// GetPlayer() returns the stats central repo
+// GetPlayer returns the stats central repo
 func (self *Game) GetGameStats() *GameStats {
 	return self.gamestats
 }

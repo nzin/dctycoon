@@ -41,6 +41,8 @@ func (self *MainStatsWidget) Hide() {
 // NewMainStatsWidget presents different stats and graphs
 func NewMainStatsWidget(root *sws.RootWidget, g *Game) *MainStatsWidget {
 	mainwidget := sws.NewMainWidget(850, 400, " Graph and Statistics ", true, true)
+	mainwidget.Center(root)
+
 	widget := &MainStatsWidget{
 		rootwindow:      root,
 		mainwidget:      mainwidget,
