@@ -129,6 +129,10 @@ func (self *Game) InitGame(locationid string, difficulty int32) {
 	self.player = NewPlayer()
 	self.player.Init(self.timer, initialcapital, locationid)
 
+	availablenames := make([]NameList, 0, 0)
+	for _, n := range nameList {
+		availablenames = append(availablenames, n)
+	}
 	// opponents
 	self.npactors = make([]*NPDatacenter, 0, 0)
 	for nb := int32(0); nb < nbopponents; nb++ {
@@ -147,9 +151,12 @@ func (self *Game) InitGame(locationid string, difficulty int32) {
 			profile = profilesarray[rand.Int()%len(profilesarray)]
 		}
 
-		opponent.Init(self.timer, 200000, locationid, self.trends, profile)
+		indexname := rand.Int() % len(availablenames)
+		opponent.Init(self.timer, 200000, locationid, self.trends, profile, availablenames[indexname].name, availablenames[indexname].male)
 		opponent.NewYearOperations()
 		self.npactors = append(self.npactors, opponent)
+
+		availablenames = append(availablenames[:indexname], availablenames[indexname+1:]...)
 	}
 	for _, s := range self.timersubscribers {
 		s.NewDay(self.timer)
@@ -348,4 +355,40 @@ func (self *Game) GetPlayer() *Player {
 // GetPlayer() returns the stats central repo
 func (self *Game) GetGameStats() *GameStats {
 	return self.gamestats
+}
+
+type NameList struct {
+	name string
+	male bool
+}
+
+var nameList = []NameList{
+	{
+		name: "John Doe",
+		male: true,
+	}, {
+		"Boby Maxmimus",
+		true,
+	}, {
+		"Emma Rasputin",
+		false,
+	}, {
+		"Susan Boyle",
+		false,
+	}, {
+		"Eleanor Grande",
+		false,
+	}, {
+		"Jimmy Carey",
+		true,
+	}, {
+		"Isaac Asimov",
+		true,
+	}, {
+		"Janet Yellen",
+		false,
+	}, {
+		"Chuck Norris",
+		true,
+	},
 }

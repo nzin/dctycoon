@@ -101,3 +101,21 @@ func LoadImageAsset(filename string) (*sdl.Surface, error) {
 
 	return img.LoadTypedRW(src, false, imagetype)
 }
+
+func AdjustImage(image *sdl.Surface, w, h int32) (*sdl.Surface, error) {
+	dst, err := sdl.CreateRGBSurface(0, w, h, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000)
+	if err != nil {
+		return nil, err
+	}
+	dstw := w
+	dsth := h
+	if image.W*h > image.H*w {
+		dsth = image.H * w / image.W
+	} else {
+		dstw = image.W * h / image.H
+	}
+	xshift := (w - dstw) / 2
+	yshift := (h - dsth) / 2
+	image.BlitScaled(&sdl.Rect{X: 0, Y: 0, W: image.W, H: image.H}, dst, &sdl.Rect{X: xshift, Y: yshift, W: dstw, H: dsth})
+	return dst, nil
+}
