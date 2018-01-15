@@ -2,6 +2,6 @@ services:
   - docker
 
 script:
-  - docker-compose run --rm app golint ./...
-  - docker-compose run --rm app go test ./...
+  - docker build -t app .
+  - docker run --rm app ./codecoverage.sh
 
