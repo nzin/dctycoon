@@ -228,11 +228,21 @@ func NewDemandStatWidget(w, h int32, gamestats *GameStats) *DemandStatWidget {
 		CoreWidget:  *corewidget,
 		demandstats: global.NewTableWithDetails(525, 200),
 	}
-
-	widget.demandstats.AddHeader("Date", 100)
-	widget.demandstats.AddHeader("Price", 100)
-	widget.demandstats.AddHeader("Nb servers", 100)
-	widget.demandstats.AddHeader("Buyer", 200)
+	widget.demandstats.AddHeader("Date", 100, func(l1, l2 string) bool {
+		var d1, d2, m1, m2, y1, y2 int
+		fmt.Sscanf(l1, "%d-%d-%d", &d1, &m1, &y1)
+		fmt.Sscanf(l2, "%d-%d-%d", &d2, &m2, &y2)
+		if y1 != y2 {
+			return y1 < y2
+		}
+		if m1 != m2 {
+			return m1 < m2
+		}
+		return d1 < d2
+	})
+	widget.demandstats.AddHeader("Price", 100, nil)
+	widget.demandstats.AddHeader("Nb servers", 100, nil)
+	widget.demandstats.AddHeader("Buyer", 200, func(l1, l2 string) bool { return l1 < l2 })
 	widget.AddChild(widget.demandstats)
 
 	gamestats.AddDemandStatSubscriber(widget)

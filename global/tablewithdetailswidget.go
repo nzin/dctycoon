@@ -1,6 +1,8 @@
 package global
 
 import (
+	"sort"
+
 	"github.com/nzin/sws"
 	"github.com/veandco/go-sdl2/sdl"
 )
@@ -24,6 +26,8 @@ func NewTableWithDetailsRow(bgcolor uint32, labels []string, details sws.Widget)
 	return row
 }
 
+type TableWithDetailsRowBy func(l1, l2 string) bool
+
 type TableWithDetails struct {
 	sws.CoreWidget
 	vertical        *sws.ScrollbarWidget
@@ -33,9 +37,22 @@ type TableWithDetails struct {
 	arrowUp         *sdl.Surface
 	arrowDown       *sdl.Surface
 	//data
-	header     []string
-	headerSize []int32
-	rows       []*TableWithDetailsRow
+	header          []string
+	headerSize      []int32
+	headerSort      []TableWithDetailsRowBy
+	rows            []*TableWithDetailsRow
+	currentSorter   int32
+	directionSorter bool
+}
+
+func (t *TableWithDetails) Len() int      { return len(t.rows) }
+func (t *TableWithDetails) Swap(i, j int) { t.rows[i], t.rows[j] = t.rows[j], t.rows[i] }
+func (t *TableWithDetails) Less(i, j int) bool {
+	if t.directionSorter {
+		return t.headerSort[t.currentSorter](t.rows[i].labels[t.currentSorter], t.rows[j].labels[t.currentSorter])
+	} else {
+		return !t.headerSort[t.currentSorter](t.rows[i].labels[t.currentSorter], t.rows[j].labels[t.currentSorter])
+	}
 }
 
 func NewTableWithDetails(w, h int32) *TableWithDetails {
@@ -49,6 +66,7 @@ func NewTableWithDetails(w, h int32) *TableWithDetails {
 		header:          make([]string, 0, 0),
 		headerSize:      make([]int32, 0, 0),
 		rows:            make([]*TableWithDetailsRow, 0, 0),
+		currentSorter:   -1,
 	}
 
 	widget.vertical.Move(w-15, HEADER_HEIGHT)
@@ -69,18 +87,26 @@ func NewTableWithDetails(w, h int32) *TableWithDetails {
 	return widget
 }
 
-func (self *TableWithDetails) AddHeader(label string, size int32) {
+func (self *TableWithDetails) AddHeader(label string, size int32, sorterfunction TableWithDetailsRowBy) {
 	self.header = append(self.header, label)
 	self.headerSize = append(self.headerSize, size)
+	self.headerSort = append(self.headerSort, sorterfunction)
 }
 
 func (self *TableWithDetails) AddRowTop(row *TableWithDetailsRow) {
 	self.rows = append([]*TableWithDetailsRow{row}, self.rows...)
+	if self.currentSorter >= 0 && self.headerSort[self.currentSorter] != nil {
+		sort.Sort(self)
+	}
+	self.Resize(self.Width(), self.Height())
 	self.PostUpdate()
 }
 
 func (self *TableWithDetails) AddRow(row *TableWithDetailsRow) {
 	self.rows = append(self.rows, row)
+	if self.currentSorter >= 0 && self.headerSort[self.currentSorter] != nil {
+		sort.Sort(self)
+	}
 	self.Resize(self.Width(), self.Height())
 	self.PostUpdate()
 }
@@ -150,8 +176,7 @@ func (self *TableWithDetails) renderText(x, y, width, height int32, label string
 }
 
 func (self *TableWithDetails) Repaint() {
-	self.FillRect(0, 0, 25, self.Height(), 0xffdddddd)
-	self.FillRect(25, 0, self.Width()-25, self.Height(), 0xffffffff)
+	self.FillRect(0, 0, self.Width(), self.Height(), 0xffffffff)
 
 	nbcolumns := int32(len(self.header))
 
@@ -159,7 +184,7 @@ func (self *TableWithDetails) Repaint() {
 	// print the cells
 	for j := int32(0); j < int32(len(self.rows)); j++ {
 		row := self.rows[j]
-		self.FillRect(25, y, self.Width()-25, 25, row.bgcolor)
+		self.FillRect(0, y, self.Width(), 25, row.bgcolor)
 
 		// show the details button
 		var arrow *sdl.Surface
@@ -188,13 +213,13 @@ func (self *TableWithDetails) Repaint() {
 				row.details.Repaint()
 			}
 			rectSrc := sdl.Rect{0, 0, row.details.Width(), row.details.Height()}
-			rectDst := sdl.Rect{25, y, row.details.Width(), row.details.Height()}
+			rectDst := sdl.Rect{0, y, row.details.Width(), row.details.Height()}
 			row.details.Surface().Blit(&rectSrc, self.Surface(), &rectDst)
 
 			y += row.details.Height()
 		}
-		self.SetDrawColorHex(0xffffffff)
-		self.DrawLine(25, y-1, self.Width()-1, y-1)
+		self.SetDrawColorHex(0xffeeeeee)
+		self.DrawLine(1, y-1, self.Width()-2, y-1)
 	}
 
 	// headers
@@ -213,6 +238,19 @@ func (self *TableWithDetails) Repaint() {
 		label := self.header[i]
 		size := self.headerSize[i]
 		self.renderText(xoffset, 0, size, HEADER_HEIGHT, label, self.headertextcolor)
+
+		if self.currentSorter == i {
+			self.SetDrawColorHex(0xff000000)
+			if self.directionSorter {
+				for j := int32(0); j < 8; j++ {
+					self.DrawLine(xoffset+size-23+j, 8+j, xoffset+size-7-j, 8+j)
+				}
+			} else {
+				for j := int32(0); j < 8; j++ {
+					self.DrawLine(xoffset+size-15-j, 8+j, xoffset+size-15+j, 8+j)
+				}
+			}
+		}
 
 		//bezel
 		self.SetDrawColorHex(0xffffffff)
@@ -246,6 +284,24 @@ func (self *TableWithDetails) Repaint() {
 }
 
 func (self *TableWithDetails) MousePressDown(x, y int32, button uint8) {
+	if button == sdl.BUTTON_LEFT && y <= HEADER_HEIGHT {
+		xoffset := int32(25)
+		for i := int32(0); i < int32(len(self.header)); i++ {
+			size := self.headerSize[i]
+			if x >= xoffset && x < xoffset+size {
+				if self.currentSorter == i {
+					self.directionSorter = !self.directionSorter
+				} else {
+					self.currentSorter = i
+				}
+				if self.headerSort[self.currentSorter] != nil {
+					sort.Sort(self)
+					self.PostUpdate()
+				}
+			}
+			xoffset += size
+		}
+	}
 	if button == sdl.BUTTON_LEFT && y > HEADER_HEIGHT {
 		yoffset := HEADER_HEIGHT - self.yoffset
 		for j := int32(0); j < int32(len(self.rows)); j++ {
