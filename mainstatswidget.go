@@ -2,6 +2,7 @@ package dctycoon
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/dctycoon/supplier"
@@ -240,8 +241,17 @@ func NewDemandStatWidget(w, h int32, gamestats *GameStats) *DemandStatWidget {
 		}
 		return d1 < d2
 	})
-	widget.demandstats.AddHeader("Price", 100, nil)
-	widget.demandstats.AddHeader("Nb servers", 100, nil)
+	widget.demandstats.AddHeader("Price", 100, func(l1, l2 string) bool {
+		var f1, f2 float64
+		fmt.Sscanf(l1, "%f $", &f1)
+		fmt.Sscanf(l2, "%f $", &f2)
+		return f1 < f2
+	})
+	widget.demandstats.AddHeader("Nb servers", 100, func(l1, l2 string) bool {
+		nb1, _ := strconv.Atoi(l1)
+		nb2, _ := strconv.Atoi(l2)
+		return nb1 < nb2
+	})
 	widget.demandstats.AddHeader("Buyer", 200, func(l1, l2 string) bool { return l1 < l2 })
 	widget.AddChild(widget.demandstats)
 
