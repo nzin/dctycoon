@@ -176,78 +176,18 @@ func (self *OpponentStatWidget) SetGame(game *Game) {
 	self.scroll.Resize(self.Width(), self.Height())
 }
 
-type DemandStatWidgetLine struct {
+type DemandStatDetailsWidget struct {
 	sws.CoreWidget
-	details     *sws.FlatButtonWidget
-	date        *sws.LabelWidget
-	price       *sws.LabelWidget
-	nbservers   *sws.LabelWidget
-	buyer       *sws.LabelWidget
-	showdetails bool
-	yoffset     int32
+	yoffset int32
 }
 
-func NewDemandStatWidgetLine(container *sws.VBoxWidget, stat *DemandStat) *DemandStatWidgetLine {
+func NewDemandStatDetailsWidget(bgcolor uint32, stat *DemandStat) *DemandStatDetailsWidget {
 	corewidget := sws.NewCoreWidget(525, 25)
-	nbservers := int32(0)
-	for _, s := range stat.serverdemands {
-		nbservers += s.nb
-	}
-	price := "-"
-	bgcolor := uint32(0xffaaaaaa)
-	if stat.buyer != "" {
-		price = fmt.Sprintf("%.2f $", stat.price)
-		bgcolor = 0xffdddddd
-	}
 
-	line := &DemandStatWidgetLine{
-		CoreWidget:  *corewidget,
-		details:     sws.NewFlatButtonWidget(25, 25, ""),
-		date:        sws.NewLabelWidget(100, 25, fmt.Sprintf("%d-%d-%d", stat.date.Day(), stat.date.Month(), stat.date.Year())),
-		price:       sws.NewLabelWidget(100, 25, price),
-		nbservers:   sws.NewLabelWidget(100, 25, fmt.Sprintf("%d", nbservers)),
-		buyer:       sws.NewLabelWidget(200, 25, stat.buyer),
-		showdetails: false,
-		yoffset:     25,
+	line := &DemandStatDetailsWidget{
+		CoreWidget: *corewidget,
 	}
 	line.SetColor(bgcolor)
-	line.details.SetColor(bgcolor)
-	if surface, err := global.LoadImageAsset("assets/ui/icon-arrowhead-pointing-to-the-right.png"); err == nil {
-		line.details.SetImageSurface(surface)
-	}
-	line.details.SetClicked(func() {
-		if line.showdetails == false {
-			if surface, err := global.LoadImageAsset("assets/ui/icon-sort-down.png"); err == nil {
-				line.details.SetImageSurface(surface)
-				line.Resize(525, line.yoffset)
-				container.Rebox()
-			}
-		} else {
-			if surface, err := global.LoadImageAsset("assets/ui/icon-arrowhead-pointing-to-the-right.png"); err == nil {
-				line.details.SetImageSurface(surface)
-				line.Resize(525, 25)
-				container.Rebox()
-			}
-		}
-		line.showdetails = !line.showdetails
-	})
-	line.AddChild(line.details)
-
-	line.date.Move(25, 0)
-	line.date.SetColor(bgcolor)
-	line.AddChild(line.date)
-
-	line.price.Move(125, 0)
-	line.price.SetColor(bgcolor)
-	line.AddChild(line.price)
-
-	line.nbservers.Move(225, 0)
-	line.nbservers.SetColor(bgcolor)
-	line.AddChild(line.nbservers)
-
-	line.buyer.Move(325, 0)
-	line.buyer.SetColor(bgcolor)
-	line.AddChild(line.buyer)
 
 	for _, s := range stat.serverdemands {
 		nb := sws.NewLabelWidget(50, 25, fmt.Sprintf("%d x", s.nb))
@@ -279,42 +219,21 @@ func NewDemandStatWidgetLine(container *sws.VBoxWidget, stat *DemandStat) *Deman
 // DemandStatWidget is an customer demand stat view
 type DemandStatWidget struct {
 	sws.CoreWidget
-	vbox      *sws.VBoxWidget
-	scroll    *sws.ScrollWidget
-	date      *sws.LabelWidget
-	price     *sws.LabelWidget
-	nbservers *sws.LabelWidget
-	buyer     *sws.LabelWidget
+	demandstats *global.TableWithDetails
 }
 
 func NewDemandStatWidget(w, h int32, gamestats *GameStats) *DemandStatWidget {
 	corewidget := sws.NewCoreWidget(w, h)
 	widget := &DemandStatWidget{
-		CoreWidget: *corewidget,
-		vbox:       sws.NewVBoxWidget(525, 0),
-		scroll:     sws.NewScrollWidget(w, h-25),
-		date:       sws.NewLabelWidget(100, 25, "Date"),
-		price:      sws.NewLabelWidget(100, 25, "$/month"),
-		nbservers:  sws.NewLabelWidget(100, 25, "Nb servers"),
-		buyer:      sws.NewLabelWidget(100, 25, "Buyer"),
+		CoreWidget:  *corewidget,
+		demandstats: global.NewTableWithDetails(525, 200),
 	}
 
-	widget.date.Move(25, 0)
-	widget.AddChild(widget.date)
-
-	widget.price.Move(125, 0)
-	widget.AddChild(widget.price)
-
-	widget.nbservers.Move(225, 0)
-	widget.AddChild(widget.nbservers)
-
-	widget.buyer.Move(325, 0)
-	widget.AddChild(widget.buyer)
-
-	widget.scroll.Move(0, 25)
-	widget.scroll.SetInnerWidget(widget.vbox)
-	widget.scroll.ShowHorizontalScrollbar(false)
-	widget.AddChild(widget.scroll)
+	widget.demandstats.AddHeader("Date", 100)
+	widget.demandstats.AddHeader("Price", 100)
+	widget.demandstats.AddHeader("Nb servers", 100)
+	widget.demandstats.AddHeader("Buyer", 200)
+	widget.AddChild(widget.demandstats)
 
 	gamestats.AddDemandStatSubscriber(widget)
 	return widget
@@ -323,23 +242,36 @@ func NewDemandStatWidget(w, h int32, gamestats *GameStats) *DemandStatWidget {
 // NewDemandStat is part of DemandStatSubscriber interface
 func (self *DemandStatWidget) NewDemandStat(ds *DemandStat) {
 	log.Debug("DemandStatWidget::NewDemandStat(", ds, ")")
-	line := NewDemandStatWidgetLine(self.vbox, ds)
-	self.vbox.AddChildTop(line)
-	self.scroll.Resize(self.Width(), self.Height()-25)
+	nbservers := int32(0)
+	for _, s := range ds.serverdemands {
+		nbservers += s.nb
+	}
+	price := "-"
+	bgcolor := uint32(0xffaaaaaa)
+	if ds.buyer != "" {
+		price = fmt.Sprintf("%.2f $", ds.price)
+		bgcolor = 0xffdddddd
+	}
+
+	labels := []string{
+		fmt.Sprintf("%d-%d-%d", ds.date.Day(), ds.date.Month(), ds.date.Year()),
+		price,
+		fmt.Sprintf("%d", nbservers),
+		ds.buyer,
+	}
+	line := global.NewTableWithDetailsRow(bgcolor, labels, NewDemandStatDetailsWidget(bgcolor, ds))
+	self.demandstats.AddRowTop(line)
 }
 
 func (self *DemandStatWidget) Resize(w, h int32) {
 	self.CoreWidget.Resize(w, h)
-	self.scroll.Resize(w, h-25)
 }
 
 func (self *DemandStatWidget) SetGame(gamestats *GameStats) {
 	log.Debug("DemandStatWidget::SetGame(", gamestats, ")")
-	self.vbox.RemoveAllChildren()
+	self.demandstats.ClearRows()
 
 	for _, ds := range gamestats.demandsstats {
-		line := NewDemandStatWidgetLine(self.vbox, ds)
-		self.vbox.AddChildTop(line)
+		self.NewDemandStat(ds)
 	}
-	self.scroll.Resize(self.Width(), self.Height()-25)
 }
