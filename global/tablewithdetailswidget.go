@@ -170,7 +170,7 @@ func (self *TableWithDetails) Repaint() {
 		}
 		if arrow != nil {
 			rectSrc := sdl.Rect{0, 0, arrow.W, arrow.H}
-			rectDst := sdl.Rect{0, y, arrow.W, arrow.H}
+			rectDst := sdl.Rect{(25 - arrow.W) / 2, y + (25-arrow.H)/2, arrow.W, arrow.H}
 			arrow.Blit(&rectSrc, self.Surface(), &rectDst)
 		}
 
@@ -193,10 +193,21 @@ func (self *TableWithDetails) Repaint() {
 
 			y += row.details.Height()
 		}
+		self.SetDrawColorHex(0xffffffff)
+		self.DrawLine(25, y-1, self.Width()-1, y-1)
 	}
 
 	// headers
 	self.FillRect(0, 0, self.Width(), HEADER_HEIGHT, 0xffdddddd)
+
+	//bezel (+)
+	self.SetDrawColorHex(0xffffffff)
+	self.DrawLine(0, 0, HEADER_HEIGHT-1, 0)
+	self.DrawLine(0, 0, 0, HEADER_HEIGHT-1)
+	self.SetDrawColor(50, 50, 50, 255)
+	self.DrawLine(HEADER_HEIGHT-1, 1, HEADER_HEIGHT-1, HEADER_HEIGHT-1)
+	self.DrawLine(1, HEADER_HEIGHT-1, HEADER_HEIGHT-1, HEADER_HEIGHT-1)
+
 	xoffset := int32(25)
 	for i := int32(0); i < nbcolumns; i++ {
 		label := self.header[i]
@@ -223,6 +234,14 @@ func (self *TableWithDetails) Repaint() {
 		rectDst := sdl.Rect{child.X(), child.Y(), child.Width(), child.Height()}
 		child.Surface().Blit(&rectSrc, self.Surface(), &rectDst)
 	}
+
+	// global bezel
+	self.SetDrawColorHex(0xffffffff)
+	self.DrawLine(self.Width()-1, HEADER_HEIGHT, self.Width()-1, self.Height()-1)
+	self.DrawLine(0, self.Height()-1, self.Width()-1, self.Height()-1)
+	self.SetDrawColor(50, 50, 50, 255)
+	self.DrawLine(0, HEADER_HEIGHT, 0, self.Height()-1)
+
 	self.SetDirtyFalse()
 }
 
