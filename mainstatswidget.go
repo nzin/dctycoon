@@ -247,7 +247,7 @@ func NewDemandStatWidget(w, h int32, g *Game) *DemandStatWidget {
 	widget.AddChild(widget.barchart)
 
 	widget.demandstats.Move(0, 220)
-	widget.demandstats.AddHeader("Date", 100, TableWithDetailsRowByYearMonthDay)
+	widget.demandstats.AddHeader("Date", 100, ui.TableWithDetailsRowByYearMonthDay)
 	widget.demandstats.AddHeader("Price", 100, ui.TableWithDetailsRowByPriceDollar)
 	widget.demandstats.AddHeader("Nb servers", 100, ui.TableWithDetailsRowByInteger)
 	widget.demandstats.AddHeader("Buyer", 200, func(l1, l2 string) bool { return l1 < l2 })
