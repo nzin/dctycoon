@@ -3,9 +3,11 @@ package dctycoon
 import (
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/dctycoon/supplier"
+	"github.com/nzin/dctycoon/ui"
 	"github.com/nzin/sws"
 
 	log "github.com/sirupsen/logrus"
@@ -50,7 +52,7 @@ func NewMainStatsWidget(root *sws.RootWidget, g *Game) *MainStatsWidget {
 		tabwidget:       sws.NewTabWidget(200, 200),
 		game:            g,
 		opponentswidget: NewOpponentStatWidget(200, 200),
-		demandswidget:   NewDemandStatWidget(200, 200, g.GetGameStats()),
+		demandswidget:   NewDemandStatWidget(200, 200, g),
 	}
 
 	widget.mainwidget.SetInnerWidget(widget.tabwidget)
@@ -67,12 +69,12 @@ func NewMainStatsWidget(root *sws.RootWidget, g *Game) *MainStatsWidget {
 
 func (self *MainStatsWidget) SetGame() {
 	self.opponentswidget.SetGame(self.game)
-	self.demandswidget.SetGame(self.game.GetGameStats())
+	self.demandswidget.SetGame(self.game.timer.CurrentTime, self.game.GetGameStats())
 }
 
 func (self *MainStatsWidget) LoadGame() {
 	self.opponentswidget.SetGame(self.game)
-	self.demandswidget.SetGame(self.game.GetGameStats())
+	self.demandswidget.SetGame(self.game.timer.CurrentTime, self.game.GetGameStats())
 }
 
 //
@@ -177,6 +179,8 @@ func (self *OpponentStatWidget) SetGame(game *Game) {
 	self.scroll.Resize(self.Width(), self.Height())
 }
 
+// DemandStatDetailsWidget is used to give some insight/details on
+// on particular demand stat
 type DemandStatDetailsWidget struct {
 	sws.CoreWidget
 	yoffset int32
@@ -217,18 +221,27 @@ func NewDemandStatDetailsWidget(bgcolor uint32, stat *DemandStat) *DemandStatDet
 }
 
 //
-// DemandStatWidget is an customer demand stat view
+// DemandStatWidget is a customer demand stat widget
 type DemandStatWidget struct {
 	sws.CoreWidget
-	demandstats *global.TableWithDetails
+	demandstats *ui.TableWithDetails
+	barchart    *ui.BarChartWidget
 }
 
-func NewDemandStatWidget(w, h int32, gamestats *GameStats) *DemandStatWidget {
+func NewDemandStatWidget(w, h int32, g *Game) *DemandStatWidget {
 	corewidget := sws.NewCoreWidget(w, h)
 	widget := &DemandStatWidget{
 		CoreWidget:  *corewidget,
-		demandstats: global.NewTableWithDetails(525, 200),
+		demandstats: ui.NewTableWithDetails(525, 200),
+		barchart:    ui.NewBarChartWidget(12, 300, 100),
 	}
+	widget.barchart.AddCategory("you", 0xffffffff)
+	widget.barchart.AddCategory("unassigned", 0xff444444)
+	widget.barchart.AddCategory("competitor", 0xffff4444)
+	g.AddGameTimerSubscriber(widget.barchart)
+	widget.AddChild(widget.barchart)
+
+	widget.demandstats.Move(0, 150)
 	widget.demandstats.AddHeader("Date", 100, func(l1, l2 string) bool {
 		var d1, d2, m1, m2, y1, y2 int
 		fmt.Sscanf(l1, "%d-%d-%d", &d1, &m1, &y1)
@@ -255,7 +268,7 @@ func NewDemandStatWidget(w, h int32, gamestats *GameStats) *DemandStatWidget {
 	widget.demandstats.AddHeader("Buyer", 200, func(l1, l2 string) bool { return l1 < l2 })
 	widget.AddChild(widget.demandstats)
 
-	gamestats.AddDemandStatSubscriber(widget)
+	g.GetGameStats().AddDemandStatSubscriber(widget)
 	return widget
 }
 
@@ -279,19 +292,37 @@ func (self *DemandStatWidget) NewDemandStat(ds *DemandStat) {
 		fmt.Sprintf("%d", nbservers),
 		ds.buyer,
 	}
-	line := global.NewTableWithDetailsRow(bgcolor, labels, NewDemandStatDetailsWidget(bgcolor, ds))
+	line := ui.NewTableWithDetailsRow(bgcolor, labels, NewDemandStatDetailsWidget(bgcolor, ds))
 	self.demandstats.AddRowTop(line)
+
+	categoryname := "competitor"
+	switch ds.buyer {
+	case "":
+		categoryname = "unassigned"
+	case "you": // defined in player.go
+		categoryname = "you"
+	}
+	self.barchart.AddPoint(ds.date, categoryname)
 }
 
 func (self *DemandStatWidget) Resize(w, h int32) {
 	self.CoreWidget.Resize(w, h)
 }
 
-func (self *DemandStatWidget) SetGame(gamestats *GameStats) {
+func (self *DemandStatWidget) SetGame(t time.Time, gamestats *GameStats) {
 	log.Debug("DemandStatWidget::SetGame(", gamestats, ")")
 	self.demandstats.ClearRows()
+	self.barchart.Clear(t)
 
 	for _, ds := range gamestats.demandsstats {
 		self.NewDemandStat(ds)
+		categoryname := "competitor"
+		switch ds.buyer {
+		case "":
+			categoryname = "unassigned"
+		case "you": // defined in player.go
+			categoryname = "you"
+		}
+		self.barchart.AddPoint(ds.date, categoryname)
 	}
 }

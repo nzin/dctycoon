@@ -1,8 +1,9 @@
-package global
+package ui
 
 import (
 	"sort"
 
+	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/sws"
 	"github.com/veandco/go-sdl2/sdl"
 )
@@ -77,10 +78,10 @@ func NewTableWithDetails(w, h int32) *TableWithDetails {
 		widget.PostUpdate()
 	})
 
-	if surface, err := LoadImageAsset("assets/ui/icon-arrowhead-pointing-to-the-right.png"); err == nil {
+	if surface, err := global.LoadImageAsset("assets/ui/icon-arrowhead-pointing-to-the-right.png"); err == nil {
 		widget.arrowUp = surface
 	}
-	if surface, err := LoadImageAsset("assets/ui/icon-sort-down.png"); err == nil {
+	if surface, err := global.LoadImageAsset("assets/ui/icon-sort-down.png"); err == nil {
 		widget.arrowDown = surface
 	}
 
