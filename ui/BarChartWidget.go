@@ -12,6 +12,8 @@ type BarChartCategory struct {
 	color uint32
 }
 
+// BarChartWidget is a bar chart widget
+// streamlining nb months of graph in a sliding window style
 type BarChartWidget struct {
 	sws.CoreWidget
 	nbmonths    int32
