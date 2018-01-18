@@ -67,7 +67,7 @@ func NewMainStatsWidget(root *sws.RootWidget, g *Game) *MainStatsWidget {
 		widget.Hide()
 	})
 
-	widget.tabwidget.AddTab("Opponents", widget.opponentswidget)
+	widget.tabwidget.AddTab("Competitors", widget.opponentswidget)
 	widget.tabwidget.AddTab("Customer demands", widget.demandswidget)
 
 	return widget
