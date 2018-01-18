@@ -235,9 +235,9 @@ func NewDemandStatWidget(w, h int32, g *Game) *DemandStatWidget {
 		demandstats: ui.NewTableWithDetails(525, 200),
 		barchart:    ui.NewBarChartWidget(18, 525, 200),
 	}
-	widget.barchart.AddCategory("you", 0xffffffff)
-	widget.barchart.AddCategory("unassigned", 0xff444444)
-	widget.barchart.AddCategory("competitor", 0xffff4444)
+	widget.barchart.AddCategory("you", 0xff8888ff)
+	widget.barchart.AddCategory("unassigned", 0xffaaaaaa)
+	widget.barchart.AddCategory("competitor", 0xffff7b44)
 	g.AddGameTimerSubscriber(widget.barchart)
 	widget.AddChild(widget.barchart)
 
@@ -283,7 +283,10 @@ func (self *DemandStatWidget) NewDemandStat(ds *DemandStat) {
 	bgcolor := uint32(0xffaaaaaa)
 	if ds.buyer != "" {
 		price = fmt.Sprintf("%.2f $", ds.price)
-		bgcolor = 0xffdddddd
+		bgcolor = 0xffff7b44
+		if ds.buyer == "you" {
+			bgcolor = 0xff8888ff
+		}
 	}
 
 	labels := []string{
