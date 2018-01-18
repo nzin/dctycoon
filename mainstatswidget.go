@@ -43,7 +43,7 @@ func (self *MainStatsWidget) Hide() {
 
 // NewMainStatsWidget presents different stats and graphs
 func NewMainStatsWidget(root *sws.RootWidget, g *Game) *MainStatsWidget {
-	mainwidget := sws.NewMainWidget(850, 400, " Graph and Statistics ", true, true)
+	mainwidget := sws.NewMainWidget(850, 600, " Graph and Statistics ", true, true)
 	mainwidget.Center(root)
 
 	widget := &MainStatsWidget{
@@ -233,7 +233,7 @@ func NewDemandStatWidget(w, h int32, g *Game) *DemandStatWidget {
 	widget := &DemandStatWidget{
 		CoreWidget:  *corewidget,
 		demandstats: ui.NewTableWithDetails(525, 200),
-		barchart:    ui.NewBarChartWidget(12, 300, 100),
+		barchart:    ui.NewBarChartWidget(18, 525, 200),
 	}
 	widget.barchart.AddCategory("you", 0xffffffff)
 	widget.barchart.AddCategory("unassigned", 0xff444444)
@@ -241,7 +241,7 @@ func NewDemandStatWidget(w, h int32, g *Game) *DemandStatWidget {
 	g.AddGameTimerSubscriber(widget.barchart)
 	widget.AddChild(widget.barchart)
 
-	widget.demandstats.Move(0, 150)
+	widget.demandstats.Move(0, 220)
 	widget.demandstats.AddHeader("Date", 100, func(l1, l2 string) bool {
 		var d1, d2, m1, m2, y1, y2 int
 		fmt.Sscanf(l1, "%d-%d-%d", &d1, &m1, &y1)
@@ -316,13 +316,5 @@ func (self *DemandStatWidget) SetGame(t time.Time, gamestats *GameStats) {
 
 	for _, ds := range gamestats.demandsstats {
 		self.NewDemandStat(ds)
-		categoryname := "competitor"
-		switch ds.buyer {
-		case "":
-			categoryname = "unassigned"
-		case "you": // defined in player.go
-			categoryname = "you"
-		}
-		self.barchart.AddPoint(ds.date, categoryname)
 	}
 }

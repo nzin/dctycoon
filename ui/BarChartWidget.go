@@ -1,10 +1,12 @@
 package ui
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/nzin/dctycoon/timer"
 	"github.com/nzin/sws"
+	"github.com/veandco/go-sdl2/sdl"
 )
 
 type BarChartCategory struct {
@@ -31,7 +33,6 @@ func NewBarChartWidget(nbmonths int32, w, h int32) *BarChartWidget {
 		data:        make([]map[string]int32, nbmonths, nbmonths),
 		categories:  make([]*BarChartCategory, 0, 0),
 	}
-	widget.SetColor(0xffffffff)
 	for i := int32(0); i < nbmonths; i++ {
 		widget.data[i] = make(map[string]int32)
 	}
@@ -83,11 +84,29 @@ func (self *BarChartWidget) AddPoint(t time.Time, category string) {
 
 func (self *BarChartWidget) Repaint() {
 	self.CoreWidget.Repaint()
+	max := int32(0)
 	for i := int32(0); i < self.nbmonths; i++ {
-		xFrom := (self.Width() * i) / self.nbmonths
-		xTo := (self.Width() * (i + 1)) / self.nbmonths
-
 		data := self.data[i]
+		total := int32(0)
+		for j := 0; j < len(self.categories); j++ {
+			total += data[self.categories[j].name]
+		}
+		if max < total {
+			max = total
+		}
+	}
+
+	width := self.Width() - 25
+	if self.Width() > 400 {
+		width = self.Width() - 150 - 25
+	}
+	height := self.Height() - 25
+	xoffset := int32(25)
+	for i := int32(0); i < self.nbmonths; i++ {
+		xFrom := (width*i)/self.nbmonths + xoffset
+		xTo := (width*(i+1))/self.nbmonths + xoffset
+
+		data := self.data[self.nbmonths-1-i]
 		total := int32(0)
 		for j := 0; j < len(self.categories); j++ {
 			total += data[self.categories[j].name]
@@ -98,10 +117,39 @@ func (self *BarChartWidget) Repaint() {
 				color := self.categories[j].color
 				nbTo := data[self.categories[j].name] + nbFrom
 				//				fmt.Println(i, xFrom, self.Height()-(nbTo*self.Height()/total), xTo-xFrom, ((nbTo - nbFrom) * self.Height() / total), color)
-				self.FillRect(xFrom, self.Height()-(nbTo*self.Height()/total), xTo-xFrom, ((nbTo - nbFrom) * self.Height() / total), color)
+				self.FillRect(xFrom+1, height-(nbTo*height/max), xTo-xFrom-2, ((nbTo - nbFrom) * height / max), color)
 
 				nbFrom = nbTo
 			}
+		}
+		// write month
+		if i%4 == 0 {
+			month := self.lastrefresh.Month()
+			year := self.lastrefresh.Year()
+			for j := self.nbmonths; j > i; j-- {
+				if month == 1 {
+					year--
+					month = 12
+				} else {
+					month--
+				}
+			}
+			self.SetDrawColorHex(0xff000000)
+			self.DrawLine((xFrom+xTo)/2, height, (xFrom+xTo)/2, height+4)
+			self.WriteText(xFrom-10, height+2, fmt.Sprintf("%d/%d", month, year%100), sdl.Color{0, 0, 0, 0xff})
+		}
+	}
+	self.WriteText(0, 0, fmt.Sprintf("%d", max), sdl.Color{0, 0, 0, 0xff})
+	self.SetDrawColorHex(0xff000000)
+	self.DrawLine(25, 0, 25, height)
+	self.DrawLine(25, height, width+25, height)
+
+	// show labels
+	if self.Width() > 400 {
+		xoffset = self.Width() - 150
+		for j := 0; j < len(self.categories); j++ {
+			self.FillRect(xoffset+5, int32(j*25)+5, 15, 15, self.categories[j].color)
+			self.WriteText(xoffset+25, int32(j*25), self.categories[j].name, sdl.Color{0, 0, 0, 0xff})
 		}
 	}
 	self.SetDirtyFalse()
