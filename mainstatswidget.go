@@ -2,7 +2,6 @@ package dctycoon
 
 import (
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/nzin/dctycoon/global"
@@ -248,29 +247,9 @@ func NewDemandStatWidget(w, h int32, g *Game) *DemandStatWidget {
 	widget.AddChild(widget.barchart)
 
 	widget.demandstats.Move(0, 220)
-	widget.demandstats.AddHeader("Date", 100, func(l1, l2 string) bool {
-		var d1, d2, m1, m2, y1, y2 int
-		fmt.Sscanf(l1, "%d-%d-%d", &d1, &m1, &y1)
-		fmt.Sscanf(l2, "%d-%d-%d", &d2, &m2, &y2)
-		if y1 != y2 {
-			return y1 < y2
-		}
-		if m1 != m2 {
-			return m1 < m2
-		}
-		return d1 < d2
-	})
-	widget.demandstats.AddHeader("Price", 100, func(l1, l2 string) bool {
-		var f1, f2 float64
-		fmt.Sscanf(l1, "%f $", &f1)
-		fmt.Sscanf(l2, "%f $", &f2)
-		return f1 < f2
-	})
-	widget.demandstats.AddHeader("Nb servers", 100, func(l1, l2 string) bool {
-		nb1, _ := strconv.Atoi(l1)
-		nb2, _ := strconv.Atoi(l2)
-		return nb1 < nb2
-	})
+	widget.demandstats.AddHeader("Date", 100, TableWithDetailsRowByYearMonthDay)
+	widget.demandstats.AddHeader("Price", 100, ui.TableWithDetailsRowByPriceDollar)
+	widget.demandstats.AddHeader("Nb servers", 100, ui.TableWithDetailsRowByInteger)
 	widget.demandstats.AddHeader("Buyer", 200, func(l1, l2 string) bool { return l1 < l2 })
 	widget.AddChild(widget.demandstats)
 
