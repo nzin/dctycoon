@@ -19,6 +19,7 @@ type TableWithDetailsRow struct {
 	bgcolor       uint32
 }
 
+// NewTableWithDetailsRow is about create a new row for a TableWithDetailsRow
 func NewTableWithDetailsRow(bgcolor uint32, labels []string, details sws.Widget) *TableWithDetailsRow {
 	row := &TableWithDetailsRow{
 		detailsopened: false,
@@ -31,6 +32,7 @@ func NewTableWithDetailsRow(bgcolor uint32, labels []string, details sws.Widget)
 
 type TableWithDetailsRowBy func(l1, l2 string) bool
 
+// TableWithDetailsRowByPriceDollar is TableWithDetailsRowBy helper implementation for string like "123.45 $"
 func TableWithDetailsRowByPriceDollar(l1, l2 string) bool {
 	var f1, f2 float64
 	fmt.Sscanf(l1, "%f $", &f1)
@@ -38,12 +40,14 @@ func TableWithDetailsRowByPriceDollar(l1, l2 string) bool {
 	return f1 < f2
 }
 
+// TableWithDetailsRowByInteger is a TableWithDetailsRowBy helper implementation for string like "123"
 func TableWithDetailsRowByInteger(l1, l2 string) bool {
 	nb1, _ := strconv.Atoi(l1)
 	nb2, _ := strconv.Atoi(l2)
 	return nb1 < nb2
 }
 
+// TableWithDetailsRowByYearMonthDay is a TableWithDetailsRowBy helper implementation for string like "24-1-1995"
 func TableWithDetailsRowByYearMonthDay(l1, l2 string) bool {
 	var d1, d2, m1, m2, y1, y2 int
 	fmt.Sscanf(l1, "%d-%d-%d", &d1, &m1, &y1)
@@ -57,6 +61,7 @@ func TableWithDetailsRowByYearMonthDay(l1, l2 string) bool {
 	return d1 < d2
 }
 
+// TableWithDetails is a data table with header + expandable details widget
 type TableWithDetails struct {
 	sws.CoreWidget
 	vertical        *sws.ScrollbarWidget
@@ -84,6 +89,7 @@ func (t *TableWithDetails) Less(i, j int) bool {
 	}
 }
 
+// NewTableWithDetails creates a TableWithDetails i.e. a data table with header + expandable details widget
 func NewTableWithDetails(w, h int32) *TableWithDetails {
 	corewidget := sws.NewCoreWidget(w, h)
 	widget := &TableWithDetails{

@@ -9,7 +9,8 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-type BarChartCategory struct {
+// internal representation of a category
+type barChartCategory struct {
 	name  string
 	color uint32
 }
@@ -21,9 +22,12 @@ type BarChartWidget struct {
 	nbmonths    int32
 	lastrefresh time.Time
 	data        []map[string]int32 // category -> nb
-	categories  []*BarChartCategory
+	categories  []*barChartCategory
 }
 
+// NewBarChartWidget create a simple timeline stacked barchart graph widget with
+// - legend on the right
+// - time point on the bottom
 func NewBarChartWidget(nbmonths int32, w, h int32) *BarChartWidget {
 	corewidget := sws.NewCoreWidget(w, h)
 	widget := &BarChartWidget{
@@ -31,7 +35,7 @@ func NewBarChartWidget(nbmonths int32, w, h int32) *BarChartWidget {
 		nbmonths:    nbmonths,
 		lastrefresh: time.Now(),
 		data:        make([]map[string]int32, nbmonths, nbmonths),
-		categories:  make([]*BarChartCategory, 0, 0),
+		categories:  make([]*barChartCategory, 0, 0),
 	}
 	for i := int32(0); i < nbmonths; i++ {
 		widget.data[i] = make(map[string]int32)
@@ -57,21 +61,24 @@ func (self *BarChartWidget) NewDay(timer *timer.GameTimer) {
 	self.lastrefresh = timer.CurrentTime
 }
 
-func (self *BarChartWidget) Clear(t time.Time) {
+// ClearData removes all data (but not categories)
+func (self *BarChartWidget) ClearData(t time.Time) {
 	self.lastrefresh = t
 	for i := int32(0); i < self.nbmonths; i++ {
 		self.data[i] = make(map[string]int32)
 	}
 }
 
+// AddCategory allows to add/represent (with a specific color) a new category in the stack barchart
 func (self *BarChartWidget) AddCategory(name string, color uint32) {
-	category := &BarChartCategory{
+	category := &barChartCategory{
 		name:  name,
 		color: color,
 	}
 	self.categories = append(self.categories, category)
 }
 
+// AddPoint is really about adding a new data point into the timeline barchart
 func (self *BarChartWidget) AddPoint(t time.Time, category string) {
 	pointMonth := t.Year()*12 + int(t.Month())
 	currentMonth := self.lastrefresh.Year()*12 + int(self.lastrefresh.Month())

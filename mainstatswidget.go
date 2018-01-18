@@ -300,7 +300,7 @@ func (self *DemandStatWidget) Resize(w, h int32) {
 func (self *DemandStatWidget) SetGame(t time.Time, gamestats *GameStats) {
 	log.Debug("DemandStatWidget::SetGame(", gamestats, ")")
 	self.demandstats.ClearRows()
-	self.barchart.Clear(t)
+	self.barchart.ClearData(t)
 
 	for _, ds := range gamestats.demandsstats {
 		self.NewDemandStat(ds)
