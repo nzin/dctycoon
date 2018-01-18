@@ -238,7 +238,7 @@ func NewDemandStatWidget(w, h int32, g *Game) *DemandStatWidget {
 	corewidget := sws.NewCoreWidget(w, h)
 	widget := &DemandStatWidget{
 		CoreWidget:  *corewidget,
-		demandstats: ui.NewTableWithDetails(525, 200),
+		demandstats: ui.NewTableWithDetails(525+15, 200),
 		barchart:    ui.NewBarChartWidget(18, 525, 200),
 	}
 	widget.barchart.AddCategory("you", COLOR_SALE_YOU)

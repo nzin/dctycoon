@@ -126,7 +126,7 @@ func (self *BarChartWidget) Repaint() {
 		if i%4 == 0 {
 			month := self.lastrefresh.Month()
 			year := self.lastrefresh.Year()
-			for j := self.nbmonths; j > i; j-- {
+			for j := self.nbmonths - 1; j > i; j-- {
 				if month == 1 {
 					year--
 					month = 12
