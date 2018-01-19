@@ -6,7 +6,7 @@ import (
 )
 
 //
-// Widget used to print a "N/A" banner
+// NothingWidget is used to print a "N/A" banner widget
 type NothingWidget struct {
 	sws.CoreWidget
 }
