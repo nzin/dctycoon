@@ -123,6 +123,7 @@ func NewMainGameMenu(game *Game, root *sws.RootWidget, quit *bool) *MainGameMenu
 		widget.loadwidget.Loadfiles()
 		root.AddChild(widget.loadwidget)
 		root.SetFocus(widget.loadwidget.listwidget)
+		root.SetModal(widget.loadwidget)
 	})
 
 	widget.quitbutton.Move(150, 170)
@@ -134,6 +135,7 @@ func NewMainGameMenu(game *Game, root *sws.RootWidget, quit *bool) *MainGameMenu
 	widget.loadwidget.Move((root.Width()-widget.loadwidget.Width())/2, (root.Height()-widget.loadwidget.Height())/2)
 	widget.loadwidget.SetCancelCallback(func() {
 		root.RemoveChild(widget.loadwidget)
+		root.SetModal(widget)
 	})
 
 	widget.loadwidget.SetLoadCallback(func(filename string) {
@@ -146,15 +148,18 @@ func NewMainGameMenu(game *Game, root *sws.RootWidget, quit *bool) *MainGameMenu
 		widget.savewidget.Loadfiles()
 		root.AddChild(widget.savewidget)
 		root.SetFocus(widget.savewidget.filenameinput)
+		root.SetModal(widget.savewidget)
 	})
 
 	widget.savewidget.SetCancelCallback(func() {
 		root.RemoveChild(widget.savewidget)
+		root.SetModal(widget)
 	})
 
 	widget.savewidget.SetSaveCallback(func(filename string) {
 		root.RemoveChild(widget.savewidget)
 		game.SaveGame(filename)
+		root.SetModal(widget)
 	})
 
 	return widget
@@ -173,6 +178,7 @@ func (self *MainGameMenu) ShowSave() {
 	self.previousSpeed = self.game.GetCurrentSpeed()
 	self.game.ChangeGameSpeed(SPEED_STOP)
 	self.root.AddChild(self)
+	self.root.SetModal(self)
 	self.SetCancelCallback(func() {
 		self.root.RemoveChild(self)
 		self.game.ChangeGameSpeed(self.previousSpeed)
