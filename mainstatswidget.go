@@ -68,7 +68,9 @@ func NewMainStatsWidget(root *sws.RootWidget, g *Game) *MainStatsWidget {
 
 	widget.tabwidget.AddTab("Competitors", widget.opponentswidget)
 	widget.tabwidget.AddTab("Customer demands", widget.demandswidget)
-
+	if g.GetDebug() {
+		widget.tabwidget.AddTab("Opponent debug", NewDebugOpponentWidget(200, 200, g))
+	}
 	return widget
 }
 
@@ -192,7 +194,7 @@ type DemandStatDetailsWidget struct {
 }
 
 func NewDemandStatDetailsWidget(bgcolor uint32, stat *DemandStat) *DemandStatDetailsWidget {
-	corewidget := sws.NewCoreWidget(525, 25)
+	corewidget := sws.NewCoreWidget(525, 0)
 
 	line := &DemandStatDetailsWidget{
 		CoreWidget: *corewidget,
@@ -222,6 +224,7 @@ func NewDemandStatDetailsWidget(bgcolor uint32, stat *DemandStat) *DemandStatDet
 
 		line.yoffset += 25
 	}
+	line.Resize(525, line.yoffset)
 	return line
 }
 

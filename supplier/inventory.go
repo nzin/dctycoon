@@ -342,21 +342,9 @@ func (self *Inventory) LoadItem(product map[string]interface{}) {
 		}
 		switch product["pooltype"] {
 		case "hardware":
-			for _, p := range self.pools {
-				if p.IsVps() == false {
-					item.Pool = p
-					break
-				}
-			}
-			break
+			self.AssignPool(item, self.GetDefaultPhysicalPool())
 		case "vps":
-			for _, p := range self.pools {
-				if p.IsVps() == true {
-					item.Pool = p
-					break
-				}
-			}
-			break
+			self.AssignPool(item, self.GetDefaultVpsPool())
 		}
 
 	case "RACK":

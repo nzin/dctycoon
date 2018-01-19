@@ -50,12 +50,13 @@ type Game struct {
 	timersubscribers []GameTimerSubscriber
 	currentSpeed     int
 	gamestats        *GameStats
+	debug            bool
 }
 
 //
 // NewGame create a common place where we generate customer demand
 // and assign them to the best provider (aka Datacenter)
-func NewGame(quit *bool, root *sws.RootWidget) *Game {
+func NewGame(quit *bool, root *sws.RootWidget, debug bool) *Game {
 	log.Debug("NewGame()")
 
 	g := &Game{
@@ -71,6 +72,7 @@ func NewGame(quit *bool, root *sws.RootWidget) *Game {
 		timersubscribers: make([]GameTimerSubscriber, 0, 0),
 		currentSpeed:     SPEED_STOP,
 		gamestats:        NewGameStats(),
+		debug:            debug,
 	}
 	g.gameui = NewGameUI(quit, root, g)
 
@@ -355,6 +357,10 @@ func (self *Game) GetPlayer() *Player {
 // GetPlayer returns the stats central repo
 func (self *Game) GetGameStats() *GameStats {
 	return self.gamestats
+}
+
+func (self *Game) GetDebug() bool {
+	return self.debug
 }
 
 type NameList struct {

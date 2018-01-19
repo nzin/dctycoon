@@ -40,12 +40,13 @@ func main() {
 
 	loglevel := flag.String("loglevel", "", "[debug,info,warning,error] Default to error")
 	logfile := flag.String("logfile", "", "optional if we want the log to not be on stdout")
+	debug := flag.Bool("debug", false, "Development only")
 	flag.Parse()
 	initLog(*loglevel, *logfile)
 
 	root := sws.Init(800, 600)
 
-	game := dctycoon.NewGame(&quit, root)
+	game := dctycoon.NewGame(&quit, root, *debug)
 	game.ShowOpening()
 	/*
 		//	game.InitGame(12000, "siliconvalley")
