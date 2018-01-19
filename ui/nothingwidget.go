@@ -1,4 +1,4 @@
-package global
+package ui
 
 import (
 	"github.com/nzin/sws"

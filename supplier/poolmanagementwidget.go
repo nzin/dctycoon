@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/nzin/dctycoon/global"
+	"github.com/nzin/dctycoon/ui"
 	"github.com/nzin/sws"
 )
 
@@ -518,7 +519,7 @@ func NewPoolManagementWidget(root *sws.RootWidget) *PoolManagementWidget {
 	globaldisk.Move(525, 100)
 	widget.AddChild(globaldisk)
 
-	na := global.NewNothingWidget(625, 25)
+	na := ui.NewNothingWidget(625, 25)
 	na.Move(0, 125)
 	widget.AddChild(na)
 

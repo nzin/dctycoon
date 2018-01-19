@@ -14,6 +14,7 @@ import (
 	"strconv"
 
 	"github.com/nzin/dctycoon/global"
+	"github.com/nzin/dctycoon/ui"
 	"github.com/nzin/sws"
 	log "github.com/sirupsen/logrus"
 )
@@ -236,7 +237,7 @@ func NewOfferManagementWidget(root *sws.RootWidget) *OfferManagementWidget {
 		}
 	})
 
-	na := global.NewNothingWidget(650, 25)
+	na := ui.NewNothingWidget(650, 25)
 	na.Move(0, 75)
 	widget.AddChild(na)
 
