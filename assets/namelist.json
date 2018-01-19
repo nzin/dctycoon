@@ -1,0 +1,30 @@
+[
+	{
+		"name": "John Doe",
+		"male": true
+	}, {
+		"name": "Boby Maxmimus",
+		"male": true
+	}, {
+		"name": "Emma Rasputin",
+		"male": false
+	}, {
+		"name": "Susan Boyle",
+		"male": false
+	}, {
+		"name": "Eleanor Grande",
+		"male": false
+	}, {
+		"name": "Jimmy Carey",
+		"male": true
+	}, {
+		"name": "Isaac Asimov",
+		"male": true
+	}, {
+		"name": "Janet Yellen",
+		"male": false
+	}, {
+		"name": "Chuck Norris",
+		"male": true
+	}
+]

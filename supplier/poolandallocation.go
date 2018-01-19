@@ -118,6 +118,7 @@ func (self *HardwareServerPool) Allocate(nbcores, ramsize, disksize int32, vt bo
 			}
 		}
 	}
+	log.Debug("HardwareServerPool::Allocate: selected=", selected)
 	if selected != nil {
 		selected.Coresallocated = selected.Serverconf.NbProcessors * selected.Serverconf.NbCore
 		selected.Ramallocated = selected.Serverconf.NbSlotRam * selected.Serverconf.RamSize

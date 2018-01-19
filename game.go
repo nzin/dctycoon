@@ -131,10 +131,17 @@ func (self *Game) InitGame(locationid string, difficulty int32) {
 	self.player = NewPlayer()
 	self.player.Init(self.timer, initialcapital, locationid)
 
+	// loading list of names
 	availablenames := make([]NameList, 0, 0)
-	for _, n := range nameList {
-		availablenames = append(availablenames, n)
+	if nameList, err := global.Asset("assets/namelist.json"); err != nil {
+		availablenames = append(availablenames, NameList{Name: "John Doe", Male: true})
+		nbopponents = 1
+	} else {
+		if err := json.Unmarshal(nameList, &availablenames); err != nil {
+			log.Error("Game::InitGame: Unable to parse correctly assets/namelist.json")
+		}
 	}
+
 	// opponents
 	self.npactors = make([]*NPDatacenter, 0, 0)
 	for nb := int32(0); nb < nbopponents; nb++ {
@@ -154,7 +161,7 @@ func (self *Game) InitGame(locationid string, difficulty int32) {
 		}
 
 		indexname := rand.Int() % len(availablenames)
-		opponent.Init(self.timer, 200000, locationid, self.trends, profile, availablenames[indexname].name, availablenames[indexname].male)
+		opponent.Init(self.timer, 200000, locationid, self.trends, profile, availablenames[indexname].Name, availablenames[indexname].Male)
 		opponent.NewYearOperations()
 		self.npactors = append(self.npactors, opponent)
 
@@ -364,37 +371,6 @@ func (self *Game) GetDebug() bool {
 }
 
 type NameList struct {
-	name string
-	male bool
-}
-
-var nameList = []NameList{
-	{
-		name: "John Doe",
-		male: true,
-	}, {
-		"Boby Maxmimus",
-		true,
-	}, {
-		"Emma Rasputin",
-		false,
-	}, {
-		"Susan Boyle",
-		false,
-	}, {
-		"Eleanor Grande",
-		false,
-	}, {
-		"Jimmy Carey",
-		true,
-	}, {
-		"Isaac Asimov",
-		true,
-	}, {
-		"Janet Yellen",
-		false,
-	}, {
-		"Chuck Norris",
-		true,
-	},
+	Name string
+	Male bool
 }
