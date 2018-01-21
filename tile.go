@@ -3,6 +3,7 @@ package dctycoon
 import (
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/dctycoon/supplier"
@@ -249,6 +250,42 @@ func (self *Tile) ItemUninstalled(item *supplier.InventoryItem) {
 
 func (self *Tile) TileElement() TileElement {
 	return self.element
+}
+
+// IsFloorOutside used to know if we can place a AC on it
+func (self *Tile) IsFloorOutside() bool {
+	return strings.HasPrefix(self.floor, "green")
+}
+
+// IsFloorInsideNotAir used to know if we are on a server tile
+// but not on a air flow to install anything
+func (self *Tile) IsFloorInsideNotAirFlow() bool {
+	return self.floor == "inside"
+}
+
+// IsFloorInsideAir used to know if we are on a air flow tile
+func (self *Tile) IsFloorInsideAirFlow() bool {
+	return self.floor == "inside.air"
+}
+
+func (self *Tile) SwitchToAirFlow() {
+	if self.floor == "inside" {
+		self.floor = "inside.air"
+		if self.surface != nil {
+			self.surface.Free()
+		}
+		self.surface = nil
+	}
+}
+
+func (self *Tile) SwitchToNotAirFlow() {
+	if self.floor == "inside.air" {
+		self.floor = "inside"
+		if self.surface != nil {
+			self.surface.Free()
+		}
+		self.surface = nil
+	}
 }
 
 func (self *Tile) IsElementAt(x, y int32) bool {

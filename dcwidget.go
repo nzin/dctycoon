@@ -80,6 +80,10 @@ func (self *DcWidget) DragDrop(x, y int32, payload sws.DragPayload) bool {
 		if tile == nil || tile.element != nil {
 			return false
 		}
+		if (!tile.IsFloorOutside() && item.Typeitem == supplier.PRODUCT_GENERATOR) ||
+			(!tile.IsFloorInsideNotAirFlow() && item.Typeitem != supplier.PRODUCT_GENERATOR) {
+			return false
+		}
 
 		self.inventory.InstallItem(item, tx, ty, -1)
 		return true
@@ -191,9 +195,9 @@ func (self *DcWidget) MousePressDown(x, y int32, button uint8) {
 	self.rackwidget.activeElement = nil
 	activeTile, xtile, ytile, isElement := self.findTile(x, y)
 
+	self.activeTile = activeTile
 	// now, do we have an active item inside the tile
 	if activeTile != nil && isElement && activeTile.TileElement().ElementType() != supplier.PRODUCT_DECORATION {
-		self.activeTile = activeTile
 		//fmt.Println("active element!!!")
 		self.activeX = xtile
 		self.activeY = ytile
@@ -263,6 +267,35 @@ func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 			}))
 			m.Move(x, y)
 			sws.ShowMenu(m)
+		} else if activeElement != nil && (activeElement.ElementType() == supplier.PRODUCT_DECORATION) {
+			decoration := activeElement.(*DecorationElement)
+			if decoration.GetName() == "shelf" && self.showInventoryManagement != nil {
+				m := sws.NewMenuWidget()
+				m.AddItem(sws.NewMenuItemLabel("Details", func() {
+					self.showInventoryManagement()
+				}))
+				m.Move(x, y)
+				sws.ShowMenu(m)
+			}
+		} else if activeElement == nil {
+			if self.activeTile.IsFloorInsideNotAirFlow() {
+				m := sws.NewMenuWidget()
+				tile := self.activeTile
+				m.AddItem(sws.NewMenuItemLabel("Switch to air flow", func() {
+					tile.SwitchToAirFlow()
+				}))
+				m.Move(x, y)
+				sws.ShowMenu(m)
+			}
+			if self.activeTile.IsFloorInsideAirFlow() {
+				m := sws.NewMenuWidget()
+				tile := self.activeTile
+				m.AddItem(sws.NewMenuItemLabel("Remove air flow", func() {
+					tile.SwitchToNotAirFlow()
+				}))
+				m.Move(x, y)
+				sws.ShowMenu(m)
+			}
 		}
 	}
 	self.activeTile = nil
@@ -306,7 +339,7 @@ func (self *DcWidget) MouseMove(x, y, xrel, yrel int32) {
 	}
 
 	// if we are moving an element's tile
-	if self.activeTile != nil && self.activeTile.TileElement() != nil {
+	if self.activeTile != nil && self.activeTile.TileElement() != nil && self.activeTile.TileElement().ElementType() != supplier.PRODUCT_DECORATION {
 
 		// compute the x-y where the mouse is
 		mapheight := len(self.tiles)
@@ -329,33 +362,38 @@ func (self *DcWidget) MouseMove(x, y, xrel, yrel int32) {
 		}
 
 		if (tilex != self.activeX || tiley != self.activeY) && self.tiles[tiley][tilex].element == nil {
+			xytile := self.tiles[tiley][tilex]
 			element := self.activeTile.element
-			rotation := self.activeTile.rotation
-			self.activeTile.element = nil
-			self.activeTile.surface = nil
 
-			// update the tiles
-			self.activeX = tilex
-			self.activeY = tiley
-			self.activeTile = self.tiles[tiley][tilex]
-			self.activeTile.element = element
-			self.activeTile.rotation = rotation
-			self.activeTile.surface = nil
+			if (xytile.IsFloorOutside() && element.ElementType() == supplier.PRODUCT_GENERATOR) ||
+				(xytile.IsFloorInsideNotAirFlow() && element.ElementType() != supplier.PRODUCT_GENERATOR) {
+				rotation := self.activeTile.rotation
+				self.activeTile.element = nil
+				self.activeTile.surface = nil
 
-			// update the InventoryItem
-			if element != nil {
-				element.InventoryItem().Xplaced = tilex
-				element.InventoryItem().Yplaced = tiley
-			}
-			if element.ElementType() == supplier.PRODUCT_RACK {
-				rack := element.(*RackElement)
-				for _, i := range rack.items {
-					i.Xplaced = tilex
-					i.Yplaced = tiley
+				// update the tiles
+				self.activeX = tilex
+				self.activeY = tiley
+				self.activeTile = xytile
+				self.activeTile.element = element
+				self.activeTile.rotation = rotation
+				self.activeTile.surface = nil
+
+				// update the InventoryItem
+				if element != nil {
+					element.InventoryItem().Xplaced = tilex
+					element.InventoryItem().Yplaced = tiley
 				}
-			}
+				if element.ElementType() == supplier.PRODUCT_RACK {
+					rack := element.(*RackElement)
+					for _, i := range rack.items {
+						i.Xplaced = tilex
+						i.Yplaced = tiley
+					}
+				}
 
-			self.PostUpdate()
+				self.PostUpdate()
+			}
 		}
 	}
 }
