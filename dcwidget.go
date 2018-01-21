@@ -242,7 +242,9 @@ func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 			}))
 			m.Move(x, y)
 			sws.ShowMenu(m)
-		} else if activeElement != nil {
+		} else if activeElement != nil && (activeElement.ElementType() == supplier.PRODUCT_GENERATOR ||
+			activeElement.ElementType() == supplier.PRODUCT_AC ||
+			activeElement.ElementType() == supplier.PRODUCT_SERVER) {
 			m := sws.NewMenuWidget()
 			activeTile := self.activeTile
 			m.AddItem(sws.NewMenuItemLabel("Rotate", func() {
@@ -461,7 +463,11 @@ func (self *DcWidget) LoadMap(dc map[string]interface{}) {
 		wall1 := tile["wall1"].(string)
 		floor := tile["floor"].(string)
 		rotation := uint32(tile["rotation"].(float64))
-		self.tiles[y][x] = NewTile(wall0, wall1, floor, rotation)
+		var decorationname string
+		if data, ok := tile["decoration"]; ok {
+			decorationname = data.(string)
+		}
+		self.tiles[y][x] = NewTile(wall0, wall1, floor, rotation, decorationname)
 	}
 	// place everything except servers
 	for _, item := range self.inventory.Items {
@@ -500,7 +506,11 @@ func (self *DcWidget) InitMap(assetdcmap string) {
 				wall1 := tile["wall1"].(string)
 				floor := tile["floor"].(string)
 				rotation := uint32(tile["rotation"].(float64))
-				self.tiles[y][x] = NewTile(wall0, wall1, floor, rotation)
+				var decorationname string
+				if data, ok := tile["decoration"]; ok {
+					decorationname = data.(string)
+				}
+				self.tiles[y][x] = NewTile(wall0, wall1, floor, rotation, decorationname)
 			}
 		}
 	}
@@ -513,14 +523,20 @@ func (self *DcWidget) SaveMap() string {
 		for x, _ := range self.tiles[y] {
 			t := self.tiles[y][x]
 			value := ""
+			decorationname := ""
+			if t.TileElement() != nil && t.TileElement().ElementType() == supplier.PRODUCT_DECORATION {
+				decoration := t.TileElement().(*DecorationElement)
+				decorationname = decoration.GetName()
+			}
 			if t.wall[0] != "" || t.wall[1] != "" || t.floor != "green" {
-				value = fmt.Sprintf(`{"x":%d, "y":%d, "wall0":"%s", "wall1":"%s", "floor":"%s","rotation":%d}`,
+				value = fmt.Sprintf(`{"x":%d, "y":%d, "wall0":"%s", "wall1":"%s", "floor":"%s","rotation":%d, "decoration": "%s"}`,
 					x,
 					y,
 					t.wall[0],
 					t.wall[1],
 					t.floor,
 					t.rotation,
+					decorationname,
 				)
 			}
 			if value != "" {

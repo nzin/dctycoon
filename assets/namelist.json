@@ -26,5 +26,47 @@
 	}, {
 		"name": "Chuck Norris",
 		"male": true
+	}, {
+		"name": "Mateo Garcia",
+		"male": true
+	}, {
+		"name": "Alfonso Defonso",
+		"male": true
+	}, {
+		"name": "Jacob Cohen",
+		"male": true
+	}, {
+		"name": "Maria Gomez",
+		"male": false
+	}, {
+		"name": "Charlotte Emmerson",
+		"male": false
+	}, {
+		"name": "Catalina Chichi",
+		"male": false
+	}, {
+		"name": "Hussein El Jasmi",
+		"male": true
+	}, {
+		"name": "Ali Tur",
+		"male": true
+	}, {
+		"name": "Pierre De Coubertin",
+		"male": true
+	}, {
+		"name": "Isabelle Dion",
+		"male": false
+	}, {
+		"name": "Daniel Herman",
+		"male": true
+	}, {
+		"name": "Sofia Ratador",
+		"male": false
+	}, {
+		"name": "Djeneba Ndiaye",
+		"male": false
+	}, {
+		"name": "Bintou Sylla",
+		"male": false
 	}
 ]

@@ -16,7 +16,10 @@ const (
 	TILE_HEIGHT      = 257
 )
 
-// base "class" for all tiles
+// base "class" for all tiles:
+// - RackElement
+// - SimpleElement
+// - DecorationElement
 type TileElement interface {
 	// should be passive, rack, ...
 	ElementType() int32                     // which type sit on: PRODUCT_RACK, PRODUCT_AC, ...
@@ -157,6 +160,42 @@ func NewSimpleElement(item *supplier.InventoryItem) *SimpleElement {
 	return ee
 }
 
+type DecorationElement struct {
+	name    string
+	surface *sdl.Surface
+}
+
+func (self *DecorationElement) GetName() string {
+	return self.name
+}
+
+func (self *DecorationElement) InventoryItem() *supplier.InventoryItem {
+	return nil
+}
+
+func (self *DecorationElement) ElementType() int32 {
+	return supplier.PRODUCT_DECORATION
+}
+
+func (self *DecorationElement) Draw(rotation uint32) *sdl.Surface {
+	if self.surface == nil {
+		self.surface = getSprite("assets/ui/" + self.name + ".png")
+	}
+	return self.surface
+}
+
+func (self *DecorationElement) Power() float64 {
+	return 0
+}
+
+func NewDecorationElement(name string) *DecorationElement {
+	decoration := &DecorationElement{
+		name:    name,
+		surface: nil,
+	}
+	return decoration
+}
+
 type Tile struct {
 	wall     [2]string // "" when nothing
 	floor    string
@@ -292,15 +331,19 @@ func NewGrassTile() *Tile {
 	return tile
 }
 
-func NewTile(wall0, wall1, floor string, rotation uint32) *Tile {
+func NewTile(wall0, wall1, floor string, rotation uint32, decorationname string) *Tile {
 	if rotation > 3 {
 		rotation = 0
+	}
+	var element TileElement
+	if decorationname != "" {
+		element = NewDecorationElement(decorationname)
 	}
 	tile := &Tile{
 		wall:     [2]string{wall0, wall1},
 		rotation: rotation,
 		floor:    floor,
-		element:  nil,
+		element:  element,
 	}
 	return tile
 }
