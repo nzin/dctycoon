@@ -534,30 +534,7 @@ func (self *DcWidget) InitMap(assetdcmap string) {
 	if data, err := global.Asset("assets/dcmap/" + assetdcmap); err == nil {
 		var dcmap map[string]interface{}
 		if json.Unmarshal(data, &dcmap) == nil {
-			width := int32(dcmap["width"].(float64))
-			height := int32(dcmap["height"].(float64))
-			self.tiles = make([][]*Tile, height)
-			for y := range self.tiles {
-				self.tiles[y] = make([]*Tile, width)
-				for x := range self.tiles[y] {
-					self.tiles[y][x] = NewGrassTile()
-				}
-			}
-			tiles := dcmap["tiles"].([]interface{})
-			for _, t := range tiles {
-				tile := t.(map[string]interface{})
-				x := int32(tile["x"].(float64))
-				y := int32(tile["y"].(float64))
-				wall0 := tile["wall0"].(string)
-				wall1 := tile["wall1"].(string)
-				floor := tile["floor"].(string)
-				rotation := uint32(tile["rotation"].(float64))
-				var decorationname string
-				if data, ok := tile["decoration"]; ok {
-					decorationname = data.(string)
-				}
-				self.tiles[y][x] = NewTile(wall0, wall1, floor, rotation, decorationname)
-			}
+			self.LoadMap(dcmap)
 		}
 	}
 }
@@ -633,32 +610,21 @@ func (self *DcWidget) SetGame(inventory *supplier.Inventory, currenttime time.Ti
 	self.hc.SetGame(inventory, currenttime)
 }
 
-// GetGlobalPowerConsumption list all machines on the map and returns
-// the power they consume (positive number)
-func (self *DcWidget) GetGlobalPowerConsumption() float64 {
-	var power float64
+// GetGlobalPower list all machines on the map and returns
+// - the power machines consumes (positive number)
+// - the power generator can sustain (positive number)
+func (self *DcWidget) GetGlobalPower() (float64, float64) {
+	var consumption, generation float64
 	for y, _ := range self.tiles {
 		for x, _ := range self.tiles[y] {
 			t := self.tiles[y][x]
 			if t.element != nil && t.Power() > 0 {
-				power += t.Power()
+				consumption += t.Power()
 			}
-		}
-	}
-	return power
-}
-
-// GetGlobalPowerGenerator list all generator on the map and returns the
-// power they can sustain (negative number)
-func (self *DcWidget) GetGlobalPowerGenerator() float64 {
-	var power float64
-	for y, _ := range self.tiles {
-		for x, _ := range self.tiles[y] {
-			t := self.tiles[y][x]
 			if t.element != nil && t.Power() < 0 {
-				power += t.Power()
+				generation -= t.Power()
 			}
 		}
 	}
-	return power
+	return consumption, generation
 }
