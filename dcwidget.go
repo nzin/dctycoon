@@ -609,22 +609,3 @@ func (self *DcWidget) SetGame(inventory *supplier.Inventory, currenttime time.Ti
 	self.rackwidget.SetGame(inventory, currenttime)
 	self.hc.SetGame(inventory, currenttime)
 }
-
-// GetGlobalPower list all machines on the map and returns
-// - the power machines consumes (positive number)
-// - the power generator can sustain (positive number)
-func (self *DcWidget) GetGlobalPower() (float64, float64) {
-	var consumption, generation float64
-	for y, _ := range self.tiles {
-		for x, _ := range self.tiles[y] {
-			t := self.tiles[y][x]
-			if t.element != nil && t.Power() > 0 {
-				consumption += t.Power()
-			}
-			if t.element != nil && t.Power() < 0 {
-				generation -= t.Power()
-			}
-		}
-	}
-	return consumption, generation
-}

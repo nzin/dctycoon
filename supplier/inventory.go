@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
 	//	"github.com/nzin/dctycoon/accounting"
 	"github.com/nzin/dctycoon/timer"
 	log "github.com/sirupsen/logrus"
@@ -44,6 +45,12 @@ type InventorySubscriber interface {
 	ItemInstalled(*InventoryItem)
 	ItemUninstalled(*InventoryItem)
 	ItemChangedPool(*InventoryItem)
+}
+
+// InventoryPowerChangeSubscriber interface is used
+// to know when the comsumption or the number of generators have changed
+type InventoryPowerChangeSubscriber interface {
+	PowerChange(time time.Time, consumed, generated float64)
 }
 
 //
@@ -203,8 +210,29 @@ type Inventory struct {
 	offers                   []*ServerOffer
 	inventorysubscribers     []InventorySubscriber
 	inventoryPoolSubscribers []InventoryPoolSubscriber
+	powerchangeSubscribers   []InventoryPowerChangeSubscriber
 	defaultPhysicalPool      ServerPool
 	defaultVpsPool           ServerPool
+}
+
+// GetGlobalPower list all machines on the map and returns
+// - the power machines consumes (positive number)
+// - the power generator can sustain (positive number)
+func (self *Inventory) ComputeGlobalPower() {
+	var consumption, generation float64
+	for _, item := range self.Items {
+		if item.IsPlaced() {
+			if item.Typeitem == PRODUCT_GENERATOR {
+				generation += 50000
+			}
+			if item.Typeitem == PRODUCT_SERVER {
+				consumption += item.Serverconf.PowerConsumption()
+			}
+		}
+	}
+	for _, s := range self.powerchangeSubscribers {
+		s.PowerChange(self.globaltimer.CurrentTime, consumption, generation)
+	}
 }
 
 func (self *Inventory) BuyCart(buydate time.Time) []*InventoryItem {
@@ -253,6 +281,7 @@ func (self *Inventory) InstallItem(item *InventoryItem, x, y, z int32) bool {
 		for _, sub := range self.inventorysubscribers {
 			sub.ItemInstalled(item)
 		}
+		self.ComputeGlobalPower()
 		return true
 	}
 	return false
@@ -268,6 +297,7 @@ func (self *Inventory) UninstallItem(item *InventoryItem) {
 	for _, sub := range self.inventorysubscribers {
 		sub.ItemInStock(item)
 	}
+	self.ComputeGlobalPower()
 }
 
 //
@@ -562,15 +592,16 @@ func (self *Inventory) GetDefaultVpsPool() ServerPool {
 func NewInventory(globaltimer *timer.GameTimer) *Inventory {
 	log.Debug("NewInventory(", globaltimer, ")")
 	inventory := &Inventory{
-		globaltimer:          globaltimer,
-		increment:            0,
-		Cart:                 make([]*CartItem, 0),
-		Items:                make(map[int32]*InventoryItem),
-		pools:                make([]ServerPool, 0),
-		offers:               make([]*ServerOffer, 0),
-		inventorysubscribers: make([]InventorySubscriber, 0),
-		defaultPhysicalPool:  NewHardwareServerPool("default"),
-		defaultVpsPool:       NewVpsServerPool("default", 1.2, 1.0),
+		globaltimer:            globaltimer,
+		increment:              0,
+		Cart:                   make([]*CartItem, 0),
+		Items:                  make(map[int32]*InventoryItem),
+		pools:                  make([]ServerPool, 0),
+		offers:                 make([]*ServerOffer, 0),
+		inventorysubscribers:   make([]InventorySubscriber, 0),
+		powerchangeSubscribers: make([]InventoryPowerChangeSubscriber, 0, 0),
+		defaultPhysicalPool:    NewHardwareServerPool("default"),
+		defaultVpsPool:         NewVpsServerPool("default", 1.2, 1.0),
 	}
 
 	inventory.AddPool(inventory.defaultPhysicalPool)

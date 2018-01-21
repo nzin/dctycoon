@@ -9,6 +9,32 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type PowerStat struct {
+	consumption float64
+	generation  float64
+	date        time.Time
+}
+
+func (self *PowerStat) Save() string {
+	str := "{"
+	str += fmt.Sprintf("\"date\": \"%d-%d-%d\",", self.date.Year(), self.date.Month(), self.date.Day())
+	str += fmt.Sprintf("\"consumption\": %f,", self.consumption)
+	str += fmt.Sprintf("\"generation\": %f", self.generation)
+	return str + "}"
+}
+
+func NewPowerStat(v map[string]interface{}) *PowerStat {
+	var year, month, day int
+	fmt.Sscanf(v["date"].(string), "%d-%d-%d", &year, &month, &day)
+
+	ps := &PowerStat{
+		consumption: v["consumption"].(float64),
+		generation:  v["generation"].(float64),
+		date:        time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC),
+	}
+	return ps
+}
+
 type ServerDemandStat struct {
 	ramsize  int32
 	nbcores  int32
@@ -67,9 +93,16 @@ type DemandStatSubscriber interface {
 	NewDemandStat(*DemandStat)
 }
 
+// DemandStatSubscriber is mainly used by the MainStatsWidget
+type PowerStatSubscriber interface {
+	NewPowerStat(*PowerStat)
+}
+
 type GameStats struct {
 	demandstatsubscribers []DemandStatSubscriber
 	demandsstats          []*DemandStat
+	powerstatssubscribers []PowerStatSubscriber
+	powerstats            []*PowerStat
 }
 
 func (self *GameStats) AddDemandStatSubscriber(subscriber DemandStatSubscriber) {
@@ -131,6 +164,8 @@ func NewGameStats() *GameStats {
 	gs := &GameStats{
 		demandsstats:          make([]*DemandStat, 0, 0),
 		demandstatsubscribers: make([]DemandStatSubscriber, 0, 0),
+		powerstats:            make([]*PowerStat, 0, 0),
+		powerstatssubscribers: make([]PowerStatSubscriber, 0, 0),
 	}
 
 	return gs
@@ -138,6 +173,7 @@ func NewGameStats() *GameStats {
 
 func (self *GameStats) InitGame() {
 	self.demandsstats = make([]*DemandStat, 0, 0)
+	self.powerstats = make([]*PowerStat, 0, 0)
 }
 
 func (self *GameStats) LoadGame(stats map[string]interface{}) {
@@ -148,6 +184,12 @@ func (self *GameStats) LoadGame(stats map[string]interface{}) {
 	demandsstats := stats["demandsstats"].([]interface{})
 	for _, d := range demandsstats {
 		self.demandsstats = append(self.demandsstats, NewDemandStat(d.(map[string]interface{})))
+	}
+	self.powerstats = make([]*PowerStat, 0, 0)
+
+	powerstats := stats["powerstats"].([]interface{})
+	for _, d := range powerstats {
+		self.powerstats = append(self.powerstats, NewPowerStat(d.(map[string]interface{})))
 	}
 }
 
@@ -161,6 +203,14 @@ func (self *GameStats) Save() string {
 			str += ",\n"
 		}
 		str += d.Save()
+	}
+	str += "},\n"
+	str += "\"powerstats\": ["
+	for i, ps := range self.powerstats {
+		if i != 0 {
+			str += ",\n"
+		}
+		str += ps.Save()
 	}
 	return str + "]}"
 }
