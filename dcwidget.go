@@ -632,3 +632,33 @@ func (self *DcWidget) SetGame(inventory *supplier.Inventory, currenttime time.Ti
 	self.rackwidget.SetGame(inventory, currenttime)
 	self.hc.SetGame(inventory, currenttime)
 }
+
+// GetGlobalPowerConsumption list all machines on the map and returns
+// the power they consume (positive number)
+func (self *DcWidget) GetGlobalPowerConsumption() float64 {
+	var power float64
+	for y, _ := range self.tiles {
+		for x, _ := range self.tiles[y] {
+			t := self.tiles[y][x]
+			if t.element != nil && t.Power() > 0 {
+				power += t.Power()
+			}
+		}
+	}
+	return power
+}
+
+// GetGlobalPowerGenerator list all generator on the map and returns the
+// power they can sustain (negative number)
+func (self *DcWidget) GetGlobalPowerGenerator() float64 {
+	var power float64
+	for y, _ := range self.tiles {
+		for x, _ := range self.tiles[y] {
+			t := self.tiles[y][x]
+			if t.element != nil && t.Power() < 0 {
+				power += t.Power()
+			}
+		}
+	}
+	return power
+}
