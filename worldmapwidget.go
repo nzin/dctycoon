@@ -8,6 +8,8 @@ import (
 	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/sws"
 	"github.com/veandco/go-sdl2/sdl"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // WorldmapWidget is a worldmap image widget
@@ -126,6 +128,7 @@ func (self *WorldmapWidget) SetLocationCallback(callback func(selected, hotspot 
 }
 
 func (self *WorldmapWidget) Reset() {
+	log.Debug("WorldmapWidget::Reset()")
 	self.selected = ""
 	self.hotspot = ""
 
