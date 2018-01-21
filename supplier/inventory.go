@@ -589,6 +589,24 @@ func (self *Inventory) GetDefaultVpsPool() ServerPool {
 	return self.defaultVpsPool
 }
 
+func (self *Inventory) AddPowerStatSubscriber(subscriber InventoryPowerChangeSubscriber) {
+	for _, s := range self.powerchangeSubscribers {
+		if s == subscriber {
+			return
+		}
+	}
+	self.powerchangeSubscribers = append(self.powerchangeSubscribers, subscriber)
+}
+
+func (self *Inventory) RemovePowerChangeSubscriber(subscriber InventoryPowerChangeSubscriber) {
+	for i, s := range self.powerchangeSubscribers {
+		if s == subscriber {
+			self.powerchangeSubscribers = append(self.powerchangeSubscribers[:i], self.powerchangeSubscribers[i+1:]...)
+			break
+		}
+	}
+}
+
 func NewInventory(globaltimer *timer.GameTimer) *Inventory {
 	log.Debug("NewInventory(", globaltimer, ")")
 	inventory := &Inventory{

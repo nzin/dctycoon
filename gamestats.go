@@ -160,6 +160,37 @@ func (self *GameStats) TriggerDemandStat(t time.Time, demand *supplier.DemandIns
 	}
 }
 
+func (self *GameStats) AddPowerStatSubscriber(subscriber PowerStatSubscriber) {
+	for _, s := range self.powerstatssubscribers {
+		if s == subscriber {
+			return
+		}
+	}
+	self.powerstatssubscribers = append(self.powerstatssubscribers, subscriber)
+}
+
+func (self *GameStats) RemovePowerStatSubscriber(subscriber PowerStatSubscriber) {
+	for i, s := range self.powerstatssubscribers {
+		if s == subscriber {
+			self.powerstatssubscribers = append(self.powerstatssubscribers[:i], self.powerstatssubscribers[i+1:]...)
+			break
+		}
+	}
+}
+
+func (self *GameStats) PowerChange(t time.Time, consumption, generation float64) {
+	stat := &PowerStat{
+		date:        t,
+		consumption: consumption,
+		generation:  generation,
+	}
+	self.powerstats = append(self.powerstats, stat)
+
+	for _, s := range self.powerstatssubscribers {
+		s.NewPowerStat(stat)
+	}
+}
+
 func NewGameStats() *GameStats {
 	gs := &GameStats{
 		demandsstats:          make([]*DemandStat, 0, 0),
@@ -171,15 +202,17 @@ func NewGameStats() *GameStats {
 	return gs
 }
 
-func (self *GameStats) InitGame() {
+func (self *GameStats) InitGame(inventory *supplier.Inventory) {
 	self.demandsstats = make([]*DemandStat, 0, 0)
 	self.powerstats = make([]*PowerStat, 0, 0)
+	inventory.AddPowerStatSubscriber(self)
 }
 
-func (self *GameStats) LoadGame(stats map[string]interface{}) {
+func (self *GameStats) LoadGame(inventory *supplier.Inventory, stats map[string]interface{}) {
 	log.Debug("GameStats::LoadGame(", stats, ")")
 
 	self.demandsstats = make([]*DemandStat, 0, 0)
+	inventory.AddPowerStatSubscriber(self)
 
 	demandsstats := stats["demandsstats"].([]interface{})
 	for _, d := range demandsstats {

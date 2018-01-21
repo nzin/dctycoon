@@ -19,23 +19,25 @@ type barChartCategory struct {
 // streamlining nb months of graph in a sliding window style
 type BarChartWidget struct {
 	sws.CoreWidget
-	nbmonths    int32
-	lastrefresh time.Time
-	data        []map[string]int32 // category -> nb
-	categories  []*barChartCategory
+	nbmonths               int32
+	lastrefresh            time.Time
+	data                   []map[string]int32 // category -> nb
+	categories             []*barChartCategory
+	reportFromMonthToMonth bool
 }
 
 // NewBarChartWidget create a simple timeline stacked barchart graph widget with
 // - legend on the right
 // - time point on the bottom
-func NewBarChartWidget(nbmonths int32, w, h int32) *BarChartWidget {
+func NewBarChartWidget(nbmonths int32, reportFromMonthToMonth bool, w, h int32) *BarChartWidget {
 	corewidget := sws.NewCoreWidget(w, h)
 	widget := &BarChartWidget{
-		CoreWidget:  *corewidget,
-		nbmonths:    nbmonths,
-		lastrefresh: time.Now(),
-		data:        make([]map[string]int32, nbmonths, nbmonths),
-		categories:  make([]*barChartCategory, 0, 0),
+		CoreWidget:             *corewidget,
+		nbmonths:               nbmonths,
+		lastrefresh:            time.Now(),
+		data:                   make([]map[string]int32, nbmonths, nbmonths),
+		categories:             make([]*barChartCategory, 0, 0),
+		reportFromMonthToMonth: reportFromMonthToMonth,
 	}
 	for i := int32(0); i < nbmonths; i++ {
 		widget.data[i] = make(map[string]int32)
@@ -56,6 +58,11 @@ func (self *BarChartWidget) NewDay(timer *timer.GameTimer) {
 			self.data[i] = self.data[i-1]
 		}
 		self.data[0] = make(map[string]int32)
+		if self.reportFromMonthToMonth == true {
+			for j := 0; j < len(self.categories); j++ {
+				self.data[0][self.categories[j].name] = self.data[1][self.categories[j].name]
+			}
+		}
 		self.PostUpdate()
 	}
 	self.lastrefresh = timer.CurrentTime
@@ -78,13 +85,24 @@ func (self *BarChartWidget) AddCategory(name string, color uint32) {
 	self.categories = append(self.categories, category)
 }
 
-// AddPoint is really about adding a new data point into the timeline barchart
+// AddPoint is really about adding/appending a new data point into the currenttimeline barchart
 func (self *BarChartWidget) AddPoint(t time.Time, category string) {
 	pointMonth := t.Year()*12 + int(t.Month())
 	currentMonth := self.lastrefresh.Year()*12 + int(self.lastrefresh.Month())
 	diff := int32(currentMonth - pointMonth)
 	if diff >= 0 && diff < self.nbmonths {
 		self.data[diff][category]++
+	}
+	self.PostUpdate()
+}
+
+// SetPoint is about resetting a data point for a given month in the timeline barchart
+func (self *BarChartWidget) SetPoint(t time.Time, category string, value int32) {
+	pointMonth := t.Year()*12 + int(t.Month())
+	currentMonth := self.lastrefresh.Year()*12 + int(self.lastrefresh.Month())
+	diff := int32(currentMonth - pointMonth)
+	if diff >= 0 && diff < self.nbmonths {
+		self.data[diff][category] = value
 	}
 	self.PostUpdate()
 }

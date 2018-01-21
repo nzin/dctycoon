@@ -125,11 +125,12 @@ func (self *Game) InitGame(locationid string, difficulty int32) {
 	self.cronevent = self.timer.AddCron(-1, -1, -1, func() {
 		self.GenerateDemandAndFee()
 	})
-	self.gamestats.InitGame()
 
 	self.trends.Init(self.gameui.eventpublisher, self.timer)
 	self.player = NewPlayer()
 	self.player.Init(self.timer, initialcapital, locationid)
+
+	self.gamestats.InitGame(self.player.GetInventory())
 
 	// loading list of names
 	availablenames := make([]NameList, 0, 0)
@@ -201,12 +202,13 @@ func (self *Game) LoadGame(filename string) {
 	self.cronevent = self.timer.AddCron(-1, -1, -1, func() {
 		self.GenerateDemandAndFee()
 	})
-	self.gamestats.LoadGame(v["stats"].(map[string]interface{}))
 
 	self.timer.Load(v["clock"].(map[string]interface{}))
 	self.trends.Load(v["trends"].(map[string]interface{}), self.gameui.eventpublisher, self.timer)
 	self.player = NewPlayer()
 	self.player.LoadGame(self.timer, v["player"].(map[string]interface{}))
+
+	self.gamestats.LoadGame(self.player.GetInventory(), v["stats"].(map[string]interface{}))
 
 	opponents := v["opponents"].([]interface{})
 	// opponents
