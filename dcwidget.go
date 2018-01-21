@@ -28,6 +28,8 @@ type DcWidget struct {
 	activeY      int32
 	// the upper left list of placeable hardware (AC,rack,generator...)
 	hc *HardwareChoice
+
+	showInventoryManagement func()
 }
 
 func (self *DcWidget) DragDrop(x, y int32, payload sws.DragPayload) bool {
@@ -188,10 +190,10 @@ func (self *DcWidget) findFloorTile(x, y int32) (*Tile, int32, int32) {
 func (self *DcWidget) MousePressDown(x, y int32, button uint8) {
 	self.rackwidget.activeElement = nil
 	activeTile, xtile, ytile, isElement := self.findTile(x, y)
-	self.activeTile = activeTile
 
 	// now, do we have an active item inside the tile
-	if activeTile != nil && isElement {
+	if activeTile != nil && isElement && activeTile.TileElement().ElementType() != supplier.PRODUCT_DECORATION {
+		self.activeTile = activeTile
 		//fmt.Println("active element!!!")
 		self.activeX = xtile
 		self.activeY = ytile
@@ -208,6 +210,12 @@ func (self *DcWidget) MouseDoubleClick(x, y int32) {
 			self.rackwidget.xactiveElement = xtile
 			self.rackwidget.yactiveElement = ytile
 			self.rackwidget.Show(self.rackwidget.xactiveElement, self.rackwidget.yactiveElement)
+		}
+		if activeElement != nil && activeElement.ElementType() == supplier.PRODUCT_DECORATION {
+			decoration := activeElement.(*DecorationElement)
+			if decoration.GetName() == "shelf" && self.showInventoryManagement != nil {
+				self.showInventoryManagement()
+			}
 		}
 	}
 }
@@ -569,6 +577,10 @@ func NewDcWidget(w, h int32, rootwindow *sws.RootWidget) *DcWidget {
 	widget.hc.Move(0, 0)
 	widget.AddChild(widget.hc)
 	return widget
+}
+
+func (self *DcWidget) SetInventoryManagementCallback(showInventoryManagement func()) {
+	self.showInventoryManagement = showInventoryManagement
 }
 
 func (self *DcWidget) SetGame(inventory *supplier.Inventory, currenttime time.Time) {
