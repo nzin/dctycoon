@@ -2,6 +2,7 @@ package supplier
 
 import (
 	"fmt"
+	"math/rand"
 	"strconv"
 	"strings"
 	"time"
@@ -18,6 +19,28 @@ const (
 	PRODUCT_GENERATOR  = iota
 	PRODUCT_DECORATION = iota
 )
+
+const (
+	POWERLINE_NONE = iota
+	POWERLINE_10K  = iota
+	POWERLINE_100K = iota
+	POWERLINE_1M   = iota
+	POWERLINE_10M  = iota
+)
+
+func GetKilowattPowerline(powerline int32) float64 {
+	switch powerline {
+	case POWERLINE_10K:
+		return 10000
+	case POWERLINE_100K:
+		return 100000
+	case POWERLINE_1M:
+		return 1000000
+	case POWERLINE_10M:
+		return 10000000
+	}
+	return 0
+}
 
 type CartItem struct {
 	Typeitem   int32
@@ -50,7 +73,7 @@ type InventorySubscriber interface {
 // InventoryPowerChangeSubscriber interface is used
 // to know when the comsumption or the number of generators have changed
 type InventoryPowerChangeSubscriber interface {
-	PowerChange(time time.Time, consumed, generated float64)
+	PowerChange(time time.Time, consumed, generated, delivered float64)
 }
 
 //
@@ -208,6 +231,8 @@ type Inventory struct {
 	Items                    map[int32]*InventoryItem
 	pools                    []ServerPool
 	offers                   []*ServerOffer
+	powerline                [3]int32
+	currentMaxPower          int32
 	inventorysubscribers     []InventorySubscriber
 	inventoryPoolSubscribers []InventoryPoolSubscriber
 	powerchangeSubscribers   []InventoryPowerChangeSubscriber
@@ -231,7 +256,7 @@ func (self *Inventory) ComputeGlobalPower() {
 		}
 	}
 	for _, s := range self.powerchangeSubscribers {
-		s.PowerChange(self.globaltimer.CurrentTime, consumption, generation)
+		s.PowerChange(self.globaltimer.CurrentTime, consumption, generation, GetKilowattPowerline(self.currentMaxPower))
 	}
 }
 
@@ -454,6 +479,12 @@ func (self *Inventory) loadPublishItem(item *InventoryItem) {
 	}
 }
 
+func (self *Inventory) LoadPowerlines(power map[string]interface{}) {
+	self.SetPowerline(0, int32(power["powerline1"].(float64)))
+	self.SetPowerline(1, int32(power["powerline2"].(float64)))
+	self.SetPowerline(2, int32(power["powerline3"].(float64)))
+}
+
 func (self *Inventory) Load(conf map[string]interface{}) {
 	log.Debug("Inventory::Load(", conf, ")")
 	self.increment = int32(conf["increment"].(float64))
@@ -483,6 +514,9 @@ func (self *Inventory) Load(conf map[string]interface{}) {
 			self.loadPublishItem(item)
 		}
 	}
+	if powerinterface, ok := conf["powerlines"]; ok {
+		self.LoadPowerlines(powerinterface.(map[string]interface{}))
+	}
 }
 
 func (self *Inventory) Save() string {
@@ -510,7 +544,9 @@ func (self *Inventory) Save() string {
 		}
 		str += item.Save()
 	}
-	str += "]}"
+	str += "],"
+	str += fmt.Sprintf(`"powerlines": { "powerline1": %d, "powerline2": %d, "powerline3": %d }`, self.powerline[0], self.powerline[1], self.powerline[2])
+	str += "}"
 	return str
 }
 
@@ -607,6 +643,48 @@ func (self *Inventory) RemovePowerChangeSubscriber(subscriber InventoryPowerChan
 	}
 }
 
+// ChangePowerline is used to adjust one of the 3 main power line arrival
+// power = [POWERLINE_NONE,POWERLINE_10K,POWERLINE_100K,POWERLINE_1M,POWERLINE_10M]
+// we call subscribers systematically
+func (self *Inventory) SetPowerline(index, power int32) {
+	if index < 0 || index > 2 {
+		return
+	}
+	self.powerline[index] = power
+	newmax := int32(POWERLINE_NONE)
+	for _, pl := range self.powerline {
+		if pl > newmax {
+			newmax = pl
+		}
+	}
+	if newmax != self.currentMaxPower {
+		self.currentMaxPower = newmax
+	}
+	self.ComputeGlobalPower()
+}
+
+// PowerlineOutage is called everyday to see if we have an electricity outage
+func (self *Inventory) GeneratePowerlineOutage(probability float64) {
+	newmax := int32(POWERLINE_NONE)
+	for _, pl := range self.powerline {
+		if rand.Float64() < probability {
+			continue
+		}
+		if pl > newmax {
+			newmax = pl
+		}
+	}
+	if newmax != self.currentMaxPower {
+		self.currentMaxPower = newmax
+		self.ComputeGlobalPower()
+	}
+}
+
+// GetPowerlines is used to collect the current situation
+func (self *Inventory) GetPowerlines() [3]int32 {
+	return self.powerline
+}
+
 func NewInventory(globaltimer *timer.GameTimer) *Inventory {
 	log.Debug("NewInventory(", globaltimer, ")")
 	inventory := &Inventory{
@@ -620,6 +698,8 @@ func NewInventory(globaltimer *timer.GameTimer) *Inventory {
 		powerchangeSubscribers: make([]InventoryPowerChangeSubscriber, 0, 0),
 		defaultPhysicalPool:    NewHardwareServerPool("default"),
 		defaultVpsPool:         NewVpsServerPool("default", 1.2, 1.0),
+		powerline:              [3]int32{POWERLINE_10K, POWERLINE_NONE, POWERLINE_NONE},
+		currentMaxPower:        POWERLINE_10K,
 	}
 
 	inventory.AddPool(inventory.defaultPhysicalPool)

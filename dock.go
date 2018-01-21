@@ -18,6 +18,8 @@ type DockWidget struct {
 	forward      *sws.FlatButtonWidget
 	shop         *sws.FlatButtonWidget
 	inventory    *sws.FlatButtonWidget
+	electricity  *sws.FlatButtonWidget
+	accounting   *sws.FlatButtonWidget
 	stats        *sws.FlatButtonWidget
 	ledgerButton *sws.FlatButtonWidget
 	timerevent   *sws.TimerEvent
@@ -34,10 +36,15 @@ func (self *DockWidget) SetShopCallback(callback func()) {
 
 func (self *DockWidget) SetLedgerCallback(callback func()) {
 	self.ledgerButton.SetClicked(callback)
+	self.accounting.SetClicked(callback)
 }
 
 func (self *DockWidget) SetInventoryCallback(callback func()) {
 	self.inventory.SetClicked(callback)
+}
+
+func (self *DockWidget) SetElectricityCallback(callback func()) {
+	self.electricity.SetClicked(callback)
 }
 
 func (self *DockWidget) LedgerChange() {
@@ -68,8 +75,18 @@ func (self *DockWidget) NewDay(timer *timer.GameTimer) {
 	self.currentDay.SetText(today)
 }
 
+func (self *DockWidget) helperAddButton(x, y int32, iconasset string) *sws.FlatButtonWidget {
+	button := sws.NewFlatButtonWidget(25, 25, "")
+	button.Move(x, y)
+	if icon, err := global.LoadImageAsset(iconasset); err == nil {
+		button.SetImageSurface(icon)
+	}
+	self.AddChild(button)
+	return button
+}
+
 func NewDockWidget(root *sws.RootWidget, game *Game, gamemenu *MainGameMenu) *DockWidget {
-	corewidget := sws.NewCoreWidget(150, 125)
+	corewidget := sws.NewCoreWidget(150, 150)
 	widget := &DockWidget{
 		CoreWidget: *corewidget,
 		currentDay: sws.NewLabelWidget(150, 25, "1 1 1990"),
@@ -85,70 +102,39 @@ func NewDockWidget(root *sws.RootWidget, game *Game, gamemenu *MainGameMenu) *Do
 	widget.currentDay.Move(5, 25)
 	widget.AddChild(widget.currentDay)
 
-	widget.pause = sws.NewFlatButtonWidget(25, 25, "")
+	widget.pause = widget.helperAddButton(25, 50, "assets/ui/icon-pause-symbol.png")
 	widget.pause.SetColor(0xff8888ff)
-	widget.pause.Move(25, 50)
-	if icon, err := global.LoadImageAsset("assets/ui/icon-pause-symbol.png"); err == nil {
-		widget.pause.SetImageSurface(icon)
-	}
 	widget.pause.SetClicked(func() {
 		game.ChangeGameSpeed(SPEED_STOP)
 	})
-	widget.AddChild(widget.pause)
 
-	widget.play = sws.NewFlatButtonWidget(25, 25, "")
-	widget.play.Move(50, 50)
-	if icon, err := global.LoadImageAsset("assets/ui/icon-arrowhead-pointing-to-the-right.png"); err == nil {
-		widget.play.SetImageSurface(icon)
-	}
+	widget.play = widget.helperAddButton(50, 50, "assets/ui/icon-arrowhead-pointing-to-the-right.png")
 	widget.play.SetClicked(func() {
 		game.ChangeGameSpeed(SPEED_FORWARD)
 	})
-	widget.AddChild(widget.play)
 
-	widget.forward = sws.NewFlatButtonWidget(25, 25, "")
-	widget.forward.Move(75, 50)
-	if icon, err := global.LoadImageAsset("assets/ui/icon-forward-button.png"); err == nil {
-		widget.forward.SetImageSurface(icon)
-	}
+	widget.forward = widget.helperAddButton(75, 50, "assets/ui/icon-forward-button.png")
 	widget.forward.SetClicked(func() {
 		game.ChangeGameSpeed(SPEED_FASTFORWARD)
 	})
-	widget.AddChild(widget.forward)
 
-	widget.shop = sws.NewFlatButtonWidget(25, 25, "")
-	widget.shop.Move(25, 75)
-	if icon, err := global.LoadImageAsset("assets/ui/icon-shopping-cart-black-shape.png"); err == nil {
-		widget.shop.SetImageSurface(icon)
-	}
-	widget.AddChild(widget.shop)
+	widget.shop = widget.helperAddButton(25, 75, "assets/ui/icon-shopping-cart-black-shape.png")
 
-	widget.inventory = sws.NewFlatButtonWidget(25, 25, "")
-	widget.inventory.Move(50, 75)
-	if icon, err := global.LoadImageAsset("assets/ui/icon-dropbox-logo.png"); err == nil {
-		widget.inventory.SetImageSurface(icon)
-	}
-	widget.AddChild(widget.inventory)
+	widget.inventory = widget.helperAddButton(50, 75, "assets/ui/icon-dropbox-logo.png")
 
-	save := sws.NewFlatButtonWidget(25, 25, "")
-	save.Move(75, 75)
-	if icon, err := global.LoadImageAsset("assets/ui/icon-blank-file.png"); err == nil {
-		save.SetImageSurface(icon)
-	}
-	widget.AddChild(save)
+	save := widget.helperAddButton(75, 75, "assets/ui/icon-blank-file.png")
 	save.SetClicked(func() {
 		gamemenu.ShowSave()
 	})
 
-	widget.stats = sws.NewFlatButtonWidget(25, 25, "")
-	widget.stats.Move(100, 75)
-	if icon, err := global.LoadImageAsset("assets/ui/icon-graph.png"); err == nil {
-		widget.stats.SetImageSurface(icon)
-	}
-	widget.AddChild(widget.stats)
+	widget.stats = widget.helperAddButton(100, 75, "assets/ui/icon-graph.png")
+
+	widget.electricity = widget.helperAddButton(25, 100, "assets/ui/icon-electricity.png")
+
+	widget.accounting = widget.helperAddButton(50, 100, "assets/ui/icon-paper-bill.png")
 
 	widget.ledgerButton = sws.NewFlatButtonWidget(150, 25, "")
-	widget.ledgerButton.Move(0, 100)
+	widget.ledgerButton.Move(0, 125)
 	widget.AddChild(widget.ledgerButton)
 
 	widget.Move(root.Width()-widget.Width(), 0)

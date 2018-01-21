@@ -566,6 +566,7 @@ type Actor interface {
 	GetInventory() *Inventory
 	GetLedger() *accounting.Ledger
 	GetName() string
+	GetLocation() *LocationType
 }
 
 type ServerBundle struct {

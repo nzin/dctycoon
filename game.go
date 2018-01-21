@@ -304,6 +304,10 @@ func (self *Game) GenerateDemandAndFee() {
 			}
 		}
 	}
+	// generate electricity outage
+	for _, a := range actors {
+		a.GetInventory().GeneratePowerlineOutage(a.GetLocation().Electricityfailrate)
+	}
 }
 
 func (self *Game) AddGameTimerSubscriber(subscriber GameTimerSubscriber) {
