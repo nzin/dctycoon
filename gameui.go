@@ -52,6 +52,10 @@ func NewGameUI(quit *bool, root *sws.RootWidget, game *Game) *GameUI {
 		gameui.inventorywidget.Show()
 	})
 
+	gameui.dc.SetInventoryManagementCallback(func() {
+		gameui.inventorywidget.Show()
+	})
+
 	return gameui
 }
 

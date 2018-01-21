@@ -28,6 +28,8 @@ type DcWidget struct {
 	activeY      int32
 	// the upper left list of placeable hardware (AC,rack,generator...)
 	hc *HardwareChoice
+
+	showInventoryManagement func()
 }
 
 func (self *DcWidget) DragDrop(x, y int32, payload sws.DragPayload) bool {
@@ -76,6 +78,10 @@ func (self *DcWidget) DragDrop(x, y int32, payload sws.DragPayload) bool {
 		height := payload.(*ElementDragPayload).imageheight
 		tile, tx, ty := self.findFloorTile(x, y+height/2-24)
 		if tile == nil || tile.element != nil {
+			return false
+		}
+		if (!tile.IsFloorOutside() && item.Typeitem == supplier.PRODUCT_GENERATOR) ||
+			(!tile.IsFloorInsideNotAirFlow() && item.Typeitem != supplier.PRODUCT_GENERATOR) {
 			return false
 		}
 
@@ -188,10 +194,10 @@ func (self *DcWidget) findFloorTile(x, y int32) (*Tile, int32, int32) {
 func (self *DcWidget) MousePressDown(x, y int32, button uint8) {
 	self.rackwidget.activeElement = nil
 	activeTile, xtile, ytile, isElement := self.findTile(x, y)
-	self.activeTile = activeTile
 
+	self.activeTile = activeTile
 	// now, do we have an active item inside the tile
-	if activeTile != nil && isElement {
+	if activeTile != nil && isElement && activeTile.TileElement().ElementType() != supplier.PRODUCT_DECORATION {
 		//fmt.Println("active element!!!")
 		self.activeX = xtile
 		self.activeY = ytile
@@ -208,6 +214,12 @@ func (self *DcWidget) MouseDoubleClick(x, y int32) {
 			self.rackwidget.xactiveElement = xtile
 			self.rackwidget.yactiveElement = ytile
 			self.rackwidget.Show(self.rackwidget.xactiveElement, self.rackwidget.yactiveElement)
+		}
+		if activeElement != nil && activeElement.ElementType() == supplier.PRODUCT_DECORATION {
+			decoration := activeElement.(*DecorationElement)
+			if decoration.GetName() == "shelf" && self.showInventoryManagement != nil {
+				self.showInventoryManagement()
+			}
 		}
 	}
 }
@@ -242,7 +254,9 @@ func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 			}))
 			m.Move(x, y)
 			sws.ShowMenu(m)
-		} else if activeElement != nil {
+		} else if activeElement != nil && (activeElement.ElementType() == supplier.PRODUCT_GENERATOR ||
+			activeElement.ElementType() == supplier.PRODUCT_AC ||
+			activeElement.ElementType() == supplier.PRODUCT_SERVER) {
 			m := sws.NewMenuWidget()
 			activeTile := self.activeTile
 			m.AddItem(sws.NewMenuItemLabel("Rotate", func() {
@@ -253,6 +267,35 @@ func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 			}))
 			m.Move(x, y)
 			sws.ShowMenu(m)
+		} else if activeElement != nil && (activeElement.ElementType() == supplier.PRODUCT_DECORATION) {
+			decoration := activeElement.(*DecorationElement)
+			if decoration.GetName() == "shelf" && self.showInventoryManagement != nil {
+				m := sws.NewMenuWidget()
+				m.AddItem(sws.NewMenuItemLabel("Details", func() {
+					self.showInventoryManagement()
+				}))
+				m.Move(x, y)
+				sws.ShowMenu(m)
+			}
+		} else if activeElement == nil {
+			if self.activeTile.IsFloorInsideNotAirFlow() {
+				m := sws.NewMenuWidget()
+				tile := self.activeTile
+				m.AddItem(sws.NewMenuItemLabel("Switch to air flow", func() {
+					tile.SwitchToAirFlow()
+				}))
+				m.Move(x, y)
+				sws.ShowMenu(m)
+			}
+			if self.activeTile.IsFloorInsideAirFlow() {
+				m := sws.NewMenuWidget()
+				tile := self.activeTile
+				m.AddItem(sws.NewMenuItemLabel("Remove air flow", func() {
+					tile.SwitchToNotAirFlow()
+				}))
+				m.Move(x, y)
+				sws.ShowMenu(m)
+			}
 		}
 	}
 	self.activeTile = nil
@@ -296,7 +339,7 @@ func (self *DcWidget) MouseMove(x, y, xrel, yrel int32) {
 	}
 
 	// if we are moving an element's tile
-	if self.activeTile != nil && self.activeTile.TileElement() != nil {
+	if self.activeTile != nil && self.activeTile.TileElement() != nil && self.activeTile.TileElement().ElementType() != supplier.PRODUCT_DECORATION {
 
 		// compute the x-y where the mouse is
 		mapheight := len(self.tiles)
@@ -319,33 +362,38 @@ func (self *DcWidget) MouseMove(x, y, xrel, yrel int32) {
 		}
 
 		if (tilex != self.activeX || tiley != self.activeY) && self.tiles[tiley][tilex].element == nil {
+			xytile := self.tiles[tiley][tilex]
 			element := self.activeTile.element
-			rotation := self.activeTile.rotation
-			self.activeTile.element = nil
-			self.activeTile.surface = nil
 
-			// update the tiles
-			self.activeX = tilex
-			self.activeY = tiley
-			self.activeTile = self.tiles[tiley][tilex]
-			self.activeTile.element = element
-			self.activeTile.rotation = rotation
-			self.activeTile.surface = nil
+			if (xytile.IsFloorOutside() && element.ElementType() == supplier.PRODUCT_GENERATOR) ||
+				(xytile.IsFloorInsideNotAirFlow() && element.ElementType() != supplier.PRODUCT_GENERATOR) {
+				rotation := self.activeTile.rotation
+				self.activeTile.element = nil
+				self.activeTile.surface = nil
 
-			// update the InventoryItem
-			if element != nil {
-				element.InventoryItem().Xplaced = tilex
-				element.InventoryItem().Yplaced = tiley
-			}
-			if element.ElementType() == supplier.PRODUCT_RACK {
-				rack := element.(*RackElement)
-				for _, i := range rack.items {
-					i.Xplaced = tilex
-					i.Yplaced = tiley
+				// update the tiles
+				self.activeX = tilex
+				self.activeY = tiley
+				self.activeTile = xytile
+				self.activeTile.element = element
+				self.activeTile.rotation = rotation
+				self.activeTile.surface = nil
+
+				// update the InventoryItem
+				if element != nil {
+					element.InventoryItem().Xplaced = tilex
+					element.InventoryItem().Yplaced = tiley
 				}
-			}
+				if element.ElementType() == supplier.PRODUCT_RACK {
+					rack := element.(*RackElement)
+					for _, i := range rack.items {
+						i.Xplaced = tilex
+						i.Yplaced = tiley
+					}
+				}
 
-			self.PostUpdate()
+				self.PostUpdate()
+			}
 		}
 	}
 }
@@ -461,7 +509,11 @@ func (self *DcWidget) LoadMap(dc map[string]interface{}) {
 		wall1 := tile["wall1"].(string)
 		floor := tile["floor"].(string)
 		rotation := uint32(tile["rotation"].(float64))
-		self.tiles[y][x] = NewTile(wall0, wall1, floor, rotation)
+		var decorationname string
+		if data, ok := tile["decoration"]; ok {
+			decorationname = data.(string)
+		}
+		self.tiles[y][x] = NewTile(wall0, wall1, floor, rotation, decorationname)
 	}
 	// place everything except servers
 	for _, item := range self.inventory.Items {
@@ -482,26 +534,7 @@ func (self *DcWidget) InitMap(assetdcmap string) {
 	if data, err := global.Asset("assets/dcmap/" + assetdcmap); err == nil {
 		var dcmap map[string]interface{}
 		if json.Unmarshal(data, &dcmap) == nil {
-			width := int32(dcmap["width"].(float64))
-			height := int32(dcmap["height"].(float64))
-			self.tiles = make([][]*Tile, height)
-			for y := range self.tiles {
-				self.tiles[y] = make([]*Tile, width)
-				for x := range self.tiles[y] {
-					self.tiles[y][x] = NewGrassTile()
-				}
-			}
-			tiles := dcmap["tiles"].([]interface{})
-			for _, t := range tiles {
-				tile := t.(map[string]interface{})
-				x := int32(tile["x"].(float64))
-				y := int32(tile["y"].(float64))
-				wall0 := tile["wall0"].(string)
-				wall1 := tile["wall1"].(string)
-				floor := tile["floor"].(string)
-				rotation := uint32(tile["rotation"].(float64))
-				self.tiles[y][x] = NewTile(wall0, wall1, floor, rotation)
-			}
+			self.LoadMap(dcmap)
 		}
 	}
 }
@@ -513,14 +546,20 @@ func (self *DcWidget) SaveMap() string {
 		for x, _ := range self.tiles[y] {
 			t := self.tiles[y][x]
 			value := ""
+			decorationname := ""
+			if t.TileElement() != nil && t.TileElement().ElementType() == supplier.PRODUCT_DECORATION {
+				decoration := t.TileElement().(*DecorationElement)
+				decorationname = decoration.GetName()
+			}
 			if t.wall[0] != "" || t.wall[1] != "" || t.floor != "green" {
-				value = fmt.Sprintf(`{"x":%d, "y":%d, "wall0":"%s", "wall1":"%s", "floor":"%s","rotation":%d}`,
+				value = fmt.Sprintf(`{"x":%d, "y":%d, "wall0":"%s", "wall1":"%s", "floor":"%s","rotation":%d, "decoration": "%s"}`,
 					x,
 					y,
 					t.wall[0],
 					t.wall[1],
 					t.floor,
 					t.rotation,
+					decorationname,
 				)
 			}
 			if value != "" {
@@ -555,6 +594,10 @@ func NewDcWidget(w, h int32, rootwindow *sws.RootWidget) *DcWidget {
 	return widget
 }
 
+func (self *DcWidget) SetInventoryManagementCallback(showInventoryManagement func()) {
+	self.showInventoryManagement = showInventoryManagement
+}
+
 func (self *DcWidget) SetGame(inventory *supplier.Inventory, currenttime time.Time) {
 	log.Debug("DcWidget::SetGame()")
 	if self.inventory != nil {
@@ -565,4 +608,23 @@ func (self *DcWidget) SetGame(inventory *supplier.Inventory, currenttime time.Ti
 
 	self.rackwidget.SetGame(inventory, currenttime)
 	self.hc.SetGame(inventory, currenttime)
+}
+
+// GetGlobalPower list all machines on the map and returns
+// - the power machines consumes (positive number)
+// - the power generator can sustain (positive number)
+func (self *DcWidget) GetGlobalPower() (float64, float64) {
+	var consumption, generation float64
+	for y, _ := range self.tiles {
+		for x, _ := range self.tiles[y] {
+			t := self.tiles[y][x]
+			if t.element != nil && t.Power() > 0 {
+				consumption += t.Power()
+			}
+			if t.element != nil && t.Power() < 0 {
+				generation -= t.Power()
+			}
+		}
+	}
+	return consumption, generation
 }

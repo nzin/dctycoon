@@ -123,6 +123,7 @@ type ServerConf struct {
 	//	PricePaid    float64
 }
 
+// PowerConsumption return the Wh consumption
 func (self *ServerConf) PowerConsumption() float64 {
 	var consumption float64
 	consumption = float64(self.NbProcessors)*100.0 +

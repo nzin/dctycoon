@@ -23,6 +23,7 @@ func (self *NothingWidget) Repaint() {
 
 	self.FillRect(self.Width()/2-15, self.Height()/2-10, 30, 20, 0)
 	self.WriteText(self.Width()/2-15, self.Height()/2-10, "N/A", sdl.Color{0, 0, 0, 255})
+	self.SetDirtyFalse()
 }
 
 func NewNothingWidget(width, height int32) *NothingWidget {

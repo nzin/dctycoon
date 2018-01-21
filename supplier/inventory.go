@@ -11,10 +11,11 @@ import (
 )
 
 const (
-	PRODUCT_SERVER    = iota
-	PRODUCT_RACK      = iota
-	PRODUCT_AC        = iota
-	PRODUCT_GENERATOR = iota
+	PRODUCT_SERVER     = iota
+	PRODUCT_RACK       = iota
+	PRODUCT_AC         = iota
+	PRODUCT_GENERATOR  = iota
+	PRODUCT_DECORATION = iota
 )
 
 type CartItem struct {

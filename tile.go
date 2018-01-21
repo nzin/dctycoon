@@ -3,6 +3,7 @@ package dctycoon
 import (
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/dctycoon/supplier"
@@ -16,7 +17,10 @@ const (
 	TILE_HEIGHT      = 257
 )
 
-// base "class" for all tiles
+// base "class" for all tiles:
+// - RackElement
+// - SimpleElement
+// - DecorationElement
 type TileElement interface {
 	// should be passive, rack, ...
 	ElementType() int32                     // which type sit on: PRODUCT_RACK, PRODUCT_AC, ...
@@ -95,11 +99,9 @@ func (self *RackElement) Draw(rotation uint32) *sdl.Surface {
 
 func (self *RackElement) Power() float64 {
 	power := float64(0)
-	/*
-		for _, e := range self.rackmount {
-			power += e.power
-		}
-	*/
+	for _, i := range self.items {
+		power += i.Serverconf.PowerConsumption()
+	}
 	return power
 }
 
@@ -114,7 +116,6 @@ func NewRackElement(item *supplier.InventoryItem) *RackElement {
 
 type SimpleElement struct {
 	inventoryitem    *supplier.InventoryItem // ac, battery, generator, tower
-	power            float64                 // negative if it is a generator
 	capacity         int32                   // kWh if it is a battery
 	surface          *sdl.Surface
 	previousrotation uint32
@@ -130,7 +131,7 @@ func (self *SimpleElement) ElementType() int32 {
 
 func (self *SimpleElement) Draw(rotation uint32) *sdl.Surface {
 	if rotation != self.previousrotation && self.surface != nil {
-		//self.surface.Free()
+		self.surface.Free()
 		self.surface = nil
 	}
 	if self.surface == nil {
@@ -141,7 +142,13 @@ func (self *SimpleElement) Draw(rotation uint32) *sdl.Surface {
 }
 
 func (self *SimpleElement) Power() float64 {
-	return self.power
+	if self.inventoryitem.Typeitem == supplier.PRODUCT_GENERATOR {
+		return -50000
+	}
+	if self.inventoryitem.Typeitem == supplier.PRODUCT_SERVER {
+		return self.inventoryitem.Serverconf.PowerConsumption()
+	}
+	return 0
 }
 
 func NewSimpleElement(item *supplier.InventoryItem) *SimpleElement {
@@ -149,12 +156,47 @@ func NewSimpleElement(item *supplier.InventoryItem) *SimpleElement {
 	//capacity := int32(payload["capacity"].(float64)) // will depend on "flavor"
 	ee := &SimpleElement{
 		inventoryitem:    item,
-		power:            0,
 		capacity:         0,
 		surface:          nil,
 		previousrotation: 0,
 	}
 	return ee
+}
+
+type DecorationElement struct {
+	name    string
+	surface *sdl.Surface
+}
+
+func (self *DecorationElement) GetName() string {
+	return self.name
+}
+
+func (self *DecorationElement) InventoryItem() *supplier.InventoryItem {
+	return nil
+}
+
+func (self *DecorationElement) ElementType() int32 {
+	return supplier.PRODUCT_DECORATION
+}
+
+func (self *DecorationElement) Draw(rotation uint32) *sdl.Surface {
+	if self.surface == nil {
+		self.surface = getSprite("assets/ui/" + self.name + ".png")
+	}
+	return self.surface
+}
+
+func (self *DecorationElement) Power() float64 {
+	return 0
+}
+
+func NewDecorationElement(name string) *DecorationElement {
+	decoration := &DecorationElement{
+		name:    name,
+		surface: nil,
+	}
+	return decoration
 }
 
 type Tile struct {
@@ -210,6 +252,42 @@ func (self *Tile) ItemUninstalled(item *supplier.InventoryItem) {
 
 func (self *Tile) TileElement() TileElement {
 	return self.element
+}
+
+// IsFloorOutside used to know if we can place a AC on it
+func (self *Tile) IsFloorOutside() bool {
+	return strings.HasPrefix(self.floor, "green")
+}
+
+// IsFloorInsideNotAir used to know if we are on a server tile
+// but not on a air flow to install anything
+func (self *Tile) IsFloorInsideNotAirFlow() bool {
+	return self.floor == "inside"
+}
+
+// IsFloorInsideAir used to know if we are on a air flow tile
+func (self *Tile) IsFloorInsideAirFlow() bool {
+	return self.floor == "inside.air"
+}
+
+func (self *Tile) SwitchToAirFlow() {
+	if self.floor == "inside" {
+		self.floor = "inside.air"
+		if self.surface != nil {
+			self.surface.Free()
+		}
+		self.surface = nil
+	}
+}
+
+func (self *Tile) SwitchToNotAirFlow() {
+	if self.floor == "inside.air" {
+		self.floor = "inside"
+		if self.surface != nil {
+			self.surface.Free()
+		}
+		self.surface = nil
+	}
 }
 
 func (self *Tile) IsElementAt(x, y int32) bool {
@@ -292,15 +370,19 @@ func NewGrassTile() *Tile {
 	return tile
 }
 
-func NewTile(wall0, wall1, floor string, rotation uint32) *Tile {
+func NewTile(wall0, wall1, floor string, rotation uint32, decorationname string) *Tile {
 	if rotation > 3 {
 		rotation = 0
+	}
+	var element TileElement
+	if decorationname != "" {
+		element = NewDecorationElement(decorationname)
 	}
 	tile := &Tile{
 		wall:     [2]string{wall0, wall1},
 		rotation: rotation,
 		floor:    floor,
-		element:  nil,
+		element:  element,
 	}
 	return tile
 }

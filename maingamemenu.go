@@ -108,9 +108,11 @@ func NewMainGameMenu(game *Game, root *sws.RootWidget, quit *bool) *MainGameMenu
 	widget.newbutton.SetClicked(func() {
 		root.AddChild(widget.newwidget)
 		widget.newwidget.Reset()
+		root.SetModal(widget.newwidget)
 	})
 	widget.newwidget.SetCancelCallback(func() {
 		root.RemoveChild(widget.newwidget)
+		root.SetModal(widget)
 	})
 	widget.newwidget.SetNewGameCallback(func(location string, difficulty int32) {
 		root.RemoveChild(widget.newwidget)

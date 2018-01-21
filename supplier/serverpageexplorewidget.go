@@ -231,7 +231,7 @@ func NewServerPageExploreWidget(width, height int32) *ServerPageExploreWidget {
 	generatorTitle.Move(300, 460)
 	serverpageexplore.AddChild(generatorTitle)
 
-	generatorDesc := sws.NewTextAreaWidget(150, 160, "Prevent electriciy outage with this powerfull yet compact diesel generator. ")
+	generatorDesc := sws.NewTextAreaWidget(150, 160, "Prevent electriciy outage with this powerfull yet compact diesel generator. Generates 50 kwh")
 	generatorDesc.SetDisabled(true)
 	generatorDesc.SetFont(sws.LatoRegular14)
 	generatorDesc.SetColor(0xffeeeeee)
