@@ -49,7 +49,7 @@ func NewMainElectricityWidget(root *sws.RootWidget) *MainElectricityWidget {
 		usageprice:  sws.NewLabelWidget(100, 25, "0 $"),
 	}
 
-	pilon := sws.NewLabelWidget(193, 213, "")
+	pilon := sws.NewLabelWidget(193, 257, "")
 	if icon, err := global.LoadImageAsset("assets/ui/pilon2.png"); err == nil {
 		pilon.SetImageSurface(icon)
 	}
