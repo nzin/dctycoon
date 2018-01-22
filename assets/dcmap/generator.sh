@@ -27,7 +27,7 @@ for x in range(3,size-4):
 		end=","
 		if y==size-5 and x==size-5:
 			end=""
-		print("\t{\"x\":"+str(x)+", \"y\":"+str(y)+", \"wall0\":\""+wall0+"\",\"wall1\":\""+wall1+"\",\"floor\":\"inside\",\"rotation\":0}"+end)
+		print("\t{\"x\":"+str(x)+", \"y\":"+str(y)+", \"wall0\":\""+wall0+"\",\"wall1\":\""+wall1+"\",\"floor\":\"inside\",\"rotation\":0, \"decoration\":\"\"}"+end)
 	print("\t")
 print("]")
 print("}")

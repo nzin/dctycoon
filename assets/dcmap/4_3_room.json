@@ -1,0 +1,21 @@
+{
+"width": 3,
+"height": 4,
+"tiles": [
+	{"x":0, "y":0, "wall0":"wall","wall1":"wall","floor":"inside","rotation":0, "decoration":"tablelight"},
+	{"x":0, "y":1, "wall0":"wall","wall1":"","floor":"inside","rotation":0, "decoration":"chair"},
+	{"x":0, "y":2, "wall0":"wall","wall1":"","floor":"inside","rotation":0, "decoration":"shelf"},
+	{"x":0, "y":3, "wall0":"wall","wall1":"","floor":"inside","rotation":0, "decoration":""},
+	
+	{"x":1, "y":0, "wall0":"","wall1":"wallwindow","floor":"inside","rotation":0, "decoration":""},
+	{"x":1, "y":1, "wall0":"","wall1":"","floor":"inside","rotation":0, "decoration":""},
+	{"x":1, "y":2, "wall0":"","wall1":"","floor":"inside","rotation":0, "decoration":""},
+	{"x":1, "y":3, "wall0":"","wall1":"","floor":"inside","rotation":0, "decoration":""},
+	
+	{"x":2, "y":0, "wall0":"","wall1":"wall","floor":"inside","rotation":0, "decoration":"bedup"},
+	{"x":2, "y":1, "wall0":"","wall1":"","floor":"inside","rotation":0, "decoration":"beddown"},
+	{"x":2, "y":2, "wall0":"","wall1":"","floor":"inside","rotation":0, "decoration":""},
+	{"x":2, "y":3, "wall0":"","wall1":"","floor":"inside","rotation":0, "decoration":""}
+	
+]
+}
