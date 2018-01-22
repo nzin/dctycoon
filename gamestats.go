@@ -20,7 +20,7 @@ func (self *PowerStat) Save() string {
 	str := "{"
 	str += fmt.Sprintf("\"date\": \"%d-%d-%d\",", self.date.Year(), self.date.Month(), self.date.Day())
 	str += fmt.Sprintf("\"consumption\": %f,", self.consumption)
-	str += fmt.Sprintf("\"generation\": %f", self.generation)
+	str += fmt.Sprintf("\"generation\": %f,", self.generation)
 	str += fmt.Sprintf("\"provided\": %f", self.provided)
 	return str + "}"
 }

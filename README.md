@@ -1,7 +1,7 @@
 # Compilation Requirements
 
 - you need go version 1.8.x minimum
-- Needs sws 0.3.6 library (https://github.com/nzin/sws) and especially grab sdl2 (see https://github.com/veandco/go-sdl2)
+- Needs sws 0.3.7 library (https://github.com/nzin/sws) and especially grab sdl2 (see https://github.com/veandco/go-sdl2)
 - you should download dependancies with `go get -u ./...`
 - and finaly you should compile with `./compile.sh`
 

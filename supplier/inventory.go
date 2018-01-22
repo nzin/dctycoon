@@ -647,6 +647,7 @@ func (self *Inventory) RemovePowerChangeSubscriber(subscriber InventoryPowerChan
 // power = [POWERLINE_NONE,POWERLINE_10K,POWERLINE_100K,POWERLINE_1M,POWERLINE_10M]
 // we call subscribers systematically
 func (self *Inventory) SetPowerline(index, power int32) {
+	log.Debug("Inventory::SetPowerline(", index, ",", power, ")")
 	if index < 0 || index > 2 {
 		return
 	}
