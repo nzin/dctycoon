@@ -69,7 +69,7 @@ func NewGameUI(quit *bool, root *sws.RootWidget, game *Game) *GameUI {
 // InitGame is used when creating a new game
 // This re-init all ledger / inventory UI.
 // Therefore you have to populate the ledger and inventory AFTER calling this method
-func (self *GameUI) InitGame(globaltimer *timer.GameTimer, inventory *supplier.Inventory, ledger *accounting.Ledger, trends *supplier.Trend) {
+func (self *GameUI) InitGame(globaltimer *timer.GameTimer, inventory *supplier.Inventory, ledger *accounting.Ledger, trends *supplier.Trend, location *supplier.LocationType) {
 	log.Debug("GameUI::InitGame()")
 	self.dc.SetGame(inventory, globaltimer.CurrentTime)
 	self.supplierwidget.SetGame(globaltimer, inventory, ledger, trends)
@@ -77,7 +77,7 @@ func (self *GameUI) InitGame(globaltimer *timer.GameTimer, inventory *supplier.I
 	self.accountingwidget.SetGame(globaltimer, ledger)
 	self.dock.SetGame(globaltimer, ledger)
 	self.statswidget.SetGame()
-	self.electricitywidget.SetGame(inventory)
+	self.electricitywidget.SetGame(inventory, location)
 
 	self.supplierwidget.Hide()
 	self.inventorywidget.Hide()
@@ -89,7 +89,7 @@ func (self *GameUI) InitGame(globaltimer *timer.GameTimer, inventory *supplier.I
 // LoadGame is used when loading a new game
 // This re-init all ledger / inventory UI.
 // Therefore you have to populate the ledger and inventory AFTER calling this method
-func (self *GameUI) LoadGame(v map[string]interface{}, globaltimer *timer.GameTimer, inventory *supplier.Inventory, ledger *accounting.Ledger, trends *supplier.Trend) {
+func (self *GameUI) LoadGame(v map[string]interface{}, globaltimer *timer.GameTimer, inventory *supplier.Inventory, ledger *accounting.Ledger, trends *supplier.Trend, location *supplier.LocationType) {
 	log.Debug("GameUI::LoadGame()")
 	self.dc.SetGame(inventory, globaltimer.CurrentTime)
 	self.supplierwidget.SetGame(globaltimer, inventory, ledger, trends)
@@ -97,7 +97,7 @@ func (self *GameUI) LoadGame(v map[string]interface{}, globaltimer *timer.GameTi
 	self.accountingwidget.SetGame(globaltimer, ledger)
 	self.dock.SetGame(globaltimer, ledger)
 	self.statswidget.LoadGame()
-	self.electricitywidget.SetGame(inventory)
+	self.electricitywidget.SetGame(inventory, location)
 
 	self.supplierwidget.Hide()
 	self.inventorywidget.Hide()

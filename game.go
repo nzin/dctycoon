@@ -171,7 +171,7 @@ func (self *Game) InitGame(locationid string, difficulty int32) {
 	for _, s := range self.timersubscribers {
 		s.NewDay(self.timer)
 	}
-	self.gameui.InitGame(self.timer, self.player.GetInventory(), self.player.GetLedger(), self.trends)
+	self.gameui.InitGame(self.timer, self.player.GetInventory(), self.player.GetLedger(), self.trends, self.player.GetLocation())
 	self.gameui.ShowDC()
 }
 
@@ -221,7 +221,7 @@ func (self *Game) LoadGame(filename string) {
 	for _, s := range self.timersubscribers {
 		s.NewDay(self.timer)
 	}
-	self.gameui.LoadGame(v, self.timer, self.player.GetInventory(), self.player.GetLedger(), self.trends)
+	self.gameui.LoadGame(v, self.timer, self.player.GetInventory(), self.player.GetLedger(), self.trends, self.player.GetLocation())
 	self.gameui.ShowDC()
 }
 
