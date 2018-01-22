@@ -243,8 +243,7 @@ type Inventory struct {
 // GetGlobalPower list all machines on the map and returns
 // - the power machines consumes (positive number)
 // - the power generator can sustain (positive number)
-func (self *Inventory) ComputeGlobalPower() {
-	var consumption, generation float64
+func (self *Inventory) ComputeGlobalPower() (consumption, generation float64) {
 	for _, item := range self.Items {
 		if item.IsPlaced() {
 			if item.Typeitem == PRODUCT_GENERATOR {
@@ -255,6 +254,11 @@ func (self *Inventory) ComputeGlobalPower() {
 			}
 		}
 	}
+	return consumption, generation
+}
+
+func (self *Inventory) triggerPowerChange() {
+	consumption, generation := self.ComputeGlobalPower()
 	for _, s := range self.powerchangeSubscribers {
 		s.PowerChange(self.globaltimer.CurrentTime, consumption, generation, GetKilowattPowerline(self.currentMaxPower))
 	}
@@ -306,7 +310,7 @@ func (self *Inventory) InstallItem(item *InventoryItem, x, y, z int32) bool {
 		for _, sub := range self.inventorysubscribers {
 			sub.ItemInstalled(item)
 		}
-		self.ComputeGlobalPower()
+		self.triggerPowerChange()
 		return true
 	}
 	return false
@@ -322,7 +326,7 @@ func (self *Inventory) UninstallItem(item *InventoryItem) {
 	for _, sub := range self.inventorysubscribers {
 		sub.ItemInStock(item)
 	}
-	self.ComputeGlobalPower()
+	self.triggerPowerChange()
 }
 
 //
@@ -661,11 +665,12 @@ func (self *Inventory) SetPowerline(index, power int32) {
 	if newmax != self.currentMaxPower {
 		self.currentMaxPower = newmax
 	}
-	self.ComputeGlobalPower()
+	self.triggerPowerChange()
 }
 
 // PowerlineOutage is called everyday to see if we have an electricity outage
 func (self *Inventory) GeneratePowerlineOutage(probability float64) {
+	log.Debug("Inventory::GeneratePowerlineOutage(", probability, ")")
 	newmax := int32(POWERLINE_NONE)
 	for _, pl := range self.powerline {
 		if rand.Float64() < probability {
@@ -677,13 +682,30 @@ func (self *Inventory) GeneratePowerlineOutage(probability float64) {
 	}
 	if newmax != self.currentMaxPower {
 		self.currentMaxPower = newmax
-		self.ComputeGlobalPower()
+		self.triggerPowerChange()
 	}
 }
 
 // GetPowerlines is used to collect the current situation
 func (self *Inventory) GetPowerlines() [3]int32 {
 	return self.powerline
+}
+
+func (self *Inventory) GetMonthlyPowerlinesPrice() float64 {
+	price := float64(0)
+	for _, line := range self.powerline {
+		switch line {
+		case POWERLINE_10K:
+			price += 10
+		case POWERLINE_100K:
+			price += 80
+		case POWERLINE_1M:
+			price += 600
+		case POWERLINE_10M:
+			price += 5000
+		}
+	}
+	return price
 }
 
 func NewInventory(globaltimer *timer.GameTimer) *Inventory {

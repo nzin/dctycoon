@@ -308,6 +308,16 @@ func (self *Game) GenerateDemandAndFee() {
 	for _, a := range actors {
 		a.GetInventory().GeneratePowerlineOutage(a.GetLocation().Electricityfailrate)
 	}
+
+	// pay other montly fee:
+	// - power lines
+	// - location renting
+	if self.timer.CurrentTime.Day() == 1 {
+		for _, a := range actors {
+			consumption, _ := a.GetInventory().ComputeGlobalPower()
+			a.GetLedger().PayUtility(a.GetInventory().GetMonthlyPowerlinesPrice()+consumption*24*30*a.GetLocation().Electricitycost/1000, self.timer.CurrentTime)
+		}
+	}
 }
 
 func (self *Game) AddGameTimerSubscriber(subscriber GameTimerSubscriber) {

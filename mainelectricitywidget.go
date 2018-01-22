@@ -1,6 +1,7 @@
 package dctycoon
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/nzin/dctycoon/global"
@@ -9,12 +10,13 @@ import (
 )
 
 type MainElectricityWidget struct {
-	rootwindow *sws.RootWidget
-	mainwidget *sws.MainWidget
-	inventory  *supplier.Inventory
-	powerline1 *sws.DropdownWidget
-	powerline2 *sws.DropdownWidget
-	powerline3 *sws.DropdownWidget
+	rootwindow  *sws.RootWidget
+	mainwidget  *sws.MainWidget
+	inventory   *supplier.Inventory
+	powerline1  *sws.DropdownWidget
+	powerline2  *sws.DropdownWidget
+	powerline3  *sws.DropdownWidget
+	montlyprice *sws.LabelWidget
 }
 
 func (self *MainElectricityWidget) Show() {
@@ -36,11 +38,12 @@ func NewMainElectricityWidget(root *sws.RootWidget) *MainElectricityWidget {
 	mainwidget.Center(root)
 
 	widget := &MainElectricityWidget{
-		rootwindow: root,
-		mainwidget: mainwidget,
-		powerline1: sws.NewDropdownWidget(100, 25, []string{"none", "10kW", "100kW", "1MW", "10MW"}),
-		powerline2: sws.NewDropdownWidget(100, 25, []string{"none", "10kW", "100kW", "1MW", "10MW"}),
-		powerline3: sws.NewDropdownWidget(100, 25, []string{"none", "10kW", "100kW", "1MW", "10MW"}),
+		rootwindow:  root,
+		mainwidget:  mainwidget,
+		powerline1:  sws.NewDropdownWidget(100, 25, []string{"none", "10kW", "100kW", "1MW", "10MW"}),
+		powerline2:  sws.NewDropdownWidget(100, 25, []string{"none", "10kW", "100kW", "1MW", "10MW"}),
+		powerline3:  sws.NewDropdownWidget(100, 25, []string{"none", "10kW", "100kW", "1MW", "10MW"}),
+		montlyprice: sws.NewLabelWidget(100, 25, "10 $"),
 	}
 
 	pilon := sws.NewLabelWidget(193, 213, "")
@@ -80,6 +83,12 @@ func NewMainElectricityWidget(root *sws.RootWidget) *MainElectricityWidget {
 		widget.inventory.SetPowerline(2, widget.powerline3.ActiveChoice)
 	})
 
+	pricelabel := sws.NewLabelWidget(100, 25, "Montly price:")
+	pricelabel.Move(200, 125)
+	widget.mainwidget.AddChild(pricelabel)
+	widget.montlyprice.Move(300, 125)
+	widget.mainwidget.AddChild(widget.montlyprice)
+
 	return widget
 }
 
@@ -89,6 +98,8 @@ func (self *MainElectricityWidget) PowerChange(time time.Time, consumed, generat
 	self.powerline1.SetActiveChoice(powerlines[0])
 	self.powerline2.SetActiveChoice(powerlines[1])
 	self.powerline3.SetActiveChoice(powerlines[2])
+
+	self.montlyprice.SetText(fmt.Sprintf("%.0f $", self.inventory.GetMonthlyPowerlinesPrice()))
 }
 
 func (self *MainElectricityWidget) SetGame(inventory *supplier.Inventory) {
