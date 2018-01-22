@@ -80,11 +80,13 @@ func NewMainStatsWidget(root *sws.RootWidget, g *Game) *MainStatsWidget {
 func (self *MainStatsWidget) SetGame() {
 	self.opponentswidget.SetGame(self.game)
 	self.demandswidget.SetGame(self.game.timer.CurrentTime, self.game.GetGameStats())
+	self.globalpowerwidget.SetGame(self.game.timer.CurrentTime, self.game.GetGameStats())
 }
 
 func (self *MainStatsWidget) LoadGame() {
 	self.opponentswidget.SetGame(self.game)
 	self.demandswidget.SetGame(self.game.timer.CurrentTime, self.game.GetGameStats())
+	self.globalpowerwidget.SetGame(self.game.timer.CurrentTime, self.game.GetGameStats())
 }
 
 //
@@ -236,7 +238,7 @@ func NewDemandStatDetailsWidget(bgcolor uint32, stat *DemandStat) *DemandStatDet
 type DemandStatWidget struct {
 	sws.CoreWidget
 	demandstats *ui.TableWithDetails
-	barchart    *ui.BarChartWidget
+	barchart    *ui.StackedBarChartWidget
 }
 
 func NewDemandStatWidget(w, h int32, g *Game) *DemandStatWidget {
@@ -244,7 +246,7 @@ func NewDemandStatWidget(w, h int32, g *Game) *DemandStatWidget {
 	widget := &DemandStatWidget{
 		CoreWidget:  *corewidget,
 		demandstats: ui.NewTableWithDetails(525+15, 200),
-		barchart:    ui.NewBarChartWidget(18, false, 525, 200),
+		barchart:    ui.NewStackedBarChartWidget(18, 525, 200),
 	}
 	widget.barchart.AddCategory("you", COLOR_SALE_YOU)
 	widget.barchart.AddCategory("unassigned", COLOR_SALE_UNASSIGNED)
@@ -319,29 +321,60 @@ type PowerStatWidget struct {
 	sws.CoreWidget
 	consumption *ui.BarChartWidget
 	generation  *ui.BarChartWidget
+	provided    *ui.BarChartWidget
 }
 
 func NewPowerStatWidget(w, h int32, g *Game) *PowerStatWidget {
 	corewidget := sws.NewCoreWidget(w, h)
 	widget := &PowerStatWidget{
 		CoreWidget:  *corewidget,
-		consumption: ui.NewBarChartWidget(18, true, 525, 200),
-		generation:  ui.NewBarChartWidget(18, true, 525, 200),
+		consumption: ui.NewBarChartWidget(525, 150),
+		generation:  ui.NewBarChartWidget(525, 150),
+		provided:    ui.NewBarChartWidget(525, 150),
 	}
-	widget.consumption.AddCategory("consumption", COLOR_SALE_YOU)
 	g.AddGameTimerSubscriber(widget.consumption)
+	widget.consumption.SetChartColor(COLOR_SALE_YOU)
 	widget.AddChild(widget.consumption)
 
-	widget.generation.Move(0, 220)
-	widget.generation.AddCategory("generators", COLOR_SALE_YOU)
+	labelConsumption := sws.NewLabelWidget(150, 25, "Current consumption")
+	labelConsumption.Move(525, 60)
+	widget.AddChild(labelConsumption)
+
+	widget.generation.Move(0, 160)
+	widget.generation.SetChartColor(COLOR_SALE_YOU)
 	g.AddGameTimerSubscriber(widget.generation)
 	widget.AddChild(widget.generation)
+
+	labelGeneration := sws.NewLabelWidget(150, 25, "Generators capacity")
+	labelGeneration.Move(525, 220)
+	widget.AddChild(labelGeneration)
+
+	widget.provided.Move(0, 320)
+	widget.provided.SetChartColor(COLOR_SALE_YOU)
+	g.AddGameTimerSubscriber(widget.provided)
+	widget.AddChild(widget.provided)
+
+	labelProvided := sws.NewLabelWidget(150, 25, "Utility transmission")
+	labelProvided.Move(525, 380)
+	widget.AddChild(labelProvided)
 
 	g.GetGameStats().AddPowerStatSubscriber(widget)
 	return widget
 }
 
 func (self *PowerStatWidget) NewPowerStat(ps *PowerStat) {
-	self.consumption.SetPoint(ps.date, "consumption", int32(ps.consumption))
-	self.generation.SetPoint(ps.date, "generators", int32(ps.generation))
+	self.consumption.SetPoint(ps.date, int32(ps.consumption))
+	self.generation.SetPoint(ps.date, int32(ps.generation))
+	self.provided.SetPoint(ps.date, int32(ps.provided))
+}
+
+func (self *PowerStatWidget) SetGame(t time.Time, gamestats *GameStats) {
+	log.Debug("PowerStatWidget::SetGame(", gamestats, ")")
+	self.consumption.ClearData(t)
+	self.generation.ClearData(t)
+	self.provided.ClearData(t)
+
+	for _, ps := range gamestats.powerstats {
+		self.NewPowerStat(ps)
+	}
 }
