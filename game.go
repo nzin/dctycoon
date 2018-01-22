@@ -125,11 +125,12 @@ func (self *Game) InitGame(locationid string, difficulty int32) {
 	self.cronevent = self.timer.AddCron(-1, -1, -1, func() {
 		self.GenerateDemandAndFee()
 	})
-	self.gamestats.InitGame()
 
 	self.trends.Init(self.gameui.eventpublisher, self.timer)
 	self.player = NewPlayer()
 	self.player.Init(self.timer, initialcapital, locationid)
+
+	self.gamestats.InitGame(self.player.GetInventory())
 
 	// loading list of names
 	availablenames := make([]NameList, 0, 0)
@@ -170,7 +171,7 @@ func (self *Game) InitGame(locationid string, difficulty int32) {
 	for _, s := range self.timersubscribers {
 		s.NewDay(self.timer)
 	}
-	self.gameui.InitGame(self.timer, self.player.GetInventory(), self.player.GetLedger(), self.trends)
+	self.gameui.InitGame(self.timer, self.player.GetInventory(), self.player.GetLedger(), self.trends, self.player.GetLocation())
 	self.gameui.ShowDC()
 }
 
@@ -201,12 +202,13 @@ func (self *Game) LoadGame(filename string) {
 	self.cronevent = self.timer.AddCron(-1, -1, -1, func() {
 		self.GenerateDemandAndFee()
 	})
-	self.gamestats.LoadGame(v["stats"].(map[string]interface{}))
 
 	self.timer.Load(v["clock"].(map[string]interface{}))
 	self.trends.Load(v["trends"].(map[string]interface{}), self.gameui.eventpublisher, self.timer)
 	self.player = NewPlayer()
 	self.player.LoadGame(self.timer, v["player"].(map[string]interface{}))
+
+	self.gamestats.LoadGame(self.player.GetInventory(), v["stats"].(map[string]interface{}))
 
 	opponents := v["opponents"].([]interface{})
 	// opponents
@@ -219,7 +221,7 @@ func (self *Game) LoadGame(filename string) {
 	for _, s := range self.timersubscribers {
 		s.NewDay(self.timer)
 	}
-	self.gameui.LoadGame(v, self.timer, self.player.GetInventory(), self.player.GetLedger(), self.trends)
+	self.gameui.LoadGame(v, self.timer, self.player.GetInventory(), self.player.GetLedger(), self.trends, self.player.GetLocation())
 	self.gameui.ShowDC()
 }
 
@@ -300,6 +302,20 @@ func (self *Game) GenerateDemandAndFee() {
 				}
 				self.gamestats.TriggerDemandStat(self.timer.CurrentTime, demand, serverbundle)
 			}
+		}
+	}
+	// generate electricity outage
+	for _, a := range actors {
+		a.GetInventory().GeneratePowerlineOutage(a.GetLocation().Electricityfailrate)
+	}
+
+	// pay other montly fee:
+	// - power lines
+	// - location renting
+	if self.timer.CurrentTime.Day() == 1 {
+		for _, a := range actors {
+			consumption, _ := a.GetInventory().ComputeGlobalPower()
+			a.GetLedger().PayUtility(a.GetInventory().GetMonthlyPowerlinesPrice()+consumption*24*30*a.GetLocation().Electricitycost/1000, self.timer.CurrentTime)
 		}
 	}
 }

@@ -26,6 +26,10 @@ func (self *ActorMock) GetName() string {
 	return "mock"
 }
 
+func (self *ActorMock) GetLocation() *LocationType {
+	return AvailableLocation["siliconvalley"]
+}
+
 func TestPool(t *testing.T) {
 	gt := timer.NewGameTimer()
 	inventory := NewInventory(gt)

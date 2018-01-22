@@ -14,7 +14,7 @@ func TestDemandAttribution(t *testing.T) {
 	quit := false
 	root := &sws.RootWidget{}
 
-	game := NewGame(&quit, root)
+	game := NewGame(&quit, root, false)
 	game.InitGame("siliconvalley", DIFFICULTY_EASY)
 
 	assert.NotEmpty(t, game, "Game created")

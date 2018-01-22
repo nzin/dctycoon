@@ -232,12 +232,19 @@ func (self *Tile) ItemInstalled(item *supplier.InventoryItem) {
 }
 
 func (self *Tile) ItemUninstalled(item *supplier.InventoryItem) {
+	log.Debug("Tile::ItemUninstalled(", item, ")")
+	// if we are removing a racked server
 	if item.Typeitem == supplier.PRODUCT_SERVER && item.Serverconf.ConfType.NbU > 0 {
 		if self.element != nil && self.element.ElementType() == supplier.PRODUCT_RACK {
 			rack := self.element.(*RackElement)
 			rack.RemoveItem(item)
 			self.surface = nil
 		}
+	}
+	// if we are removing a tower server
+	if item.Typeitem == supplier.PRODUCT_SERVER && item.Serverconf.ConfType.NbU == -1 {
+		self.element = nil
+		self.surface = nil
 	}
 	// the rack here is supposed to be empty
 	if item.Typeitem == supplier.PRODUCT_RACK && self.element != nil {

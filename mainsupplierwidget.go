@@ -63,7 +63,11 @@ func (self *MainSupplierWidget) Hide() {
 }
 
 func NewMainSupplierWidget(root *sws.RootWidget) *MainSupplierWidget {
-	mainwidget := sws.NewMainWidget(650, root.Height()-100, " Your DEAL supplier", true, true)
+	height := int32(50)
+	if root.Height() > 150 {
+		height = root.Height() - 100
+	}
+	mainwidget := sws.NewMainWidget(650, height, " Your DEAL supplier", true, true)
 	mainwidget.Center(root)
 
 	scrollwidgetshop := sws.NewScrollWidget(600, 550)

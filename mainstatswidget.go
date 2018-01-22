@@ -24,12 +24,13 @@ const (
 // - customer demand stats
 // - ...
 type MainStatsWidget struct {
-	rootwindow      *sws.RootWidget
-	mainwidget      *sws.MainWidget
-	tabwidget       *sws.TabWidget
-	opponentswidget *OpponentStatWidget
-	demandswidget   *DemandStatWidget
-	game            *Game
+	rootwindow        *sws.RootWidget
+	mainwidget        *sws.MainWidget
+	tabwidget         *sws.TabWidget
+	opponentswidget   *OpponentStatWidget
+	demandswidget     *DemandStatWidget
+	globalpowerwidget *PowerStatWidget
+	game              *Game
 }
 
 func (self *MainStatsWidget) Show() {
@@ -52,12 +53,13 @@ func NewMainStatsWidget(root *sws.RootWidget, g *Game) *MainStatsWidget {
 	mainwidget.Center(root)
 
 	widget := &MainStatsWidget{
-		rootwindow:      root,
-		mainwidget:      mainwidget,
-		tabwidget:       sws.NewTabWidget(200, 200),
-		game:            g,
-		opponentswidget: NewOpponentStatWidget(200, 200),
-		demandswidget:   NewDemandStatWidget(200, 200, g),
+		rootwindow:        root,
+		mainwidget:        mainwidget,
+		tabwidget:         sws.NewTabWidget(200, 200),
+		game:              g,
+		opponentswidget:   NewOpponentStatWidget(200, 200),
+		demandswidget:     NewDemandStatWidget(200, 200, g),
+		globalpowerwidget: NewPowerStatWidget(200, 200, g),
 	}
 
 	widget.mainwidget.SetInnerWidget(widget.tabwidget)
@@ -68,6 +70,7 @@ func NewMainStatsWidget(root *sws.RootWidget, g *Game) *MainStatsWidget {
 
 	widget.tabwidget.AddTab("Competitors", widget.opponentswidget)
 	widget.tabwidget.AddTab("Customer demands", widget.demandswidget)
+	widget.tabwidget.AddTab("Global Power", widget.globalpowerwidget)
 	if g.GetDebug() {
 		widget.tabwidget.AddTab("Opponent debug", NewDebugOpponentWidget(200, 200, g))
 	}
@@ -241,7 +244,7 @@ func NewDemandStatWidget(w, h int32, g *Game) *DemandStatWidget {
 	widget := &DemandStatWidget{
 		CoreWidget:  *corewidget,
 		demandstats: ui.NewTableWithDetails(525+15, 200),
-		barchart:    ui.NewBarChartWidget(18, 525, 200),
+		barchart:    ui.NewBarChartWidget(18, false, 525, 200),
 	}
 	widget.barchart.AddCategory("you", COLOR_SALE_YOU)
 	widget.barchart.AddCategory("unassigned", COLOR_SALE_UNASSIGNED)
@@ -308,4 +311,37 @@ func (self *DemandStatWidget) SetGame(t time.Time, gamestats *GameStats) {
 	for _, ds := range gamestats.demandsstats {
 		self.NewDemandStat(ds)
 	}
+}
+
+//
+// PowerStatWidget is a about global power consumption / generation stat widget
+type PowerStatWidget struct {
+	sws.CoreWidget
+	consumption *ui.BarChartWidget
+	generation  *ui.BarChartWidget
+}
+
+func NewPowerStatWidget(w, h int32, g *Game) *PowerStatWidget {
+	corewidget := sws.NewCoreWidget(w, h)
+	widget := &PowerStatWidget{
+		CoreWidget:  *corewidget,
+		consumption: ui.NewBarChartWidget(18, true, 525, 200),
+		generation:  ui.NewBarChartWidget(18, true, 525, 200),
+	}
+	widget.consumption.AddCategory("consumption", COLOR_SALE_YOU)
+	g.AddGameTimerSubscriber(widget.consumption)
+	widget.AddChild(widget.consumption)
+
+	widget.generation.Move(0, 220)
+	widget.generation.AddCategory("generators", COLOR_SALE_YOU)
+	g.AddGameTimerSubscriber(widget.generation)
+	widget.AddChild(widget.generation)
+
+	g.GetGameStats().AddPowerStatSubscriber(widget)
+	return widget
+}
+
+func (self *PowerStatWidget) NewPowerStat(ps *PowerStat) {
+	self.consumption.SetPoint(ps.date, "consumption", int32(ps.consumption))
+	self.generation.SetPoint(ps.date, "generators", int32(ps.generation))
 }

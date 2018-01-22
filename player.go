@@ -34,6 +34,10 @@ func (p *Player) GetName() string {
 	return "you"
 }
 
+func (p *Player) GetLocation() *supplier.LocationType {
+	return p.location
+}
+
 //
 // NewPlayer create a new player representation
 func NewPlayer() *Player {

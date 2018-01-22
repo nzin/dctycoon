@@ -69,6 +69,10 @@ func (self *NPDatacenter) GetPicture() string {
 	return self.picture
 }
 
+func (self *NPDatacenter) GetLocation() *supplier.LocationType {
+	return self.location
+}
+
 //
 // NewNPDatacenter() create a new NonPlayerDatacenter that will compete with the player
 func NewNPDatacenter() *NPDatacenter {
