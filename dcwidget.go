@@ -272,6 +272,7 @@ func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 			activeTile := self.activeTile
 			m.AddItem(sws.NewMenuItemLabel("Rotate", func() {
 				activeTile.Rotate((activeTile.rotation + 1) % 4)
+				self.PostUpdate()
 			}))
 			// prepare rackwidget
 			self.rackwidget.activeElement = self.activeTile.TileElement()
@@ -298,6 +299,7 @@ func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 			activeTile := self.activeTile
 			m.AddItem(sws.NewMenuItemLabel("Rotate", func() {
 				activeTile.Rotate((activeTile.rotation + 1) % 4)
+				self.PostUpdate()
 			}))
 			m.AddItem(sws.NewMenuItemLabel("Uninstall", func() {
 				self.inventory.UninstallItem(activeTile.TileElement().InventoryItem())
@@ -729,6 +731,7 @@ func (self *DcWidget) ComputeHeatMap() {
 					var leftfactor, rightfactor, topfactor, bottomfactor float64
 					if y > 0 {
 						if self.tiles[y-1][x].floor == "green" {
+							// building wall are isolating a bit
 							bottomfactor = 0.01
 						} else {
 							bottomfactor = 0.2
@@ -740,6 +743,7 @@ func (self *DcWidget) ComputeHeatMap() {
 					}
 					if x > 0 {
 						if self.tiles[y][x-1].floor == "green" {
+							// building wall are isolating a bit
 							leftfactor = 0.01
 						} else {
 							leftfactor = 0.2
@@ -751,6 +755,7 @@ func (self *DcWidget) ComputeHeatMap() {
 					}
 					if y < mapheight-1 {
 						if self.tiles[y+1][x].floor == "green" {
+							// building wall are isolating a bit
 							topfactor = 0.01
 						} else {
 							topfactor = 0.2
@@ -762,6 +767,7 @@ func (self *DcWidget) ComputeHeatMap() {
 					}
 					if x < mapwidth-1 {
 						if self.tiles[y][x+1].floor == "green" {
+							// building wall are isolating a bit
 							rightfactor = 0.01
 						} else {
 							rightfactor = 0.2
