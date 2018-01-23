@@ -101,7 +101,7 @@ func NewMainElectricityWidget(root *sws.RootWidget) *MainElectricityWidget {
 	return widget
 }
 
-func (self *MainElectricityWidget) PowerChange(time time.Time, consumed, generated, delivered float64) {
+func (self *MainElectricityWidget) PowerChange(time time.Time, consumed, generated, delivered, cooler float64) {
 	powerlines := self.inventory.GetPowerlines()
 
 	self.powerline1.SetActiveChoice(powerlines[0])
@@ -121,7 +121,7 @@ func (self *MainElectricityWidget) SetGame(inventory *supplier.Inventory, locati
 	self.powerline3.SetActiveChoice(powerlines[2])
 
 	self.montlyprice.SetText(fmt.Sprintf("%.0f $", self.inventory.GetMonthlyPowerlinesPrice()))
-	consumption, _ := inventory.GetGlobalPower()
+	consumption, _, _ := inventory.GetGlobalPower()
 	self.usageprice.SetText(fmt.Sprintf("%.0f $", consumption*24*30*location.Electricitycost/1000))
 
 	inventory.AddPowerStatSubscriber(self)

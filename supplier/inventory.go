@@ -73,7 +73,7 @@ type InventorySubscriber interface {
 // InventoryPowerChangeSubscriber interface is used
 // to know when the comsumption or the number of generators have changed
 type InventoryPowerChangeSubscriber interface {
-	PowerChange(time time.Time, consumed, generated, delivered float64)
+	PowerChange(time time.Time, consumed, generated, delivered, cooler float64)
 }
 
 //
@@ -236,6 +236,7 @@ type Inventory struct {
 	consumptionHotspot       map[int32]map[int32]float64
 	globalConsumption        float64
 	globalGeneration         float64
+	globalCooler             float64 // in BTU ~ kJ
 	inventorysubscribers     []InventorySubscriber
 	inventoryPoolSubscribers []InventoryPoolSubscriber
 	powerchangeSubscribers   []InventoryPowerChangeSubscriber
@@ -251,8 +252,12 @@ func (self *Inventory) ComputeGlobalPower() {
 	self.consumptionHotspot = make(map[int32]map[int32]float64)
 	self.globalConsumption = 0
 	self.globalGeneration = 0
+	self.globalCooler = 0
 	for _, item := range self.Items {
 		if item.IsPlaced() {
+			if item.Typeitem == PRODUCT_AC {
+				self.globalCooler += 50000
+			}
 			if item.Typeitem == PRODUCT_GENERATOR {
 				self.globalGeneration += 50000
 			}
@@ -277,14 +282,14 @@ func (self *Inventory) GetHotspotValue(y, x int32) float64 {
 }
 
 // GetGlobalPower allow to get the current consumption and generator capacity
-func (self *Inventory) GetGlobalPower() (consumption, generation float64) {
-	return self.globalConsumption, self.globalGeneration
+func (self *Inventory) GetGlobalPower() (consumption, generation, cooler float64) {
+	return self.globalConsumption, self.globalGeneration, self.globalCooler
 }
 
 func (self *Inventory) triggerPowerChange() {
 	self.ComputeGlobalPower()
 	for _, s := range self.powerchangeSubscribers {
-		s.PowerChange(self.globaltimer.CurrentTime, self.globalConsumption, self.globalGeneration, GetKilowattPowerline(self.currentMaxPower))
+		s.PowerChange(self.globaltimer.CurrentTime, self.globalConsumption, self.globalGeneration, GetKilowattPowerline(self.currentMaxPower), self.globalCooler)
 	}
 }
 
