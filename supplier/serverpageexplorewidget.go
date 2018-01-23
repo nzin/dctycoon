@@ -173,7 +173,7 @@ func NewServerPageExploreWidget(width, height int32) *ServerPageExploreWidget {
 	acTitle.Move(0, 460)
 	serverpageexplore.AddChild(acTitle)
 
-	acDesc := sws.NewTextAreaWidget(150, 160, "Our next generation efficient Data Center Air Climatiser")
+	acDesc := sws.NewTextAreaWidget(150, 160, "Our next generation efficient Data Center Air Climatiser. 50kWh")
 	acDesc.SetDisabled(true)
 	acDesc.SetFont(sws.LatoRegular14)
 	acDesc.SetColor(0xffeeeeee)

@@ -274,6 +274,7 @@ func (self *Inventory) ComputeGlobalPower() {
 }
 
 // GetHotspotValue allow to get the heat map for each tile
+// It returns the amount of wH
 func (self *Inventory) GetHotspotValue(y, x int32) float64 {
 	if _, ok := self.consumptionHotspot[y]; ok == true {
 		return self.consumptionHotspot[y][x]
