@@ -246,6 +246,7 @@ type Inventory struct {
 // GetGlobalPower list all machines on the map and compute
 // - the power machines consumes (positive number)
 // - the power generator can sustain (positive number)
+// normaly called by Inventory only
 func (self *Inventory) ComputeGlobalPower() {
 	self.consumptionHotspot = make(map[int32]map[int32]float64)
 	self.globalConsumption = 0
@@ -275,7 +276,7 @@ func (self *Inventory) GetHotspotValue(y, x int32) float64 {
 	return 0
 }
 
-// GetHotspotValue allow to get the heat map for each tile
+// GetGlobalPower allow to get the current consumption and generator capacity
 func (self *Inventory) GetGlobalPower() (consumption, generation float64) {
 	return self.globalConsumption, self.globalGeneration
 }

@@ -21,7 +21,7 @@ type DcWidget struct {
 	rootwindow   *sws.RootWidget
 	tiles        [][]*Tile
 	xRoot, yRoot int32 // offset of the whole map
-	activeTile   *Tile
+	activeTile   *Tile // if we click, to know which element tile we are relocating
 	te           *sws.TimerEvent
 	inventory    *supplier.Inventory
 	activeX      int32
