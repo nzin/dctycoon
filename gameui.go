@@ -84,6 +84,7 @@ func (self *GameUI) InitGame(globaltimer *timer.GameTimer, inventory *supplier.I
 	self.accountingwidget.Hide()
 	self.dc.InitMap("24_24_standard.json")
 	//	self.dc.InitMap("3_4_room.json")
+
 }
 
 //

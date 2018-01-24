@@ -31,7 +31,7 @@ type DcWidget struct {
 	activeY       int32
 	hc            *HardwareChoice // the upper left list of placeable hardware (AC,rack,generator...)
 	showHeatmap   bool
-	heatmapButton *sws.ButtonWidget
+	heatmapButton *sws.FlatButtonWidget
 
 	showInventoryManagement func()
 }
@@ -229,6 +229,9 @@ func (self *DcWidget) findFloorTile(x, y int32) (*Tile, int32, int32) {
 }
 
 func (self *DcWidget) MousePressDown(x, y int32, button uint8) {
+	if self.showHeatmap == true {
+		return
+	}
 	self.rackwidget.activeElement = nil
 	activeTile, xtile, ytile, isElement := self.findTile(x, y)
 
@@ -243,6 +246,9 @@ func (self *DcWidget) MousePressDown(x, y int32, button uint8) {
 }
 
 func (self *DcWidget) MouseDoubleClick(x, y int32) {
+	if self.showHeatmap == true {
+		return
+	}
 	activeTile, xtile, ytile, isElement := self.findTile(x, y)
 	if activeTile != nil && isElement {
 		activeElement := activeTile.TileElement()
@@ -262,6 +268,9 @@ func (self *DcWidget) MouseDoubleClick(x, y int32) {
 }
 
 func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
+	if self.showHeatmap == true {
+		return
+	}
 	if button == sdl.BUTTON_LEFT {
 	}
 	if button == sdl.BUTTON_RIGHT && self.activeTile != nil {
@@ -635,23 +644,32 @@ func NewDcWidget(w, h int32, rootwindow *sws.RootWidget) *DcWidget {
 		inventory:     nil,
 		hc:            NewHardwareChoice(),
 		showHeatmap:   false,
-		heatmapButton: sws.NewButtonWidget(100, 25, "Heatmap"),
+		heatmapButton: sws.NewFlatButtonWidget(150, 40, "Heatmap"),
 	}
 
 	//widget.hc.Move(0,h/2-100)
 	widget.hc.Move(0, 0)
 	widget.AddChild(widget.hc)
 
+	if icon, err := global.LoadImageAsset("assets/ui/map.png"); err == nil {
+		widget.heatmapButton.SetImageSurface(icon)
+	}
 	widget.heatmapButton.SetClicked(func() {
 		widget.showHeatmap = !widget.showHeatmap
-		widget.PostUpdate()
 		if widget.showHeatmap {
 			widget.heatmapButton.SetText("Map")
+			widget.RemoveChild(widget.hc)
 		} else {
 			widget.heatmapButton.SetText("Heatmap")
+			widget.AddChild(widget.hc)
 		}
+		widget.PostUpdate()
 	})
-	widget.heatmapButton.Move(30, rootwindow.Height()-55)
+	widget.heatmapButton.SetColor(0x80ffffff)
+	//	widget.heatmapButton.SetTextColor(sdl.Color{0xff, 0xff, 0xff, 0xff})
+	widget.heatmapButton.AlignImageLeft(true)
+	widget.heatmapButton.SetCentered(false)
+	widget.heatmapButton.Move(30, rootwindow.Height()-65)
 	widget.AddChild(widget.heatmapButton)
 
 	return widget
