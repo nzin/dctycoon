@@ -145,30 +145,6 @@ func (self *DcWidget) Repaint() {
 }
 
 //
-// helper function, to know which pixel is in (x.y)
-//
-// It is mainly used to know if we are on a transparent pixel
-//
-func GetSurfacePixel(surface *sdl.Surface, x, y int32) (red, green, blue, alpha uint8) {
-	if x < 0 || x >= surface.W || y < 0 || y >= surface.H {
-		return 0, 0, 0, 0
-	}
-	err := surface.Lock()
-	if err != nil {
-		panic(err)
-	}
-	bpp := surface.Format.BytesPerPixel
-	bytes := surface.Pixels()
-	red = bytes[int(y)*int(surface.Pitch)+int(x)*int(bpp)]
-	green = bytes[int(y)*int(surface.Pitch)+int(x)*int(bpp)+1]
-	blue = bytes[int(y)*int(surface.Pitch)+int(x)*int(bpp)+2]
-	alpha = bytes[int(y)*int(surface.Pitch)+int(x)*int(bpp)+3]
-
-	surface.Unlock()
-	return
-}
-
-//
 // this method will return the tile where the cusor point to
 // ie if the cursor point to the floor or an element on the tile
 //
@@ -186,9 +162,9 @@ func (self *DcWidget) findTile(x, y int32) (*Tile, int32, int32, bool) {
 				(y >= yShift) &&
 				(x < xShift+surface.W) &&
 				(y < yShift+surface.H) {
-				_, _, _, alpha := GetSurfacePixel(surface, x-xShift, y-yShift)
+				_, _, _, alpha := global.GetSurfacePixel(surface, x-xShift, y-yShift)
 				if alpha > 0 {
-					return tile, int32(tx), int32(ty), tile.IsElementAt(x-xShift, y-yShift)
+					return tile, int32(tx), int32(ty), tile.TileElement() != nil
 				}
 			}
 		}
