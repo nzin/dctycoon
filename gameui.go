@@ -71,7 +71,7 @@ func NewGameUI(quit *bool, root *sws.RootWidget, game *Game) *GameUI {
 // Therefore you have to populate the ledger and inventory AFTER calling this method
 func (self *GameUI) InitGame(globaltimer *timer.GameTimer, inventory *supplier.Inventory, ledger *accounting.Ledger, trends *supplier.Trend, location *supplier.LocationType) {
 	log.Debug("GameUI::InitGame()")
-	self.dc.SetGame(inventory, globaltimer.CurrentTime)
+	self.dc.SetGame(inventory, location, globaltimer.CurrentTime)
 	self.supplierwidget.SetGame(globaltimer, inventory, ledger, trends)
 	self.inventorywidget.SetGame(inventory, globaltimer.CurrentTime)
 	self.accountingwidget.SetGame(globaltimer, ledger)
@@ -83,6 +83,8 @@ func (self *GameUI) InitGame(globaltimer *timer.GameTimer, inventory *supplier.I
 	self.inventorywidget.Hide()
 	self.accountingwidget.Hide()
 	self.dc.InitMap("24_24_standard.json")
+	//	self.dc.InitMap("3_4_room.json")
+
 }
 
 //
@@ -91,7 +93,7 @@ func (self *GameUI) InitGame(globaltimer *timer.GameTimer, inventory *supplier.I
 // Therefore you have to populate the ledger and inventory AFTER calling this method
 func (self *GameUI) LoadGame(v map[string]interface{}, globaltimer *timer.GameTimer, inventory *supplier.Inventory, ledger *accounting.Ledger, trends *supplier.Trend, location *supplier.LocationType) {
 	log.Debug("GameUI::LoadGame()")
-	self.dc.SetGame(inventory, globaltimer.CurrentTime)
+	self.dc.SetGame(inventory, location, globaltimer.CurrentTime)
 	self.supplierwidget.SetGame(globaltimer, inventory, ledger, trends)
 	self.inventorywidget.SetGame(inventory, globaltimer.CurrentTime)
 	self.accountingwidget.SetGame(globaltimer, ledger)

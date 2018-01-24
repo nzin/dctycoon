@@ -101,7 +101,7 @@ func NewMainElectricityWidget(root *sws.RootWidget) *MainElectricityWidget {
 	return widget
 }
 
-func (self *MainElectricityWidget) PowerChange(time time.Time, consumed, generated, delivered float64) {
+func (self *MainElectricityWidget) PowerChange(time time.Time, consumed, generated, delivered, cooler float64) {
 	powerlines := self.inventory.GetPowerlines()
 
 	self.powerline1.SetActiveChoice(powerlines[0])
@@ -109,6 +109,7 @@ func (self *MainElectricityWidget) PowerChange(time time.Time, consumed, generat
 	self.powerline3.SetActiveChoice(powerlines[2])
 
 	self.montlyprice.SetText(fmt.Sprintf("%.0f $", self.inventory.GetMonthlyPowerlinesPrice()))
+	self.usageprice.SetText(fmt.Sprintf("%.0f $", consumed*24*30*self.location.Electricitycost/1000))
 }
 
 func (self *MainElectricityWidget) SetGame(inventory *supplier.Inventory, location *supplier.LocationType) {
@@ -120,22 +121,8 @@ func (self *MainElectricityWidget) SetGame(inventory *supplier.Inventory, locati
 	self.powerline3.SetActiveChoice(powerlines[2])
 
 	self.montlyprice.SetText(fmt.Sprintf("%.0f $", self.inventory.GetMonthlyPowerlinesPrice()))
-	consumption, _ := inventory.ComputeGlobalPower()
+	consumption, _, _ := inventory.GetGlobalPower()
 	self.usageprice.SetText(fmt.Sprintf("%.0f $", consumption*24*30*location.Electricitycost/1000))
 
 	inventory.AddPowerStatSubscriber(self)
-	inventory.AddInventorySubscriber(self)
 }
-
-func (self *MainElectricityWidget) ItemInTransit(*supplier.InventoryItem)       {}
-func (self *MainElectricityWidget) ItemInStock(*supplier.InventoryItem)         {}
-func (self *MainElectricityWidget) ItemRemoveFromStock(*supplier.InventoryItem) {}
-func (self *MainElectricityWidget) ItemInstalled(*supplier.InventoryItem) {
-	consumption, _ := self.inventory.ComputeGlobalPower()
-	self.usageprice.SetText(fmt.Sprintf("%.0f $", consumption*24*30*self.location.Electricitycost/1000))
-}
-func (self *MainElectricityWidget) ItemUninstalled(*supplier.InventoryItem) {
-	consumption, _ := self.inventory.ComputeGlobalPower()
-	self.usageprice.SetText(fmt.Sprintf("%.0f $", consumption*24*30*self.location.Electricitycost/1000))
-}
-func (self *MainElectricityWidget) ItemChangedPool(*supplier.InventoryItem) {}

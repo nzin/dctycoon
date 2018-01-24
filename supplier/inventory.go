@@ -73,7 +73,7 @@ type InventorySubscriber interface {
 // InventoryPowerChangeSubscriber interface is used
 // to know when the comsumption or the number of generators have changed
 type InventoryPowerChangeSubscriber interface {
-	PowerChange(time time.Time, consumed, generated, delivered float64)
+	PowerChange(time time.Time, consumed, generated, delivered, cooler float64)
 }
 
 //
@@ -232,7 +232,11 @@ type Inventory struct {
 	pools                    []ServerPool
 	offers                   []*ServerOffer
 	powerline                [3]int32
-	currentMaxPower          int32
+	currentMaxPower          int32 // currentMaxPower is the current highest current provided by utility power lines
+	consumptionHotspot       map[int32]map[int32]float64
+	globalConsumption        float64
+	globalGeneration         float64
+	globalCooler             float64 // in BTU ~ kJ
 	inventorysubscribers     []InventorySubscriber
 	inventoryPoolSubscribers []InventoryPoolSubscriber
 	powerchangeSubscribers   []InventoryPowerChangeSubscriber
@@ -240,27 +244,53 @@ type Inventory struct {
 	defaultVpsPool           ServerPool
 }
 
-// GetGlobalPower list all machines on the map and returns
+// GetGlobalPower list all machines on the map and compute
 // - the power machines consumes (positive number)
 // - the power generator can sustain (positive number)
-func (self *Inventory) ComputeGlobalPower() (consumption, generation float64) {
+// normaly called by Inventory only
+func (self *Inventory) ComputeGlobalPower() {
+	self.consumptionHotspot = make(map[int32]map[int32]float64)
+	self.globalConsumption = 0
+	self.globalGeneration = 0
+	self.globalCooler = 0
 	for _, item := range self.Items {
 		if item.IsPlaced() {
+			if item.Typeitem == PRODUCT_AC {
+				self.globalCooler += 50000
+			}
 			if item.Typeitem == PRODUCT_GENERATOR {
-				generation += 50000
+				self.globalGeneration += 50000
 			}
 			if item.Typeitem == PRODUCT_SERVER {
-				consumption += item.Serverconf.PowerConsumption()
+				itemconsumption := item.Serverconf.PowerConsumption()
+				self.globalConsumption += itemconsumption
+				if _, ok := self.consumptionHotspot[item.Yplaced]; ok == false {
+					self.consumptionHotspot[item.Yplaced] = make(map[int32]float64)
+				}
+				self.consumptionHotspot[item.Yplaced][item.Xplaced] += itemconsumption
 			}
 		}
 	}
-	return consumption, generation
+}
+
+// GetHotspotValue allow to get the heat map for each tile
+// It returns the amount of wH
+func (self *Inventory) GetHotspotValue(y, x int32) float64 {
+	if _, ok := self.consumptionHotspot[y]; ok == true {
+		return self.consumptionHotspot[y][x]
+	}
+	return 0
+}
+
+// GetGlobalPower allow to get the current consumption and generator capacity
+func (self *Inventory) GetGlobalPower() (consumption, generation, cooler float64) {
+	return self.globalConsumption, self.globalGeneration, self.globalCooler
 }
 
 func (self *Inventory) triggerPowerChange() {
-	consumption, generation := self.ComputeGlobalPower()
+	self.ComputeGlobalPower()
 	for _, s := range self.powerchangeSubscribers {
-		s.PowerChange(self.globaltimer.CurrentTime, consumption, generation, GetKilowattPowerline(self.currentMaxPower))
+		s.PowerChange(self.globaltimer.CurrentTime, self.globalConsumption, self.globalGeneration, GetKilowattPowerline(self.currentMaxPower), self.globalCooler)
 	}
 }
 
@@ -492,6 +522,7 @@ func (self *Inventory) LoadPowerlines(power map[string]interface{}) {
 func (self *Inventory) Load(conf map[string]interface{}) {
 	log.Debug("Inventory::Load(", conf, ")")
 	self.increment = int32(conf["increment"].(float64))
+	self.consumptionHotspot = make(map[int32]map[int32]float64)
 	self.Items = make(map[int32]*InventoryItem)
 	if itemsinterface, ok := conf["items"]; ok {
 		items := itemsinterface.([]interface{})
@@ -521,6 +552,8 @@ func (self *Inventory) Load(conf map[string]interface{}) {
 	if powerinterface, ok := conf["powerlines"]; ok {
 		self.LoadPowerlines(powerinterface.(map[string]interface{}))
 	}
+	// to compute the hotspot
+	self.triggerPowerChange()
 }
 
 func (self *Inventory) Save() string {
@@ -723,6 +756,7 @@ func NewInventory(globaltimer *timer.GameTimer) *Inventory {
 		defaultVpsPool:         NewVpsServerPool("default", 1.2, 1.0),
 		powerline:              [3]int32{POWERLINE_10K, POWERLINE_NONE, POWERLINE_NONE},
 		currentMaxPower:        POWERLINE_10K,
+		consumptionHotspot:     make(map[int32]map[int32]float64),
 	}
 
 	inventory.AddPool(inventory.defaultPhysicalPool)

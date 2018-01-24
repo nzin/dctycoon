@@ -3,6 +3,7 @@ package dctycoon
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/nzin/dctycoon/global"
@@ -17,17 +18,20 @@ import (
 //
 type DcWidget struct {
 	sws.CoreWidget
-	rackwidget   *RackWidget
-	rootwindow   *sws.RootWidget
-	tiles        [][]*Tile
-	xRoot, yRoot int32 // offset of the whole map
-	activeTile   *Tile
-	te           *sws.TimerEvent
-	inventory    *supplier.Inventory
-	activeX      int32
-	activeY      int32
-	// the upper left list of placeable hardware (AC,rack,generator...)
-	hc *HardwareChoice
+	rackwidget    *RackWidget
+	rootwindow    *sws.RootWidget
+	tiles         [][]*Tile
+	xRoot, yRoot  int32 // offset of the whole map
+	activeTile    *Tile // if we click, to know which element tile we are relocating
+	te            *sws.TimerEvent
+	inventory     *supplier.Inventory
+	externaltemp  float64
+	heatmap       [][]float64
+	activeX       int32
+	activeY       int32
+	hc            *HardwareChoice // the upper left list of placeable hardware (AC,rack,generator...)
+	showHeatmap   bool
+	heatmapButton *sws.FlatButtonWidget
 
 	showInventoryManagement func()
 }
@@ -95,15 +99,39 @@ func (self *DcWidget) Repaint() {
 	mapheight := len(self.tiles)
 	mapwidth := len(self.tiles[0])
 	self.FillRect(0, 0, self.Width(), self.Height(), 0xff000000)
+
+	// prepare heat map tiles
+	var heat [10]*sdl.Surface
+	for i := 0; i < 10; i++ {
+		heat[i], _ = sdl.CreateRGBSurface(0, 105, TILE_HEIGHT, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000)
+		floor := getSprite("assets/ui/heat" + strconv.Itoa(i) + ".png")
+		rectSrc := sdl.Rect{0, 0, floor.W, floor.H}
+		rectDst := sdl.Rect{0, TILE_HEIGHT - floor.H, floor.W, floor.H}
+		floor.Blit(&rectSrc, heat[i], &rectDst)
+	}
 	for y := 0; y < mapheight; y++ {
 		for x := 0; x < mapwidth; x++ {
 			tile := self.tiles[y][x]
-			if tile != nil {
-				surface := (*tile).Draw()
-				rectSrc := sdl.Rect{0, 0, surface.W, surface.H}
-				rectDst := sdl.Rect{self.xRoot + (self.Surface().W / 2) + (TILE_WIDTH_STEP/2)*int32(x) - (TILE_WIDTH_STEP/2)*int32(y), self.yRoot + (TILE_HEIGHT_STEP/2)*int32(x) + (TILE_HEIGHT_STEP/2)*int32(y), surface.W, surface.H}
-				surface.Blit(&rectSrc, self.Surface(), &rectDst)
+			var surface *sdl.Surface
+			if self.showHeatmap == false {
+				surface = (*tile).Draw()
+			} else {
+				if tile.floor == "green" {
+					surface = (*tile).Draw()
+				} else {
+					temp := int(self.heatmap[y][x] - 17)
+					if temp < 0 {
+						temp = 0
+					}
+					if temp > 9 {
+						temp = 9
+					}
+					surface = heat[temp]
+				}
 			}
+			rectSrc := sdl.Rect{0, 0, surface.W, surface.H}
+			rectDst := sdl.Rect{self.xRoot + (self.Surface().W / 2) + (TILE_WIDTH_STEP/2)*int32(x) - (TILE_WIDTH_STEP/2)*int32(y), self.yRoot + (TILE_HEIGHT_STEP/2)*int32(x) + (TILE_HEIGHT_STEP/2)*int32(y), surface.W, surface.H}
+			surface.Blit(&rectSrc, self.Surface(), &rectDst)
 		}
 	}
 	for _, child := range self.GetChildren() {
@@ -113,6 +141,7 @@ func (self *DcWidget) Repaint() {
 		rectDst := sdl.Rect{child.X(), child.Y(), child.Width(), child.Height()}
 		child.Surface().Blit(&rectSrc, self.Surface(), &rectDst)
 	}
+	self.SetDirtyFalse()
 }
 
 //
@@ -192,6 +221,9 @@ func (self *DcWidget) findFloorTile(x, y int32) (*Tile, int32, int32) {
 }
 
 func (self *DcWidget) MousePressDown(x, y int32, button uint8) {
+	if self.showHeatmap == true {
+		return
+	}
 	self.rackwidget.activeElement = nil
 	activeTile, xtile, ytile, isElement := self.findTile(x, y)
 
@@ -206,6 +238,9 @@ func (self *DcWidget) MousePressDown(x, y int32, button uint8) {
 }
 
 func (self *DcWidget) MouseDoubleClick(x, y int32) {
+	if self.showHeatmap == true {
+		return
+	}
 	activeTile, xtile, ytile, isElement := self.findTile(x, y)
 	if activeTile != nil && isElement {
 		activeElement := activeTile.TileElement()
@@ -225,6 +260,9 @@ func (self *DcWidget) MouseDoubleClick(x, y int32) {
 }
 
 func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
+	if self.showHeatmap == true {
+		return
+	}
 	if button == sdl.BUTTON_LEFT {
 	}
 	if button == sdl.BUTTON_RIGHT && self.activeTile != nil {
@@ -235,6 +273,7 @@ func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 			activeTile := self.activeTile
 			m.AddItem(sws.NewMenuItemLabel("Rotate", func() {
 				activeTile.Rotate((activeTile.rotation + 1) % 4)
+				self.PostUpdate()
 			}))
 			// prepare rackwidget
 			self.rackwidget.activeElement = self.activeTile.TileElement()
@@ -261,6 +300,7 @@ func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 			activeTile := self.activeTile
 			m.AddItem(sws.NewMenuItemLabel("Rotate", func() {
 				activeTile.Rotate((activeTile.rotation + 1) % 4)
+				self.PostUpdate()
 			}))
 			m.AddItem(sws.NewMenuItemLabel("Uninstall", func() {
 				self.inventory.UninstallItem(activeTile.TileElement().InventoryItem())
@@ -283,6 +323,8 @@ func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 				tile := self.activeTile
 				m.AddItem(sws.NewMenuItemLabel("Switch to air flow", func() {
 					tile.SwitchToAirFlow()
+					self.ComputeHeatMap()
+					self.PostUpdate()
 				}))
 				m.Move(x, y)
 				sws.ShowMenu(m)
@@ -292,6 +334,8 @@ func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 				tile := self.activeTile
 				m.AddItem(sws.NewMenuItemLabel("Remove air flow", func() {
 					tile.SwitchToNotAirFlow()
+					self.ComputeHeatMap()
+					self.PostUpdate()
 				}))
 				m.Move(x, y)
 				sws.ShowMenu(m)
@@ -494,10 +538,13 @@ func (self *DcWidget) LoadMap(dc map[string]interface{}) {
 	width := int32(dc["width"].(float64))
 	height := int32(dc["height"].(float64))
 	self.tiles = make([][]*Tile, height)
+	self.heatmap = make([][]float64, height)
 	for y := range self.tiles {
 		self.tiles[y] = make([]*Tile, width)
+		self.heatmap[y] = make([]float64, width)
 		for x := range self.tiles[y] {
 			self.tiles[y][x] = NewGrassTile()
+			self.heatmap[y][x] = self.externaltemp
 		}
 	}
 	tiles := dc["tiles"].([]interface{})
@@ -527,6 +574,7 @@ func (self *DcWidget) LoadMap(dc map[string]interface{}) {
 			self.ItemInstalled(item)
 		}
 	}
+	self.ComputeHeatMap()
 }
 
 func (self *DcWidget) InitMap(assetdcmap string) {
@@ -579,18 +627,43 @@ func NewDcWidget(w, h int32, rootwindow *sws.RootWidget) *DcWidget {
 	corewidget := sws.NewCoreWidget(w, h)
 	rackwidget := NewRackWidget(rootwindow)
 	widget := &DcWidget{CoreWidget: *corewidget,
-		rackwidget: rackwidget,
-		rootwindow: rootwindow,
-		tiles:      [][]*Tile{{}},
-		xRoot:      0,
-		yRoot:      0,
-		inventory:  nil,
-		hc:         NewHardwareChoice(),
+		rackwidget:    rackwidget,
+		rootwindow:    rootwindow,
+		tiles:         [][]*Tile{{}},
+		heatmap:       [][]float64{},
+		xRoot:         0,
+		yRoot:         0,
+		inventory:     nil,
+		hc:            NewHardwareChoice(),
+		showHeatmap:   false,
+		heatmapButton: sws.NewFlatButtonWidget(150, 40, "Heatmap"),
 	}
 
 	//widget.hc.Move(0,h/2-100)
 	widget.hc.Move(0, 0)
 	widget.AddChild(widget.hc)
+
+	if icon, err := global.LoadImageAsset("assets/ui/map.png"); err == nil {
+		widget.heatmapButton.SetImageSurface(icon)
+	}
+	widget.heatmapButton.SetClicked(func() {
+		widget.showHeatmap = !widget.showHeatmap
+		if widget.showHeatmap {
+			widget.heatmapButton.SetText("Map")
+			widget.RemoveChild(widget.hc)
+		} else {
+			widget.heatmapButton.SetText("Heatmap")
+			widget.AddChild(widget.hc)
+		}
+		widget.PostUpdate()
+	})
+	widget.heatmapButton.SetColor(0x80ffffff)
+	//	widget.heatmapButton.SetTextColor(sdl.Color{0xff, 0xff, 0xff, 0xff})
+	widget.heatmapButton.AlignImageLeft(true)
+	widget.heatmapButton.SetCentered(false)
+	widget.heatmapButton.Move(30, rootwindow.Height()-65)
+	widget.AddChild(widget.heatmapButton)
+
 	return widget
 }
 
@@ -598,14 +671,127 @@ func (self *DcWidget) SetInventoryManagementCallback(showInventoryManagement fun
 	self.showInventoryManagement = showInventoryManagement
 }
 
-func (self *DcWidget) SetGame(inventory *supplier.Inventory, currenttime time.Time) {
+func (self *DcWidget) SetGame(inventory *supplier.Inventory, location *supplier.LocationType, currenttime time.Time) {
 	log.Debug("DcWidget::SetGame()")
 	if self.inventory != nil {
 		self.inventory.RemoveInventorySubscriber(self)
+		self.inventory.RemovePowerChangeSubscriber(self)
 	}
 	self.inventory = inventory
 	inventory.AddInventorySubscriber(self)
+	inventory.AddPowerStatSubscriber(self)
+	self.externaltemp = location.Temperatureaverage
 
 	self.rackwidget.SetGame(inventory, currenttime)
 	self.hc.SetGame(inventory, currenttime)
+	self.showHeatmap = false
+}
+
+func (self *DcWidget) PowerChange(time time.Time, consumed, generated, delivered, cooler float64) {
+	self.ComputeHeatMap()
+}
+
+func (self *DcWidget) ComputeHeatMap() {
+	log.Debug("DcWidget::ComputeHeatMap()")
+	// to raise 1 m-3 of air by 1 deg C : 1.211kj
+	// 1kwh = 3600kJ /h?
+	// 1BTU ~ 1kJ /s? or kwh?
+	//
+	// so
+	mapheight := len(self.tiles)
+	mapwidth := len(self.tiles[0])
+	self.heatmap = make([][]float64, mapheight)
+	nbairflow := float64(0)
+	for y := 0; y < mapheight; y++ {
+		self.heatmap[y] = make([]float64, mapwidth)
+		for x := 0; x < mapwidth; x++ {
+			self.heatmap[y][x] = self.externaltemp
+			if self.tiles[y][x].floor == "inside.air" {
+				nbairflow++
+			}
+		}
+	}
+
+	// removePerAirFlow is in wH
+	// GetHotspotValue() is in wH
+	_, _, removePerAirflow := self.inventory.GetGlobalPower()
+	if nbairflow != 0 {
+		removePerAirflow = removePerAirflow / nbairflow
+	}
+
+	// we loop 10 times to spread the heat
+	for loop := 0; loop < 600; loop++ {
+		nextheatmap := make([][]float64, mapheight)
+		for y := 0; y < mapheight; y++ {
+			nextheatmap[y] = make([]float64, mapwidth)
+			for x := 0; x < mapwidth; x++ {
+				nextheatmap[y][x] = self.heatmap[y][x]
+				// we flow air only inside
+				if self.tiles[y][x].floor != "green" {
+					// we add the heat
+					nextheatmap[y][x] += self.inventory.GetHotspotValue(int32(y), int32(x)) / 1000
+					// we remove via the airflow
+					if self.tiles[y][x].floor == "inside.air" {
+						nextheatmap[y][x] -= removePerAirflow / 1000
+						if nextheatmap[y][x] < 17 {
+							nextheatmap[y][x] = 17
+						}
+					}
+					var left, right, top, bottom float64
+					var leftfactor, rightfactor, topfactor, bottomfactor float64
+					if y > 0 {
+						if self.tiles[y-1][x].floor == "green" {
+							// building wall are isolating a bit
+							bottomfactor = 0.01
+						} else {
+							bottomfactor = 0.2
+						}
+						bottom = self.heatmap[y-1][x]
+					} else {
+						bottomfactor = 0.01
+						bottom = self.externaltemp
+					}
+					if x > 0 {
+						if self.tiles[y][x-1].floor == "green" {
+							// building wall are isolating a bit
+							leftfactor = 0.01
+						} else {
+							leftfactor = 0.2
+						}
+						left = self.heatmap[y][x-1]
+					} else {
+						leftfactor = 0.01
+						left = self.externaltemp
+					}
+					if y < mapheight-1 {
+						if self.tiles[y+1][x].floor == "green" {
+							// building wall are isolating a bit
+							topfactor = 0.01
+						} else {
+							topfactor = 0.2
+						}
+						top = self.heatmap[y+1][x]
+					} else {
+						topfactor = 0.01
+						top = self.externaltemp
+					}
+					if x < mapwidth-1 {
+						if self.tiles[y][x+1].floor == "green" {
+							// building wall are isolating a bit
+							rightfactor = 0.01
+						} else {
+							rightfactor = 0.2
+						}
+						right = self.heatmap[y][x+1]
+					} else {
+						rightfactor = 0.01
+						right = self.externaltemp
+					}
+					nextheatmap[y][x] = (1-leftfactor-rightfactor-topfactor-bottomfactor)*nextheatmap[y][x] +
+						leftfactor*left + rightfactor*right + topfactor*top + bottomfactor*bottom
+				}
+			}
+		}
+		self.heatmap = nextheatmap
+	}
 }

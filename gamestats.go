@@ -13,6 +13,7 @@ type PowerStat struct {
 	consumption float64
 	generation  float64
 	provided    float64
+	cooler      float64
 	date        time.Time
 }
 
@@ -21,7 +22,8 @@ func (self *PowerStat) Save() string {
 	str += fmt.Sprintf("\"date\": \"%d-%d-%d\",", self.date.Year(), self.date.Month(), self.date.Day())
 	str += fmt.Sprintf("\"consumption\": %f,", self.consumption)
 	str += fmt.Sprintf("\"generation\": %f,", self.generation)
-	str += fmt.Sprintf("\"provided\": %f", self.provided)
+	str += fmt.Sprintf("\"provided\": %f,", self.provided)
+	str += fmt.Sprintf("\"cooler\": %f", self.cooler)
 	return str + "}"
 }
 
@@ -33,6 +35,7 @@ func NewPowerStat(v map[string]interface{}) *PowerStat {
 		consumption: v["consumption"].(float64),
 		generation:  v["generation"].(float64),
 		provided:    v["provided"].(float64),
+		cooler:      v["cooler"].(float64),
 		date:        time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC),
 	}
 	return ps
@@ -181,12 +184,13 @@ func (self *GameStats) RemovePowerStatSubscriber(subscriber PowerStatSubscriber)
 	}
 }
 
-func (self *GameStats) PowerChange(t time.Time, consumption, generation, provided float64) {
+func (self *GameStats) PowerChange(t time.Time, consumption, generation, provided, cooler float64) {
 	stat := &PowerStat{
 		date:        t,
 		consumption: consumption,
 		generation:  generation,
 		provided:    provided,
+		cooler:      cooler,
 	}
 	self.powerstats = append(self.powerstats, stat)
 
