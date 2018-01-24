@@ -118,8 +118,8 @@ func (self *DatacenterMap) UninstallItem(item *supplier.InventoryItem) {
 //     "width": 10,
 //     "height": 10,
 //     "tiles": [
-//       {"x":0, "y":0, "wall0":"","wall1":"","floor":"inside","dcelementtype":"rack","dcelement":{...}},
-//       {"x":1, "y":0, "wall0":"","wall1":"","floor":"inside"},
+//       {"x":0, "y":0, "wall0":"","wall1":"","floor":"inside","rotation":0, "decoration":""},
+//       {"x":1, "y":0, "wall0":"","wall1":"","floor":"inside","rotation":0, "decoration":"chair"}
 //     ]
 //   }
 //
