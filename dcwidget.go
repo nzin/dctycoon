@@ -112,21 +112,13 @@ func (self *DcWidget) Repaint() {
 	for y := 0; y < mapheight; y++ {
 		for x := 0; x < mapwidth; x++ {
 			tile := self.tiles[y][x]
+			var surface *sdl.Surface
 			if self.showHeatmap == false {
-				if tile != nil {
-					surface := (*tile).Draw()
-					rectSrc := sdl.Rect{0, 0, surface.W, surface.H}
-					rectDst := sdl.Rect{self.xRoot + (self.Surface().W / 2) + (TILE_WIDTH_STEP/2)*int32(x) - (TILE_WIDTH_STEP/2)*int32(y), self.yRoot + (TILE_HEIGHT_STEP/2)*int32(x) + (TILE_HEIGHT_STEP/2)*int32(y), surface.W, surface.H}
-					surface.Blit(&rectSrc, self.Surface(), &rectDst)
-				}
+				surface = (*tile).Draw()
 			} else {
-				var surface *sdl.Surface
 				if tile.floor == "green" {
 					surface = (*tile).Draw()
 				} else {
-					/*					if y == 10 && x == 6 {
-										fmt.Println("DcWidget::Repaint", y, x, self.heatmap[y][x])
-									}*/
 					temp := int(self.heatmap[y][x] - 17)
 					if temp < 0 {
 						temp = 0
@@ -136,10 +128,10 @@ func (self *DcWidget) Repaint() {
 					}
 					surface = heat[temp]
 				}
-				rectSrc := sdl.Rect{0, 0, surface.W, surface.H}
-				rectDst := sdl.Rect{self.xRoot + (self.Surface().W / 2) + (TILE_WIDTH_STEP/2)*int32(x) - (TILE_WIDTH_STEP/2)*int32(y), self.yRoot + (TILE_HEIGHT_STEP/2)*int32(x) + (TILE_HEIGHT_STEP/2)*int32(y), surface.W, surface.H}
-				surface.Blit(&rectSrc, self.Surface(), &rectDst)
 			}
+			rectSrc := sdl.Rect{0, 0, surface.W, surface.H}
+			rectDst := sdl.Rect{self.xRoot + (self.Surface().W / 2) + (TILE_WIDTH_STEP/2)*int32(x) - (TILE_WIDTH_STEP/2)*int32(y), self.yRoot + (TILE_HEIGHT_STEP/2)*int32(x) + (TILE_HEIGHT_STEP/2)*int32(y), surface.W, surface.H}
+			surface.Blit(&rectSrc, self.Surface(), &rectDst)
 		}
 	}
 	for _, child := range self.GetChildren() {
