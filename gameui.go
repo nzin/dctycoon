@@ -1,8 +1,6 @@
 package dctycoon
 
 import (
-	"fmt"
-
 	"github.com/nzin/dctycoon/accounting"
 	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/dctycoon/timer"
@@ -66,12 +64,12 @@ func NewGameUI(quit *bool, root *sws.RootWidget, game *Game) *GameUI {
 }
 
 //
-// InitGame is used when creating a new game
+// SetGame is used when creating a new game, or loading a game
 // This re-init all ledger / inventory UI.
 // Therefore you have to populate the ledger and inventory AFTER calling this method
-func (self *GameUI) InitGame(globaltimer *timer.GameTimer, inventory *supplier.Inventory, ledger *accounting.Ledger, trends *supplier.Trend, location *supplier.LocationType) {
+func (self *GameUI) SetGame(globaltimer *timer.GameTimer, inventory *supplier.Inventory, ledger *accounting.Ledger, trends *supplier.Trend, location *supplier.LocationType, dcmap *DatacenterMap) {
 	log.Debug("GameUI::InitGame()")
-	self.dc.SetGame(inventory, location, globaltimer.CurrentTime)
+	self.dc.SetGame(inventory, globaltimer.CurrentTime, dcmap)
 	self.supplierwidget.SetGame(globaltimer, inventory, ledger, trends)
 	self.inventorywidget.SetGame(inventory, globaltimer.CurrentTime)
 	self.accountingwidget.SetGame(globaltimer, ledger)
@@ -82,34 +80,6 @@ func (self *GameUI) InitGame(globaltimer *timer.GameTimer, inventory *supplier.I
 	self.supplierwidget.Hide()
 	self.inventorywidget.Hide()
 	self.accountingwidget.Hide()
-	self.dc.InitMap("24_24_standard.json")
-	//	self.dc.InitMap("3_4_room.json")
-
-}
-
-//
-// LoadGame is used when loading a new game
-// This re-init all ledger / inventory UI.
-// Therefore you have to populate the ledger and inventory AFTER calling this method
-func (self *GameUI) LoadGame(v map[string]interface{}, globaltimer *timer.GameTimer, inventory *supplier.Inventory, ledger *accounting.Ledger, trends *supplier.Trend, location *supplier.LocationType) {
-	log.Debug("GameUI::LoadGame()")
-	self.dc.SetGame(inventory, location, globaltimer.CurrentTime)
-	self.supplierwidget.SetGame(globaltimer, inventory, ledger, trends)
-	self.inventorywidget.SetGame(inventory, globaltimer.CurrentTime)
-	self.accountingwidget.SetGame(globaltimer, ledger)
-	self.dock.SetGame(globaltimer, ledger)
-	self.statswidget.LoadGame()
-	self.electricitywidget.SetGame(inventory, location)
-
-	self.supplierwidget.Hide()
-	self.inventorywidget.Hide()
-	self.accountingwidget.Hide()
-	gamemap := v["map"].(map[string]interface{})
-	self.dc.LoadMap(gamemap)
-}
-
-func (self *GameUI) SaveGame() string {
-	return fmt.Sprintf(`"map": %s`, self.dc.SaveMap())
 }
 
 func (self *GameUI) ShowDC() {
