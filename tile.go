@@ -200,11 +200,12 @@ func NewDecorationElement(name string) *DecorationElement {
 }
 
 type Tile struct {
-	wall     [2]string // "" when nothing
-	floor    string
-	element  TileElement // either RackElement or SimpleElement
-	surface  *sdl.Surface
-	rotation uint32 // rotation of the inner element: floor+element (not the walls)
+	wall               [2]string // "" when nothing
+	floor              string
+	element            TileElement // either RackElement or SimpleElement
+	surface            *sdl.Surface
+	surfaceWithoutWall *sdl.Surface
+	rotation           uint32 // rotation of the inner element: floor+element (not the walls)
 }
 
 func (self *Tile) ItemInstalled(item *supplier.InventoryItem) {
@@ -212,22 +213,22 @@ func (self *Tile) ItemInstalled(item *supplier.InventoryItem) {
 		if self.element != nil && self.element.ElementType() == supplier.PRODUCT_RACK {
 			rack := self.element.(*RackElement)
 			rack.AddItem(item)
-			self.surface = nil
+			self.freeSurface()
 		}
 	}
 	// tower
 	if item.Typeitem == supplier.PRODUCT_SERVER && item.Serverconf.ConfType.NbU <= 0 {
 		self.element = NewSimpleElement(item)
-		self.surface = nil
+		self.freeSurface()
 	}
 
 	if item.Typeitem == supplier.PRODUCT_RACK && self.element == nil {
 		self.element = NewRackElement(item)
-		self.surface = nil
+		self.freeSurface()
 	}
 	if item.Typeitem != supplier.PRODUCT_RACK && item.Typeitem != supplier.PRODUCT_SERVER {
 		self.element = NewSimpleElement(item)
-		self.surface = nil
+		self.freeSurface()
 	}
 }
 
@@ -238,22 +239,22 @@ func (self *Tile) ItemUninstalled(item *supplier.InventoryItem) {
 		if self.element != nil && self.element.ElementType() == supplier.PRODUCT_RACK {
 			rack := self.element.(*RackElement)
 			rack.RemoveItem(item)
-			self.surface = nil
+			self.freeSurface()
 		}
 	}
 	// if we are removing a tower server
 	if item.Typeitem == supplier.PRODUCT_SERVER && item.Serverconf.ConfType.NbU == -1 {
 		self.element = nil
-		self.surface = nil
+		self.freeSurface()
 	}
 	// the rack here is supposed to be empty
 	if item.Typeitem == supplier.PRODUCT_RACK && self.element != nil {
 		self.element = nil
-		self.surface = nil
+		self.freeSurface()
 	}
 	if item.Typeitem != supplier.PRODUCT_RACK && item.Typeitem != supplier.PRODUCT_SERVER {
 		self.element = nil
-		self.surface = nil
+		self.freeSurface()
 	}
 }
 
@@ -280,83 +281,80 @@ func (self *Tile) IsFloorInsideAirFlow() bool {
 func (self *Tile) SwitchToAirFlow() {
 	if self.floor == "inside" {
 		self.floor = "inside.air"
-		if self.surface != nil {
-			self.surface.Free()
-		}
-		self.surface = nil
+		self.freeSurface()
 	}
 }
 
 func (self *Tile) SwitchToNotAirFlow() {
 	if self.floor == "inside.air" {
 		self.floor = "inside"
-		if self.surface != nil {
-			self.surface.Free()
-		}
-		self.surface = nil
+		self.freeSurface()
 	}
 }
 
-func (self *Tile) IsElementAt(x, y int32) bool {
-	if self.element == nil {
-		return false
+func (self *Tile) freeSurface() {
+	if self.surface != nil {
+		self.surface.Free()
 	}
-	//if self.element.ElementType() != supplier.PRODUCT_RACK {
-	//	return false
-	//}
-	elt := self.element.Draw(self.rotation)
-	y -= TILE_HEIGHT - elt.H
-	if (x < 0) || (y < 0) || (x >= elt.W) || (y > elt.H) {
-		return false
+	if self.surfaceWithoutWall != nil {
+		self.surfaceWithoutWall.Free()
 	}
-	_, _, _, alpha := GetSurfacePixel(elt, x, y)
-	if alpha > 0 {
-		return true
-	}
-	return false
+	self.surface = nil
+	self.surfaceWithoutWall = nil
 }
 
 func (self *Tile) Draw() *sdl.Surface {
 	if self.surface == nil {
-		self.surface, _ = sdl.CreateRGBSurface(0, 105, TILE_HEIGHT, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000)
-		floor := getSprite("assets/ui/" + self.floor + strconv.Itoa(int(self.rotation)) + ".png")
-		rectSrc := sdl.Rect{0, 0, floor.W, floor.H}
-		rectDst := sdl.Rect{0, TILE_HEIGHT - floor.H, floor.W, floor.H}
-		floor.Blit(&rectSrc, self.surface, &rectDst)
+		self.surface = self.draw(true)
+	}
+	return self.surface
+}
+
+func (self *Tile) DrawWithoutWall() *sdl.Surface {
+	if self.surfaceWithoutWall == nil {
+		self.surfaceWithoutWall = self.draw(false)
+	}
+	return self.surfaceWithoutWall
+}
+
+func (self *Tile) draw(withWall bool) *sdl.Surface {
+	surface, _ := sdl.CreateRGBSurface(0, 105, TILE_HEIGHT, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000)
+	floor := getSprite("assets/ui/" + self.floor + strconv.Itoa(int(self.rotation)) + ".png")
+	rectSrc := sdl.Rect{0, 0, floor.W, floor.H}
+	rectDst := sdl.Rect{0, TILE_HEIGHT - floor.H, floor.W, floor.H}
+	floor.Blit(&rectSrc, surface, &rectDst)
+	if withWall {
 		if (self.wall[0] != "") || (self.wall[1] != "") {
 			wall := getSprite("assets/ui/wallX.png")
 			rectSrc := sdl.Rect{0, 0, wall.W, wall.H}
 			rectDst := sdl.Rect{0, TILE_HEIGHT - wall.H, wall.W, wall.H}
-			wall.Blit(&rectSrc, self.surface, &rectDst)
+			wall.Blit(&rectSrc, surface, &rectDst)
 		}
 		if self.wall[0] != "" {
 			wall := getSprite("assets/ui/" + self.wall[0] + "L.png")
 			rectSrc := sdl.Rect{0, 0, wall.W, wall.H}
 			rectDst := sdl.Rect{0, TILE_HEIGHT - wall.H, wall.W, wall.H}
-			wall.Blit(&rectSrc, self.surface, &rectDst)
+			wall.Blit(&rectSrc, surface, &rectDst)
 		}
 		if self.wall[1] != "" {
 			wall := getSprite("assets/ui/" + self.wall[1] + "R.png")
 			rectSrc := sdl.Rect{0, 0, wall.W, wall.H}
 			rectDst := sdl.Rect{0, TILE_HEIGHT - wall.H, wall.W, wall.H}
-			wall.Blit(&rectSrc, self.surface, &rectDst)
-		}
-
-		if self.element != nil {
-			elt := self.element.Draw(self.rotation)
-			rectSrc := sdl.Rect{0, 0, elt.W, elt.H}
-			rectDst := sdl.Rect{0, TILE_HEIGHT - elt.H, elt.W, elt.H}
-			elt.Blit(&rectSrc, self.surface, &rectDst)
+			wall.Blit(&rectSrc, surface, &rectDst)
 		}
 	}
-	return self.surface
+
+	if self.element != nil {
+		elt := self.element.Draw(self.rotation)
+		rectSrc := sdl.Rect{0, 0, elt.W, elt.H}
+		rectDst := sdl.Rect{0, TILE_HEIGHT - elt.H, elt.W, elt.H}
+		elt.Blit(&rectSrc, surface, &rectDst)
+	}
+	return surface
 }
 
 func (self *Tile) Rotate(rotation uint32) {
-	if self.surface != nil {
-		self.surface.Free()
-	}
-	self.surface = nil
+	self.freeSurface()
 	self.rotation = rotation
 }
 

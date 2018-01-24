@@ -45,6 +45,7 @@ type Game struct {
 	serverbundles    []*supplier.ServerBundle
 	cronevent        *timer.GameCronEvent
 	trends           *supplier.Trend
+	dcmap            *DatacenterMap
 	gameui           *GameUI
 	timerevent       *sws.TimerEvent
 	timersubscribers []GameTimerSubscriber
@@ -67,6 +68,7 @@ func NewGame(quit *bool, root *sws.RootWidget, debug bool) *Game {
 		serverbundles:    make([]*supplier.ServerBundle, 0, 0),
 		cronevent:        nil,
 		trends:           supplier.NewTrend(),
+		dcmap:            NewDatacenterMap(),
 		gameui:           nil,
 		timerevent:       nil,
 		timersubscribers: make([]GameTimerSubscriber, 0, 0),
@@ -171,7 +173,10 @@ func (self *Game) InitGame(locationid string, difficulty int32) {
 	for _, s := range self.timersubscribers {
 		s.NewDay(self.timer)
 	}
-	self.gameui.InitGame(self.timer, self.player.GetInventory(), self.player.GetLedger(), self.trends, self.player.GetLocation())
+	self.dcmap.SetGame(self.player.GetInventory(), self.player.GetLocation(), self.timer.CurrentTime)
+	self.dcmap.InitMap("24_24_standard.json")
+	//	self.dcmap.InitMap("3_4_room.json")
+	self.gameui.SetGame(self.timer, self.player.GetInventory(), self.player.GetLedger(), self.trends, self.player.GetLocation(), self.dcmap)
 	self.gameui.ShowDC()
 }
 
@@ -221,7 +226,9 @@ func (self *Game) LoadGame(filename string) {
 	for _, s := range self.timersubscribers {
 		s.NewDay(self.timer)
 	}
-	self.gameui.LoadGame(v, self.timer, self.player.GetInventory(), self.player.GetLedger(), self.trends, self.player.GetLocation())
+	self.dcmap.SetGame(self.player.GetInventory(), self.player.GetLocation(), self.timer.CurrentTime)
+	self.dcmap.LoadMap(v["map"].(map[string]interface{}))
+	self.gameui.SetGame(self.timer, self.player.GetInventory(), self.player.GetLedger(), self.trends, self.player.GetLocation(), self.dcmap)
 	self.gameui.ShowDC()
 }
 
@@ -232,9 +239,8 @@ func (self *Game) SaveGame(filename string) {
 		log.Error("Not able to create savegame: ", err.Error())
 		return
 	}
-	data := self.gameui.SaveGame()
 	gamefile.WriteString("{")
-	gamefile.WriteString(fmt.Sprintf(`%s,`, data) + "\n")
+	gamefile.WriteString(fmt.Sprintf(`"map": %s`, self.dcmap.SaveMap()) + "\n")
 	gamefile.WriteString(fmt.Sprintf(`"trends": %s,`, self.trends.Save()) + "\n")
 	gamefile.WriteString(fmt.Sprintf(`"clock": %s,`, self.timer.Save()) + "\n")
 	gamefile.WriteString(fmt.Sprintf(`"stats": %s,`, self.gamestats.Save()) + "\n")

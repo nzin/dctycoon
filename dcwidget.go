@@ -1,8 +1,6 @@
 package dctycoon
 
 import (
-	"encoding/json"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -20,13 +18,10 @@ type DcWidget struct {
 	sws.CoreWidget
 	rackwidget    *RackWidget
 	rootwindow    *sws.RootWidget
-	tiles         [][]*Tile
+	dcmap         *DatacenterMap
 	xRoot, yRoot  int32 // offset of the whole map
 	activeTile    *Tile // if we click, to know which element tile we are relocating
 	te            *sws.TimerEvent
-	inventory     *supplier.Inventory
-	externaltemp  float64
-	heatmap       [][]float64
 	activeX       int32
 	activeY       int32
 	hc            *HardwareChoice // the upper left list of placeable hardware (AC,rack,generator...)
@@ -44,36 +39,7 @@ func (self *DcWidget) DragDrop(x, y int32, payload sws.DragPayload) bool {
 		if tile == nil || tile.element == nil || tile.element.ElementType() != supplier.PRODUCT_RACK {
 			return false
 		}
-		nbu := item.Serverconf.ConfType.NbU
-		var busy [42]bool
-
-		// first create the map of what is filled
-		for _, i := range self.inventory.Items {
-			if i.Xplaced == tx && i.Yplaced == ty && i.Typeitem == supplier.PRODUCT_SERVER {
-				iNbU := i.Serverconf.ConfType.NbU
-				for j := 0; j < int(iNbU); j++ {
-					if j+int(i.Zplaced) < 42 {
-						busy[j+int(i.Zplaced)] = true
-					}
-				}
-			}
-		}
-
-		// try to find a place
-		for i := 0; i < int(42-nbu); i++ {
-			found := true
-			for j := 0; j < int(nbu); j++ {
-				if busy[i+j] == true {
-					found = false
-					break
-				}
-			}
-			if found == true {
-				self.inventory.InstallItem(item, tx, ty, int32(i))
-				return true
-			}
-		}
-		return false
+		return self.dcmap.InstallItem(item, tx, ty)
 	}
 
 	// other: tower, ac, generator, rack
@@ -89,15 +55,12 @@ func (self *DcWidget) DragDrop(x, y int32, payload sws.DragPayload) bool {
 			return false
 		}
 
-		self.inventory.InstallItem(item, tx, ty, -1)
-		return true
+		return self.dcmap.InstallItem(item, tx, ty)
 	}
 	return false
 }
 
 func (self *DcWidget) Repaint() {
-	mapheight := len(self.tiles)
-	mapwidth := len(self.tiles[0])
 	self.FillRect(0, 0, self.Width(), self.Height(), 0xff000000)
 
 	// prepare heat map tiles
@@ -109,9 +72,9 @@ func (self *DcWidget) Repaint() {
 		rectDst := sdl.Rect{0, TILE_HEIGHT - floor.H, floor.W, floor.H}
 		floor.Blit(&rectSrc, heat[i], &rectDst)
 	}
-	for y := 0; y < mapheight; y++ {
-		for x := 0; x < mapwidth; x++ {
-			tile := self.tiles[y][x]
+	for y := int32(0); y < self.dcmap.GetHeight(); y++ {
+		for x := int32(0); x < self.dcmap.GetWidth(); x++ {
+			tile := self.dcmap.GetTile(x, y)
 			var surface *sdl.Surface
 			if self.showHeatmap == false {
 				surface = (*tile).Draw()
@@ -119,7 +82,7 @@ func (self *DcWidget) Repaint() {
 				if tile.floor == "green" {
 					surface = (*tile).Draw()
 				} else {
-					temp := int(self.heatmap[y][x] - 17)
+					temp := int(self.dcmap.GetTemperature(x, y) - 17)
 					if temp < 0 {
 						temp = 0
 					}
@@ -145,39 +108,13 @@ func (self *DcWidget) Repaint() {
 }
 
 //
-// helper function, to know which pixel is in (x.y)
-//
-// It is mainly used to know if we are on a transparent pixel
-//
-func GetSurfacePixel(surface *sdl.Surface, x, y int32) (red, green, blue, alpha uint8) {
-	if x < 0 || x >= surface.W || y < 0 || y >= surface.H {
-		return 0, 0, 0, 0
-	}
-	err := surface.Lock()
-	if err != nil {
-		panic(err)
-	}
-	bpp := surface.Format.BytesPerPixel
-	bytes := surface.Pixels()
-	red = bytes[int(y)*int(surface.Pitch)+int(x)*int(bpp)]
-	green = bytes[int(y)*int(surface.Pitch)+int(x)*int(bpp)+1]
-	blue = bytes[int(y)*int(surface.Pitch)+int(x)*int(bpp)+2]
-	alpha = bytes[int(y)*int(surface.Pitch)+int(x)*int(bpp)+3]
-
-	surface.Unlock()
-	return
-}
-
-//
 // this method will return the tile where the cusor point to
 // ie if the cursor point to the floor or an element on the tile
 //
 func (self *DcWidget) findTile(x, y int32) (*Tile, int32, int32, bool) {
-	mapheight := len(self.tiles)
-	mapwidth := len(self.tiles[0])
-	for ty := mapheight - 1; ty >= 0; ty-- {
-		for tx := mapwidth - 1; tx >= 0; tx-- {
-			tile := self.tiles[ty][tx]
+	for ty := self.dcmap.GetHeight() - 1; ty >= 0; ty-- {
+		for tx := self.dcmap.GetWidth() - 1; tx >= 0; tx-- {
+			tile := self.dcmap.GetTile(tx, ty)
 			surface := (*tile).Draw()
 			xShift := self.xRoot + (self.Surface().W / 2) + (TILE_WIDTH_STEP/2)*int32(tx) - (TILE_WIDTH_STEP/2)*int32(ty)
 			yShift := self.yRoot + (TILE_HEIGHT_STEP/2)*int32(tx) + (TILE_HEIGHT_STEP/2)*int32(ty)
@@ -186,9 +123,9 @@ func (self *DcWidget) findTile(x, y int32) (*Tile, int32, int32, bool) {
 				(y >= yShift) &&
 				(x < xShift+surface.W) &&
 				(y < yShift+surface.H) {
-				_, _, _, alpha := GetSurfacePixel(surface, x-xShift, y-yShift)
+				_, _, _, alpha := global.GetSurfacePixel(surface, x-xShift, y-yShift)
 				if alpha > 0 {
-					return tile, int32(tx), int32(ty), tile.IsElementAt(x-xShift, y-yShift)
+					return tile, int32(tx), int32(ty), tile.TileElement() != nil
 				}
 			}
 		}
@@ -197,8 +134,6 @@ func (self *DcWidget) findTile(x, y int32) (*Tile, int32, int32, bool) {
 }
 
 func (self *DcWidget) findFloorTile(x, y int32) (*Tile, int32, int32) {
-	mapheight := len(self.tiles)
-	mapwidth := len(self.tiles[0])
 	// compute the x-y where the mouse is
 	tilex := ((x-self.xRoot-(self.Surface().W/2)-TILE_WIDTH_STEP/2-10)/2 + y - self.yRoot - TILE_HEIGHT + TILE_HEIGHT_STEP + 8) / TILE_HEIGHT_STEP
 	tiley := (y - self.yRoot - TILE_HEIGHT + TILE_HEIGHT_STEP + 8 - (x-self.xRoot-(self.Surface().W/2)-TILE_WIDTH_STEP/2-10)/2) / TILE_HEIGHT_STEP
@@ -210,14 +145,14 @@ func (self *DcWidget) findFloorTile(x, y int32) (*Tile, int32, int32) {
 	if tiley < 0 {
 		return nil, -1, -1
 	}
-	if tilex >= int32(mapwidth) {
+	if tilex >= self.dcmap.GetWidth() {
 		return nil, -1, -1
 	}
-	if tiley >= int32(mapheight) {
+	if tiley >= self.dcmap.GetHeight() {
 		return nil, -1, -1
 	}
 
-	return self.tiles[tiley][tilex], tilex, tiley
+	return self.dcmap.GetTile(tilex, tiley), tilex, tiley
 }
 
 func (self *DcWidget) MousePressDown(x, y int32, button uint8) {
@@ -288,7 +223,7 @@ func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 					iconsurface, _ := global.LoadImageAsset("assets/ui/icon-triangular-big.png")
 					sws.ShowModalErrorSurfaceicon(self.rootwindow, "Uninstall action", iconsurface, "It is not possible to uninstall a rack unless it is empty", nil)
 				} else {
-					self.inventory.UninstallItem(rackelement.InventoryItem())
+					self.dcmap.UninstallItem(rackelement.InventoryItem())
 				}
 			}))
 			m.Move(x, y)
@@ -303,7 +238,7 @@ func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 				self.PostUpdate()
 			}))
 			m.AddItem(sws.NewMenuItemLabel("Uninstall", func() {
-				self.inventory.UninstallItem(activeTile.TileElement().InventoryItem())
+				self.dcmap.UninstallItem(activeTile.TileElement().InventoryItem())
 			}))
 			m.Move(x, y)
 			sws.ShowMenu(m)
@@ -323,7 +258,7 @@ func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 				tile := self.activeTile
 				m.AddItem(sws.NewMenuItemLabel("Switch to air flow", func() {
 					tile.SwitchToAirFlow()
-					self.ComputeHeatMap()
+					self.dcmap.ComputeHeatMap()
 					self.PostUpdate()
 				}))
 				m.Move(x, y)
@@ -334,7 +269,7 @@ func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 				tile := self.activeTile
 				m.AddItem(sws.NewMenuItemLabel("Remove air flow", func() {
 					tile.SwitchToNotAirFlow()
-					self.ComputeHeatMap()
+					self.dcmap.ComputeHeatMap()
 					self.PostUpdate()
 				}))
 				m.Move(x, y)
@@ -386,8 +321,6 @@ func (self *DcWidget) MouseMove(x, y, xrel, yrel int32) {
 	if self.activeTile != nil && self.activeTile.TileElement() != nil && self.activeTile.TileElement().ElementType() != supplier.PRODUCT_DECORATION {
 
 		// compute the x-y where the mouse is
-		mapheight := len(self.tiles)
-		mapwidth := len(self.tiles[0])
 		tilex := ((x-self.xRoot-(self.Surface().W/2)-TILE_WIDTH_STEP/2-10)/2 + y - self.yRoot - TILE_HEIGHT + TILE_HEIGHT_STEP + 8) / TILE_HEIGHT_STEP
 		tiley := (y - self.yRoot - TILE_HEIGHT + TILE_HEIGHT_STEP + 8 - (x-self.xRoot-(self.Surface().W/2)-TILE_WIDTH_STEP/2-10)/2) / TILE_HEIGHT_STEP
 
@@ -398,15 +331,15 @@ func (self *DcWidget) MouseMove(x, y, xrel, yrel int32) {
 		if tiley < 0 {
 			tiley = 0
 		}
-		if tilex >= int32(mapwidth) {
-			tilex = int32(mapwidth) - 1
+		if tilex >= self.dcmap.GetWidth() {
+			tilex = self.dcmap.GetWidth() - 1
 		}
-		if tiley >= int32(mapheight) {
-			tiley = int32(mapheight) - 1
+		if tiley >= self.dcmap.GetHeight() {
+			tiley = self.dcmap.GetHeight() - 1
 		}
 
-		if (tilex != self.activeX || tiley != self.activeY) && self.tiles[tiley][tilex].element == nil {
-			xytile := self.tiles[tiley][tilex]
+		if (tilex != self.activeX || tiley != self.activeY) && self.dcmap.GetTile(tilex, tiley).element == nil {
+			xytile := self.dcmap.GetTile(tilex, tiley)
 			element := self.activeTile.element
 
 			if (xytile.IsFloorOutside() && element.ElementType() == supplier.PRODUCT_GENERATOR) ||
@@ -443,7 +376,7 @@ func (self *DcWidget) MouseMove(x, y, xrel, yrel int32) {
 }
 
 func (self *DcWidget) MoveLeft() {
-	width := int32(len(self.tiles[0])+len(self.tiles)+1) * TILE_WIDTH_STEP / 2
+	width := (self.dcmap.GetWidth() + self.dcmap.GetHeight() + 1) * TILE_WIDTH_STEP / 2
 	if self.xRoot-width/2+self.Width()/2 < 0 {
 		self.xRoot += 20
 		self.PostUpdate()
@@ -451,7 +384,7 @@ func (self *DcWidget) MoveLeft() {
 }
 
 func (self *DcWidget) MoveUp() {
-	height := int32(len(self.tiles[0])+len(self.tiles))*TILE_HEIGHT_STEP/2 + TILE_HEIGHT
+	height := (self.dcmap.GetWidth()+self.dcmap.GetHeight())*TILE_HEIGHT_STEP/2 + TILE_HEIGHT
 	if self.yRoot-height/2+self.Height()/2 < 0 {
 		self.yRoot += 20
 		self.PostUpdate()
@@ -459,7 +392,7 @@ func (self *DcWidget) MoveUp() {
 }
 
 func (self *DcWidget) MoveRight() {
-	width := int32(len(self.tiles[0])+len(self.tiles)+1) * TILE_WIDTH_STEP / 2
+	width := (self.dcmap.GetWidth() + self.dcmap.GetHeight() + 1) * TILE_WIDTH_STEP / 2
 	if self.xRoot+width > self.Width() {
 		self.xRoot -= 20
 		self.PostUpdate()
@@ -467,7 +400,7 @@ func (self *DcWidget) MoveRight() {
 }
 
 func (self *DcWidget) MoveDown() {
-	height := int32(len(self.tiles[0])+len(self.tiles))*TILE_HEIGHT_STEP/2 + TILE_HEIGHT
+	height := (self.dcmap.GetWidth()+self.dcmap.GetHeight())*TILE_HEIGHT_STEP/2 + TILE_HEIGHT
 	if self.yRoot+height > self.Height() {
 		self.yRoot -= 20
 		self.PostUpdate()
@@ -487,140 +420,15 @@ func (self *DcWidget) KeyDown(key sdl.Keycode, mod uint16) {
 	if key == sdl.K_DOWN {
 		self.MoveDown()
 	}
-
 }
 
-func (self *DcWidget) ItemInTransit(*supplier.InventoryItem) {
-}
-
-func (self *DcWidget) ItemInStock(*supplier.InventoryItem) {
-}
-
-func (self *DcWidget) ItemRemoveFromStock(*supplier.InventoryItem) {
-}
-
-func (self *DcWidget) ItemChangedPool(*supplier.InventoryItem) {
-}
-
-func (self *DcWidget) ItemInstalled(item *supplier.InventoryItem) {
-	mapheight := len(self.tiles)
-	mapwidth := len(self.tiles[0])
-	if item.Xplaced <= int32(mapwidth) && item.Yplaced <= int32(mapheight) && item.Xplaced >= 0 && item.Yplaced >= 0 {
-		//if item.Typeitem==supplier.PRODUCT_SERVER {
-		self.tiles[item.Yplaced][item.Xplaced].ItemInstalled(item)
-		//}
-	}
-}
-
-func (self *DcWidget) ItemUninstalled(item *supplier.InventoryItem) {
-	mapheight := len(self.tiles)
-	mapwidth := len(self.tiles[0])
-	if item.Xplaced <= int32(mapwidth) && item.Yplaced <= int32(mapheight) && item.Xplaced >= 0 && item.Yplaced >= 0 {
-		//if item.Typeitem==supplier.PRODUCT_SERVER {
-		self.tiles[item.Yplaced][item.Xplaced].ItemUninstalled(item)
-		//}
-	}
-}
-
-//
-// LoadMap typically load a map like:
-//   {
-//     "width": 10,
-//     "height": 10,
-//     "tiles": [
-//       {"x":0, "y":0, "wall0":"","wall1":"","floor":"inside","dcelementtype":"rack","dcelement":{...}},
-//       {"x":1, "y":0, "wall0":"","wall1":"","floor":"inside"},
-//     ]
-//   }
-//
-func (self *DcWidget) LoadMap(dc map[string]interface{}) {
-	log.Debug("DcWidget::LoadMap(", dc, ")")
-	width := int32(dc["width"].(float64))
-	height := int32(dc["height"].(float64))
-	self.tiles = make([][]*Tile, height)
-	self.heatmap = make([][]float64, height)
-	for y := range self.tiles {
-		self.tiles[y] = make([]*Tile, width)
-		self.heatmap[y] = make([]float64, width)
-		for x := range self.tiles[y] {
-			self.tiles[y][x] = NewGrassTile()
-			self.heatmap[y][x] = self.externaltemp
-		}
-	}
-	tiles := dc["tiles"].([]interface{})
-	for _, t := range tiles {
-		tile := t.(map[string]interface{})
-		x := int32(tile["x"].(float64))
-		y := int32(tile["y"].(float64))
-		wall0 := tile["wall0"].(string)
-		wall1 := tile["wall1"].(string)
-		floor := tile["floor"].(string)
-		rotation := uint32(tile["rotation"].(float64))
-		var decorationname string
-		if data, ok := tile["decoration"]; ok {
-			decorationname = data.(string)
-		}
-		self.tiles[y][x] = NewTile(wall0, wall1, floor, rotation, decorationname)
-	}
-	// place everything except servers
-	for _, item := range self.inventory.Items {
-		if item.IsPlaced() && item.Typeitem != supplier.PRODUCT_SERVER {
-			self.ItemInstalled(item)
-		}
-	}
-	// place servers
-	for _, item := range self.inventory.Items {
-		if item.IsPlaced() && item.Typeitem == supplier.PRODUCT_SERVER {
-			self.ItemInstalled(item)
-		}
-	}
-	self.ComputeHeatMap()
-}
-
-func (self *DcWidget) InitMap(assetdcmap string) {
-	log.Debug("DcWidget::InitMap(", assetdcmap, ")")
-	if data, err := global.Asset("assets/dcmap/" + assetdcmap); err == nil {
-		var dcmap map[string]interface{}
-		if json.Unmarshal(data, &dcmap) == nil {
-			self.LoadMap(dcmap)
-		}
-	}
-}
-
-func (self *DcWidget) SaveMap() string {
-	s := fmt.Sprintf(`{"width":%d, "height":%d, "tiles": [`, len(self.tiles[0]), len(self.tiles))
-	previous := false
-	for y, _ := range self.tiles {
-		for x, _ := range self.tiles[y] {
-			t := self.tiles[y][x]
-			value := ""
-			decorationname := ""
-			if t.TileElement() != nil && t.TileElement().ElementType() == supplier.PRODUCT_DECORATION {
-				decoration := t.TileElement().(*DecorationElement)
-				decorationname = decoration.GetName()
-			}
-			if t.wall[0] != "" || t.wall[1] != "" || t.floor != "green" {
-				value = fmt.Sprintf(`{"x":%d, "y":%d, "wall0":"%s", "wall1":"%s", "floor":"%s","rotation":%d, "decoration": "%s"}`,
-					x,
-					y,
-					t.wall[0],
-					t.wall[1],
-					t.floor,
-					t.rotation,
-					decorationname,
-				)
-			}
-			if value != "" {
-				if previous == true {
-					s += ",\n"
-				}
-				previous = true
-				s += value
-			}
-		}
-	}
-	s += "]}"
-	return s
+func (self *DcWidget) SetGame(inventory *supplier.Inventory, currenttime time.Time, dcmap *DatacenterMap) {
+	log.Debug("DcWidget::SetGame(", inventory, ",", currenttime, ",", dcmap, ")")
+	self.dcmap = dcmap
+	self.rackwidget.SetGame(inventory, currenttime)
+	self.hc.SetGame(inventory, currenttime)
+	self.showHeatmap = false
+	self.PostUpdate()
 }
 
 func NewDcWidget(w, h int32, rootwindow *sws.RootWidget) *DcWidget {
@@ -629,11 +437,9 @@ func NewDcWidget(w, h int32, rootwindow *sws.RootWidget) *DcWidget {
 	widget := &DcWidget{CoreWidget: *corewidget,
 		rackwidget:    rackwidget,
 		rootwindow:    rootwindow,
-		tiles:         [][]*Tile{{}},
-		heatmap:       [][]float64{},
+		dcmap:         NewDatacenterMap(),
 		xRoot:         0,
 		yRoot:         0,
-		inventory:     nil,
 		hc:            NewHardwareChoice(),
 		showHeatmap:   false,
 		heatmapButton: sws.NewFlatButtonWidget(150, 40, "Heatmap"),
@@ -669,129 +475,4 @@ func NewDcWidget(w, h int32, rootwindow *sws.RootWidget) *DcWidget {
 
 func (self *DcWidget) SetInventoryManagementCallback(showInventoryManagement func()) {
 	self.showInventoryManagement = showInventoryManagement
-}
-
-func (self *DcWidget) SetGame(inventory *supplier.Inventory, location *supplier.LocationType, currenttime time.Time) {
-	log.Debug("DcWidget::SetGame()")
-	if self.inventory != nil {
-		self.inventory.RemoveInventorySubscriber(self)
-		self.inventory.RemovePowerChangeSubscriber(self)
-	}
-	self.inventory = inventory
-	inventory.AddInventorySubscriber(self)
-	inventory.AddPowerStatSubscriber(self)
-	self.externaltemp = location.Temperatureaverage
-
-	self.rackwidget.SetGame(inventory, currenttime)
-	self.hc.SetGame(inventory, currenttime)
-	self.showHeatmap = false
-}
-
-func (self *DcWidget) PowerChange(time time.Time, consumed, generated, delivered, cooler float64) {
-	self.ComputeHeatMap()
-}
-
-func (self *DcWidget) ComputeHeatMap() {
-	log.Debug("DcWidget::ComputeHeatMap()")
-	// to raise 1 m-3 of air by 1 deg C : 1.211kj
-	// 1kwh = 3600kJ /h?
-	// 1BTU ~ 1kJ /s? or kwh?
-	//
-	// so
-	mapheight := len(self.tiles)
-	mapwidth := len(self.tiles[0])
-	self.heatmap = make([][]float64, mapheight)
-	nbairflow := float64(0)
-	for y := 0; y < mapheight; y++ {
-		self.heatmap[y] = make([]float64, mapwidth)
-		for x := 0; x < mapwidth; x++ {
-			self.heatmap[y][x] = self.externaltemp
-			if self.tiles[y][x].floor == "inside.air" {
-				nbairflow++
-			}
-		}
-	}
-
-	// removePerAirFlow is in wH
-	// GetHotspotValue() is in wH
-	_, _, removePerAirflow := self.inventory.GetGlobalPower()
-	if nbairflow != 0 {
-		removePerAirflow = removePerAirflow / nbairflow
-	}
-
-	// we loop 10 times to spread the heat
-	for loop := 0; loop < 600; loop++ {
-		nextheatmap := make([][]float64, mapheight)
-		for y := 0; y < mapheight; y++ {
-			nextheatmap[y] = make([]float64, mapwidth)
-			for x := 0; x < mapwidth; x++ {
-				nextheatmap[y][x] = self.heatmap[y][x]
-				// we flow air only inside
-				if self.tiles[y][x].floor != "green" {
-					// we add the heat
-					nextheatmap[y][x] += self.inventory.GetHotspotValue(int32(y), int32(x)) / 1000
-					// we remove via the airflow
-					if self.tiles[y][x].floor == "inside.air" {
-						nextheatmap[y][x] -= removePerAirflow / 1000
-						if nextheatmap[y][x] < 17 {
-							nextheatmap[y][x] = 17
-						}
-					}
-					var left, right, top, bottom float64
-					var leftfactor, rightfactor, topfactor, bottomfactor float64
-					if y > 0 {
-						if self.tiles[y-1][x].floor == "green" {
-							// building wall are isolating a bit
-							bottomfactor = 0.01
-						} else {
-							bottomfactor = 0.2
-						}
-						bottom = self.heatmap[y-1][x]
-					} else {
-						bottomfactor = 0.01
-						bottom = self.externaltemp
-					}
-					if x > 0 {
-						if self.tiles[y][x-1].floor == "green" {
-							// building wall are isolating a bit
-							leftfactor = 0.01
-						} else {
-							leftfactor = 0.2
-						}
-						left = self.heatmap[y][x-1]
-					} else {
-						leftfactor = 0.01
-						left = self.externaltemp
-					}
-					if y < mapheight-1 {
-						if self.tiles[y+1][x].floor == "green" {
-							// building wall are isolating a bit
-							topfactor = 0.01
-						} else {
-							topfactor = 0.2
-						}
-						top = self.heatmap[y+1][x]
-					} else {
-						topfactor = 0.01
-						top = self.externaltemp
-					}
-					if x < mapwidth-1 {
-						if self.tiles[y][x+1].floor == "green" {
-							// building wall are isolating a bit
-							rightfactor = 0.01
-						} else {
-							rightfactor = 0.2
-						}
-						right = self.heatmap[y][x+1]
-					} else {
-						rightfactor = 0.01
-						right = self.externaltemp
-					}
-					nextheatmap[y][x] = (1-leftfactor-rightfactor-topfactor-bottomfactor)*nextheatmap[y][x] +
-						leftfactor*left + rightfactor*right + topfactor*top + bottomfactor*bottom
-				}
-			}
-		}
-		self.heatmap = nextheatmap
-	}
 }

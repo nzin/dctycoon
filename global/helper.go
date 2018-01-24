@@ -124,3 +124,27 @@ func AdjustImage(image *sdl.Surface, w, h int32) (*sdl.Surface, error) {
 	image.BlitScaled(&sdl.Rect{X: 0, Y: 0, W: image.W, H: image.H}, dst, &sdl.Rect{X: xshift, Y: yshift, W: dstw, H: dsth})
 	return dst, nil
 }
+
+//
+// helper function, to know which pixel is in (x.y)
+//
+// It is mainly used to know if we are on a transparent pixel
+//
+func GetSurfacePixel(surface *sdl.Surface, x, y int32) (red, green, blue, alpha uint8) {
+	if x < 0 || x >= surface.W || y < 0 || y >= surface.H {
+		return 0, 0, 0, 0
+	}
+	err := surface.Lock()
+	if err != nil {
+		panic(err)
+	}
+	bpp := surface.Format.BytesPerPixel
+	bytes := surface.Pixels()
+	red = bytes[int(y)*int(surface.Pitch)+int(x)*int(bpp)]
+	green = bytes[int(y)*int(surface.Pitch)+int(x)*int(bpp)+1]
+	blue = bytes[int(y)*int(surface.Pitch)+int(x)*int(bpp)+2]
+	alpha = bytes[int(y)*int(surface.Pitch)+int(x)*int(bpp)+3]
+
+	surface.Unlock()
+	return
+}
