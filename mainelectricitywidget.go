@@ -42,9 +42,9 @@ func NewMainElectricityWidget(root *sws.RootWidget) *MainElectricityWidget {
 	widget := &MainElectricityWidget{
 		rootwindow:  root,
 		mainwidget:  mainwidget,
-		powerline1:  sws.NewDropdownWidget(100, 25, []string{"none", "10kW", "100kW", "1MW", "10MW"}),
-		powerline2:  sws.NewDropdownWidget(100, 25, []string{"none", "10kW", "100kW", "1MW", "10MW"}),
-		powerline3:  sws.NewDropdownWidget(100, 25, []string{"none", "10kW", "100kW", "1MW", "10MW"}),
+		powerline1:  sws.NewDropdownWidget(100, 25, []string{"none", "10kW", "50kW", "200kW", "1MW"}),
+		powerline2:  sws.NewDropdownWidget(100, 25, []string{"none", "10kW", "50kW", "200kW", "1MW"}),
+		powerline3:  sws.NewDropdownWidget(100, 25, []string{"none", "10kW", "50kW", "200kW", "1MW"}),
 		montlyprice: sws.NewLabelWidget(100, 25, "10 $"),
 		usageprice:  sws.NewLabelWidget(100, 25, "0 $"),
 	}

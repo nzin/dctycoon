@@ -23,21 +23,21 @@ const (
 const (
 	POWERLINE_NONE = iota
 	POWERLINE_10K  = iota
-	POWERLINE_100K = iota
+	POWERLINE_50K  = iota
+	POWERLINE_200K = iota
 	POWERLINE_1M   = iota
-	POWERLINE_10M  = iota
 )
 
 func GetKilowattPowerline(powerline int32) float64 {
 	switch powerline {
 	case POWERLINE_10K:
 		return 10000
-	case POWERLINE_100K:
-		return 100000
+	case POWERLINE_50K:
+		return 50000
+	case POWERLINE_200K:
+		return 200000
 	case POWERLINE_1M:
 		return 1000000
-	case POWERLINE_10M:
-		return 10000000
 	}
 	return 0
 }
@@ -730,12 +730,12 @@ func (self *Inventory) GetMonthlyPowerlinesPrice() float64 {
 		switch line {
 		case POWERLINE_10K:
 			price += 10
-		case POWERLINE_100K:
-			price += 80
+		case POWERLINE_50K:
+			price += 45
+		case POWERLINE_200K:
+			price += 160
 		case POWERLINE_1M:
-			price += 600
-		case POWERLINE_10M:
-			price += 5000
+			price += 700
 		}
 	}
 	return price

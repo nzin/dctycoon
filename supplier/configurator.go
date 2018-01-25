@@ -126,10 +126,11 @@ type ServerConf struct {
 // PowerConsumption return the Wh consumption
 func (self *ServerConf) PowerConsumption() float64 {
 	var consumption float64
-	consumption = float64(self.NbProcessors)*100.0 +
-		float64(self.NbDisks)*7.0 +
-		float64(self.NbSlotRam)*4.0 +
-		60.0
+	// http://www.vertatique.com/average-power-use-server
+	consumption = float64(self.NbProcessors)*50.0 +
+		float64(self.NbDisks)*42.0 +
+		float64(self.NbSlotRam)*22.0 +
+		218
 	return consumption
 }
 

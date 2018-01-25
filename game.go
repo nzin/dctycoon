@@ -240,7 +240,7 @@ func (self *Game) SaveGame(filename string) {
 		return
 	}
 	gamefile.WriteString("{")
-	gamefile.WriteString(fmt.Sprintf(`"map": %s`, self.dcmap.SaveMap()) + "\n")
+	gamefile.WriteString(fmt.Sprintf(`"map": %s,`, self.dcmap.SaveMap()) + "\n")
 	gamefile.WriteString(fmt.Sprintf(`"trends": %s,`, self.trends.Save()) + "\n")
 	gamefile.WriteString(fmt.Sprintf(`"clock": %s,`, self.timer.Save()) + "\n")
 	gamefile.WriteString(fmt.Sprintf(`"stats": %s,`, self.gamestats.Save()) + "\n")

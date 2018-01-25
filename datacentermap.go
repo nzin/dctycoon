@@ -264,6 +264,59 @@ func (self *DatacenterMap) ComputeHeatMap() {
 				nextheatmap[y][x] = self.heatmap[y][x]
 				// we flow air only inside
 				if self.tiles[y][x].floor != "green" {
+					// we spread the heat
+					var left, right, top, bottom float64
+					var leftfactor, rightfactor, topfactor, bottomfactor float64
+					if y > 0 {
+						if self.tiles[y-1][x].floor == "green" {
+							// building wall are isolating a bit
+							bottomfactor = 0.002
+						} else {
+							bottomfactor = 0.2
+						}
+						bottom = self.heatmap[y-1][x]
+					} else {
+						bottomfactor = 0.002
+						bottom = self.externaltemp
+					}
+					if x > 0 {
+						if self.tiles[y][x-1].floor == "green" {
+							// building wall are isolating a bit
+							leftfactor = 0.002
+						} else {
+							leftfactor = 0.2
+						}
+						left = self.heatmap[y][x-1]
+					} else {
+						leftfactor = 0.002
+						left = self.externaltemp
+					}
+					if y < int(self.height)-1 {
+						if self.tiles[y+1][x].floor == "green" {
+							// building wall are isolating a bit
+							topfactor = 0.002
+						} else {
+							topfactor = 0.2
+						}
+						top = self.heatmap[y+1][x]
+					} else {
+						topfactor = 0.002
+						top = self.externaltemp
+					}
+					if x < int(self.width)-1 {
+						if self.tiles[y][x+1].floor == "green" {
+							// building wall are isolating a bit
+							rightfactor = 0.002
+						} else {
+							rightfactor = 0.2
+						}
+						right = self.heatmap[y][x+1]
+					} else {
+						rightfactor = 0.002
+						right = self.externaltemp
+					}
+					nextheatmap[y][x] = (1-leftfactor-rightfactor-topfactor-bottomfactor)*nextheatmap[y][x] +
+						leftfactor*left + rightfactor*right + topfactor*top + bottomfactor*bottom
 					// we add the heat
 					nextheatmap[y][x] += self.inventory.GetHotspotValue(int32(y), int32(x)) / 1000
 					// we remove via the airflow
@@ -273,58 +326,6 @@ func (self *DatacenterMap) ComputeHeatMap() {
 							nextheatmap[y][x] = 17
 						}
 					}
-					var left, right, top, bottom float64
-					var leftfactor, rightfactor, topfactor, bottomfactor float64
-					if y > 0 {
-						if self.tiles[y-1][x].floor == "green" {
-							// building wall are isolating a bit
-							bottomfactor = 0.01
-						} else {
-							bottomfactor = 0.2
-						}
-						bottom = self.heatmap[y-1][x]
-					} else {
-						bottomfactor = 0.01
-						bottom = self.externaltemp
-					}
-					if x > 0 {
-						if self.tiles[y][x-1].floor == "green" {
-							// building wall are isolating a bit
-							leftfactor = 0.01
-						} else {
-							leftfactor = 0.2
-						}
-						left = self.heatmap[y][x-1]
-					} else {
-						leftfactor = 0.01
-						left = self.externaltemp
-					}
-					if y < int(self.height)-1 {
-						if self.tiles[y+1][x].floor == "green" {
-							// building wall are isolating a bit
-							topfactor = 0.01
-						} else {
-							topfactor = 0.2
-						}
-						top = self.heatmap[y+1][x]
-					} else {
-						topfactor = 0.01
-						top = self.externaltemp
-					}
-					if x < int(self.width)-1 {
-						if self.tiles[y][x+1].floor == "green" {
-							// building wall are isolating a bit
-							rightfactor = 0.01
-						} else {
-							rightfactor = 0.2
-						}
-						right = self.heatmap[y][x+1]
-					} else {
-						rightfactor = 0.01
-						right = self.externaltemp
-					}
-					nextheatmap[y][x] = (1-leftfactor-rightfactor-topfactor-bottomfactor)*nextheatmap[y][x] +
-						leftfactor*left + rightfactor*right + topfactor*top + bottomfactor*bottom
 				}
 			}
 		}

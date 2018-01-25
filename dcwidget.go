@@ -437,7 +437,7 @@ func NewDcWidget(w, h int32, rootwindow *sws.RootWidget) *DcWidget {
 	widget := &DcWidget{CoreWidget: *corewidget,
 		rackwidget:    rackwidget,
 		rootwindow:    rootwindow,
-		dcmap:         NewDatacenterMap(),
+		dcmap:         nil,
 		xRoot:         0,
 		yRoot:         0,
 		hc:            NewHardwareChoice(),

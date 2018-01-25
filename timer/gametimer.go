@@ -83,7 +83,7 @@ func (self *GameTimer) Load(game map[string]interface{}) {
 
 func (self *GameTimer) AddEvent(evdate time.Time, callback func()) {
 	log.Debug("GameTimer::AddEvent(", evdate, ",callback)")
-	if evdate.Before(self.CurrentTime) {
+	if evdate.Before(self.CurrentTime) || evdate.Equal(self.CurrentTime) {
 		return
 	}
 	self.events.ReplaceOrInsert(&GamerTimerEvent{
