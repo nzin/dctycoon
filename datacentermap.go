@@ -10,6 +10,18 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	RACK_NORMAL_STATE = iota
+	RACK_OVER_CURRENT = iota
+	RACK_OVER_HEAT    = iota
+	RACK_MELTING      = iota
+)
+
+type RackStatusSubscriber interface {
+	RackStatusChange(x, y int32, rackstate int32)
+	GeneralOutage(bool)
+}
+
 // DatacenterMap holds the map information, and is used to
 // - show the datacenter on screen
 // - show the heatmap on screen
@@ -17,12 +29,33 @@ import (
 // - spot all racks when there is an electricity outage
 // - spot a rack which is overtemperature (>50 degrees)
 type DatacenterMap struct {
-	inventory    *supplier.Inventory
-	externaltemp float64
-	tiles        [][]*Tile
-	heatmap      [][]float64
-	width        int32
-	height       int32
+	inventory             *supplier.Inventory
+	externaltemp          float64
+	tiles                 [][]*Tile
+	heatmap               [][]float64
+	overheating           [][]int32
+	width                 int32
+	height                int32
+	rackstatusSubscribers []RackStatusSubscriber
+	inoutage              bool
+}
+
+func (self *DatacenterMap) AddRackStatusSubscriber(subscriber RackStatusSubscriber) {
+	for _, s := range self.rackstatusSubscribers {
+		if s == subscriber {
+			return
+		}
+	}
+	self.rackstatusSubscribers = append(self.rackstatusSubscribers, subscriber)
+}
+
+func (self *DatacenterMap) RemoveRackStatusSubscriber(subscriber RackStatusSubscriber) {
+	for i, s := range self.rackstatusSubscribers {
+		if s == subscriber {
+			self.rackstatusSubscribers = append(self.rackstatusSubscribers[:i], self.rackstatusSubscribers[i+1:]...)
+			break
+		}
+	}
 }
 
 func (self *DatacenterMap) GetWidth() int32 {
@@ -39,6 +72,23 @@ func (self *DatacenterMap) GetTile(x, y int32) *Tile {
 
 func (self *DatacenterMap) GetTemperature(x, y int32) float64 {
 	return self.heatmap[y][x]
+}
+
+func (self *DatacenterMap) GetGeneralOutage() bool {
+	return self.inoutage
+}
+
+func (self *DatacenterMap) GetRackStatus(x, y int32) int32 {
+	if self.overheating[y][x] < 0 {
+		return RACK_OVER_CURRENT
+	}
+	if self.overheating[y][x] > 20 {
+		return RACK_MELTING
+	}
+	if self.overheating[y][x] > 0 {
+		return RACK_OVER_HEAT
+	}
+	return RACK_NORMAL_STATE
 }
 
 func (self *DatacenterMap) ItemInTransit(*supplier.InventoryItem)       {}
@@ -129,9 +179,12 @@ func (self *DatacenterMap) LoadMap(dc map[string]interface{}) {
 	self.height = int32(dc["height"].(float64))
 	self.tiles = make([][]*Tile, self.height)
 	self.heatmap = make([][]float64, self.height)
+	self.overheating = make([][]int32, self.height)
+	self.inoutage = false
 	for y := range self.tiles {
 		self.tiles[y] = make([]*Tile, self.width)
 		self.heatmap[y] = make([]float64, self.width)
+		self.overheating[y] = make([]int32, self.width)
 		for x := range self.tiles[y] {
 			self.tiles[y][x] = NewGrassTile()
 			self.heatmap[y][x] = self.externaltemp
@@ -165,6 +218,7 @@ func (self *DatacenterMap) LoadMap(dc map[string]interface{}) {
 		}
 	}
 	self.ComputeHeatMap()
+	self.ComputeOverLimits()
 }
 
 func (self *DatacenterMap) InitMap(assetdcmap string) {
@@ -226,7 +280,36 @@ func (self *DatacenterMap) SetGame(inventory *supplier.Inventory, location *supp
 }
 
 func (self *DatacenterMap) PowerChange(time time.Time, consumed, generated, delivered, cooler float64) {
-	self.ComputeHeatMap()
+	outagesituation := consumed > generated && consumed > delivered
+	if outagesituation != self.inoutage {
+		self.inoutage = outagesituation
+		for _, s := range self.rackstatusSubscribers {
+			s.GeneralOutage(self.inoutage)
+		}
+	}
+
+	if self.inoutage {
+		for y := 0; y < int(self.height); y++ {
+			for x := 0; x < int(self.width); x++ {
+				self.heatmap[y][x] = self.externaltemp
+				self.overheating[y][x] = 0
+			}
+		}
+	} else {
+		self.ComputeHeatMap()
+	}
+}
+
+func (self *DatacenterMap) getHeatSpread(x, y int32) (temperature, spreadfactor float64) {
+	if y < 0 || y >= self.height || x < 0 || x >= self.width {
+		return self.externaltemp, 0.002
+	}
+	if self.tiles[y][x].floor == "green" {
+		// building wall are isolating a bit
+		return self.heatmap[y][x], 0.002
+	} else {
+		return self.heatmap[y][x], 0.2
+	}
 }
 
 func (self *DatacenterMap) ComputeHeatMap() {
@@ -258,63 +341,17 @@ func (self *DatacenterMap) ComputeHeatMap() {
 	// we loop 600 times to spread the heat
 	for loop := 0; loop < 600; loop++ {
 		nextheatmap := make([][]float64, self.height)
-		for y := 0; y < int(self.height); y++ {
+		for y := int32(0); y < self.height; y++ {
 			nextheatmap[y] = make([]float64, self.width)
-			for x := 0; x < int(self.width); x++ {
+			for x := int32(0); x < self.width; x++ {
 				nextheatmap[y][x] = self.heatmap[y][x]
 				// we flow air only inside
 				if self.tiles[y][x].floor != "green" {
 					// we spread the heat
-					var left, right, top, bottom float64
-					var leftfactor, rightfactor, topfactor, bottomfactor float64
-					if y > 0 {
-						if self.tiles[y-1][x].floor == "green" {
-							// building wall are isolating a bit
-							bottomfactor = 0.002
-						} else {
-							bottomfactor = 0.2
-						}
-						bottom = self.heatmap[y-1][x]
-					} else {
-						bottomfactor = 0.002
-						bottom = self.externaltemp
-					}
-					if x > 0 {
-						if self.tiles[y][x-1].floor == "green" {
-							// building wall are isolating a bit
-							leftfactor = 0.002
-						} else {
-							leftfactor = 0.2
-						}
-						left = self.heatmap[y][x-1]
-					} else {
-						leftfactor = 0.002
-						left = self.externaltemp
-					}
-					if y < int(self.height)-1 {
-						if self.tiles[y+1][x].floor == "green" {
-							// building wall are isolating a bit
-							topfactor = 0.002
-						} else {
-							topfactor = 0.2
-						}
-						top = self.heatmap[y+1][x]
-					} else {
-						topfactor = 0.002
-						top = self.externaltemp
-					}
-					if x < int(self.width)-1 {
-						if self.tiles[y][x+1].floor == "green" {
-							// building wall are isolating a bit
-							rightfactor = 0.002
-						} else {
-							rightfactor = 0.2
-						}
-						right = self.heatmap[y][x+1]
-					} else {
-						rightfactor = 0.002
-						right = self.externaltemp
-					}
+					bottom, bottomfactor := self.getHeatSpread(x, y-1)
+					left, leftfactor := self.getHeatSpread(x-1, y)
+					top, topfactor := self.getHeatSpread(x, y+1)
+					right, rightfactor := self.getHeatSpread(x+1, y)
 					nextheatmap[y][x] = (1-leftfactor-rightfactor-topfactor-bottomfactor)*nextheatmap[y][x] +
 						leftfactor*left + rightfactor*right + topfactor*top + bottomfactor*bottom
 					// we add the heat
@@ -333,14 +370,73 @@ func (self *DatacenterMap) ComputeHeatMap() {
 	}
 }
 
+func (self *DatacenterMap) triggerRackStatus(x, y int32, status int32) {
+	log.Debug("DatacenterMap::triggerRackStatus(", x, ",", y, ",", status, ")")
+	for _, s := range self.rackstatusSubscribers {
+		s.RackStatusChange(x, y, status)
+	}
+}
+
+func (self *DatacenterMap) ComputeOverLimits() {
+	log.Debug("DatacenterMap::ComputeOverLimits()")
+	if self.inoutage {
+		for y := int32(0); y < self.height; y++ {
+			for x := int32(0); x < self.width; x++ {
+				if self.overheating[y][x] > 0 {
+					self.triggerRackStatus(x, y, RACK_NORMAL_STATE)
+				}
+				self.overheating[y][x] = 0
+			}
+		}
+	} else {
+		for y := int32(0); y < self.height; y++ {
+			for x := int32(0); x < self.width; x++ {
+				previousState := self.GetRackStatus(x, y)
+				newState := int32(RACK_NORMAL_STATE)
+				element := self.tiles[y][x].TileElement()
+
+				if element != nil && element.ElementType() == supplier.PRODUCT_RACK {
+					if self.heatmap[y][x] > 45 {
+						// if we begin to over heat
+						if self.overheating[y][x] == 0 {
+							newState = RACK_OVER_HEAT
+						}
+						// if we over heat since 20 days
+						if self.overheating[y][x] == 20 {
+							newState = RACK_MELTING
+						}
+						self.overheating[y][x]++
+						return
+					} else {
+						self.overheating[y][x] = 0
+					}
+					// if we go over 64 A
+					if self.inventory.GetHotspotValue(y, x) > 64.0*110.0 {
+						if self.overheating[y][x] == 0 {
+							newState = RACK_OVER_CURRENT
+							self.overheating[y][x] = -1
+						}
+					}
+				}
+				if previousState != newState {
+					self.triggerRackStatus(x, y, newState)
+				}
+			}
+		}
+	}
+}
+
 func NewDatacenterMap() *DatacenterMap {
 	dcmap := &DatacenterMap{
-		tiles:        [][]*Tile{{}},
-		heatmap:      [][]float64{},
-		inventory:    nil,
-		width:        0,
-		height:       0,
-		externaltemp: 0,
+		tiles:                 [][]*Tile{{}},
+		heatmap:               [][]float64{},
+		overheating:           [][]int32{},
+		inventory:             nil,
+		width:                 0,
+		height:                0,
+		externaltemp:          0,
+		rackstatusSubscribers: make([]RackStatusSubscriber, 0, 0),
+		inoutage:              false,
 	}
 	return dcmap
 }

@@ -26,6 +26,7 @@ type DcWidget struct {
 	activeY       int32
 	hc            *HardwareChoice // the upper left list of placeable hardware (AC,rack,generator...)
 	showHeatmap   bool
+	blinkon       bool
 	heatmapButton *sws.FlatButtonWidget
 
 	showInventoryManagement func()
@@ -95,6 +96,29 @@ func (self *DcWidget) Repaint() {
 			rectSrc := sdl.Rect{0, 0, surface.W, surface.H}
 			rectDst := sdl.Rect{self.xRoot + (self.Surface().W / 2) + (TILE_WIDTH_STEP/2)*int32(x) - (TILE_WIDTH_STEP/2)*int32(y), self.yRoot + (TILE_HEIGHT_STEP/2)*int32(x) + (TILE_HEIGHT_STEP/2)*int32(y), surface.W, surface.H}
 			surface.Blit(&rectSrc, self.Surface(), &rectDst)
+
+			var extraIcon *sdl.Surface
+			if self.dcmap.GetGeneralOutage() {
+				element := tile.TileElement()
+				if element != nil && (element.ElementType() == supplier.PRODUCT_AC ||
+					element.ElementType() == supplier.PRODUCT_RACK ||
+					element.ElementType() == supplier.PRODUCT_SERVER) {
+					extraIcon, _ = global.LoadImageAsset("assets/ui/lightning-bolt-shadow.png")
+				}
+			}
+			switch self.dcmap.GetRackStatus(x, y) {
+			case RACK_OVER_CURRENT:
+				extraIcon, _ = global.LoadImageAsset("assets/ui/lightning-bolt-shadow.png")
+			case RACK_OVER_HEAT:
+				extraIcon, _ = global.LoadImageAsset("assets/ui/thermometer.png")
+			case RACK_MELTING:
+				extraIcon, _ = global.LoadImageAsset("assets/ui/thermometer.png")
+			}
+			if extraIcon != nil && self.blinkon {
+				rectSrc = sdl.Rect{0, 0, extraIcon.W, extraIcon.H}
+				rectDst = sdl.Rect{self.xRoot + (self.Surface().W / 2) + (TILE_WIDTH_STEP/2)*int32(x) - (TILE_WIDTH_STEP/2)*int32(y) + (surface.W-extraIcon.W)/2, self.yRoot + (TILE_HEIGHT_STEP/2)*int32(x) + (TILE_HEIGHT_STEP/2)*int32(y) + 20, extraIcon.W, extraIcon.H}
+				extraIcon.Blit(&rectSrc, self.Surface(), &rectDst)
+			}
 		}
 	}
 	for _, child := range self.GetChildren() {
@@ -259,6 +283,7 @@ func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 				m.AddItem(sws.NewMenuItemLabel("Switch to air flow", func() {
 					tile.SwitchToAirFlow()
 					self.dcmap.ComputeHeatMap()
+					self.dcmap.ComputeOverLimits()
 					self.PostUpdate()
 				}))
 				m.Move(x, y)
@@ -270,6 +295,7 @@ func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 				m.AddItem(sws.NewMenuItemLabel("Remove air flow", func() {
 					tile.SwitchToNotAirFlow()
 					self.dcmap.ComputeHeatMap()
+					self.dcmap.ComputeOverLimits()
 					self.PostUpdate()
 				}))
 				m.Move(x, y)
@@ -442,6 +468,7 @@ func NewDcWidget(w, h int32, rootwindow *sws.RootWidget) *DcWidget {
 		yRoot:         0,
 		hc:            NewHardwareChoice(),
 		showHeatmap:   false,
+		blinkon:       false,
 		heatmapButton: sws.NewFlatButtonWidget(150, 40, "Heatmap"),
 	}
 
@@ -455,6 +482,7 @@ func NewDcWidget(w, h int32, rootwindow *sws.RootWidget) *DcWidget {
 	widget.heatmapButton.SetClicked(func() {
 		widget.showHeatmap = !widget.showHeatmap
 		if widget.showHeatmap {
+			widget.blinkon = false
 			widget.heatmapButton.SetText("Map")
 			widget.RemoveChild(widget.hc)
 		} else {
@@ -469,6 +497,14 @@ func NewDcWidget(w, h int32, rootwindow *sws.RootWidget) *DcWidget {
 	widget.heatmapButton.SetCentered(false)
 	widget.heatmapButton.Move(30, rootwindow.Height()-65)
 	widget.AddChild(widget.heatmapButton)
+
+	sws.TimerAddEvent(time.Now(), 1000*time.Millisecond, func(evt *sws.TimerEvent) {
+		// to "blink" on over heat or over current
+		if widget.showHeatmap == false {
+			widget.blinkon = !widget.blinkon
+			widget.PostUpdate()
+		}
+	})
 
 	return widget
 }

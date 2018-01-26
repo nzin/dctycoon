@@ -312,8 +312,12 @@ func (self *Game) GenerateDemandAndFee() {
 	}
 	// generate electricity outage
 	for _, a := range actors {
+		// TBD, if outage = true, image of the provider decrease
 		a.GetInventory().GeneratePowerlineOutage(a.GetLocation().Electricityfailrate)
 	}
+
+	// check for over heat
+	self.dcmap.ComputeOverLimits()
 
 	// pay other montly fee:
 	// - power lines
