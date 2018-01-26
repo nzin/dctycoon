@@ -116,7 +116,7 @@ func (self *DcWidget) Repaint() {
 			}
 			if extraIcon != nil && self.blinkon {
 				rectSrc = sdl.Rect{0, 0, extraIcon.W, extraIcon.H}
-				rectDst = sdl.Rect{self.xRoot + (self.Surface().W / 2) + (TILE_WIDTH_STEP/2)*int32(x) - (TILE_WIDTH_STEP/2)*int32(y) + (surface.W-extraIcon.W)/2, self.yRoot + (TILE_HEIGHT_STEP/2)*int32(x) + (TILE_HEIGHT_STEP/2)*int32(y) + (surface.H-extraIcon.H)/2, extraIcon.W, extraIcon.H}
+				rectDst = sdl.Rect{self.xRoot + (self.Surface().W / 2) + (TILE_WIDTH_STEP/2)*int32(x) - (TILE_WIDTH_STEP/2)*int32(y) + (surface.W-extraIcon.W)/2, self.yRoot + (TILE_HEIGHT_STEP/2)*int32(x) + (TILE_HEIGHT_STEP/2)*int32(y) + 20, extraIcon.W, extraIcon.H}
 				extraIcon.Blit(&rectSrc, self.Surface(), &rectDst)
 			}
 		}
