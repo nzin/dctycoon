@@ -232,7 +232,7 @@ type Inventory struct {
 	pools                    []ServerPool
 	offers                   []*ServerOffer
 	powerline                [3]int32
-	currentMaxPower          int32 // currentMaxPower is the current highest current provided by utility power lines
+	currentMaxPower          int32 // currentMaxPower is the current highest current provided by utility power lines, POWERLINE_10K, POWERLINE_50K, ...
 	consumptionHotspot       map[int32]map[int32]float64
 	globalConsumption        float64
 	globalGeneration         float64
@@ -702,7 +702,8 @@ func (self *Inventory) SetPowerline(index, power int32) {
 }
 
 // PowerlineOutage is called everyday to see if we have an electricity outage
-func (self *Inventory) GeneratePowerlineOutage(probability float64) {
+// return true if outage
+func (self *Inventory) GeneratePowerlineOutage(probability float64) bool {
 	log.Debug("Inventory::GeneratePowerlineOutage(", probability, ")")
 	newmax := int32(POWERLINE_NONE)
 	for _, pl := range self.powerline {
@@ -717,6 +718,10 @@ func (self *Inventory) GeneratePowerlineOutage(probability float64) {
 		self.currentMaxPower = newmax
 		self.triggerPowerChange()
 	}
+	if GetKilowattPowerline(self.currentMaxPower) < self.globalConsumption && self.globalGeneration < self.globalConsumption {
+		return true
+	}
+	return false
 }
 
 // GetPowerlines is used to collect the current situation

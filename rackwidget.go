@@ -288,7 +288,7 @@ func (self *RackChassisWidget) Repaint() {
 	for _, i := range self.items {
 		watts += i.Serverconf.PowerConsumption()
 	}
-	rackwatt := fmt.Sprintf("Rack consumption: %.2f W", watts)
+	rackwatt := fmt.Sprintf("Rack consumption: %.2f W / 7040 W", watts)
 	self.WriteText(10, 10, rackwatt, sdl.Color{0, 0, 0, 255})
 
 	self.SetDrawColor(0, 0, 0, 255)
