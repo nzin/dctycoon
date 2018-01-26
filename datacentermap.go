@@ -99,16 +99,12 @@ func (self *DatacenterMap) ItemChangedPool(*supplier.InventoryItem)     {}
 func (self *DatacenterMap) ItemInstalled(item *supplier.InventoryItem) {
 	if item.Xplaced <= self.width && item.Yplaced <= self.height && item.Xplaced >= 0 && item.Yplaced >= 0 {
 		self.tiles[item.Yplaced][item.Xplaced].ItemInstalled(item)
-		self.ComputeHeatMap()
-		self.ComputeOverLimits()
 	}
 }
 
 func (self *DatacenterMap) ItemUninstalled(item *supplier.InventoryItem) {
 	if item.Xplaced <= self.width && item.Yplaced <= self.height && item.Xplaced >= 0 && item.Yplaced >= 0 {
 		self.tiles[item.Yplaced][item.Xplaced].ItemUninstalled(item)
-		self.ComputeHeatMap()
-		self.ComputeOverLimits()
 	}
 }
 
