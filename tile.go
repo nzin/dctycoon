@@ -42,8 +42,14 @@ type RackElement struct {
 	previousrotation uint32
 }
 
+// InventoryItem return the Rack item itself
 func (self *RackElement) InventoryItem() *supplier.InventoryItem {
 	return self.item
+}
+
+// GetRackServers return the racked servers inside the rack
+func (self *RackElement) GetRackServers() []*supplier.InventoryItem {
+	return self.items
 }
 
 func (self *RackElement) AddItem(item *supplier.InventoryItem) {

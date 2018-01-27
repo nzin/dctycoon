@@ -247,8 +247,8 @@ type Inventory struct {
 
 // DecommissionServer try to relocate an offer on a given item
 // to other servers.
-// return true if it was done "nicely"
-func (self *Inventory) DecommissionServer(item *InventoryItem) bool {
+// return true decomission was possible
+func (self *Inventory) DecommissionServer(item *InventoryItem, smoothly bool) bool {
 	log.Debug("Inventory::DecommissionServer(", item, ")")
 	pool := item.Pool
 	if pool != nil && pool.IsAllocated(item) {
@@ -256,7 +256,6 @@ func (self *Inventory) DecommissionServer(item *InventoryItem) bool {
 		item.Pool.removeInventoryItem(item)
 		delete(self.Items, item.Id)
 
-		globalreallocated := true
 		// 2nd for all bundle
 		//  for all contract we try to re-allocate else we kill the bundle
 		for _, sb := range self.serverbundles {
@@ -268,28 +267,66 @@ func (self *Inventory) DecommissionServer(item *InventoryItem) bool {
 						contract.Item = newitem
 					} else {
 						reallocated = false
-						globalreallocated = false
 						break
 					}
 				}
 			}
-			// we coudn't reallocate, we destroy the service bundle (and loose a customer)
+			// we coudn't reallocate, we destroy the service bundle (and loose a customer) except if we wanted to do it smoothly
 			if reallocated == false {
+				if smoothly == true {
+					item.Pool.addInventoryItem(item)
+					self.Items[item.Id] = item
+					return false
+				}
 				for _, c := range sb.Contracts {
 					if c.Item != item {
 						c.Item.Pool.Release(c.Item, c.Nbcores, c.Ramsize, c.Disksize)
 					}
 				}
 				self.RemoveServerBundle(sb)
+
+				// TDB: actor image drop
 			}
-			// TDB: actor image drop
 		}
 		item.Pool.addInventoryItem(item)
 		self.Items[item.Id] = item
-
-		return globalreallocated
 	}
 	return true
+}
+
+// ScrapItem replace a given item by a scrap part:
+// - it decomission the server
+// - transform the server into a scrap part
+func (self *Inventory) ScrapItem(item *InventoryItem) {
+	log.Debug("Inventory::ScrapItem(", item, ")")
+	self.DecommissionServer(item, false)
+	for _, sub := range self.inventorysubscribers {
+		sub.ItemUninstalled(item)
+	}
+
+	// transform it into a scrap item
+	item.Serverconf.NbCore = 0
+	item.Serverconf.NbProcessors = 0
+	item.Serverconf.DiskSize = 0
+	item.Serverconf.NbDisks = 0
+	item.Serverconf.NbSlotRam = 0
+	item.Serverconf.RamSize = 0
+
+	switch item.Serverconf.ConfType.NbU {
+	case 1:
+		item.Serverconf.ConfType = GetServerConfTypeByName("scrap1U")
+	case 2:
+		item.Serverconf.ConfType = GetServerConfTypeByName("scrap2U")
+	case 4:
+		item.Serverconf.ConfType = GetServerConfTypeByName("scrap4U")
+	case 8:
+		item.Serverconf.ConfType = GetServerConfTypeByName("scrap8U")
+	}
+
+	for _, sub := range self.inventorysubscribers {
+		sub.ItemInstalled(item)
+	}
+	self.triggerPowerChange()
 }
 
 func (self *Inventory) AddServerBundle(bundle *ServerBundle) {
@@ -424,14 +461,17 @@ func (self *Inventory) UninstallItem(item *InventoryItem) {
 }
 
 //
-// to discard an item, it must not be placed
+// to discard an item, it must not be placed or be a scrap item
 //
 func (self *Inventory) DiscardItem(item *InventoryItem) bool {
-	if item.Xplaced != -1 {
-		return false
+	if item.Typeitem == PRODUCT_SERVER {
+		if item.Xplaced != -1 || item.Serverconf.ConfType.scrap == false {
+			return false
+		}
+		// remove from pool first
+		self.AssignPool(item, nil)
 	}
-	// remove from pool first
-	self.AssignPool(item, nil)
+
 	// remove from inventory
 	if _, ok := self.Items[item.Id]; ok {
 		for _, sub := range self.inventorysubscribers {

@@ -90,7 +90,30 @@ func NewGame(quit *bool, root *sws.RootWidget, debug bool) *Game {
 		}
 	}
 
+	g.dcmap.AddRackStatusSubscriber(g)
+
 	return g
+}
+
+// RackStatusChange comes from interface DatacenterMap::RackStatusSubscriber
+func (self *Game) RackStatusChange(x, y int32, rackstate int32) {
+	log.Debug("Game::RackStatusChange(", x, ",", y, ",", rackstate, ")")
+	if rackstate == RACK_MELTING {
+		tileelement := self.dcmap.GetTile(x, y).TileElement()
+		if tileelement.ElementType() == supplier.PRODUCT_RACK {
+			rackelement := tileelement.(*RackElement)
+			for _, item := range rackelement.GetRackServers() {
+				if rand.Float32() > 0.5 {
+					self.player.GetInventory().ScrapItem(item)
+				}
+			}
+		}
+	}
+}
+
+// GeneralOutage comes from interface DatacenterMap::RackStatusSubscriber
+func (self *Game) GeneralOutage(bool) {
+
 }
 
 func (self *Game) ShowOpening() {
