@@ -245,14 +245,52 @@ type Inventory struct {
 	serverbundles            []*ServerBundle
 }
 
-/*
 // DecommissionServer try to relocate an offer on a given item
-// to another server.
-func (self *Inventory) DecommissionServer(item *InventoryItem) {
-	if item.Pool != nil {
-		item.Pool.IsAllocated(item)
+// to other servers.
+// return true if it was done "nicely"
+func (self *Inventory) DecommissionServer(item *InventoryItem) bool {
+	log.Debug("Inventory::DecommissionServer(", item, ")")
+	pool := item.Pool
+	if pool != nil && pool.IsAllocated(item) {
+		// 1st we discard it
+		item.Pool.removeInventoryItem(item)
+		delete(self.Items, item.Id)
+
+		globalreallocated := true
+		// 2nd for all bundle
+		//  for all contract we try to re-allocate else we kill the bundle
+		for _, sb := range self.serverbundles {
+			reallocated := true
+			for _, contract := range sb.Contracts {
+				if contract.Item == item {
+					newitem := pool.Allocate(contract.Nbcores, contract.Ramsize, contract.Disksize, contract.Vt)
+					if newitem != nil {
+						contract.Item = newitem
+					} else {
+						reallocated = false
+						globalreallocated = false
+						break
+					}
+				}
+			}
+			// we coudn't reallocate, we destroy the service bundle (and loose a customer)
+			if reallocated == false {
+				for _, c := range sb.Contracts {
+					if c.Item != item {
+						c.Item.Pool.Release(c.Item, c.Nbcores, c.Ramsize, c.Disksize)
+					}
+				}
+				self.RemoveServerBundle(sb)
+			}
+			// TDB: actor image drop
+		}
+		item.Pool.addInventoryItem(item)
+		self.Items[item.Id] = item
+
+		return globalreallocated
 	}
-}*/
+	return true
+}
 
 func (self *Inventory) AddServerBundle(bundle *ServerBundle) {
 	self.serverbundles = append(self.serverbundles, bundle)

@@ -282,6 +282,7 @@ func (self *Game) GenerateDemandAndFee() {
 					for _, c := range sb.Contracts {
 						c.Item.Pool.Release(c.Item, c.Nbcores, c.Ramsize, c.Disksize)
 					}
+					a.GetInventory().RemoveServerBundle(sb)
 				}
 			}
 		}
