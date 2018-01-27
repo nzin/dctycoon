@@ -607,7 +607,7 @@ func (self *ServerBundle) Save() string {
 	str := "{"
 	str += fmt.Sprintf(`"renewalrate": %f,`, self.Renewalrate)
 	str += fmt.Sprintf(`"date": "%d-%d-%d",`, self.Date.Day(), self.Date.Month(), self.Date.Year())
-	str += `"contracts:["`
+	str += `"contracts":[`
 	for i, c := range self.Contracts {
 		if i != 0 {
 			str += ","
