@@ -297,6 +297,7 @@ func (self *DatacenterMap) PowerChange(time time.Time, consumed, generated, deli
 		}
 	} else {
 		self.ComputeHeatMap()
+		self.ComputeOverLimits()
 	}
 }
 

@@ -242,6 +242,32 @@ type Inventory struct {
 	powerchangeSubscribers   []InventoryPowerChangeSubscriber
 	defaultPhysicalPool      ServerPool
 	defaultVpsPool           ServerPool
+	serverbundles            []*ServerBundle
+}
+
+/*
+// DecommissionServer try to relocate an offer on a given item
+// to another server.
+func (self *Inventory) DecommissionServer(item *InventoryItem) {
+	if item.Pool != nil {
+		item.Pool.IsAllocated(item)
+	}
+}*/
+
+func (self *Inventory) AddServerBundle(bundle *ServerBundle) {
+	self.serverbundles = append(self.serverbundles, bundle)
+}
+
+func (self *Inventory) RemoveServerBundle(bundle *ServerBundle) {
+	for i, sb := range self.serverbundles {
+		if sb == bundle {
+			self.serverbundles = append(self.serverbundles[:i], self.serverbundles[i+1:]...)
+		}
+	}
+}
+
+func (self *Inventory) GetServerBundles() []*ServerBundle {
+	return self.serverbundles
 }
 
 // GetGlobalPower list all machines on the map and compute
@@ -458,7 +484,7 @@ func (self *Inventory) LoadItem(product map[string]interface{}) {
 	})
 }
 
-func (self *Inventory) LoadOffer(offer map[string]interface{}) {
+func (self *Inventory) loadOffer(offer map[string]interface{}) {
 	log.Debug("Inventory::LoadOffer(", offer, ")")
 	vps := offer["vps"].(bool)
 
@@ -490,6 +516,37 @@ func (self *Inventory) LoadOffer(offer map[string]interface{}) {
 	self.AddOffer(o)
 }
 
+func (self *Inventory) loadServerBundle(bundle map[string]interface{}) {
+	var year, month, day int
+	fmt.Sscanf(bundle["date"].(string), "%d-%d-%d", &year, &month, &day)
+	sb := &ServerBundle{
+		Renewalrate: bundle["renewalrate"].(float64),
+		Date:        time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC),
+		Contracts:   make([]*ServerContract, 0, 0),
+	}
+	if contractsinterface, ok := bundle["contracts"]; ok {
+		contracts := contractsinterface.([]interface{})
+		for _, contract := range contracts {
+			c := contract.(map[string]interface{})
+			if item, ok := self.Items[int32(c["item"].(float64))]; ok {
+				servercontract := &ServerContract{
+					Item:      item,
+					OfferName: c["offername"].(string),
+					Vps:       c["vps"].(bool),
+					Nbcores:   int32(c["nbcores"].(float64)),
+					Ramsize:   int32(c["ramsize"].(float64)),
+					Disksize:  int32(c["disksize"].(float64)),
+					Vt:        c["vt"].(bool),
+					Price:     c["price"].(float64),
+				}
+				sb.Contracts = append(sb.Contracts, servercontract)
+			}
+		}
+	}
+
+	self.AddServerBundle(sb)
+}
+
 // called by Load() for a given item to publish it to subscribers
 func (self *Inventory) loadPublishItem(item *InventoryItem) {
 	if item.Xplaced != -1 {
@@ -513,7 +570,7 @@ func (self *Inventory) loadPublishItem(item *InventoryItem) {
 	}
 }
 
-func (self *Inventory) LoadPowerlines(power map[string]interface{}) {
+func (self *Inventory) loadPowerlines(power map[string]interface{}) {
 	self.SetPowerline(0, int32(power["powerline1"].(float64)))
 	self.SetPowerline(1, int32(power["powerline2"].(float64)))
 	self.SetPowerline(2, int32(power["powerline3"].(float64)))
@@ -533,7 +590,14 @@ func (self *Inventory) Load(conf map[string]interface{}) {
 	if offersinterface, ok := conf["offers"]; ok {
 		offers := offersinterface.([]interface{})
 		for _, offer := range offers {
-			self.LoadOffer(offer.(map[string]interface{}))
+			self.loadOffer(offer.(map[string]interface{}))
+		}
+	}
+
+	if bundleinterface, ok := conf["serverbundles"]; ok {
+		bundles := bundleinterface.([]interface{})
+		for _, bundle := range bundles {
+			self.loadServerBundle(bundle.(map[string]interface{}))
 		}
 	}
 
@@ -550,7 +614,7 @@ func (self *Inventory) Load(conf map[string]interface{}) {
 		}
 	}
 	if powerinterface, ok := conf["powerlines"]; ok {
-		self.LoadPowerlines(powerinterface.(map[string]interface{}))
+		self.loadPowerlines(powerinterface.(map[string]interface{}))
 	}
 	// to compute the hotspot
 	self.triggerPowerChange()
@@ -560,8 +624,19 @@ func (self *Inventory) Save() string {
 	log.Debug("Inventory::Save()")
 	str := "{"
 	str += fmt.Sprintf(`"increment":%d,`, self.increment)
-	str += `"offers":[`
+	str += `"serverbundles":[`
 	firstitem := true
+	for _, sb := range self.serverbundles {
+		if firstitem == true {
+			firstitem = false
+		} else {
+			str += ",\n"
+		}
+		str += sb.Save()
+	}
+	str += "],"
+	str += `"offers":[`
+	firstitem = true
 	for _, offer := range self.offers {
 		if firstitem == true {
 			firstitem = false
@@ -762,6 +837,7 @@ func NewInventory(globaltimer *timer.GameTimer) *Inventory {
 		powerline:              [3]int32{POWERLINE_10K, POWERLINE_NONE, POWERLINE_NONE},
 		currentMaxPower:        POWERLINE_10K,
 		consumptionHotspot:     make(map[int32]map[int32]float64),
+		serverbundles:          make([]*ServerBundle, 0, 0),
 	}
 
 	inventory.AddPool(inventory.defaultPhysicalPool)

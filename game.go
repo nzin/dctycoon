@@ -42,7 +42,6 @@ type Game struct {
 	npactors         []*NPDatacenter
 	player           *Player
 	demandtemplates  []*supplier.DemandTemplate
-	serverbundles    []*supplier.ServerBundle
 	cronevent        *timer.GameCronEvent
 	trends           *supplier.Trend
 	dcmap            *DatacenterMap
@@ -65,7 +64,6 @@ func NewGame(quit *bool, root *sws.RootWidget, debug bool) *Game {
 		player:           nil,
 		npactors:         make([]*NPDatacenter, 0, 0),
 		demandtemplates:  make([]*supplier.DemandTemplate, 0, 0),
-		serverbundles:    make([]*supplier.ServerBundle, 0, 0),
 		cronevent:        nil,
 		trends:           supplier.NewTrend(),
 		dcmap:            NewDatacenterMap(),
@@ -262,20 +260,28 @@ func (self *Game) SaveGame(filename string) {
 // GenerateDemandAndFee generate randomly new demand (and check if a datacenter can handle it)
 func (self *Game) GenerateDemandAndFee() {
 	log.Debug("Game::GenerateDemandAndFee()")
-	// check if a bundle has to be paid (and renewed)
-	for _, sb := range self.serverbundles {
-		//
-		if sb.Date.Day() == self.timer.CurrentTime.Day() {
-			// pay monthly fee
-			sb.PayMontlyFee(self.timer.CurrentTime)
-		}
+	actors := make([]supplier.Actor, 0, 0)
+	for _, a := range self.npactors {
+		actors = append(actors, a)
+	}
+	actors = append(actors, self.player)
 
-		if sb.Date.Month() == self.timer.CurrentTime.Month() &&
-			sb.Date.Day() == self.timer.CurrentTime.Day() {
-			// if we don't renew, we drop it
-			if rand.Float64() >= sb.Renewalrate {
-				for _, c := range sb.Contracts {
-					c.Item.Pool.Release(c.Item, c.Nbcores, c.Ramsize, c.Disksize)
+	// check if a bundle has to be paid (and renewed)
+	for _, a := range actors {
+		for _, sb := range a.GetInventory().GetServerBundles() {
+			//
+			if sb.Date.Day() == self.timer.CurrentTime.Day() {
+				// pay monthly fee
+				sb.PayMontlyFee(a.GetLedger(), self.timer.CurrentTime)
+			}
+
+			if sb.Date.Month() == self.timer.CurrentTime.Month() &&
+				sb.Date.Day() == self.timer.CurrentTime.Day() {
+				// if we don't renew, we drop it
+				if rand.Float64() >= sb.Renewalrate {
+					for _, c := range sb.Contracts {
+						c.Item.Pool.Release(c.Item, c.Nbcores, c.Ramsize, c.Disksize)
+					}
 				}
 			}
 		}
@@ -288,12 +294,6 @@ func (self *Game) GenerateDemandAndFee() {
 		}
 	}
 
-	actors := make([]supplier.Actor, 0, 0)
-	for _, a := range self.npactors {
-		actors = append(actors, a)
-	}
-	actors = append(actors, self.player)
-
 	// generate new demand
 	for _, d := range self.demandtemplates {
 		if !d.Beginningdate.After(self.timer.CurrentTime) { // before or equals
@@ -301,12 +301,12 @@ func (self *Game) GenerateDemandAndFee() {
 				// here we will generate a new server demand (and see if it is fulfill)
 				demand := d.InstanciateDemand()
 				log.Debug("Game::GenerateDemandAndFee(): A new demand has been created: ", demand.ToString())
-				serverbundle := demand.FindOffer(actors, self.timer.CurrentTime)
+				serverbundle, actor := demand.FindOffer(actors, self.timer.CurrentTime)
 				if serverbundle != nil {
-					self.serverbundles = append(self.serverbundles, serverbundle)
-					serverbundle.PayMontlyFee(self.timer.CurrentTime)
+					actor.GetInventory().AddServerBundle(serverbundle)
+					serverbundle.PayMontlyFee(actor.GetLedger(), self.timer.CurrentTime)
 				}
-				self.gamestats.TriggerDemandStat(self.timer.CurrentTime, demand, serverbundle)
+				self.gamestats.TriggerDemandStat(self.timer.CurrentTime, demand, actor, serverbundle)
 			}
 		}
 	}

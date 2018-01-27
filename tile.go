@@ -135,7 +135,15 @@ func (self *SimpleElement) Draw(rotation uint32) *sdl.Surface {
 		self.surface = nil
 	}
 	if self.surface == nil {
-		self.surface = getSprite("assets/ui/" + self.inventoryitem.GetSprite() + strconv.Itoa(int(rotation)) + ".png")
+		var err error
+		itemsprite := getSprite("assets/ui/" + self.inventoryitem.GetSprite() + strconv.Itoa(int(rotation)) + ".png")
+		self.surface, err = sdl.CreateRGBSurface(0, itemsprite.W, itemsprite.H, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000)
+		if err != nil {
+			panic(err)
+		}
+		rectSrc := sdl.Rect{0, 0, itemsprite.W, itemsprite.H}
+		rectDst := sdl.Rect{0, 0, itemsprite.W, itemsprite.H}
+		itemsprite.Blit(&rectSrc, self.surface, &rectDst)
 		self.previousrotation = rotation
 	}
 	return self.surface
