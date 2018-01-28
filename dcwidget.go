@@ -448,9 +448,30 @@ func (self *DcWidget) KeyDown(key sdl.Keycode, mod uint16) {
 	}
 }
 
+func (self *DcWidget) RackStatusChange(x, y int32, rackstate int32) {
+	if rackstate == RACK_MELTING {
+		flash := uint32(9)
+		tilex := x
+		tiley := y
+		self.dcmap.GetTile(tilex, tiley).SetFlashEffect(flash)
+		sws.TimerAddEvent(time.Now(), 75*time.Millisecond, func(evt *sws.TimerEvent) {
+			self.dcmap.GetTile(tilex, tiley).SetFlashEffect(flash)
+			if flash == 0 {
+				evt.StopRepeat()
+			} else {
+				flash = flash - 1
+			}
+			self.PostUpdate()
+		})
+	}
+}
+
+func (self *DcWidget) GeneralOutage(bool) {}
+
 func (self *DcWidget) SetGame(inventory *supplier.Inventory, currenttime time.Time, dcmap *DatacenterMap) {
 	log.Debug("DcWidget::SetGame(", inventory, ",", currenttime, ",", dcmap, ")")
 	self.dcmap = dcmap
+	dcmap.AddRackStatusSubscriber(self)
 	self.rackwidget.SetGame(inventory, currenttime)
 	self.hc.SetGame(inventory, currenttime)
 	self.showHeatmap = false

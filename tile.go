@@ -23,10 +23,10 @@ const (
 // - DecorationElement
 type TileElement interface {
 	// should be passive, rack, ...
-	ElementType() int32                     // which type sit on: PRODUCT_RACK, PRODUCT_AC, ...
-	InventoryItem() *supplier.InventoryItem // if there is one
-	Draw(rotation uint32) *sdl.Surface      // face can be 0,1,2,3 (i.e. 0, 90, 180, 270)
-	Power() float64                         // ampere
+	ElementType() int32                             // which type sit on: PRODUCT_RACK, PRODUCT_AC, ...
+	InventoryItem() *supplier.InventoryItem         // if there is one
+	Draw(rotation, flasheffect uint32) *sdl.Surface // face can be 0,1,2,3 (i.e. 0, 90, 180, 270)
+	Power() float64                                 // ampere
 }
 
 type ItemInventoryArray []*supplier.InventoryItem
@@ -40,6 +40,7 @@ type RackElement struct {
 	item             *supplier.InventoryItem
 	items            []*supplier.InventoryItem
 	previousrotation uint32
+	previousflash    uint32
 }
 
 // InventoryItem return the Rack item itself
@@ -71,8 +72,8 @@ func (self *RackElement) ElementType() int32 {
 	return supplier.PRODUCT_RACK
 }
 
-func (self *RackElement) Draw(rotation uint32) *sdl.Surface {
-	if (self.surface != nil) && (self.previousrotation != rotation) {
+func (self *RackElement) Draw(rotation, flasheffect uint32) *sdl.Surface {
+	if (self.surface != nil) && (self.previousrotation != rotation || self.previousflash != flasheffect) {
 		self.surface.Free()
 		self.surface = nil
 	}
@@ -87,12 +88,22 @@ func (self *RackElement) Draw(rotation uint32) *sdl.Surface {
 		rectDst := sdl.Rect{0, 0, bottom.W, bottom.H}
 		bottom.Blit(&rectSrc, self.surface, &rectDst)
 
+		inside, _ := sdl.CreateRGBSurface(0, bottom.W, bottom.H, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000)
 		for _, item := range self.items {
 			img := getSprite("assets/ui/" + item.Serverconf.ConfType.ServerSprite + strconv.Itoa(int(rotation)) + ".png")
 			rectSrc := sdl.Rect{0, 0, img.W, img.H}
 			rectDst := sdl.Rect{0, TILE_HEIGHT - img.H - ((42-item.Zplaced)-item.Serverconf.ConfType.NbU+2)*4, img.W, img.H}
-			img.Blit(&rectSrc, self.surface, &rectDst)
+			img.Blit(&rectSrc, inside, &rectDst)
 		}
+
+		// do we have to flash the image
+		if flasheffect != 0 {
+			global.FlashImage(inside, flasheffect)
+		}
+
+		rectSrc = sdl.Rect{0, 0, inside.W, inside.H}
+		rectDst = sdl.Rect{0, 0, inside.W, inside.H}
+		inside.Blit(&rectSrc, self.surface, &rectDst)
 
 		top := getSprite("assets/ui/rack.top" + strconv.Itoa(int(rotation)) + ".png")
 		rectSrc = sdl.Rect{0, 0, top.W, top.H}
@@ -135,7 +146,7 @@ func (self *SimpleElement) ElementType() int32 {
 	return self.inventoryitem.Typeitem
 }
 
-func (self *SimpleElement) Draw(rotation uint32) *sdl.Surface {
+func (self *SimpleElement) Draw(rotation, flasheffect uint32) *sdl.Surface {
 	if rotation != self.previousrotation && self.surface != nil {
 		self.surface.Free()
 		self.surface = nil
@@ -194,7 +205,7 @@ func (self *DecorationElement) ElementType() int32 {
 	return supplier.PRODUCT_DECORATION
 }
 
-func (self *DecorationElement) Draw(rotation uint32) *sdl.Surface {
+func (self *DecorationElement) Draw(rotation, flasheffect uint32) *sdl.Surface {
 	if self.surface == nil {
 		self.surface = getSprite("assets/ui/" + self.name + ".png")
 	}
@@ -220,6 +231,7 @@ type Tile struct {
 	surface            *sdl.Surface
 	surfaceWithoutWall *sdl.Surface
 	rotation           uint32 // rotation of the inner element: floor+element (not the walls)
+	flasheffect        uint32
 }
 
 func (self *Tile) ItemInstalled(item *supplier.InventoryItem) {
@@ -359,7 +371,7 @@ func (self *Tile) draw(withWall bool) *sdl.Surface {
 	}
 
 	if self.element != nil {
-		elt := self.element.Draw(self.rotation)
+		elt := self.element.Draw(self.rotation, self.flasheffect)
 		rectSrc := sdl.Rect{0, 0, elt.W, elt.H}
 		rectDst := sdl.Rect{0, TILE_HEIGHT - elt.H, elt.W, elt.H}
 		elt.Blit(&rectSrc, surface, &rectDst)
@@ -372,6 +384,12 @@ func (self *Tile) Rotate(rotation uint32) {
 	self.rotation = rotation
 }
 
+func (self *Tile) SetFlashEffect(flash uint32) {
+	log.Debug("Tile::SetFlashEffect(", flash, ")")
+	self.freeSurface()
+	self.flasheffect = flash
+}
+
 func (self *Tile) Power() float64 {
 	if self.element == nil {
 		return 0
@@ -381,10 +399,11 @@ func (self *Tile) Power() float64 {
 
 func NewGrassTile() *Tile {
 	tile := &Tile{
-		wall:     [2]string{"", ""},
-		rotation: 0,
-		floor:    "green",
-		element:  nil,
+		wall:        [2]string{"", ""},
+		rotation:    0,
+		flasheffect: 0,
+		floor:       "green",
+		element:     nil,
 	}
 	return tile
 }
