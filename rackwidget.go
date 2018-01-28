@@ -27,8 +27,9 @@ func (self *ServerDragPayload) PayloadAccepted(bool) {
 }
 
 type ServerMovePayload struct {
-	inventory *supplier.Inventory
-	item      *supplier.InventoryItem
+	inventory   *supplier.Inventory
+	item        *supplier.InventoryItem
+	rackchassis *RackChassisWidget
 }
 
 func (self *ServerMovePayload) GetType() int32 {
@@ -39,6 +40,8 @@ func (self *ServerMovePayload) PayloadAccepted(accepted bool) {
 	if accepted == false {
 		self.inventory.UninstallItem(self.item)
 	}
+	//	self.rackchassis.inmove = nil
+	//	self.rackchassis.PostUpdate()
 }
 
 type RackWidgetLine struct {
@@ -100,6 +103,7 @@ type RackWidgetItems struct {
 	vbox      *sws.VBoxWidget
 	scroll    *sws.ScrollWidget
 	inventory *supplier.Inventory
+	trash     *TrashWidget
 }
 
 func NewRackWidgetItems() *RackWidgetItems {
@@ -108,6 +112,7 @@ func NewRackWidgetItems() *RackWidgetItems {
 		vbox:       sws.NewVBoxWidget(300, 0),
 		scroll:     sws.NewScrollWidget(300, 300),
 		inventory:  nil,
+		trash:      NewTrashWidget(300, 40),
 	}
 
 	label := sws.NewLabelWidget(300, 25, "Available server to place: ")
@@ -118,6 +123,8 @@ func NewRackWidgetItems() *RackWidgetItems {
 	widgetitems.scroll.Move(0, 25)
 	widgetitems.AddChild(widgetitems.scroll)
 
+	widgetitems.trash.Move(0, 100)
+	widgetitems.AddChild(widgetitems.trash)
 	return widgetitems
 }
 
@@ -130,6 +137,7 @@ func (self *RackWidgetItems) SetGame(inventory *supplier.Inventory, currenttime 
 	}
 	self.inventory = inventory
 	inventory.AddInventorySubscriber(self)
+	self.trash.SetInventory(inventory)
 
 	// for material not placed but in stock
 	for _, item := range self.inventory.Items {
@@ -141,7 +149,8 @@ func (self *RackWidgetItems) SetGame(inventory *supplier.Inventory, currenttime 
 
 func (self *RackWidgetItems) Resize(w, h int32) {
 	self.CoreWidget.Resize(w, h)
-	self.scroll.Resize(w, h-25)
+	self.scroll.Resize(w, h-25-40)
+	self.trash.Move(0, h-40)
 }
 
 func (self *RackWidgetItems) ItemInTransit(item *supplier.InventoryItem) {
@@ -325,6 +334,13 @@ func (self *RackChassisWidget) Repaint() {
 		self.FillRect(80, CHASSIS_OFFSET+(i.Zplaced+nbu-1)*RACK_SIZE+5, 5, 5, servercolor)
 		self.FillRect(90, CHASSIS_OFFSET+(i.Zplaced+nbu-1)*RACK_SIZE+5, 5, 5, servercolor)
 
+		if i.Serverconf.ConfType.Scrap == true {
+			self.SetDrawColor(255, 0, 0, 255)
+
+			self.DrawLine(10, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE, 109, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE+nbu*RACK_SIZE-1)
+			self.DrawLine(10, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE+nbu*RACK_SIZE-1, 109, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE)
+		}
+
 		self.WriteText(120, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE, i.ShortDescription(false), sdl.Color{0, 0, 0, 255})
 	}
 
@@ -365,8 +381,9 @@ func (self *RackChassisWidget) MousePressDown(x, y int32, button uint8) {
 		if item != nil {
 			self.inmove = item
 			payload := &ServerMovePayload{
-				item:      item,
-				inventory: self.inventory,
+				item:        item,
+				inventory:   self.inventory,
+				rackchassis: self,
 			}
 			var parent sws.Widget
 			parent = self

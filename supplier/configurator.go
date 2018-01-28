@@ -29,7 +29,7 @@ type ServerConfType struct {
 	BackplanePrice float64
 	ServerSprite   string
 	NbU            int32
-	scrap          bool
+	Scrap          bool
 }
 
 var AvailableConfs = []ServerConfType{
@@ -41,7 +41,7 @@ var AvailableConfs = []ServerConfType{
 		BackplanePrice: 200,
 		ServerSprite:   "tower",
 		NbU:            -1,
-		scrap:          false,
+		Scrap:          false,
 	},
 	ServerConfType{
 		ServerName:     "R100",
@@ -51,7 +51,7 @@ var AvailableConfs = []ServerConfType{
 		BackplanePrice: 1000,
 		ServerSprite:   "server.1u",
 		NbU:            1,
-		scrap:          false,
+		Scrap:          false,
 	},
 	ServerConfType{
 		ServerName:     "R200",
@@ -61,7 +61,7 @@ var AvailableConfs = []ServerConfType{
 		BackplanePrice: 2000,
 		ServerSprite:   "server.2u",
 		NbU:            2,
-		scrap:          false,
+		Scrap:          false,
 	},
 	ServerConfType{
 		ServerName:     "R400",
@@ -71,7 +71,7 @@ var AvailableConfs = []ServerConfType{
 		BackplanePrice: 3000,
 		ServerSprite:   "server.4u",
 		NbU:            4,
-		scrap:          false,
+		Scrap:          false,
 	},
 	ServerConfType{
 		ServerName:     "R600",
@@ -81,7 +81,7 @@ var AvailableConfs = []ServerConfType{
 		BackplanePrice: 3000,
 		ServerSprite:   "server.4u",
 		NbU:            4,
-		scrap:          false,
+		Scrap:          false,
 	},
 	ServerConfType{
 		ServerName:     "B100",
@@ -91,7 +91,7 @@ var AvailableConfs = []ServerConfType{
 		BackplanePrice: 6000,
 		ServerSprite:   "server.blade.8u",
 		NbU:            8,
-		scrap:          false,
+		Scrap:          false,
 	},
 	ServerConfType{
 		ServerName:     "B200",
@@ -101,7 +101,7 @@ var AvailableConfs = []ServerConfType{
 		BackplanePrice: 8000,
 		ServerSprite:   "server.blade.8u",
 		NbU:            8,
-		scrap:          false,
+		Scrap:          false,
 	},
 	ServerConfType{
 		ServerName:     "scrap1U",
@@ -111,7 +111,7 @@ var AvailableConfs = []ServerConfType{
 		BackplanePrice: 0,
 		ServerSprite:   "server.1u",
 		NbU:            1,
-		scrap:          true,
+		Scrap:          true,
 	},
 	ServerConfType{
 		ServerName:     "scrap2U",
@@ -121,7 +121,7 @@ var AvailableConfs = []ServerConfType{
 		BackplanePrice: 0,
 		ServerSprite:   "server.2u",
 		NbU:            2,
-		scrap:          true,
+		Scrap:          true,
 	},
 	ServerConfType{
 		ServerName:     "scrap4U",
@@ -131,7 +131,7 @@ var AvailableConfs = []ServerConfType{
 		BackplanePrice: 0,
 		ServerSprite:   "server.4u",
 		NbU:            4,
-		scrap:          true,
+		Scrap:          true,
 	},
 	ServerConfType{
 		ServerName:     "scrap8U",
@@ -141,7 +141,7 @@ var AvailableConfs = []ServerConfType{
 		BackplanePrice: 0,
 		ServerSprite:   "server.blade.8u",
 		NbU:            8,
-		scrap:          true,
+		Scrap:          true,
 	},
 }
 
@@ -173,7 +173,7 @@ type ServerConf struct {
 
 // PowerConsumption return the Wh consumption
 func (self *ServerConf) PowerConsumption() float64 {
-	if self.ConfType.scrap == true {
+	if self.ConfType.Scrap == true {
 		return 0
 	}
 	var consumption float64

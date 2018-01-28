@@ -465,7 +465,7 @@ func (self *Inventory) UninstallItem(item *InventoryItem) {
 //
 func (self *Inventory) DiscardItem(item *InventoryItem) bool {
 	if item.Typeitem == PRODUCT_SERVER {
-		if item.Xplaced != -1 || item.Serverconf.ConfType.scrap == false {
+		if item.Xplaced != -1 && item.Serverconf.ConfType.Scrap == false {
 			return false
 		}
 		// remove from pool first
@@ -475,6 +475,7 @@ func (self *Inventory) DiscardItem(item *InventoryItem) bool {
 	// remove from inventory
 	if _, ok := self.Items[item.Id]; ok {
 		for _, sub := range self.inventorysubscribers {
+			sub.ItemUninstalled(item)
 			sub.ItemRemoveFromStock(item)
 		}
 		delete(self.Items, item.Id)
