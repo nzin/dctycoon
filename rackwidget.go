@@ -320,8 +320,14 @@ func (self *RackChassisWidget) Repaint() {
 				servercolor = global.PHYSICAL_COLOR
 			}
 		}
+		bladebgcolor := uint32(0xff000000)
+		bladepowercolor := uint32(0xff00d800)
+		if i.Serverconf.ConfType.Scrap == true {
+			bladebgcolor = uint32(0xff664706)
+			bladepowercolor = uint32(0xff888888)
+		}
 
-		self.FillRect(10, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE, 100, nbu*RACK_SIZE, 0xff000000)
+		self.FillRect(10, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE, 100, nbu*RACK_SIZE, bladebgcolor)
 		self.SetDrawColor(byte((servercolor&0xff0000)>>16), byte((servercolor&0xff00)>>8), byte(servercolor&0xff), 255)
 
 		self.DrawLine(10, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE, 109, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE)
@@ -332,15 +338,15 @@ func (self *RackChassisWidget) Repaint() {
 			self.FillRect(14, CHASSIS_OFFSET+(i.Zplaced+r)*RACK_SIZE+5, 40, 5, servercolor)
 		}
 		self.FillRect(80, CHASSIS_OFFSET+(i.Zplaced+nbu-1)*RACK_SIZE+5, 5, 5, servercolor)
-		self.FillRect(90, CHASSIS_OFFSET+(i.Zplaced+nbu-1)*RACK_SIZE+5, 5, 5, servercolor)
+		self.FillRect(90, CHASSIS_OFFSET+(i.Zplaced+nbu-1)*RACK_SIZE+5, 5, 5, bladepowercolor)
 
-		if i.Serverconf.ConfType.Scrap == true {
-			self.SetDrawColor(255, 0, 0, 255)
+		/*		if i.Serverconf.ConfType.Scrap == true {
+					self.SetDrawColor(255, 0, 0, 255)
 
-			self.DrawLine(10, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE, 109, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE+nbu*RACK_SIZE-1)
-			self.DrawLine(10, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE+nbu*RACK_SIZE-1, 109, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE)
-		}
-
+					self.DrawLine(10, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE, 109, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE+nbu*RACK_SIZE-1)
+					self.DrawLine(10, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE+nbu*RACK_SIZE-1, 109, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE)
+				}
+		*/
 		self.WriteText(120, CHASSIS_OFFSET+i.Zplaced*RACK_SIZE, i.ShortDescription(false), sdl.Color{0, 0, 0, 255})
 	}
 

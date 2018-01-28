@@ -191,7 +191,10 @@ func (self *InventoryItem) ShortDescription(condensed bool) string {
 		return "Generator"
 	case PRODUCT_SERVER:
 		if self.Serverconf.ConfType.Scrap == true {
-			return "scrap"
+			if self.Serverconf.ConfType.NbU < 0 {
+				return "scrap"
+			}
+			return fmt.Sprintf("scrap %du", self.Serverconf.ConfType.NbU)
 		}
 		ramText := fmt.Sprintf("%d Mo", self.Serverconf.NbSlotRam*self.Serverconf.RamSize)
 		if self.Serverconf.NbSlotRam*self.Serverconf.RamSize >= 2048 {
