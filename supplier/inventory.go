@@ -190,6 +190,9 @@ func (self *InventoryItem) ShortDescription(condensed bool) string {
 	case PRODUCT_GENERATOR:
 		return "Generator"
 	case PRODUCT_SERVER:
+		if self.Serverconf.ConfType.Scrap == true {
+			return "scrap"
+		}
 		ramText := fmt.Sprintf("%d Mo", self.Serverconf.NbSlotRam*self.Serverconf.RamSize)
 		if self.Serverconf.NbSlotRam*self.Serverconf.RamSize >= 2048 {
 			ramText = fmt.Sprintf("%d Go", self.Serverconf.NbSlotRam*self.Serverconf.RamSize/1024)
@@ -300,6 +303,9 @@ func (self *Inventory) DecommissionServer(item *InventoryItem, smoothly bool) bo
 func (self *Inventory) ScrapItem(item *InventoryItem) {
 	log.Debug("Inventory::ScrapItem(", item, ")")
 	self.DecommissionServer(item, false)
+	if item.Pool != nil {
+		item.Pool.removeInventoryItem(item)
+	}
 	for _, sub := range self.inventorysubscribers {
 		sub.ItemUninstalled(item)
 	}
@@ -465,7 +471,7 @@ func (self *Inventory) UninstallItem(item *InventoryItem) {
 //
 func (self *Inventory) DiscardItem(item *InventoryItem) bool {
 	if item.Typeitem == PRODUCT_SERVER {
-		if item.Xplaced != -1 && item.Serverconf.ConfType.Scrap == false {
+		if item.Pool != nil && item.Pool.IsAllocated(item) {
 			return false
 		}
 		// remove from pool first

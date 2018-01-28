@@ -106,13 +106,13 @@ type RackWidgetItems struct {
 	trash     *TrashWidget
 }
 
-func NewRackWidgetItems() *RackWidgetItems {
+func NewRackWidgetItems(root *sws.RootWidget) *RackWidgetItems {
 	widgetitems := &RackWidgetItems{
 		CoreWidget: *sws.NewCoreWidget(300, 100),
 		vbox:       sws.NewVBoxWidget(300, 0),
 		scroll:     sws.NewScrollWidget(300, 300),
 		inventory:  nil,
-		trash:      NewTrashWidget(300, 40),
+		trash:      NewTrashWidget(300, 40, root),
 	}
 
 	label := sws.NewLabelWidget(300, 25, "Available server to place: ")
@@ -523,7 +523,7 @@ func NewRackWidget(rootwindow *sws.RootWidget) *RackWidget {
 		activeElement:   nil,
 		splitview:       svBottom,
 		rackchassis:     NewRackChassisWidget(),
-		rackwidgetitems: NewRackWidgetItems(),
+		rackwidgetitems: NewRackWidgetItems(rootwindow),
 	}
 
 	sv := sws.NewSplitviewWidget(200, 200, false)
