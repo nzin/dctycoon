@@ -11,6 +11,12 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
+const (
+	SHOW_MAPWALL = iota
+	SHOW_MAP     = iota
+	SHOW_HEATMAP = iota
+)
+
 //
 // This widget allow to display a Datacenter map (and more)
 //
@@ -25,7 +31,7 @@ type DcWidget struct {
 	activeX       int32
 	activeY       int32
 	hc            *HardwareChoice // the upper left list of placeable hardware (AC,rack,generator...)
-	showHeatmap   bool
+	showMap       int32
 	blinkon       bool
 	heatmapButton *sws.FlatButtonWidget
 
@@ -77,8 +83,12 @@ func (self *DcWidget) Repaint() {
 		for x := int32(0); x < self.dcmap.GetWidth(); x++ {
 			tile := self.dcmap.GetTile(x, y)
 			var surface *sdl.Surface
-			if self.showHeatmap == false {
-				surface = (*tile).Draw()
+			if self.showMap != SHOW_HEATMAP {
+				if self.showMap == SHOW_MAPWALL {
+					surface = (*tile).Draw()
+				} else {
+					surface = (*tile).DrawWithoutWall()
+				}
 			} else {
 				if tile.floor == "green" {
 					surface = (*tile).Draw()
@@ -180,7 +190,7 @@ func (self *DcWidget) findFloorTile(x, y int32) (*Tile, int32, int32) {
 }
 
 func (self *DcWidget) MousePressDown(x, y int32, button uint8) {
-	if self.showHeatmap == true {
+	if self.showMap == SHOW_HEATMAP {
 		return
 	}
 	self.rackwidget.activeElement = nil
@@ -197,7 +207,7 @@ func (self *DcWidget) MousePressDown(x, y int32, button uint8) {
 }
 
 func (self *DcWidget) MouseDoubleClick(x, y int32) {
-	if self.showHeatmap == true {
+	if self.showMap == SHOW_HEATMAP {
 		return
 	}
 	activeTile, xtile, ytile, isElement := self.findTile(x, y)
@@ -219,7 +229,7 @@ func (self *DcWidget) MouseDoubleClick(x, y int32) {
 }
 
 func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
-	if self.showHeatmap == true {
+	if self.showMap == SHOW_HEATMAP {
 		return
 	}
 	if button == sdl.BUTTON_LEFT {
@@ -350,7 +360,6 @@ func (self *DcWidget) MouseMove(x, y, xrel, yrel int32) {
 		tilex := ((x-self.xRoot-(self.Surface().W/2)-TILE_WIDTH_STEP/2-10)/2 + y - self.yRoot - TILE_HEIGHT + TILE_HEIGHT_STEP + 8) / TILE_HEIGHT_STEP
 		tiley := (y - self.yRoot - TILE_HEIGHT + TILE_HEIGHT_STEP + 8 - (x-self.xRoot-(self.Surface().W/2)-TILE_WIDTH_STEP/2-10)/2) / TILE_HEIGHT_STEP
 
-		//fmt.Println("DcWidget::MouveMove",tilex,tiley)
 		if tilex < 0 {
 			tilex = 0
 		}
@@ -364,39 +373,12 @@ func (self *DcWidget) MouseMove(x, y, xrel, yrel int32) {
 			tiley = self.dcmap.GetHeight() - 1
 		}
 
-		if (tilex != self.activeX || tiley != self.activeY) && self.dcmap.GetTile(tilex, tiley).element == nil {
-			xytile := self.dcmap.GetTile(tilex, tiley)
-			element := self.activeTile.element
-
-			if (xytile.IsFloorOutside() && element.ElementType() == supplier.PRODUCT_GENERATOR) ||
-				(xytile.IsFloorInsideNotAirFlow() && element.ElementType() != supplier.PRODUCT_GENERATOR) {
-				rotation := self.activeTile.rotation
-				self.activeTile.element = nil
-				self.activeTile.surface = nil
-
-				// update the tiles
-				self.activeX = tilex
-				self.activeY = tiley
-				self.activeTile = xytile
-				self.activeTile.element = element
-				self.activeTile.rotation = rotation
-				self.activeTile.surface = nil
-
-				// update the InventoryItem
-				if element != nil {
-					element.InventoryItem().Xplaced = tilex
-					element.InventoryItem().Yplaced = tiley
-				}
-				if element.ElementType() == supplier.PRODUCT_RACK {
-					rack := element.(*RackElement)
-					for _, i := range rack.items {
-						i.Xplaced = tilex
-						i.Yplaced = tiley
-					}
-				}
-
-				self.PostUpdate()
-			}
+		// move the element
+		if self.dcmap.MoveElement(self.activeX, self.activeY, tilex, tiley) == true {
+			self.activeX = tilex
+			self.activeY = tiley
+			self.activeTile = self.dcmap.GetTile(tilex, tiley)
+			self.PostUpdate()
 		}
 	}
 }
@@ -474,7 +456,8 @@ func (self *DcWidget) SetGame(inventory *supplier.Inventory, currenttime time.Ti
 	dcmap.AddRackStatusSubscriber(self)
 	self.rackwidget.SetGame(inventory, currenttime)
 	self.hc.SetGame(inventory, currenttime)
-	self.showHeatmap = false
+	self.showMap = SHOW_MAPWALL
+	self.heatmapButton.SetText("Map without wall")
 	self.PostUpdate()
 }
 
@@ -488,9 +471,9 @@ func NewDcWidget(w, h int32, rootwindow *sws.RootWidget) *DcWidget {
 		xRoot:         0,
 		yRoot:         0,
 		hc:            NewHardwareChoice(),
-		showHeatmap:   false,
+		showMap:       SHOW_MAPWALL,
 		blinkon:       false,
-		heatmapButton: sws.NewFlatButtonWidget(150, 40, "Heatmap"),
+		heatmapButton: sws.NewFlatButtonWidget(200, 40, "Map without wall"),
 	}
 
 	//widget.hc.Move(0,h/2-100)
@@ -501,13 +484,23 @@ func NewDcWidget(w, h int32, rootwindow *sws.RootWidget) *DcWidget {
 		widget.heatmapButton.SetImageSurface(icon)
 	}
 	widget.heatmapButton.SetClicked(func() {
-		widget.showHeatmap = !widget.showHeatmap
-		if widget.showHeatmap {
+		var text string
+		switch widget.showMap {
+		case SHOW_MAPWALL:
+			widget.showMap = SHOW_MAP
+			text = "HeatMap"
+		case SHOW_MAP:
+			widget.showMap = SHOW_HEATMAP
+			text = "Map"
+		case SHOW_HEATMAP:
+			widget.showMap = SHOW_MAPWALL
+			text = "Map without wall"
+		}
+		widget.heatmapButton.SetText(text)
+		if widget.showMap == SHOW_HEATMAP {
 			widget.blinkon = false
-			widget.heatmapButton.SetText("Map")
 			widget.RemoveChild(widget.hc)
 		} else {
-			widget.heatmapButton.SetText("Heatmap")
 			widget.AddChild(widget.hc)
 		}
 		widget.PostUpdate()
@@ -521,10 +514,10 @@ func NewDcWidget(w, h int32, rootwindow *sws.RootWidget) *DcWidget {
 
 	sws.TimerAddEvent(time.Now(), 1000*time.Millisecond, func(evt *sws.TimerEvent) {
 		// to "blink" on over heat or over current
-		if widget.showHeatmap == false {
+		if widget.showMap != SHOW_HEATMAP {
 			widget.blinkon = !widget.blinkon
-			widget.PostUpdate()
 		}
+		widget.PostUpdate()
 	})
 
 	return widget

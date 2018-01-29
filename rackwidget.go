@@ -113,7 +113,7 @@ func NewRackWidgetItems(root *sws.RootWidget) *RackWidgetItems {
 		vbox:       sws.NewVBoxWidget(300, 0),
 		scroll:     sws.NewScrollWidget(300, 300),
 		inventory:  nil,
-		trash:      NewTrashWidget(300, 40, root),
+		trash:      NewTrashWidget(300, 64, root),
 	}
 
 	label := sws.NewLabelWidget(300, 25, "Available server to place: ")
@@ -150,8 +150,8 @@ func (self *RackWidgetItems) SetGame(inventory *supplier.Inventory, currenttime 
 
 func (self *RackWidgetItems) Resize(w, h int32) {
 	self.CoreWidget.Resize(w, h)
-	self.scroll.Resize(w, h-25-40)
-	self.trash.Move(0, h-40)
+	self.scroll.Resize(w, h-25-64)
+	self.trash.Move(0, h-64)
 }
 
 func (self *RackWidgetItems) ItemInTransit(item *supplier.InventoryItem) {
@@ -522,7 +522,16 @@ type RackWidget struct {
 }
 
 func NewRackWidget(rootwindow *sws.RootWidget) *RackWidget {
-	mainwidget := sws.NewMainWidget(650, 400, " Rack info ", false, true)
+	height := int32(50)
+	if rootwindow.Height() > 150 {
+		height = rootwindow.Height() - 100
+		if height > 800 {
+			height = 800
+		}
+	}
+
+	mainwidget := sws.NewMainWidget(760, height, " Rack info ", false, true)
+	mainwidget.Move(50, 50)
 	svBottom := sws.NewSplitviewWidget(400, 300, true)
 
 	rack := &RackWidget{
