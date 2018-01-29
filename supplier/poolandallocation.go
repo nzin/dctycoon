@@ -415,7 +415,7 @@ func (self *DemandTemplate) InstanciateDemand() *DemandInstance {
 // we should check across the inventory of different competitors
 //  and from these inventory checks across all the offers
 //
-func (self *DemandInstance) FindOffer(actors []Actor, now time.Time) *ServerBundle {
+func (self *DemandInstance) FindOffer(actors []Actor, now time.Time) (*ServerBundle, Actor) {
 	log.Debug("DemandInstance::FindOffer(", actors, ",", now, ")")
 	selection := make(map[Actor]map[string]*ServerOffer)
 	for _, actor := range actors {
@@ -523,7 +523,7 @@ func (self *DemandInstance) FindOffer(actors []Actor, now time.Time) *ServerBund
 	// pass 3: we create the contracts
 
 	if selectedActor == nil {
-		return nil
+		return nil, nil
 	}
 
 	var allocated []*ServerContract
@@ -543,11 +543,10 @@ func (self *DemandInstance) FindOffer(actors []Actor, now time.Time) *ServerBund
 		}
 	}
 	return &ServerBundle{
-		Actor:       selectedActor,
 		Contracts:   allocated,
 		Renewalrate: self.Template.Renewalfactor,
 		Date:        now,
-	}
+	}, selectedActor
 }
 
 type ServerContract struct {
@@ -561,6 +560,29 @@ type ServerContract struct {
 	Price     float64 // per month
 }
 
+func (self *ServerContract) Save() string {
+	vps := "true"
+	if self.Vps == false {
+		vps = "false"
+	}
+	vt := "true"
+	if self.Vt == false {
+		vt = "false"
+	}
+
+	str := "{"
+	str += fmt.Sprintf(`"item": %d, `, self.Item.Id)
+	str += fmt.Sprintf(`"offername": "%s", `, self.OfferName)
+	str += fmt.Sprintf(`"vps": %s, `, vps)
+	str += fmt.Sprintf(`"nbcores": %d, `, self.Nbcores)
+	str += fmt.Sprintf(`"ramsize": %d, `, self.Ramsize)
+	str += fmt.Sprintf(`"disksize": %d, `, self.Disksize)
+	str += fmt.Sprintf(`"vt": %s, `, vt)
+	str += fmt.Sprintf(`"price": %f`, self.Price)
+	str += "}"
+	return str
+}
+
 // Actor -> Player or NPDatacenter
 type Actor interface {
 	GetInventory() *Inventory
@@ -570,16 +592,30 @@ type Actor interface {
 }
 
 type ServerBundle struct {
-	Actor       Actor
 	Contracts   []*ServerContract
 	Renewalrate float64
 	Date        time.Time
 }
 
-func (self *ServerBundle) PayMontlyFee(t time.Time) {
+func (self *ServerBundle) PayMontlyFee(ledger *accounting.Ledger, t time.Time) {
 	for _, contract := range self.Contracts {
-		self.Actor.GetLedger().PayServerRenting(contract.Price, t, fmt.Sprintf("paying leasing for %s", contract.OfferName))
+		ledger.PayServerRenting(contract.Price, t, fmt.Sprintf("paying leasing for %s", contract.OfferName))
 	}
+}
+
+func (self *ServerBundle) Save() string {
+	str := "{"
+	str += fmt.Sprintf(`"renewalrate": %f,`, self.Renewalrate)
+	str += fmt.Sprintf(`"date": "%d-%d-%d",`, self.Date.Day(), self.Date.Month(), self.Date.Year())
+	str += `"contracts":[`
+	for i, c := range self.Contracts {
+		if i != 0 {
+			str += ","
+		}
+		str += c.Save()
+	}
+	str += "]}"
+	return str
 }
 
 type CriteriaFilter interface {

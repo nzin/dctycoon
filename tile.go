@@ -23,10 +23,10 @@ const (
 // - DecorationElement
 type TileElement interface {
 	// should be passive, rack, ...
-	ElementType() int32                     // which type sit on: PRODUCT_RACK, PRODUCT_AC, ...
-	InventoryItem() *supplier.InventoryItem // if there is one
-	Draw(rotation uint32) *sdl.Surface      // face can be 0,1,2,3 (i.e. 0, 90, 180, 270)
-	Power() float64                         // ampere
+	ElementType() int32                             // which type sit on: PRODUCT_RACK, PRODUCT_AC, ...
+	InventoryItem() *supplier.InventoryItem         // if there is one
+	Draw(rotation, flasheffect uint32) *sdl.Surface // face can be 0,1,2,3 (i.e. 0, 90, 180, 270)
+	Power() float64                                 // ampere
 }
 
 type ItemInventoryArray []*supplier.InventoryItem
@@ -40,10 +40,17 @@ type RackElement struct {
 	item             *supplier.InventoryItem
 	items            []*supplier.InventoryItem
 	previousrotation uint32
+	previousflash    uint32
 }
 
+// InventoryItem return the Rack item itself
 func (self *RackElement) InventoryItem() *supplier.InventoryItem {
 	return self.item
+}
+
+// GetRackServers return the racked servers inside the rack
+func (self *RackElement) GetRackServers() []*supplier.InventoryItem {
+	return self.items
 }
 
 func (self *RackElement) AddItem(item *supplier.InventoryItem) {
@@ -65,8 +72,8 @@ func (self *RackElement) ElementType() int32 {
 	return supplier.PRODUCT_RACK
 }
 
-func (self *RackElement) Draw(rotation uint32) *sdl.Surface {
-	if (self.surface != nil) && (self.previousrotation != rotation) {
+func (self *RackElement) Draw(rotation, flasheffect uint32) *sdl.Surface {
+	if (self.surface != nil) && (self.previousrotation != rotation || self.previousflash != flasheffect) {
 		self.surface.Free()
 		self.surface = nil
 	}
@@ -81,12 +88,22 @@ func (self *RackElement) Draw(rotation uint32) *sdl.Surface {
 		rectDst := sdl.Rect{0, 0, bottom.W, bottom.H}
 		bottom.Blit(&rectSrc, self.surface, &rectDst)
 
+		inside, _ := sdl.CreateRGBSurface(0, bottom.W, bottom.H, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000)
 		for _, item := range self.items {
 			img := getSprite("assets/ui/" + item.Serverconf.ConfType.ServerSprite + strconv.Itoa(int(rotation)) + ".png")
 			rectSrc := sdl.Rect{0, 0, img.W, img.H}
 			rectDst := sdl.Rect{0, TILE_HEIGHT - img.H - ((42-item.Zplaced)-item.Serverconf.ConfType.NbU+2)*4, img.W, img.H}
-			img.Blit(&rectSrc, self.surface, &rectDst)
+			img.Blit(&rectSrc, inside, &rectDst)
 		}
+
+		// do we have to flash the image
+		if flasheffect != 0 {
+			global.FlashImage(inside, flasheffect)
+		}
+
+		rectSrc = sdl.Rect{0, 0, inside.W, inside.H}
+		rectDst = sdl.Rect{0, 0, inside.W, inside.H}
+		inside.Blit(&rectSrc, self.surface, &rectDst)
 
 		top := getSprite("assets/ui/rack.top" + strconv.Itoa(int(rotation)) + ".png")
 		rectSrc = sdl.Rect{0, 0, top.W, top.H}
@@ -129,13 +146,21 @@ func (self *SimpleElement) ElementType() int32 {
 	return self.inventoryitem.Typeitem
 }
 
-func (self *SimpleElement) Draw(rotation uint32) *sdl.Surface {
+func (self *SimpleElement) Draw(rotation, flasheffect uint32) *sdl.Surface {
 	if rotation != self.previousrotation && self.surface != nil {
 		self.surface.Free()
 		self.surface = nil
 	}
 	if self.surface == nil {
-		self.surface = getSprite("assets/ui/" + self.inventoryitem.GetSprite() + strconv.Itoa(int(rotation)) + ".png")
+		var err error
+		itemsprite := getSprite("assets/ui/" + self.inventoryitem.GetSprite() + strconv.Itoa(int(rotation)) + ".png")
+		self.surface, err = sdl.CreateRGBSurface(0, itemsprite.W, itemsprite.H, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000)
+		if err != nil {
+			panic(err)
+		}
+		rectSrc := sdl.Rect{0, 0, itemsprite.W, itemsprite.H}
+		rectDst := sdl.Rect{0, 0, itemsprite.W, itemsprite.H}
+		itemsprite.Blit(&rectSrc, self.surface, &rectDst)
 		self.previousrotation = rotation
 	}
 	return self.surface
@@ -180,7 +205,7 @@ func (self *DecorationElement) ElementType() int32 {
 	return supplier.PRODUCT_DECORATION
 }
 
-func (self *DecorationElement) Draw(rotation uint32) *sdl.Surface {
+func (self *DecorationElement) Draw(rotation, flasheffect uint32) *sdl.Surface {
 	if self.surface == nil {
 		self.surface = getSprite("assets/ui/" + self.name + ".png")
 	}
@@ -206,6 +231,7 @@ type Tile struct {
 	surface            *sdl.Surface
 	surfaceWithoutWall *sdl.Surface
 	rotation           uint32 // rotation of the inner element: floor+element (not the walls)
+	flasheffect        uint32
 }
 
 func (self *Tile) ItemInstalled(item *supplier.InventoryItem) {
@@ -345,7 +371,7 @@ func (self *Tile) draw(withWall bool) *sdl.Surface {
 	}
 
 	if self.element != nil {
-		elt := self.element.Draw(self.rotation)
+		elt := self.element.Draw(self.rotation, self.flasheffect)
 		rectSrc := sdl.Rect{0, 0, elt.W, elt.H}
 		rectDst := sdl.Rect{0, TILE_HEIGHT - elt.H, elt.W, elt.H}
 		elt.Blit(&rectSrc, surface, &rectDst)
@@ -353,9 +379,22 @@ func (self *Tile) draw(withWall bool) *sdl.Surface {
 	return surface
 }
 
+//
+// Rotate is used to rotate the tile by 90 degrees
+// you can call Draw() after calling this function
 func (self *Tile) Rotate(rotation uint32) {
 	self.freeSurface()
 	self.rotation = rotation
+}
+
+//
+// SetFlashEffect is used to "flash/brighten" the rack content (the racked servers)
+// flash is a value between 8 (completely white) and 0 (normal image).
+// see global.FlashImage()
+// you can call Draw() after calling this function
+func (self *Tile) SetFlashEffect(flash uint32) {
+	self.freeSurface()
+	self.flasheffect = flash
 }
 
 func (self *Tile) Power() float64 {
@@ -367,10 +406,11 @@ func (self *Tile) Power() float64 {
 
 func NewGrassTile() *Tile {
 	tile := &Tile{
-		wall:     [2]string{"", ""},
-		rotation: 0,
-		floor:    "green",
-		element:  nil,
+		wall:        [2]string{"", ""},
+		rotation:    0,
+		flasheffect: 0,
+		floor:       "green",
+		element:     nil,
 	}
 	return tile
 }
@@ -394,6 +434,8 @@ func NewTile(wall0, wall1, floor string, rotation uint32, decorationname string)
 
 var spritecache map[string]*sdl.Surface
 
+//
+// getSprite is used to cache loaded images assets
 func getSprite(image string) *sdl.Surface {
 	if spritecache == nil {
 		spritecache = make(map[string]*sdl.Surface)

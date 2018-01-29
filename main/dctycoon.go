@@ -48,17 +48,6 @@ func main() {
 
 	game := dctycoon.NewGame(&quit, root, *debug)
 	game.ShowOpening()
-	/*
-		//	game.InitGame(12000, "siliconvalley")
-		game.LoadGame("example.map")
-
-		for sws.PoolEvent() == false && quit == false {
-		}
-
-		game.SaveGame("backup.map")
-
-		game.LoadGame("backup.map")
-		quit = false */
 	for sws.PoolEvent() == false && quit == false {
 	}
 }

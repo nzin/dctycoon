@@ -48,6 +48,37 @@ func GlowImage(spriteassetpath string, color uint32) *sdl.Surface {
 }
 
 //
+// FlashImage will flash/brighten a surface depending on the 'level'
+// - level=8 -> completely white
+// - level=0 -> the normal image
+func FlashImage(surface *sdl.Surface, level uint32) {
+	log.Debug("FlashImage(", surface, ",", level, ")")
+	if level > 8 {
+		level = 8
+	}
+	if level > 0 {
+		threshold := byte(level*32 - 1)
+		surface.Lock()
+		pixels := surface.Pixels()
+		lenpixels := len(pixels)
+		for i := 0; i < lenpixels; i += 4 {
+			if pixels[i+3] != 0 {
+				if pixels[i] < threshold {
+					pixels[i] = threshold
+				}
+				if pixels[i+1] < threshold {
+					pixels[i+1] = threshold
+				}
+				if pixels[i+2] < threshold {
+					pixels[i+2] = threshold
+				}
+			}
+		}
+		surface.Unlock()
+	}
+}
+
+//
 // ParseMega parse a string like 100M and translate it into
 // a int32 in Megabytes
 func ParseMega(str string) int32 {

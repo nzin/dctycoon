@@ -129,7 +129,7 @@ func (self *GameStats) RemoveDemandStatSubscriber(subscriber DemandStatSubscribe
 	}
 }
 
-func (self *GameStats) TriggerDemandStat(t time.Time, demand *supplier.DemandInstance, serverbundle *supplier.ServerBundle) {
+func (self *GameStats) TriggerDemandStat(t time.Time, demand *supplier.DemandInstance, actor supplier.Actor, serverbundle *supplier.ServerBundle) {
 	log.Debug("GameStats::TriggerDemandStat(", t, ",", demand, ",", serverbundle, ")")
 
 	stat := &DemandStat{
@@ -137,7 +137,7 @@ func (self *GameStats) TriggerDemandStat(t time.Time, demand *supplier.DemandIns
 		serverdemands: make([]*ServerDemandStat, 0, 0),
 	}
 	if serverbundle != nil {
-		stat.buyer = serverbundle.Actor.GetName()
+		stat.buyer = actor.GetName()
 		for _, sc := range serverbundle.Contracts {
 			stat.price += sc.Price
 		}

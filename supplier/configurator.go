@@ -29,6 +29,7 @@ type ServerConfType struct {
 	BackplanePrice float64
 	ServerSprite   string
 	NbU            int32
+	Scrap          bool
 }
 
 var AvailableConfs = []ServerConfType{
@@ -40,6 +41,7 @@ var AvailableConfs = []ServerConfType{
 		BackplanePrice: 200,
 		ServerSprite:   "tower",
 		NbU:            -1,
+		Scrap:          false,
 	},
 	ServerConfType{
 		ServerName:     "R100",
@@ -49,6 +51,7 @@ var AvailableConfs = []ServerConfType{
 		BackplanePrice: 1000,
 		ServerSprite:   "server.1u",
 		NbU:            1,
+		Scrap:          false,
 	},
 	ServerConfType{
 		ServerName:     "R200",
@@ -58,6 +61,7 @@ var AvailableConfs = []ServerConfType{
 		BackplanePrice: 2000,
 		ServerSprite:   "server.2u",
 		NbU:            2,
+		Scrap:          false,
 	},
 	ServerConfType{
 		ServerName:     "R400",
@@ -67,6 +71,7 @@ var AvailableConfs = []ServerConfType{
 		BackplanePrice: 3000,
 		ServerSprite:   "server.4u",
 		NbU:            4,
+		Scrap:          false,
 	},
 	ServerConfType{
 		ServerName:     "R600",
@@ -76,6 +81,7 @@ var AvailableConfs = []ServerConfType{
 		BackplanePrice: 3000,
 		ServerSprite:   "server.4u",
 		NbU:            4,
+		Scrap:          false,
 	},
 	ServerConfType{
 		ServerName:     "B100",
@@ -85,6 +91,7 @@ var AvailableConfs = []ServerConfType{
 		BackplanePrice: 6000,
 		ServerSprite:   "server.blade.8u",
 		NbU:            8,
+		Scrap:          false,
 	},
 	ServerConfType{
 		ServerName:     "B200",
@@ -94,6 +101,47 @@ var AvailableConfs = []ServerConfType{
 		BackplanePrice: 8000,
 		ServerSprite:   "server.blade.8u",
 		NbU:            8,
+		Scrap:          false,
+	},
+	ServerConfType{
+		ServerName:     "scrap1U",
+		NbProcessors:   [2]int32{0, 0},
+		NbDisks:        [2]int32{0, 0},
+		NbSlotRam:      [2]int32{0, 0},
+		BackplanePrice: 0,
+		ServerSprite:   "scrap.1u",
+		NbU:            1,
+		Scrap:          true,
+	},
+	ServerConfType{
+		ServerName:     "scrap2U",
+		NbProcessors:   [2]int32{0, 0},
+		NbDisks:        [2]int32{0, 0},
+		NbSlotRam:      [2]int32{0, 0},
+		BackplanePrice: 0,
+		ServerSprite:   "scrap.2u",
+		NbU:            2,
+		Scrap:          true,
+	},
+	ServerConfType{
+		ServerName:     "scrap4U",
+		NbProcessors:   [2]int32{0, 0},
+		NbDisks:        [2]int32{0, 0},
+		NbSlotRam:      [2]int32{0, 0},
+		BackplanePrice: 0,
+		ServerSprite:   "scrap.4u",
+		NbU:            4,
+		Scrap:          true,
+	},
+	ServerConfType{
+		ServerName:     "scrap8U",
+		NbProcessors:   [2]int32{0, 0},
+		NbDisks:        [2]int32{0, 0},
+		NbSlotRam:      [2]int32{0, 0},
+		BackplanePrice: 0,
+		ServerSprite:   "scrap.8u",
+		NbU:            8,
+		Scrap:          true,
 	},
 }
 
@@ -125,6 +173,9 @@ type ServerConf struct {
 
 // PowerConsumption return the Wh consumption
 func (self *ServerConf) PowerConsumption() float64 {
+	if self.ConfType.Scrap == true {
+		return 0
+	}
 	var consumption float64
 	// http://www.vertatique.com/average-power-use-server
 	consumption = float64(self.NbProcessors)*50.0 +

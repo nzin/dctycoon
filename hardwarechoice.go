@@ -43,9 +43,9 @@ func (self *HardwareChoiceItem) UpdateSprite() {
 		if self.item.Pool.IsVps() == false {
 			color = global.PHYSICAL_COLOR
 		}
-		self.LabelWidget.SetImageSurface(global.GlowImage("assets/ui/icon."+self.item.GetSprite()+".png", color))
+		self.LabelWidget.SetImageSurface(global.GlowImage("assets/ui/"+self.item.GetSprite()+"half.png", color))
 	} else {
-		if icon, err := global.LoadImageAsset("assets/ui/icon." + self.item.GetSprite() + ".png"); err == nil {
+		if icon, err := global.LoadImageAsset("assets/ui/" + self.item.GetSprite() + "half.png"); err == nil {
 			self.LabelWidget.SetImageSurface(icon)
 		}
 	}
@@ -53,7 +53,7 @@ func (self *HardwareChoiceItem) UpdateSprite() {
 
 func NewHardwareChoiceItem(item *supplier.InventoryItem) *HardwareChoiceItem {
 	i := &HardwareChoiceItem{
-		LabelWidget: *sws.NewLabelWidget(200, 50, item.ShortDescription(true)),
+		LabelWidget: *sws.NewLabelWidget(250, 50, item.ShortDescription(true)),
 		item:        item,
 	}
 	i.AlignImageLeft(true)
@@ -117,8 +117,8 @@ func NewHardwareChoiceCategory(category int32, main *HardwareChoice) *HardwareCh
 		Category:    category,
 		main:        main,
 		items:       make(map[int32]*supplier.InventoryItem),
-		subpanel:    sws.NewScrollWidget(200, 0),
-		vbox:        sws.NewVBoxWidget(200, 0),
+		subpanel:    sws.NewScrollWidget(250, 0),
+		vbox:        sws.NewVBoxWidget(250, 0),
 	}
 	c.SetTextColor(sdl.Color{0xff, 0xff, 0xff, 0xff})
 	c.SetColor(0)
@@ -158,7 +158,7 @@ func (self *HardwareChoiceCategory) addItem(item *supplier.InventoryItem) {
 	if self.Category == CATEGORY_SERVER_TOWER || self.Category == CATEGORY_SERVER_RACK {
 		self.vbox.AddChild(NewHardwareChoiceItem(item))
 		if len(self.items) <= 10 {
-			self.subpanel.Resize(200, int32(50*len(self.items)))
+			self.subpanel.Resize(250, int32(50*len(self.items)))
 		}
 	}
 }
@@ -177,7 +177,7 @@ func (self *HardwareChoiceCategory) removeItem(item *supplier.InventoryItem) {
 		if len(self.items) == 0 {
 			self.main.closeItemPanel()
 		} else if len(self.items) <= 10 {
-			self.subpanel.Resize(200, int32(50*len(self.items)))
+			self.subpanel.Resize(250, int32(50*len(self.items)))
 		}
 	}
 }

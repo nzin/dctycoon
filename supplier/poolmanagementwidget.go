@@ -221,7 +221,7 @@ func (self *PoolManagementWidget) ItemInTransit(*InventoryItem) {
 }
 
 func (self *PoolManagementWidget) ItemInStock(item *InventoryItem) {
-	if item.Typeitem != PRODUCT_SERVER {
+	if item.Typeitem != PRODUCT_SERVER || item.Serverconf.ConfType.Scrap == true {
 		return
 	}
 	// we don't want to add it twice
