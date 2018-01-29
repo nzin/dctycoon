@@ -303,9 +303,6 @@ func (self *DatacenterMap) PowerChange(time time.Time, consumed, generated, deli
 				self.overheating[y][x] = 0
 			}
 		}
-	} else {
-		self.ComputeHeatMap()
-		self.ComputeOverLimits()
 	}
 }
 
@@ -412,6 +409,7 @@ func (self *DatacenterMap) ComputeOverLimits() {
 						// if we over heat since 20 days
 						if self.overheating[y][x] >= 20 {
 							newState = RACK_MELTING
+							self.overheating[y][x] = 10
 						} else {
 							// if we begin to over heat
 							newState = RACK_OVER_HEAT
@@ -468,14 +466,15 @@ func (self *DatacenterMap) MoveElement(xfrom, yfrom, xto, yto int32) bool {
 			}
 		}
 
-		// update the electrical consumption
-		self.inventory.ComputeGlobalPower()
-		for y := 0; y < int(self.height); y++ {
-			for x := 0; x < int(self.width); x++ {
-				self.overheating[y][x] = 0
-			}
+		// update the electrical/heat situation
+		rackstatus := self.GetRackStatus(xfrom, yfrom)
+		overheat := self.overheating[yfrom][xfrom]
+		if rackstatus != RACK_NORMAL_STATE {
+			self.overheating[yfrom][xfrom] = 0
+			self.overheating[yto][xto] = overheat
+			self.triggerRackStatus(xfrom, yfrom, RACK_NORMAL_STATE)
+			self.triggerRackStatus(xto, yto, rackstatus)
 		}
-		self.ComputeOverLimits()
 
 		return true
 	}
