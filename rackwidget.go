@@ -7,6 +7,7 @@ import (
 	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/sws"
+	log "github.com/sirupsen/logrus"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -237,6 +238,7 @@ func (self *RackChassisWidget) SetLocation(x, y int32) {
 			self.items = append(self.items, item)
 		}
 	}
+	self.PostUpdate()
 }
 
 func (self *RackChassisWidget) computeComingPos(zpos int32) int32 {
@@ -291,6 +293,7 @@ func (self *RackChassisWidget) computeComingPos(zpos int32) int32 {
 }
 
 func (self *RackChassisWidget) Repaint() {
+	log.Debug("RackChassisWidget::Repaint()")
 	self.CoreWidget.Repaint()
 
 	var watts float64
@@ -373,6 +376,7 @@ func (self *RackChassisWidget) Repaint() {
 			self.DrawLine(109, CHASSIS_OFFSET-1+(zpos+nbu)*RACK_SIZE, 109, CHASSIS_OFFSET-10+(zpos+nbu)*RACK_SIZE)
 		}
 	}
+	self.SetDirtyFalse()
 }
 
 func (self *RackChassisWidget) MousePressDown(x, y int32, button uint8) {
@@ -495,6 +499,7 @@ func (self *RackChassisWidget) SetGame(inventory *supplier.Inventory) {
 	}
 	self.inventory = inventory
 	inventory.AddInventorySubscriber(self)
+	self.PostUpdate()
 }
 
 //
