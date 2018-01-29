@@ -48,7 +48,9 @@ func GlowImage(spriteassetpath string, color uint32) *sdl.Surface {
 }
 
 //
-// GlowImage takes a asset path, load it, and add a glow effect around it
+// FlashImage will flash/brighten a surface depending on the 'level'
+// - level=8 -> completely white
+// - level=0 -> the normal image
 func FlashImage(surface *sdl.Surface, level uint32) {
 	log.Debug("FlashImage(", surface, ",", level, ")")
 	if level > 8 {

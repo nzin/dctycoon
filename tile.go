@@ -379,13 +379,20 @@ func (self *Tile) draw(withWall bool) *sdl.Surface {
 	return surface
 }
 
+//
+// Rotate is used to rotate the tile by 90 degrees
+// you can call Draw() after calling this function
 func (self *Tile) Rotate(rotation uint32) {
 	self.freeSurface()
 	self.rotation = rotation
 }
 
+//
+// SetFlashEffect is used to "flash/brighten" the rack content (the racked servers)
+// flash is a value between 8 (completely white) and 0 (normal image).
+// see global.FlashImage()
+// you can call Draw() after calling this function
 func (self *Tile) SetFlashEffect(flash uint32) {
-	log.Debug("Tile::SetFlashEffect(", flash, ")")
 	self.freeSurface()
 	self.flasheffect = flash
 }
@@ -427,6 +434,8 @@ func NewTile(wall0, wall1, floor string, rotation uint32, decorationname string)
 
 var spritecache map[string]*sdl.Surface
 
+//
+// getSprite is used to cache loaded images assets
 func getSprite(image string) *sdl.Surface {
 	if spritecache == nil {
 		spritecache = make(map[string]*sdl.Surface)
