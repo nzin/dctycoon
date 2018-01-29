@@ -65,7 +65,7 @@ func NewTrashWidget(w, h int32, root *sws.RootWidget) *TrashWidget {
 		trashIcon:  nil,
 	}
 
-	widget.trashIcon, _ = global.LoadImageAsset("assets/ui/trash.png")
+	widget.trashIcon, _ = global.LoadImageAsset("assets/ui/totrash.png")
 
 	return widget
 }
