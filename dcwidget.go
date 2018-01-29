@@ -360,7 +360,6 @@ func (self *DcWidget) MouseMove(x, y, xrel, yrel int32) {
 		tilex := ((x-self.xRoot-(self.Surface().W/2)-TILE_WIDTH_STEP/2-10)/2 + y - self.yRoot - TILE_HEIGHT + TILE_HEIGHT_STEP + 8) / TILE_HEIGHT_STEP
 		tiley := (y - self.yRoot - TILE_HEIGHT + TILE_HEIGHT_STEP + 8 - (x-self.xRoot-(self.Surface().W/2)-TILE_WIDTH_STEP/2-10)/2) / TILE_HEIGHT_STEP
 
-		//fmt.Println("DcWidget::MouveMove",tilex,tiley)
 		if tilex < 0 {
 			tilex = 0
 		}
@@ -374,39 +373,12 @@ func (self *DcWidget) MouseMove(x, y, xrel, yrel int32) {
 			tiley = self.dcmap.GetHeight() - 1
 		}
 
-		if (tilex != self.activeX || tiley != self.activeY) && self.dcmap.GetTile(tilex, tiley).element == nil {
-			xytile := self.dcmap.GetTile(tilex, tiley)
-			element := self.activeTile.element
-
-			if (xytile.IsFloorOutside() && element.ElementType() == supplier.PRODUCT_GENERATOR) ||
-				(xytile.IsFloorInsideNotAirFlow() && element.ElementType() != supplier.PRODUCT_GENERATOR) {
-				rotation := self.activeTile.rotation
-				self.activeTile.element = nil
-				self.activeTile.freeSurface()
-
-				// update the tiles
-				self.activeX = tilex
-				self.activeY = tiley
-				self.activeTile = xytile
-				self.activeTile.element = element
-				self.activeTile.rotation = rotation
-				self.activeTile.freeSurface()
-
-				// update the InventoryItem
-				if element != nil {
-					element.InventoryItem().Xplaced = tilex
-					element.InventoryItem().Yplaced = tiley
-				}
-				if element.ElementType() == supplier.PRODUCT_RACK {
-					rack := element.(*RackElement)
-					for _, i := range rack.items {
-						i.Xplaced = tilex
-						i.Yplaced = tiley
-					}
-				}
-
-				self.PostUpdate()
-			}
+		// move the element
+		if self.dcmap.MoveElement(self.activeX, self.activeY, tilex, tiley) == true {
+			self.activeX = tilex
+			self.activeY = tiley
+			self.activeTile = self.dcmap.GetTile(tilex, tiley)
+			self.PostUpdate()
 		}
 	}
 }
@@ -544,8 +516,8 @@ func NewDcWidget(w, h int32, rootwindow *sws.RootWidget) *DcWidget {
 		// to "blink" on over heat or over current
 		if widget.showMap != SHOW_HEATMAP {
 			widget.blinkon = !widget.blinkon
-			widget.PostUpdate()
 		}
+		widget.PostUpdate()
 	})
 
 	return widget

@@ -341,6 +341,7 @@ func (self *Game) GenerateDemandAndFee() {
 	}
 
 	// check for over heat
+	self.dcmap.ComputeHeatMap()
 	self.dcmap.ComputeOverLimits()
 
 	// pay other montly fee:

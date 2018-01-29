@@ -320,14 +320,17 @@ func (self *DatacenterMap) ComputeHeatMap() {
 	// 1BTU ~ 1kJ /s? or kwh?
 	//
 	// so
-	self.heatmap = make([][]float64, self.height)
+	//	self.heatmap = make([][]float64, self.height)
 	nbairflow := float64(0)
 	for y := 0; y < int(self.height); y++ {
-		self.heatmap[y] = make([]float64, self.width)
+		//		self.heatmap[y] = make([]float64, self.width)
 		for x := 0; x < int(self.width); x++ {
-			self.heatmap[y][x] = self.externaltemp
+			//			self.heatmap[y][x] = self.externaltemp
 			if self.tiles[y][x].floor == "inside.air" {
 				nbairflow++
+			}
+			if self.tiles[y][x].floor == "green" {
+				self.heatmap[y][x] = self.externaltemp
 			}
 		}
 	}
@@ -339,8 +342,8 @@ func (self *DatacenterMap) ComputeHeatMap() {
 		removePerAirflow = removePerAirflow / nbairflow
 	}
 
-	// we loop 600 times to spread the heat
-	for loop := 0; loop < 600; loop++ {
+	// we loop 60 times to spread the heat
+	for loop := 0; loop < 60; loop++ {
 		nextheatmap := make([][]float64, self.height)
 		for y := int32(0); y < self.height; y++ {
 			nextheatmap[y] = make([]float64, self.width)
@@ -398,21 +401,22 @@ func (self *DatacenterMap) ComputeOverLimits() {
 
 				if element != nil && element.ElementType() == supplier.PRODUCT_RACK {
 					if self.heatmap[y][x] > 45 {
-						// if we begin to over heat
-						if self.overheating[y][x] >= 0 {
-							newState = RACK_OVER_HEAT
-						}
 						// if we over heat since 20 days
 						if self.overheating[y][x] >= 20 {
 							newState = RACK_MELTING
+						} else {
+							// if we begin to over heat
+							newState = RACK_OVER_HEAT
+							if self.overheating[y][x] < 0 {
+								self.overheating[y][x] = 1
+							}
+
 						}
 						self.overheating[y][x]++
 					} else {
 						self.overheating[y][x] = 0
-					}
-					// if we go over 64 A
-					if self.inventory.GetHotspotValue(y, x) > 64.0*110.0 {
-						if self.overheating[y][x] == 0 {
+						// if we go over 64 A
+						if self.inventory.GetHotspotValue(y, x) > 64.0*110.0 {
 							newState = RACK_OVER_CURRENT
 							self.overheating[y][x] = -1
 						}
@@ -424,6 +428,50 @@ func (self *DatacenterMap) ComputeOverLimits() {
 			}
 		}
 	}
+}
+
+func (self *DatacenterMap) MoveElement(xfrom, yfrom, xto, yto int32) bool {
+	tileFrom := self.GetTile(xfrom, yfrom)
+	element := tileFrom.element
+	tileTo := self.GetTile(xto, yto)
+
+	if (tileTo.IsFloorOutside() && element.ElementType() == supplier.PRODUCT_GENERATOR) ||
+		(tileTo.IsFloorInsideNotAirFlow() && element.ElementType() != supplier.PRODUCT_GENERATOR) {
+		rotation := tileFrom.rotation
+		tileFrom.rotation = 0
+		tileFrom.element = nil
+		tileFrom.freeSurface()
+
+		// update the tiles
+		tileTo.element = element
+		tileTo.rotation = rotation
+		tileTo.freeSurface()
+
+		// update the InventoryItem
+		if element != nil {
+			element.InventoryItem().Xplaced = xto
+			element.InventoryItem().Yplaced = yto
+		}
+		if element.ElementType() == supplier.PRODUCT_RACK {
+			rack := element.(*RackElement)
+			for _, i := range rack.items {
+				i.Xplaced = xto
+				i.Yplaced = yto
+			}
+		}
+
+		// update the electrical consumption
+		self.inventory.ComputeGlobalPower()
+		for y := 0; y < int(self.height); y++ {
+			for x := 0; x < int(self.width); x++ {
+				self.overheating[y][x] = 0
+			}
+		}
+		self.ComputeOverLimits()
+
+		return true
+	}
+	return false
 }
 
 func NewDatacenterMap() *DatacenterMap {
