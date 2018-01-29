@@ -203,6 +203,12 @@ func (self *DatacenterMap) LoadMap(dc map[string]interface{}) {
 		if data, ok := tile["decoration"]; ok {
 			decorationname = data.(string)
 		}
+		if data, ok := tile["heat"]; ok {
+			self.heatmap[y][x] = data.(float64)
+		}
+		if data, ok := tile["overheating"]; ok {
+			self.overheating[y][x] = int32(data.(float64))
+		}
 		self.tiles[y][x] = NewTile(wall0, wall1, floor, rotation, decorationname)
 	}
 	// place everything except servers
@@ -244,7 +250,7 @@ func (self *DatacenterMap) SaveMap() string {
 				decorationname = decoration.GetName()
 			}
 			if t.wall[0] != "" || t.wall[1] != "" || t.floor != "green" {
-				value = fmt.Sprintf(`{"x":%d, "y":%d, "wall0":"%s", "wall1":"%s", "floor":"%s","rotation":%d, "decoration": "%s"}`,
+				value = fmt.Sprintf(`{"x":%d, "y":%d, "wall0":"%s", "wall1":"%s", "floor":"%s","rotation":%d, "decoration": "%s", "heat":%f, "overheating": %d}`,
 					x,
 					y,
 					t.wall[0],
@@ -252,6 +258,8 @@ func (self *DatacenterMap) SaveMap() string {
 					t.floor,
 					t.rotation,
 					decorationname,
+					self.heatmap[y][x],
+					self.overheating[y][x],
 				)
 			}
 			if value != "" {
