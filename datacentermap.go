@@ -475,6 +475,7 @@ func (self *DatacenterMap) MoveElement(xfrom, yfrom, xto, yto int32) bool {
 			self.triggerRackStatus(xfrom, yfrom, RACK_NORMAL_STATE)
 			self.triggerRackStatus(xto, yto, rackstatus)
 		}
+		self.inventory.ComputeGlobalPower()
 
 		return true
 	}
