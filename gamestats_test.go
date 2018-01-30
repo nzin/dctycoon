@@ -23,7 +23,8 @@ func TestGameStats(t *testing.T) {
 				]
 			}
 		],
-		"powerstats": []
+		"powerstats": [],
+		"reputationstats": []
 	}`
 	var v map[string]interface{}
 	err := json.Unmarshal([]byte(sample), &v)

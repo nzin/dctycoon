@@ -94,11 +94,12 @@ func (self *MainStatsWidget) LoadGame() {
 // see OpponentStatWidget
 type OpponentStatWidgetLine struct {
 	sws.CoreWidget
-	opponent  *NPDatacenter
-	picture   *sws.LabelWidget
-	name      *sws.LabelWidget
-	location  *sws.LabelWidget
-	nbservers *sws.LabelWidget
+	opponent   *NPDatacenter
+	picture    *sws.LabelWidget
+	name       *sws.LabelWidget
+	location   *sws.LabelWidget
+	nbservers  *sws.LabelWidget
+	reputation *sws.LabelWidget
 }
 
 func NewOpponentStatWidgetLine(opponent *NPDatacenter) *OpponentStatWidgetLine {
@@ -110,6 +111,7 @@ func NewOpponentStatWidgetLine(opponent *NPDatacenter) *OpponentStatWidgetLine {
 		name:       sws.NewLabelWidget(300, 25, opponent.GetName()),
 		location:   sws.NewLabelWidget(300, 25, opponent.location.Name),
 		nbservers:  sws.NewLabelWidget(300, 25, fmt.Sprintf("%d", len(opponent.GetInventory().Items))),
+		reputation: sws.NewLabelWidget(300, 25, fmt.Sprintf("%.2f", opponent.GetReputationScore())),
 	}
 	if opponent.GetPicture() != "" {
 		if surface, err := global.LoadImageAsset("assets/faces/" + opponent.GetPicture()); err == nil {
@@ -140,6 +142,13 @@ func NewOpponentStatWidgetLine(opponent *NPDatacenter) *OpponentStatWidgetLine {
 
 	line.nbservers.Move(200, 55)
 	line.AddChild(line.nbservers)
+
+	labelReputation := sws.NewLabelWidget(100, 25, "Reputation: ")
+	labelReputation.Move(100, 80)
+	line.AddChild(labelReputation)
+
+	line.reputation.Move(200, 80)
+	line.AddChild(line.reputation)
 
 	opponent.GetInventory().AddInventorySubscriber(line)
 

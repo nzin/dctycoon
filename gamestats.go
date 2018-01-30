@@ -9,6 +9,29 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type ReputationStat struct {
+	reputation float64
+	date       time.Time
+}
+
+func (self *ReputationStat) Save() string {
+	str := "{"
+	str += fmt.Sprintf("\"date\": \"%d-%d-%d\",", self.date.Year(), self.date.Month(), self.date.Day())
+	str += fmt.Sprintf("\"reputation\": %f", self.reputation)
+	return str + "}"
+}
+
+func NewReputationStat(v map[string]interface{}) *ReputationStat {
+	var year, month, day int
+	fmt.Sscanf(v["date"].(string), "%d-%d-%d", &year, &month, &day)
+
+	rs := &ReputationStat{
+		reputation: v["reputation"].(float64),
+		date:       time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC),
+	}
+	return rs
+}
+
 type PowerStat struct {
 	consumption float64
 	generation  float64
@@ -109,6 +132,7 @@ type GameStats struct {
 	demandsstats          []*DemandStat
 	powerstatssubscribers []PowerStatSubscriber
 	powerstats            []*PowerStat
+	reputationstats       []*ReputationStat
 }
 
 func (self *GameStats) AddDemandStatSubscriber(subscriber DemandStatSubscriber) {
@@ -205,6 +229,7 @@ func NewGameStats() *GameStats {
 		demandstatsubscribers: make([]DemandStatSubscriber, 0, 0),
 		powerstats:            make([]*PowerStat, 0, 0),
 		powerstatssubscribers: make([]PowerStatSubscriber, 0, 0),
+		reputationstats:       make([]*ReputationStat, 0, 0),
 	}
 
 	return gs
@@ -213,6 +238,7 @@ func NewGameStats() *GameStats {
 func (self *GameStats) InitGame(inventory *supplier.Inventory) {
 	self.demandsstats = make([]*DemandStat, 0, 0)
 	self.powerstats = make([]*PowerStat, 0, 0)
+	self.reputationstats = make([]*ReputationStat, 0, 0)
 	inventory.AddPowerStatSubscriber(self)
 }
 
@@ -232,6 +258,10 @@ func (self *GameStats) LoadGame(inventory *supplier.Inventory, stats map[string]
 	for _, d := range powerstats {
 		self.powerstats = append(self.powerstats, NewPowerStat(d.(map[string]interface{})))
 	}
+	reputationstats := stats["reputationstats"].([]interface{})
+	for _, d := range reputationstats {
+		self.reputationstats = append(self.reputationstats, NewReputationStat(d.(map[string]interface{})))
+	}
 }
 
 func (self *GameStats) Save() string {
@@ -240,6 +270,14 @@ func (self *GameStats) Save() string {
 	str := "{\n"
 	str += "\"demandsstats\": ["
 	for i, d := range self.demandsstats {
+		if i != 0 {
+			str += ",\n"
+		}
+		str += d.Save()
+	}
+	str += "],\n"
+	str += "\"reputationstats\": ["
+	for i, d := range self.reputationstats {
 		if i != 0 {
 			str += ",\n"
 		}

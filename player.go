@@ -13,7 +13,18 @@ type Player struct {
 	inventory    *supplier.Inventory
 	ledger       *accounting.Ledger
 	location     *supplier.LocationType
+	reputation   *supplier.Reputation
 	locationname string
+}
+
+//
+// GetReputationScore is part of the Actor interface
+func (p *Player) GetReputationScore() float64 {
+	return p.reputation.GetScore()
+}
+
+func (p *Player) GetReputation() *supplier.Reputation {
+	return p.reputation
 }
 
 //
@@ -49,6 +60,7 @@ func NewPlayer() *Player {
 		ledger:       nil,
 		location:     location,
 		locationname: "siliconvalley",
+		reputation:   nil,
 	}
 
 	return p
@@ -69,6 +81,7 @@ func (self *Player) Init(timer *timer.GameTimer, initialcapital float64, locatio
 	self.inventory = supplier.NewInventory(timer)
 	self.ledger = accounting.NewLedger(timer, location.Taxrate, location.Bankinterestrate)
 	self.location = location
+	self.reputation = supplier.NewReputation()
 
 	// add some equity
 	self.ledger.AddMovement(accounting.LedgerMovement{
@@ -95,14 +108,17 @@ func (self *Player) LoadGame(timer *timer.GameTimer, v map[string]interface{}) {
 	self.ledger = accounting.NewLedger(timer, location.Taxrate, location.Bankinterestrate)
 	self.location = location
 	self.locationname = locationname
+	self.reputation = supplier.NewReputation()
 
 	self.ledger.Load(v["ledger"].(map[string]interface{}), location.Taxrate, location.Bankinterestrate)
 	self.inventory.Load(v["inventory"].(map[string]interface{}))
+	self.reputation.Load(v["reputation"].(map[string]interface{}))
 }
 
 func (self *Player) Save() string {
 	save := fmt.Sprintf(`"location": "%s",`, self.locationname) + "\n"
 	save += fmt.Sprintf(`"inventory": %s,`, self.inventory.Save()) + "\n"
+	save += fmt.Sprintf(`"reputation": %s,`, self.reputation.Save()) + "\n"
 	save += fmt.Sprintf(`"ledger": %s`, self.ledger.Save()) + "\n"
 	return save
 }

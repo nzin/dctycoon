@@ -36,17 +36,24 @@ type BuyoutProfile struct {
 }
 
 type NPDatacenter struct {
-	inventory     *supplier.Inventory
-	ledger        *accounting.Ledger
-	trend         *supplier.Trend
-	timer         *timer.GameTimer
-	location      *supplier.LocationType
-	locationname  string
-	buyoutprofile map[string]BuyoutProfile
-	profilename   string
-	cronevent     *timer.GameCronEvent
-	name          string
-	picture       string
+	inventory       *supplier.Inventory
+	ledger          *accounting.Ledger
+	trend           *supplier.Trend
+	timer           *timer.GameTimer
+	location        *supplier.LocationType
+	locationname    string
+	buyoutprofile   map[string]BuyoutProfile
+	profilename     string
+	cronevent       *timer.GameCronEvent
+	name            string
+	picture         string
+	reputationscore float64
+}
+
+//
+// GetReputationScore is part of the Actor interface
+func (self *NPDatacenter) GetReputationScore() float64 {
+	return self.reputationscore
 }
 
 //
@@ -81,17 +88,18 @@ func NewNPDatacenter() *NPDatacenter {
 	location := supplier.AvailableLocation["siliconvalley"]
 
 	datacenter := &NPDatacenter{
-		inventory:     nil,
-		ledger:        nil,
-		trend:         nil,
-		timer:         nil,
-		location:      location,
-		locationname:  "siliconvalley",
-		buyoutprofile: nil,
-		profilename:   "",
-		cronevent:     nil,
-		name:          "",
-		picture:       "",
+		inventory:       nil,
+		ledger:          nil,
+		trend:           nil,
+		timer:           nil,
+		location:        location,
+		locationname:    "siliconvalley",
+		buyoutprofile:   nil,
+		profilename:     "",
+		cronevent:       nil,
+		name:            "",
+		picture:         "",
+		reputationscore: 0.0,
 	}
 
 	return datacenter
@@ -136,6 +144,7 @@ func (self *NPDatacenter) Init(timer *timer.GameTimer, initialcapital float64, l
 	self.buyoutprofile = profile
 	self.name = name
 	self.picture = self.findPicture(male)
+	self.reputationscore = 0.8 + rand.Float64()*0.2
 
 	// add some equity
 	self.ledger.AddMovement(accounting.LedgerMovement{
@@ -202,6 +211,7 @@ func (self *NPDatacenter) LoadGame(timer *timer.GameTimer, trend *supplier.Trend
 	self.buyoutprofile = profile
 	self.name = v["name"].(string)
 	self.picture = v["picture"].(string)
+	self.reputationscore = v["reputation"].(float64)
 
 	self.ledger.Load(v["ledger"].(map[string]interface{}), location.Taxrate, location.Bankinterestrate)
 	self.inventory.Load(v["inventory"].(map[string]interface{}))
@@ -216,6 +226,7 @@ func (self *NPDatacenter) Save() string {
 	save += fmt.Sprintf(`"profile": "%s",`, self.profilename) + "\n"
 	save += fmt.Sprintf(`"name": "%s",`, self.name) + "\n"
 	save += fmt.Sprintf(`"picture": "%s",`, self.picture) + "\n"
+	save += fmt.Sprintf(`"reputation": %f,`, self.reputationscore) + "\n"
 	save += fmt.Sprintf(`"inventory": %s,`, self.inventory.Save()) + "\n"
 	save += fmt.Sprintf(`"ledger": %s`, self.ledger.Save()) + "}\n"
 	return save

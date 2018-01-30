@@ -589,6 +589,7 @@ type Actor interface {
 	GetLedger() *accounting.Ledger
 	GetName() string
 	GetLocation() *LocationType
+	GetReputationScore() float64
 }
 
 type ServerBundle struct {
