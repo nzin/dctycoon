@@ -13,6 +13,7 @@ import (
 const (
 	RACK_NORMAL_STATE = iota
 	RACK_OVER_CURRENT = iota
+	RACK_HEAT_WARNING = iota
 	RACK_OVER_HEAT    = iota
 	RACK_MELTING      = iota
 )
@@ -82,11 +83,14 @@ func (self *DatacenterMap) GetRackStatus(x, y int32) int32 {
 	if self.overheating[y][x] < 0 {
 		return RACK_OVER_CURRENT
 	}
-	if self.overheating[y][x] > 20 {
+	if self.overheating[y][x] >= 16 {
 		return RACK_MELTING
 	}
-	if self.overheating[y][x] > 0 {
+	if self.overheating[y][x] > 8 {
 		return RACK_OVER_HEAT
+	}
+	if self.overheating[y][x] > 0 {
+		return RACK_HEAT_WARNING
 	}
 	return RACK_NORMAL_STATE
 }
@@ -405,20 +409,23 @@ func (self *DatacenterMap) ComputeOverLimits() {
 				element := self.tiles[y][x].TileElement()
 
 				if element != nil && element.ElementType() == supplier.PRODUCT_RACK {
-					if self.heatmap[y][x] > 45 {
+					if self.heatmap[y][x] > 40 {
 						// if we over heat since 20 days
-						if self.overheating[y][x] >= 20 {
+						if self.overheating[y][x] >= 16 {
 							newState = RACK_MELTING
-							self.overheating[y][x] = 10
+							self.overheating[y][x] = 8 // to repeat over heating in 10 days
+						} else if self.overheating[y][x] > 8 {
+							newState = RACK_OVER_HEAT
 						} else {
 							// if we begin to over heat
-							newState = RACK_OVER_HEAT
+							newState = RACK_HEAT_WARNING
 							if self.overheating[y][x] < 0 {
 								self.overheating[y][x] = 1
 							}
-
 						}
-						self.overheating[y][x]++
+						if self.heatmap[y][x] > 45 {
+							self.overheating[y][x]++
+						}
 					} else {
 						self.overheating[y][x] = 0
 						// if we go over 64 A
