@@ -122,17 +122,23 @@ type DemandStatSubscriber interface {
 	NewDemandStat(*DemandStat)
 }
 
-// DemandStatSubscriber is mainly used by the MainStatsWidget
+// PowerStatSubscriber is mainly used by the MainStatsWidget
 type PowerStatSubscriber interface {
 	NewPowerStat(*PowerStat)
 }
 
+// ReputationStatSubscriber is mainly used by the MainStatsWidget
+type ReputationStatSubscriber interface {
+	NewReputationStat(*ReputationStat)
+}
+
 type GameStats struct {
-	demandstatsubscribers []DemandStatSubscriber
-	demandsstats          []*DemandStat
-	powerstatssubscribers []PowerStatSubscriber
-	powerstats            []*PowerStat
-	reputationstats       []*ReputationStat
+	demandstatsubscribers      []DemandStatSubscriber
+	demandsstats               []*DemandStat
+	powerstatssubscribers      []PowerStatSubscriber
+	powerstats                 []*PowerStat
+	reputationstatssubscribers []ReputationStatSubscriber
+	reputationstats            []*ReputationStat
 }
 
 func (self *GameStats) AddDemandStatSubscriber(subscriber DemandStatSubscriber) {
@@ -223,13 +229,40 @@ func (self *GameStats) PowerChange(t time.Time, consumption, generation, provide
 	}
 }
 
+func (self *GameStats) AddReputationStatSubscriber(subscriber ReputationStatSubscriber) {
+	for _, s := range self.reputationstatssubscribers {
+		if s == subscriber {
+			return
+		}
+	}
+	self.reputationstatssubscribers = append(self.reputationstatssubscribers, subscriber)
+}
+
+func (self *GameStats) RemoveReputationStatSubscriber(subscriber ReputationStatSubscriber) {
+	for i, s := range self.reputationstatssubscribers {
+		if s == subscriber {
+			self.reputationstatssubscribers = append(self.reputationstatssubscribers[:i], self.reputationstatssubscribers[i+1:]...)
+			break
+		}
+	}
+}
+
+func (self *GameStats) NewReputationScore(date time.Time, score float64) {
+	stat := &ReputationStat{
+		reputation: score,
+		date:       date,
+	}
+	self.reputationstats = append(self.reputationstats, stat)
+}
+
 func NewGameStats() *GameStats {
 	gs := &GameStats{
-		demandsstats:          make([]*DemandStat, 0, 0),
-		demandstatsubscribers: make([]DemandStatSubscriber, 0, 0),
-		powerstats:            make([]*PowerStat, 0, 0),
-		powerstatssubscribers: make([]PowerStatSubscriber, 0, 0),
-		reputationstats:       make([]*ReputationStat, 0, 0),
+		demandsstats:               make([]*DemandStat, 0, 0),
+		demandstatsubscribers:      make([]DemandStatSubscriber, 0, 0),
+		powerstats:                 make([]*PowerStat, 0, 0),
+		powerstatssubscribers:      make([]PowerStatSubscriber, 0, 0),
+		reputationstats:            make([]*ReputationStat, 0, 0),
+		reputationstatssubscribers: make([]ReputationStatSubscriber, 0, 0),
 	}
 
 	return gs

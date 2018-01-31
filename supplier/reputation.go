@@ -9,6 +9,11 @@ const (
 	REPUTATION_NB_MONTH = 36
 )
 
+// ReputationSubscriber is mainly used by the MainStatsWidget
+type ReputationSubscriber interface {
+	NewReputationScore(t time.Time, score float64)
+}
+
 // Reputation stores all positive and negative "review"
 // and create a [0-1] score.
 // we forget what is older than REPUTATION_NB_MONTH
@@ -17,6 +22,25 @@ type Reputation struct {
 	positiveRecords       map[int32]int32
 	negativeRecords       map[int32]int32
 	lastConsolidatedMonth int32
+	reputationsubscribers []ReputationSubscriber
+}
+
+func (self *Reputation) AddReputationSubscriber(subscriber ReputationSubscriber) {
+	for _, s := range self.reputationsubscribers {
+		if s == subscriber {
+			return
+		}
+	}
+	self.reputationsubscribers = append(self.reputationsubscribers, subscriber)
+}
+
+func (self *Reputation) RemoveReputationSubscriber(subscriber ReputationSubscriber) {
+	for i, s := range self.reputationsubscribers {
+		if s == subscriber {
+			self.reputationsubscribers = append(self.reputationsubscribers[:i], self.reputationsubscribers[i+1:]...)
+			break
+		}
+	}
 }
 
 func (self *Reputation) GetScore() float64 {
@@ -24,7 +48,7 @@ func (self *Reputation) GetScore() float64 {
 	var negative int32
 	for i := int32(0); i < REPUTATION_NB_MONTH; i++ {
 		positive += self.positiveRecords[self.lastConsolidatedMonth-i]
-		negative += self.positiveRecords[self.lastConsolidatedMonth-i]
+		negative += self.negativeRecords[self.lastConsolidatedMonth-i]
 	}
 	if positive+negative == 0 {
 		return 1.0
@@ -32,20 +56,31 @@ func (self *Reputation) GetScore() float64 {
 	return float64(positive) / float64(positive+negative)
 }
 
-func (self *Reputation) RecordPositivePoint(time time.Time) {
+// register a new reputation increment (positive/negative) and inform subscribers
+func (self *Reputation) newReputation(time time.Time, positive bool) {
 	yearmonth := int32(time.Year())*12 + int32(time.Month())
 	if self.lastConsolidatedMonth < yearmonth {
 		self.lastConsolidatedMonth = yearmonth
 	}
-	self.positiveRecords[yearmonth]++
+	if positive {
+		self.positiveRecords[yearmonth]++
+	} else {
+		self.negativeRecords[yearmonth]++
+	}
+
+	// now we trigger the result
+	score := self.GetScore()
+	for _, s := range self.reputationsubscribers {
+		s.NewReputationScore(time, score)
+	}
+}
+
+func (self *Reputation) RecordPositivePoint(time time.Time) {
+	self.newReputation(time, true)
 }
 
 func (self *Reputation) RecordNegativePoint(time time.Time) {
-	yearmonth := int32(time.Year())*12 + int32(time.Month())
-	if self.lastConsolidatedMonth < yearmonth {
-		self.lastConsolidatedMonth = yearmonth
-	}
-	self.positiveRecords[yearmonth]--
+	self.newReputation(time, false)
 }
 
 func (self *Reputation) Load(data map[string]interface{}) {
@@ -99,6 +134,7 @@ func NewReputation() *Reputation {
 		positiveRecords:       make(map[int32]int32),
 		negativeRecords:       make(map[int32]int32),
 		lastConsolidatedMonth: 0,
+		reputationsubscribers: make([]ReputationSubscriber, 0, 0),
 	}
 	return reputation
 }
