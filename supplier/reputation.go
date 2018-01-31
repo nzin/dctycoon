@@ -81,7 +81,7 @@ func (self *Reputation) Save() string {
 		first = false
 		str += fmt.Sprintf(`{"month":%d, "value":%d}`, m, v)
 	}
-	str += `}, "negative": [`
+	str += `], "negative": [`
 	first = true
 	for m, v := range self.negativeRecords {
 		if first == false {

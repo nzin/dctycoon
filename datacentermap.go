@@ -410,21 +410,21 @@ func (self *DatacenterMap) ComputeOverLimits() {
 
 				if element != nil && element.ElementType() == supplier.PRODUCT_RACK {
 					if self.heatmap[y][x] > 40 {
-						// if we over heat since 20 days
+						if self.heatmap[y][x] > 45 {
+							self.overheating[y][x]++
+						}
+						// if we over heat since 16 days
 						if self.overheating[y][x] >= 16 {
 							newState = RACK_MELTING
-							self.overheating[y][x] = 8 // to repeat over heating in 10 days
+							self.overheating[y][x] = 8 // to repeat over heating in 8 days
 						} else if self.overheating[y][x] > 8 {
 							newState = RACK_OVER_HEAT
 						} else {
 							// if we begin to over heat
 							newState = RACK_HEAT_WARNING
-							if self.overheating[y][x] < 0 {
+							if self.overheating[y][x] <= 0 {
 								self.overheating[y][x] = 1
 							}
-						}
-						if self.heatmap[y][x] > 45 {
-							self.overheating[y][x]++
 						}
 					} else {
 						self.overheating[y][x] = 0
