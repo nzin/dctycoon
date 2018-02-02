@@ -104,11 +104,19 @@ func (self *Game) RackStatusChange(x, y int32, rackstate int32) {
 			rackelement := tileelement.(*RackElement)
 			for _, item := range rackelement.GetRackServers() {
 				if rand.Float32() > 0.5 {
-					self.player.GetReputation().RecordNegativePoint(self.timer.CurrentTime)
+					// server melted : 3 times as bad
+					if self.player.GetInventory().GetServerBundlePerItem(item) != nil {
+						self.player.GetReputation().RecordNegativePoint(self.timer.CurrentTime)
+						self.player.GetReputation().RecordNegativePoint(self.timer.CurrentTime)
+						self.player.GetReputation().RecordNegativePoint(self.timer.CurrentTime)
+					}
 					self.player.GetInventory().ScrapItem(item)
 				}
 			}
 		}
+	}
+	if rackstate == RACK_OVER_CURRENT {
+		self.player.GetReputation().RecordNegativePoint(self.timer.CurrentTime)
 	}
 }
 
@@ -121,7 +129,7 @@ func (self *Game) GeneralOutage(outage bool) {
 		}
 		speed := self.GetCurrentSpeed()
 		self.ChangeGameSpeed(SPEED_STOP)
-		iconsurface, _ := global.LoadImageAsset("assets/ui/icon-triangular-big.png")
+		iconsurface, _ := global.LoadImageAsset("assets/ui/lightning-bolt-shadow.32.png")
 		sws.ShowModalErrorSurfaceicon(self.gameui.rootwindow, "Power Outage", iconsurface, "Your customers are furious. A global power outage occured. Review your electric lines or add more diesel generators", func() {
 			self.ChangeGameSpeed(speed)
 		})
