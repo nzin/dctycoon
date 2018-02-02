@@ -104,11 +104,17 @@ func (self *Game) RackStatusChange(x, y int32, rackstate int32) {
 			rackelement := tileelement.(*RackElement)
 			for _, item := range rackelement.GetRackServers() {
 				if rand.Float32() > 0.5 {
+					// 3 times as bad
+					self.player.GetReputation().RecordNegativePoint(self.timer.CurrentTime)
+					self.player.GetReputation().RecordNegativePoint(self.timer.CurrentTime)
 					self.player.GetReputation().RecordNegativePoint(self.timer.CurrentTime)
 					self.player.GetInventory().ScrapItem(item)
 				}
 			}
 		}
+	}
+	if rackstate == RACK_OVER_CURRENT {
+		self.player.GetReputation().RecordNegativePoint(self.timer.CurrentTime)
 	}
 }
 

@@ -53,9 +53,9 @@ func (self *Reputation) GetScore() float64 {
 		negative += self.negativeRecords[self.lastConsolidatedMonth-i]
 	}
 	if positive+negative == 0 {
-		return 1.0
+		return 0.8
 	}
-	return float64(positive) / float64(positive+negative)
+	return 0.8 + 0.2*float64(positive)/float64(positive+negative) - 0.4*float64(negative)/float64(positive+negative)
 }
 
 // register a new reputation increment (positive/negative) and inform subscribers
