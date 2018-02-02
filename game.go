@@ -104,6 +104,7 @@ func (self *Game) RackStatusChange(x, y int32, rackstate int32) {
 			rackelement := tileelement.(*RackElement)
 			for _, item := range rackelement.GetRackServers() {
 				if rand.Float32() > 0.5 {
+					self.player.GetReputation().RecordNegativePoint(self.timer.CurrentTime)
 					self.player.GetInventory().ScrapItem(item)
 				}
 			}
@@ -112,8 +113,19 @@ func (self *Game) RackStatusChange(x, y int32, rackstate int32) {
 }
 
 // GeneralOutage comes from interface DatacenterMap::RackStatusSubscriber
-func (self *Game) GeneralOutage(bool) {
-
+func (self *Game) GeneralOutage(outage bool) {
+	log.Debug("Game::GeneralOutage(", outage, ")")
+	if outage {
+		for i := 0; i < len(self.player.GetInventory().GetServerBundles()); i++ {
+			self.player.GetReputation().RecordNegativePoint(self.timer.CurrentTime)
+		}
+		speed := self.GetCurrentSpeed()
+		self.ChangeGameSpeed(SPEED_STOP)
+		iconsurface, _ := global.LoadImageAsset("assets/ui/icon-triangular-big.png")
+		sws.ShowModalErrorSurfaceicon(self.gameui.rootwindow, "Power Outage", iconsurface, "Your customers are furious. A global power outage occured. Review your electric lines or add more diesel generators", func() {
+			self.ChangeGameSpeed(speed)
+		})
+	}
 }
 
 func (self *Game) ShowOpening() {
@@ -153,7 +165,7 @@ func (self *Game) InitGame(locationid string, difficulty int32) {
 	self.player = NewPlayer()
 	self.player.Init(self.timer, initialcapital, locationid)
 
-	self.gamestats.InitGame(self.player.GetInventory())
+	self.gamestats.InitGame(self.player.GetInventory(), self.player.GetReputation())
 
 	// loading list of names
 	availablenames := make([]NameList, 0, 0)
@@ -234,7 +246,7 @@ func (self *Game) LoadGame(filename string) {
 	self.player = NewPlayer()
 	self.player.LoadGame(self.timer, v["player"].(map[string]interface{}))
 
-	self.gamestats.LoadGame(self.player.GetInventory(), v["stats"].(map[string]interface{}))
+	self.gamestats.LoadGame(self.player.GetInventory(), self.player.GetReputation(), v["stats"].(map[string]interface{}))
 
 	opponents := v["opponents"].([]interface{})
 	// opponents
@@ -296,6 +308,11 @@ func (self *Game) GenerateDemandAndFee() {
 			if sb.Date.Day() == self.timer.CurrentTime.Day() {
 				// pay monthly fee
 				sb.PayMontlyFee(a.GetLedger(), self.timer.CurrentTime)
+
+				// no outage?
+				if a == self.player {
+					self.player.GetReputation().RecordPositivePoint(self.timer.CurrentTime)
+				}
 			}
 
 			if sb.Date.Month() == self.timer.CurrentTime.Month() &&
@@ -336,7 +353,6 @@ func (self *Game) GenerateDemandAndFee() {
 	}
 	// generate electricity outage
 	for _, a := range actors {
-		// TBD, if outage = true, image of the provider decrease
 		a.GetInventory().GeneratePowerlineOutage(a.GetLocation().Electricityfailrate)
 	}
 

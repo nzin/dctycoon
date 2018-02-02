@@ -119,6 +119,8 @@ func (self *DcWidget) Repaint() {
 			switch self.dcmap.GetRackStatus(x, y) {
 			case RACK_OVER_CURRENT:
 				extraIcon, _ = global.LoadImageAsset("assets/ui/lightning-bolt-shadow.png")
+			case RACK_HEAT_WARNING:
+				extraIcon, _ = global.LoadImageAsset("assets/ui/thermometer.warning.png")
 			case RACK_OVER_HEAT:
 				extraIcon, _ = global.LoadImageAsset("assets/ui/thermometer.png")
 			case RACK_MELTING:

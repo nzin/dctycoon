@@ -28,6 +28,7 @@ type MainStatsWidget struct {
 	mainwidget        *sws.MainWidget
 	tabwidget         *sws.TabWidget
 	opponentswidget   *OpponentStatWidget
+	playerwidget      *PlayerStatWidget
 	demandswidget     *DemandStatWidget
 	globalpowerwidget *PowerStatWidget
 	game              *Game
@@ -58,6 +59,7 @@ func NewMainStatsWidget(root *sws.RootWidget, g *Game) *MainStatsWidget {
 		tabwidget:         sws.NewTabWidget(200, 200),
 		game:              g,
 		opponentswidget:   NewOpponentStatWidget(200, 200),
+		playerwidget:      NewPlayerStatWidget(200, 200, g),
 		demandswidget:     NewDemandStatWidget(200, 200, g),
 		globalpowerwidget: NewPowerStatWidget(200, 200, g),
 	}
@@ -69,6 +71,7 @@ func NewMainStatsWidget(root *sws.RootWidget, g *Game) *MainStatsWidget {
 	})
 
 	widget.tabwidget.AddTab("Competitors", widget.opponentswidget)
+	widget.tabwidget.AddTab("You", widget.playerwidget)
 	widget.tabwidget.AddTab("Customer demands", widget.demandswidget)
 	widget.tabwidget.AddTab("Global Power", widget.globalpowerwidget)
 	if g.GetDebug() {
@@ -79,12 +82,7 @@ func NewMainStatsWidget(root *sws.RootWidget, g *Game) *MainStatsWidget {
 
 func (self *MainStatsWidget) SetGame() {
 	self.opponentswidget.SetGame(self.game)
-	self.demandswidget.SetGame(self.game.timer.CurrentTime, self.game.GetGameStats())
-	self.globalpowerwidget.SetGame(self.game.timer.CurrentTime, self.game.GetGameStats())
-}
-
-func (self *MainStatsWidget) LoadGame() {
-	self.opponentswidget.SetGame(self.game)
+	self.playerwidget.SetGame(self.game.GetGameStats())
 	self.demandswidget.SetGame(self.game.timer.CurrentTime, self.game.GetGameStats())
 	self.globalpowerwidget.SetGame(self.game.timer.CurrentTime, self.game.GetGameStats())
 }
@@ -94,11 +92,12 @@ func (self *MainStatsWidget) LoadGame() {
 // see OpponentStatWidget
 type OpponentStatWidgetLine struct {
 	sws.CoreWidget
-	opponent  *NPDatacenter
-	picture   *sws.LabelWidget
-	name      *sws.LabelWidget
-	location  *sws.LabelWidget
-	nbservers *sws.LabelWidget
+	opponent   *NPDatacenter
+	picture    *sws.LabelWidget
+	name       *sws.LabelWidget
+	location   *sws.LabelWidget
+	nbservers  *sws.LabelWidget
+	reputation *sws.LabelWidget
 }
 
 func NewOpponentStatWidgetLine(opponent *NPDatacenter) *OpponentStatWidgetLine {
@@ -110,6 +109,7 @@ func NewOpponentStatWidgetLine(opponent *NPDatacenter) *OpponentStatWidgetLine {
 		name:       sws.NewLabelWidget(300, 25, opponent.GetName()),
 		location:   sws.NewLabelWidget(300, 25, opponent.location.Name),
 		nbservers:  sws.NewLabelWidget(300, 25, fmt.Sprintf("%d", len(opponent.GetInventory().Items))),
+		reputation: sws.NewLabelWidget(300, 25, fmt.Sprintf("%.2f", opponent.GetReputationScore())),
 	}
 	if opponent.GetPicture() != "" {
 		if surface, err := global.LoadImageAsset("assets/faces/" + opponent.GetPicture()); err == nil {
@@ -140,6 +140,13 @@ func NewOpponentStatWidgetLine(opponent *NPDatacenter) *OpponentStatWidgetLine {
 
 	line.nbservers.Move(200, 55)
 	line.AddChild(line.nbservers)
+
+	labelReputation := sws.NewLabelWidget(100, 25, "Reputation: ")
+	labelReputation.Move(100, 80)
+	line.AddChild(labelReputation)
+
+	line.reputation.Move(200, 80)
+	line.AddChild(line.reputation)
 
 	opponent.GetInventory().AddInventorySubscriber(line)
 
@@ -377,4 +384,41 @@ func (self *PowerStatWidget) SetGame(t time.Time, gamestats *GameStats) {
 	for _, ps := range gamestats.powerstats {
 		self.NewPowerStat(ps)
 	}
+}
+
+//
+// PlayerStatWidget is a about player info (reputation)
+type PlayerStatWidget struct {
+	sws.CoreWidget
+	reputation *ui.BarChartWidget
+}
+
+func (self *PlayerStatWidget) NewReputationStat(rs *ReputationStat) {
+	log.Debug("PlayerStatWidget::NewReputationStat(", rs, ")")
+	self.reputation.SetPoint(rs.date, int32(rs.reputation*100))
+}
+
+func (self *PlayerStatWidget) SetGame(gamestats *GameStats) {
+	gamestats.AddReputationStatSubscriber(self)
+
+	for _, rs := range gamestats.reputationstats {
+		self.NewReputationStat(rs)
+	}
+}
+
+func NewPlayerStatWidget(w, h int32, g *Game) *PlayerStatWidget {
+	corewidget := sws.NewCoreWidget(w, h)
+	widget := &PlayerStatWidget{
+		CoreWidget: *corewidget,
+		reputation: ui.NewBarChartWidget(525, 150),
+	}
+
+	g.AddGameTimerSubscriber(widget.reputation)
+	widget.reputation.SetChartColor(COLOR_SALE_YOU)
+	widget.AddChild(widget.reputation)
+	labelReputation := sws.NewLabelWidget(150, 25, "Current reputation")
+	labelReputation.Move(525, 60)
+	widget.AddChild(labelReputation)
+
+	return widget
 }

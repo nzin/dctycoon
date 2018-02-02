@@ -13,13 +13,17 @@ import (
 const (
 	RACK_NORMAL_STATE = iota
 	RACK_OVER_CURRENT = iota
+	RACK_HEAT_WARNING = iota
 	RACK_OVER_HEAT    = iota
 	RACK_MELTING      = iota
 )
 
 type RackStatusSubscriber interface {
+	// when a rack change from status (RACK_NORMAL_STATE, RACK_OVER_CURRENT, RACK_HEAT_WARNING, RACK_OVER_HEAT, RACK_MELTING)
 	RackStatusChange(x, y int32, rackstate int32)
-	GeneralOutage(bool)
+
+	// outage is true when there is a global outage, and false when we recover
+	GeneralOutage(outage bool)
 }
 
 // DatacenterMap holds the map information, and is used to
@@ -79,14 +83,21 @@ func (self *DatacenterMap) GetGeneralOutage() bool {
 }
 
 func (self *DatacenterMap) GetRackStatus(x, y int32) int32 {
+	element := self.tiles[y][x].TileElement()
+	if self.inoutage && element != nil {
+		return RACK_OVER_CURRENT
+	}
 	if self.overheating[y][x] < 0 {
 		return RACK_OVER_CURRENT
 	}
-	if self.overheating[y][x] > 20 {
+	if self.overheating[y][x] >= 16 {
 		return RACK_MELTING
 	}
-	if self.overheating[y][x] > 0 {
+	if self.overheating[y][x] > 8 {
 		return RACK_OVER_HEAT
+	}
+	if self.overheating[y][x] > 0 {
+		return RACK_HEAT_WARNING
 	}
 	return RACK_NORMAL_STATE
 }
@@ -405,20 +416,23 @@ func (self *DatacenterMap) ComputeOverLimits() {
 				element := self.tiles[y][x].TileElement()
 
 				if element != nil && element.ElementType() == supplier.PRODUCT_RACK {
-					if self.heatmap[y][x] > 45 {
-						// if we over heat since 20 days
-						if self.overheating[y][x] >= 20 {
+					if self.heatmap[y][x] > 40 {
+						if self.heatmap[y][x] > 45 {
+							self.overheating[y][x]++
+						}
+						// if we over heat since 16 days
+						if self.overheating[y][x] >= 16 {
 							newState = RACK_MELTING
-							self.overheating[y][x] = 10
+							self.overheating[y][x] = 8 // to repeat over heating in 8 days
+						} else if self.overheating[y][x] > 8 {
+							newState = RACK_OVER_HEAT
 						} else {
 							// if we begin to over heat
-							newState = RACK_OVER_HEAT
-							if self.overheating[y][x] < 0 {
+							newState = RACK_HEAT_WARNING
+							if self.overheating[y][x] <= 0 {
 								self.overheating[y][x] = 1
 							}
-
 						}
-						self.overheating[y][x]++
 					} else {
 						self.overheating[y][x] = 0
 						// if we go over 64 A

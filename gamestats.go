@@ -9,6 +9,29 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type ReputationStat struct {
+	reputation float64
+	date       time.Time
+}
+
+func (self *ReputationStat) Save() string {
+	str := "{"
+	str += fmt.Sprintf("\"date\": \"%d-%d-%d\",", self.date.Year(), self.date.Month(), self.date.Day())
+	str += fmt.Sprintf("\"reputation\": %f", self.reputation)
+	return str + "}"
+}
+
+func NewReputationStat(v map[string]interface{}) *ReputationStat {
+	var year, month, day int
+	fmt.Sscanf(v["date"].(string), "%d-%d-%d", &year, &month, &day)
+
+	rs := &ReputationStat{
+		reputation: v["reputation"].(float64),
+		date:       time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC),
+	}
+	return rs
+}
+
 type PowerStat struct {
 	consumption float64
 	generation  float64
@@ -99,16 +122,23 @@ type DemandStatSubscriber interface {
 	NewDemandStat(*DemandStat)
 }
 
-// DemandStatSubscriber is mainly used by the MainStatsWidget
+// PowerStatSubscriber is mainly used by the MainStatsWidget
 type PowerStatSubscriber interface {
 	NewPowerStat(*PowerStat)
 }
 
+// ReputationStatSubscriber is mainly used by the MainStatsWidget
+type ReputationStatSubscriber interface {
+	NewReputationStat(*ReputationStat)
+}
+
 type GameStats struct {
-	demandstatsubscribers []DemandStatSubscriber
-	demandsstats          []*DemandStat
-	powerstatssubscribers []PowerStatSubscriber
-	powerstats            []*PowerStat
+	demandstatsubscribers      []DemandStatSubscriber
+	demandsstats               []*DemandStat
+	powerstatssubscribers      []PowerStatSubscriber
+	powerstats                 []*PowerStat
+	reputationstatssubscribers []ReputationStatSubscriber
+	reputationstats            []*ReputationStat
 }
 
 func (self *GameStats) AddDemandStatSubscriber(subscriber DemandStatSubscriber) {
@@ -199,24 +229,57 @@ func (self *GameStats) PowerChange(t time.Time, consumption, generation, provide
 	}
 }
 
+func (self *GameStats) AddReputationStatSubscriber(subscriber ReputationStatSubscriber) {
+	for _, s := range self.reputationstatssubscribers {
+		if s == subscriber {
+			return
+		}
+	}
+	self.reputationstatssubscribers = append(self.reputationstatssubscribers, subscriber)
+}
+
+func (self *GameStats) RemoveReputationStatSubscriber(subscriber ReputationStatSubscriber) {
+	for i, s := range self.reputationstatssubscribers {
+		if s == subscriber {
+			self.reputationstatssubscribers = append(self.reputationstatssubscribers[:i], self.reputationstatssubscribers[i+1:]...)
+			break
+		}
+	}
+}
+
+func (self *GameStats) NewReputationScore(date time.Time, score float64) {
+	stat := &ReputationStat{
+		reputation: score,
+		date:       date,
+	}
+	self.reputationstats = append(self.reputationstats, stat)
+	for _, s := range self.reputationstatssubscribers {
+		s.NewReputationStat(stat)
+	}
+}
+
 func NewGameStats() *GameStats {
 	gs := &GameStats{
-		demandsstats:          make([]*DemandStat, 0, 0),
-		demandstatsubscribers: make([]DemandStatSubscriber, 0, 0),
-		powerstats:            make([]*PowerStat, 0, 0),
-		powerstatssubscribers: make([]PowerStatSubscriber, 0, 0),
+		demandsstats:               make([]*DemandStat, 0, 0),
+		demandstatsubscribers:      make([]DemandStatSubscriber, 0, 0),
+		powerstats:                 make([]*PowerStat, 0, 0),
+		powerstatssubscribers:      make([]PowerStatSubscriber, 0, 0),
+		reputationstats:            make([]*ReputationStat, 0, 0),
+		reputationstatssubscribers: make([]ReputationStatSubscriber, 0, 0),
 	}
 
 	return gs
 }
 
-func (self *GameStats) InitGame(inventory *supplier.Inventory) {
+func (self *GameStats) InitGame(inventory *supplier.Inventory, reputation *supplier.Reputation) {
 	self.demandsstats = make([]*DemandStat, 0, 0)
 	self.powerstats = make([]*PowerStat, 0, 0)
+	self.reputationstats = make([]*ReputationStat, 0, 0)
 	inventory.AddPowerStatSubscriber(self)
+	reputation.AddReputationSubscriber(self)
 }
 
-func (self *GameStats) LoadGame(inventory *supplier.Inventory, stats map[string]interface{}) {
+func (self *GameStats) LoadGame(inventory *supplier.Inventory, reputation *supplier.Reputation, stats map[string]interface{}) {
 	log.Debug("GameStats::LoadGame(", stats, ")")
 
 	self.demandsstats = make([]*DemandStat, 0, 0)
@@ -226,12 +289,19 @@ func (self *GameStats) LoadGame(inventory *supplier.Inventory, stats map[string]
 	for _, d := range demandsstats {
 		self.demandsstats = append(self.demandsstats, NewDemandStat(d.(map[string]interface{})))
 	}
-	self.powerstats = make([]*PowerStat, 0, 0)
 
+	self.powerstats = make([]*PowerStat, 0, 0)
 	powerstats := stats["powerstats"].([]interface{})
 	for _, d := range powerstats {
 		self.powerstats = append(self.powerstats, NewPowerStat(d.(map[string]interface{})))
 	}
+
+	self.reputationstats = make([]*ReputationStat, 0, 0)
+	reputationstats := stats["reputationstats"].([]interface{})
+	for _, d := range reputationstats {
+		self.reputationstats = append(self.reputationstats, NewReputationStat(d.(map[string]interface{})))
+	}
+	reputation.AddReputationSubscriber(self)
 }
 
 func (self *GameStats) Save() string {
@@ -240,6 +310,14 @@ func (self *GameStats) Save() string {
 	str := "{\n"
 	str += "\"demandsstats\": ["
 	for i, d := range self.demandsstats {
+		if i != 0 {
+			str += ",\n"
+		}
+		str += d.Save()
+	}
+	str += "],\n"
+	str += "\"reputationstats\": ["
+	for i, d := range self.reputationstats {
 		if i != 0 {
 			str += ",\n"
 		}

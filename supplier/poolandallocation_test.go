@@ -14,6 +14,10 @@ type ActorMock struct {
 	inventory *Inventory
 }
 
+func (self *ActorMock) GetReputationScore() float64 {
+	return 0.8
+}
+
 func (self *ActorMock) GetInventory() *Inventory {
 	return self.inventory
 }
@@ -156,7 +160,7 @@ func TestPool(t *testing.T) {
 		inventory: inventory,
 	}
 	actors := []Actor{actor}
-	bundlecontracts := demand.FindOffer(actors, time.Date(1999, 1, 1, 0, 0, 0, 0, time.UTC))
+	bundlecontracts, _ := demand.FindOffer(actors, time.Date(1999, 1, 1, 0, 0, 0, 0, time.UTC))
 	assert.Empty(t, bundlecontracts, "we didn't found servers fitting the demand")
 
 	bigpayload2 := `{
@@ -196,12 +200,12 @@ func TestPool(t *testing.T) {
 	assert.Equal(t, 2, len(demandtemplate2.Specs), "2 servers asked ")
 
 	demand2 := demandtemplate2.InstanciateDemand()
-	bundlecontracts2 := demand2.FindOffer(actors, time.Date(1999, 1, 1, 0, 0, 0, 0, time.UTC))
+	bundlecontracts2, _ := demand2.FindOffer(actors, time.Date(1999, 1, 1, 0, 0, 0, 0, time.UTC))
 	assert.NotEmpty(t, bundlecontracts2, "we found servers fitting the demand")
 	assert.Equal(t, 2, len(bundlecontracts2.Contracts), "2 servers allocated")
 
 	assert.Equal(t, int32(1), bundlecontracts2.Contracts[0].Item.Coresallocated, "1st server allocated")
 
-	bundlecontracts3 := demand2.FindOffer(actors, time.Date(1999, 1, 1, 0, 0, 0, 0, time.UTC))
+	bundlecontracts3, _ := demand2.FindOffer(actors, time.Date(1999, 1, 1, 0, 0, 0, 0, time.UTC))
 	assert.Empty(t, bundlecontracts3, "no server left fitting the demand")
 }

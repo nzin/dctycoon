@@ -28,6 +28,11 @@ func NewBarChartWidget(w, h int32) *BarChartWidget {
 		lastrefresh: time.Now(),
 		data:        make([]int32, w, w),
 	}
+	for i := int32(0); i < w; i++ {
+		widget.data[i] = -1
+	}
+	widget.data[w-1] = 0
+
 	return widget
 }
 

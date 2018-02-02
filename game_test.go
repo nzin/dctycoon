@@ -39,7 +39,7 @@ func TestDemandAttribution(t *testing.T) {
 	actors = append(actors, opponent)
 	actors = append(actors, game.player)
 	demand := demandtemplate.InstanciateDemand()
-	serverbundle := demand.FindOffer(actors, game.timer.CurrentTime)
+	serverbundle, _ := demand.FindOffer(actors, game.timer.CurrentTime)
 	assert.Empty(t, serverbundle, "demand created but not atributed")
 
 	// add server in inventory
@@ -51,7 +51,7 @@ func TestDemandAttribution(t *testing.T) {
 	fmt.Println(opponent.inventory.Items[0])
 	fmt.Println(game.timer.CurrentTime)
 	fmt.Println(opponent.inventory.GetOffers()[0])
-	serverbundle = demand.FindOffer(actors, game.timer.CurrentTime)
+	serverbundle, _ = demand.FindOffer(actors, game.timer.CurrentTime)
 	// flaky
 	//	assert.NotEmpty(t, serverbundle, "demand created and attributed")
 }

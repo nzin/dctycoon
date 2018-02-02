@@ -14,6 +14,7 @@ func TestGameStats(t *testing.T) {
 	gs := NewGameStats()
 	gt := timer.NewGameTimer()
 	inventory := supplier.NewInventory(gt)
+	reputation := supplier.NewReputation()
 
 	sample := `{
 		"demandsstats": [
@@ -23,12 +24,13 @@ func TestGameStats(t *testing.T) {
 				]
 			}
 		],
-		"powerstats": []
+		"powerstats": [],
+		"reputationstats": []
 	}`
 	var v map[string]interface{}
 	err := json.Unmarshal([]byte(sample), &v)
 	assert.Empty(t, err, "correct json payload")
-	gs.LoadGame(inventory, v)
+	gs.LoadGame(inventory, reputation, v)
 
 	assert.Equal(t, 1, len(gs.demandsstats), "1 demand stat loaded")
 	assert.Equal(t, 2, len(gs.demandsstats[0].serverdemands), "1 demand stat loaded with 2 server confs")
