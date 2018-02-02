@@ -326,33 +326,34 @@ func (self *DemandStatWidget) SetGame(t time.Time, gamestats *GameStats) {
 // PowerStatWidget is a about global power consumption / generation stat widget
 type PowerStatWidget struct {
 	sws.CoreWidget
-	consumption *ui.BarChartWidget
-	generation  *ui.BarChartWidget
-	provided    *ui.BarChartWidget
+	consumption      *ui.BarChartWidget
+	generation       *ui.BarChartWidget
+	provided         *ui.BarChartWidget
+	labelConsumption *sws.LabelWidget
 }
 
 func NewPowerStatWidget(w, h int32, g *Game) *PowerStatWidget {
 	corewidget := sws.NewCoreWidget(w, h)
 	widget := &PowerStatWidget{
-		CoreWidget:  *corewidget,
-		consumption: ui.NewBarChartWidget(525, 150),
-		generation:  ui.NewBarChartWidget(525, 150),
-		provided:    ui.NewBarChartWidget(525, 150),
+		CoreWidget:       *corewidget,
+		consumption:      ui.NewBarChartWidget(525, 150),
+		generation:       ui.NewBarChartWidget(525, 150),
+		provided:         ui.NewBarChartWidget(525, 150),
+		labelConsumption: sws.NewLabelWidget(250, 25, "Current consumption: 0 kwh"),
 	}
 	g.AddGameTimerSubscriber(widget.consumption)
 	widget.consumption.SetChartColor(COLOR_SALE_YOU)
 	widget.AddChild(widget.consumption)
 
-	labelConsumption := sws.NewLabelWidget(150, 25, "Current consumption")
-	labelConsumption.Move(525, 60)
-	widget.AddChild(labelConsumption)
+	widget.labelConsumption.Move(525, 60)
+	widget.AddChild(widget.labelConsumption)
 
 	widget.generation.Move(0, 160)
 	widget.generation.SetChartColor(COLOR_SALE_YOU)
 	g.AddGameTimerSubscriber(widget.generation)
 	widget.AddChild(widget.generation)
 
-	labelGeneration := sws.NewLabelWidget(150, 25, "Generators capacity")
+	labelGeneration := sws.NewLabelWidget(250, 25, "Generators capacity")
 	labelGeneration.Move(525, 220)
 	widget.AddChild(labelGeneration)
 
@@ -361,7 +362,7 @@ func NewPowerStatWidget(w, h int32, g *Game) *PowerStatWidget {
 	g.AddGameTimerSubscriber(widget.provided)
 	widget.AddChild(widget.provided)
 
-	labelProvided := sws.NewLabelWidget(150, 25, "Utility transmission")
+	labelProvided := sws.NewLabelWidget(250, 25, "Utility transmission")
 	labelProvided.Move(525, 380)
 	widget.AddChild(labelProvided)
 
@@ -373,6 +374,8 @@ func (self *PowerStatWidget) NewPowerStat(ps *PowerStat) {
 	self.consumption.SetPoint(ps.date, int32(ps.consumption))
 	self.generation.SetPoint(ps.date, int32(ps.generation))
 	self.provided.SetPoint(ps.date, int32(ps.provided))
+
+	self.labelConsumption.SetText(fmt.Sprintf("Current consumption: %d kwh", int(ps.consumption)/1000))
 }
 
 func (self *PowerStatWidget) SetGame(t time.Time, gamestats *GameStats) {
