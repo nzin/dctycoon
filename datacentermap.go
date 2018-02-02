@@ -19,8 +19,11 @@ const (
 )
 
 type RackStatusSubscriber interface {
+	// when a rack change from status (RACK_NORMAL_STATE, RACK_OVER_CURRENT, RACK_HEAT_WARNING, RACK_OVER_HEAT, RACK_MELTING)
 	RackStatusChange(x, y int32, rackstate int32)
-	GeneralOutage(bool)
+
+	// outage is true when there is a global outage, and false when we recover
+	GeneralOutage(outage bool)
 }
 
 // DatacenterMap holds the map information, and is used to
@@ -80,6 +83,10 @@ func (self *DatacenterMap) GetGeneralOutage() bool {
 }
 
 func (self *DatacenterMap) GetRackStatus(x, y int32) int32 {
+	element := self.tiles[y][x].TileElement()
+	if self.inoutage && element != nil {
+		return RACK_OVER_CURRENT
+	}
 	if self.overheating[y][x] < 0 {
 		return RACK_OVER_CURRENT
 	}

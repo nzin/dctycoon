@@ -394,6 +394,7 @@ type PlayerStatWidget struct {
 }
 
 func (self *PlayerStatWidget) NewReputationStat(rs *ReputationStat) {
+	log.Debug("PlayerStatWidget::NewReputationStat(", rs, ")")
 	self.reputation.SetPoint(rs.date, int32(rs.reputation*100))
 }
 

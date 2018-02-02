@@ -3,6 +3,8 @@ package supplier
 import (
 	"fmt"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -58,6 +60,7 @@ func (self *Reputation) GetScore() float64 {
 
 // register a new reputation increment (positive/negative) and inform subscribers
 func (self *Reputation) newReputation(time time.Time, positive bool) {
+	log.Debug("Reputation::newReputation()")
 	yearmonth := int32(time.Year())*12 + int32(time.Month())
 	if self.lastConsolidatedMonth < yearmonth {
 		self.lastConsolidatedMonth = yearmonth

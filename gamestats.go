@@ -253,6 +253,9 @@ func (self *GameStats) NewReputationScore(date time.Time, score float64) {
 		date:       date,
 	}
 	self.reputationstats = append(self.reputationstats, stat)
+	for _, s := range self.reputationstatssubscribers {
+		s.NewReputationStat(stat)
+	}
 }
 
 func NewGameStats() *GameStats {
@@ -268,14 +271,15 @@ func NewGameStats() *GameStats {
 	return gs
 }
 
-func (self *GameStats) InitGame(inventory *supplier.Inventory) {
+func (self *GameStats) InitGame(inventory *supplier.Inventory, reputation *supplier.Reputation) {
 	self.demandsstats = make([]*DemandStat, 0, 0)
 	self.powerstats = make([]*PowerStat, 0, 0)
 	self.reputationstats = make([]*ReputationStat, 0, 0)
 	inventory.AddPowerStatSubscriber(self)
+	reputation.AddReputationSubscriber(self)
 }
 
-func (self *GameStats) LoadGame(inventory *supplier.Inventory, stats map[string]interface{}) {
+func (self *GameStats) LoadGame(inventory *supplier.Inventory, reputation *supplier.Reputation, stats map[string]interface{}) {
 	log.Debug("GameStats::LoadGame(", stats, ")")
 
 	self.demandsstats = make([]*DemandStat, 0, 0)
@@ -285,16 +289,19 @@ func (self *GameStats) LoadGame(inventory *supplier.Inventory, stats map[string]
 	for _, d := range demandsstats {
 		self.demandsstats = append(self.demandsstats, NewDemandStat(d.(map[string]interface{})))
 	}
-	self.powerstats = make([]*PowerStat, 0, 0)
 
+	self.powerstats = make([]*PowerStat, 0, 0)
 	powerstats := stats["powerstats"].([]interface{})
 	for _, d := range powerstats {
 		self.powerstats = append(self.powerstats, NewPowerStat(d.(map[string]interface{})))
 	}
+
+	self.reputationstats = make([]*ReputationStat, 0, 0)
 	reputationstats := stats["reputationstats"].([]interface{})
 	for _, d := range reputationstats {
 		self.reputationstats = append(self.reputationstats, NewReputationStat(d.(map[string]interface{})))
 	}
+	reputation.AddReputationSubscriber(self)
 }
 
 func (self *GameStats) Save() string {
