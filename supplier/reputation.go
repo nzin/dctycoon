@@ -48,12 +48,14 @@ func (self *Reputation) RemoveReputationSubscriber(subscriber ReputationSubscrib
 func (self *Reputation) GetScore() float64 {
 	var positive int32
 	var negative int32
+	positive = 10
+	negative = 10
 	for i := int32(0); i < REPUTATION_NB_MONTH; i++ {
 		positive += self.positiveRecords[self.lastConsolidatedMonth-i]
 		negative += self.negativeRecords[self.lastConsolidatedMonth-i]
 	}
 	if positive+negative == 0 {
-		return 0.8
+		return 0.6
 	}
 	return 0.8 + 0.2*float64(positive)/float64(positive+negative) - 0.4*float64(negative)/float64(positive+negative)
 }

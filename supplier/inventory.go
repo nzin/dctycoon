@@ -258,7 +258,7 @@ func (self *Inventory) DecommissionServer(item *InventoryItem, smoothly bool) bo
 	log.Debug("Inventory::DecommissionServer(", item, ")")
 	pool := item.Pool
 	if pool != nil && pool.IsAllocated(item) {
-		// 1st we discard it
+		// 1st we discard it temporarily
 		item.Pool.removeInventoryItem(item)
 		delete(self.Items, item.Id)
 
@@ -294,10 +294,22 @@ func (self *Inventory) DecommissionServer(item *InventoryItem, smoothly bool) bo
 				// TDB: actor image drop
 			}
 		}
+		// 3rd we re-enable it
 		item.Pool.addInventoryItem(item)
 		self.Items[item.Id] = item
 	}
 	return true
+}
+
+func (self *Inventory) GetServerBundlePerItem(item *InventoryItem) *ServerBundle {
+	for _, sb := range self.serverbundles {
+		for _, contract := range sb.Contracts {
+			if contract.Item == item {
+				return sb
+			}
+		}
+	}
+	return nil
 }
 
 // ScrapItem replace a given item by a scrap part:
