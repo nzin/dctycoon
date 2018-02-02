@@ -119,6 +119,12 @@ func (self *Game) GeneralOutage(outage bool) {
 		for i := 0; i < len(self.player.GetInventory().GetServerBundles()); i++ {
 			self.player.GetReputation().RecordNegativePoint(self.timer.CurrentTime)
 		}
+		speed := self.GetCurrentSpeed()
+		self.ChangeGameSpeed(SPEED_STOP)
+		iconsurface, _ := global.LoadImageAsset("assets/ui/icon-triangular-big.png")
+		sws.ShowModalErrorSurfaceicon(self.gameui.rootwindow, "Power Outage", iconsurface, "Your customers are furious. A global power outage occured. Review your electric lines or add more diesel generators", func() {
+			self.ChangeGameSpeed(speed)
+		})
 	}
 }
 
