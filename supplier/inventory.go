@@ -259,7 +259,7 @@ func (self *Inventory) DecommissionServer(item *InventoryItem, smoothly bool) bo
 	pool := item.Pool
 	if pool != nil && pool.IsAllocated(item) {
 		// 1st we discard it temporarily
-		item.Pool.removeInventoryItem(item)
+		pool.removeInventoryItem(item)
 		delete(self.Items, item.Id)
 
 		// 2nd for all bundle
@@ -280,7 +280,7 @@ func (self *Inventory) DecommissionServer(item *InventoryItem, smoothly bool) bo
 			// we coudn't reallocate, we destroy the service bundle (and loose a customer) except if we wanted to do it smoothly
 			if reallocated == false {
 				if smoothly == true {
-					item.Pool.addInventoryItem(item)
+					pool.addInventoryItem(item)
 					self.Items[item.Id] = item
 					return false
 				}
@@ -295,7 +295,7 @@ func (self *Inventory) DecommissionServer(item *InventoryItem, smoothly bool) bo
 			}
 		}
 		// 3rd we re-enable it
-		item.Pool.addInventoryItem(item)
+		pool.addInventoryItem(item)
 		self.Items[item.Id] = item
 	}
 	return true

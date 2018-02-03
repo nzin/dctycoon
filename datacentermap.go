@@ -416,6 +416,10 @@ func (self *DatacenterMap) ComputeOverLimits() {
 				element := self.tiles[y][x].TileElement()
 
 				if element != nil && element.ElementType() == supplier.PRODUCT_RACK {
+					// previous turn, we were melting
+					if previousState == RACK_MELTING {
+						self.overheating[y][x] = 8 // to repeat over heating in 8 days
+					}
 					if self.heatmap[y][x] > 40 {
 						if self.heatmap[y][x] > 45 {
 							self.overheating[y][x]++
@@ -423,7 +427,6 @@ func (self *DatacenterMap) ComputeOverLimits() {
 						// if we over heat since 16 days
 						if self.overheating[y][x] >= 16 {
 							newState = RACK_MELTING
-							self.overheating[y][x] = 8 // to repeat over heating in 8 days
 						} else if self.overheating[y][x] > 8 {
 							newState = RACK_OVER_HEAT
 						} else {
