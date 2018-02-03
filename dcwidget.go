@@ -259,7 +259,7 @@ func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 					iconsurface, _ := global.LoadImageAsset("assets/ui/icon-triangular-big.png")
 					sws.ShowModalErrorSurfaceicon(self.rootwindow, "Uninstall action", iconsurface, "It is not possible to uninstall a rack unless it is empty", nil)
 				} else {
-					activeTile.Rotate((0)
+					activeTile.Rotate(0)
 					self.dcmap.UninstallItem(rackelement.InventoryItem())
 				}
 			}))
@@ -275,7 +275,7 @@ func (self *DcWidget) MousePressUp(x, y int32, button uint8) {
 				self.PostUpdate()
 			}))
 			m.AddItem(sws.NewMenuItemLabel("Uninstall", func() {
-				activeTile.Rotate((0)
+				activeTile.Rotate(0)
 				self.dcmap.UninstallItem(activeTile.TileElement().InventoryItem())
 			}))
 			m.Move(x, y)

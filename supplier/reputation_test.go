@@ -17,5 +17,5 @@ func TestReputation(t *testing.T) {
 	reputation.RecordNegativePoint(date)
 	reputation.RecordNegativePoint(date)
 
-	assert.Equal(t, float64(0.25), reputation.GetScore(), "reputatiom of 0.25 expected")
+	assert.Equal(t, float64(0.675), reputation.GetScore(), "reputatiom of 0.25 expected")
 }
