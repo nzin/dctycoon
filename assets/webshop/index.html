@@ -1,0 +1,119 @@
+<!doctype html>
+<html>
+    <head>
+        <!-- Required meta tags -->
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+        <!-- Bootstrap CSS -->
+        <link rel="stylesheet" href="static/css/bootstrap.min.css">
+    
+        <title>DCTycoon - The shop were the magic begins</title>
+      </head>
+      <body style="background-color:lightgrey">
+        <div class="d-flex p-2" style="align-items: center; background-color: rgb(71, 37, 110); color: white"><img src="static/dctycoon.png"><div style="font-size: x-large">DC-Tycoon </div><div>&nbsp;| The power at your fingers</div></div>
+
+        <nav class="nav navbar-expand-lg navbar-dark bg-dark" id="myTab2" role="tablist">
+            <a class="navbar-brand" href="#">Offers: </a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNavAltMarkup" role="tablist">
+                <div class="nav navbar-nav">
+                    <a class="nav-item nav-link active" id="dedicated-tab"  data-toggle="tab" href="#dedicated"  role="tab" aria-controls="dedicated"  aria-selected="false">Dedicated</a>
+                    <a class="nav-item nav-link"        id="vps-tab"        data-toggle="tab" href="#vps"        role="tab" aria-controls="vps"        aria-selected="false">VPS</a>
+                    <a class="nav-item nav-link"        id="datacenter-tab" data-toggle="tab" href="#datacenter" role="tab" aria-controls="datacenter" aria-selected="false">Global Datacenter info</a>
+                </div>
+            </div>
+        </nav>
+
+        <div class="tab-content" id="myTabContent">
+            <div class="container tab-pane fade show active" id="dedicated" role="tabpanel" aria-labelledby="home-tab">
+                <br>
+                We offer a variety of dedicated servers with at least the following specs:
+                <br>
+                <br>
+                {{with .Dedicated}}
+                {{range .}}
+                <div class="card">
+                    <h5 class="card-header">{{.Name}}</h5>
+                    <div class="card-body">
+                        <table border="0">
+                        <tr><td>CPU(s):</td><td>{{.Cpu}}</td></tr>
+                        <tr><td>RAM:</td><td>{{.Ram}}</td></tr>
+                        <tr><td>Disk:</td><td>{{.Disk}}</td></tr>
+                        <tr><td>Vt enabled:</td><td>{{.Vt}}</td></tr>
+                        <tr><td>Our price:</td><td>{{.Price}} $/month</td></tr>
+                        <tr><td>Available now:</td><td>{{.Remaining}}</td></tr>
+                        <tr><td>&nbsp;</td><td></td></tr>
+                        <tr><td>How many:</td><td>
+                            <select class="custom-select" id="inputGroupSelect04">
+                                <option selected value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                            </select></td></tr>
+                        <tr><td>&nbsp;</td><td><button class="btn btn-primary active" type="button">Buy</button></td></tr>
+                        </table>
+                    </div>
+                </div>
+                <br>
+                {{end}}
+                {{end}}
+            </div>
+            <div class="container tab-pane fade" id="vps" role="tabpanel" aria-labelledby="profile-tab">
+                <br>
+                We offer a variety of VPS servers with at least the following specs:
+                <br>
+                <br>
+                {{with .Vps}}
+                {{range .}}
+                <div class="card">
+                    <h5 class="card-header">{{.Name}}</h5>
+                    <div class="card-body">
+                        <table border="0">
+                        <tr><td>CPU(s):</td><td>{{.Cpu}}</td></tr>
+                        <tr><td>RAM:</td><td>{{.Ram}}</td></tr>
+                        <tr><td>Disk:</td><td>{{.Disk}}</td></tr>
+                        <tr><td>Our price:</td><td>{{.Price}} $/month</td></tr>
+                        <tr><td>Available now:</td><td>{{.Remaining}}</td></tr>
+                        <tr><td>&nbsp;</td><td></td></tr>
+                        <tr><td>How many:</td><td>
+                            <select class="custom-select" id="inputGroupSelect04">
+                                <option selected value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                            </select></td></tr>
+                        <tr><td>&nbsp;</td><td><button class="btn btn-primary active" type="button">Buy</button></td></tr>
+                        </table>
+                    </div>
+                </div>
+                <br>
+                {{end}}
+                {{end}}
+            </div>
+            <div class="tab-pane fade" id="datacenter" role="tabpanel" aria-labelledby="datacenter-tab">
+                <br>
+                Our main facility is located at {{.Location}}<br>
+                To better server our customer we are connected to {{.ElectricalNetworks}} electrical networks, and we have a fully tested Diesel Generators on site
+
+            </div>
+        </div>
+        <!-- Optional JavaScript -->
+        <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+        <script src="static/jquery-3.2.1.slim.min.js"></script>
+        <script src="static/popper.min.js"></script>
+        <script src="static/js/bootstrap.min.js"></script>
+      </body>
+</html>

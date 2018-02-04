@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/nzin/dctycoon"
+	"github.com/nzin/dctycoon/webshop"
 	"github.com/nzin/sws"
 	log "github.com/sirupsen/logrus"
 )
@@ -47,6 +48,10 @@ func main() {
 	root := sws.Init(800, 600)
 
 	game := dctycoon.NewGame(&quit, root, *debug)
+
+	// server http server (port 9090)
+	go webshop.Webshop(game)
+
 	game.ShowOpening()
 	for sws.PoolEvent() == false && quit == false {
 	}
