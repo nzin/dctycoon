@@ -1,3 +1,8 @@
+# Introduction
+
+This game is heavily influence by the defunct Server Tycoon (http://www.servertycoon.com/).
+i.e. I wanted to see the guys behind Server Tycoon create and release their game, but apparently they stopped developping it. So I decided to tentatively create my own. And because I began to learn Go in march 2017, I tried to use Go to develop it.
+
 # Compilation Requirements
 
 - you need go version 1.8.x minimum
