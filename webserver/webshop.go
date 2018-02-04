@@ -1,4 +1,4 @@
-package webshop
+package webserver
 
 import (
 	"fmt"
@@ -76,6 +76,7 @@ type VpsOffer struct {
 type IndexTemplate struct {
 	Dedicated          []*DedicatedOffer
 	Vps                []*VpsOffer
+	Companyname        string
 	ElectricalNetworks string
 	Location           string
 }
@@ -140,6 +141,7 @@ func (self *IndexPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		variables := IndexTemplate{
 			Dedicated:          self.fillDedicated(),
 			Vps:                self.fillVps(),
+			Companyname:        self.game.GetPlayer().GetCompanyName(),
 			Location:           self.game.GetPlayer().GetLocation().Name,
 			ElectricalNetworks: fmt.Sprintf("%d", nbpowerlines),
 		}

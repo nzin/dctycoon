@@ -140,8 +140,8 @@ func (self *Game) ShowOpening() {
 	self.gameui.ShowOpening()
 }
 
-func (self *Game) InitGame(locationid string, difficulty int32) {
-	log.Debug("Game::InitGame(", locationid, ",", difficulty, ")")
+func (self *Game) InitGame(locationid string, difficulty int32, companyname string) {
+	log.Debug("Game::InitGame(", locationid, ",", difficulty, ",", companyname, ")")
 
 	var initialcapital float64
 	var nbopponents int32
@@ -171,7 +171,7 @@ func (self *Game) InitGame(locationid string, difficulty int32) {
 
 	self.trends.Init(self.gameui.eventpublisher, self.timer)
 	self.player = NewPlayer()
-	self.player.Init(self.timer, initialcapital, locationid)
+	self.player.Init(self.timer, initialcapital, locationid, companyname)
 
 	self.gamestats.InitGame(self.player.GetInventory(), self.player.GetReputation())
 

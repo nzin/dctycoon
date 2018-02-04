@@ -114,9 +114,9 @@ func NewMainGameMenu(game *Game, root *sws.RootWidget, quit *bool) *MainGameMenu
 		root.RemoveChild(widget.newwidget)
 		root.SetModal(widget)
 	})
-	widget.newwidget.SetNewGameCallback(func(location string, difficulty int32) {
+	widget.newwidget.SetNewGameCallback(func(location string, difficulty int32, companyname string) {
 		root.RemoveChild(widget.newwidget)
-		game.InitGame(location, difficulty)
+		game.InitGame(location, difficulty, companyname)
 	})
 
 	widget.loadbutton.Move(150, 110)
@@ -362,7 +362,10 @@ type MainGameMenuNew struct {
 	currentlocation string
 	bankrate        *sws.LabelWidget
 	taxrate         *sws.LabelWidget
+	temperature     *sws.LabelWidget
+	rentingprice    *sws.LabelWidget
 	difficulty      *sws.DropdownWidget
+	companyname     *sws.InputWidget
 	createbutton    *sws.ButtonWidget
 	cancelbutton    *sws.ButtonWidget
 }
@@ -386,10 +389,14 @@ func (self *MainGameMenuNew) SetLocation(selected, hotspot string) {
 		self.locationname.SetText(location.Name)
 		self.bankrate.SetText(fmt.Sprintf("%.2f %%", location.Bankinterestrate*100))
 		self.taxrate.SetText(fmt.Sprintf("%.2f %%", location.Taxrate*100))
+		self.temperature.SetText(fmt.Sprintf("%.1f °C", location.Temperatureaverage))
+		self.rentingprice.SetText(fmt.Sprintf("%.0f $/m²", location.Metersquareprice))
 	} else {
 		self.locationname.SetText("")
 		self.bankrate.SetText("- %")
 		self.taxrate.SetText("- %")
+		self.temperature.SetText("- °C")
+		self.rentingprice.SetText("- $/m²")
 	}
 }
 
@@ -397,14 +404,19 @@ func (self *MainGameMenuNew) SetCancelCallback(callback func()) {
 	self.cancelbutton.SetClicked(callback)
 }
 
-func (self *MainGameMenuNew) SetNewGameCallback(callback func(location string, difficulty int32)) {
+func (self *MainGameMenuNew) SetNewGameCallback(callback func(location string, difficulty int32, companyname string)) {
 	self.createbutton.SetClicked(func() {
-		if self.currentlocation != "" {
-			callback(self.currentlocation, self.difficulty.ActiveChoice)
-		} else {
+		if self.currentlocation == "" {
 			iconsurface, _ := global.LoadImageAsset("assets/ui/icon-triangular-big.png")
 			sws.ShowModalErrorSurfaceicon(self.root, "No location selected", iconsurface, "You must select a location where you want to be based", nil)
+			return
 		}
+		if self.companyname.GetText() == "" {
+			iconsurface, _ := global.LoadImageAsset("assets/ui/icon-triangular-big.png")
+			sws.ShowModalErrorSurfaceicon(self.root, "No company name", iconsurface, "You must give your company a name", nil)
+			return
+		}
+		callback(self.currentlocation, self.difficulty.ActiveChoice, self.companyname.GetText())
 	})
 }
 
@@ -417,7 +429,10 @@ func NewMainGameMenuNew(root *sws.RootWidget) *MainGameMenuNew {
 		locationname: sws.NewLabelWidget(100, 25, ""),
 		bankrate:     sws.NewLabelWidget(100, 25, ""),
 		taxrate:      sws.NewLabelWidget(100, 25, ""),
-		difficulty:   sws.NewDropdownWidget(90, 25, []string{"Easy", "Medium", "Hard"}),
+		temperature:  sws.NewLabelWidget(100, 25, ""),
+		rentingprice: sws.NewLabelWidget(100, 25, ""),
+		difficulty:   sws.NewDropdownWidget(100, 25, []string{"Easy", "Medium", "Hard"}),
+		companyname:  sws.NewInputWidget(100, 25, "noname"),
 		createbutton: sws.NewButtonWidget(100, 40, "Create"),
 		cancelbutton: sws.NewButtonWidget(100, 40, "Cancel"),
 	}
@@ -436,8 +451,8 @@ func NewMainGameMenuNew(root *sws.RootWidget) *MainGameMenuNew {
 	selectyourlocation.Move(20, 20)
 	widget.AddChild(selectyourlocation)
 
-	name := sws.NewLabelWidget(80, 25, "Location:")
-	name.Move(root.Width()-410, 25)
+	name := sws.NewLabelWidget(130, 25, "Location:")
+	name.Move(root.Width()-450, 25)
 	name.SetTextColor(sdl.Color{0xff, 0xff, 0xff, 0xff})
 	name.SetColor(0xff000000)
 	widget.AddChild(name)
@@ -446,8 +461,8 @@ func NewMainGameMenuNew(root *sws.RootWidget) *MainGameMenuNew {
 	widget.locationname.SetColor(0xff000000)
 	widget.AddChild(widget.locationname)
 
-	bankrate := sws.NewLabelWidget(80, 25, "Bank rate:")
-	bankrate.Move(root.Width()-410, 50)
+	bankrate := sws.NewLabelWidget(130, 25, "Bank rate:")
+	bankrate.Move(root.Width()-450, 50)
 	bankrate.SetTextColor(sdl.Color{0xff, 0xff, 0xff, 0xff})
 	bankrate.SetColor(0xff000000)
 	widget.AddChild(bankrate)
@@ -456,8 +471,8 @@ func NewMainGameMenuNew(root *sws.RootWidget) *MainGameMenuNew {
 	widget.bankrate.SetColor(0xff000000)
 	widget.AddChild(widget.bankrate)
 
-	taxrate := sws.NewLabelWidget(80, 25, "Tax rate:")
-	taxrate.Move(root.Width()-410, 75)
+	taxrate := sws.NewLabelWidget(130, 25, "Tax rate:")
+	taxrate.Move(root.Width()-450, 75)
 	taxrate.SetTextColor(sdl.Color{0xff, 0xff, 0xff, 0xff})
 	taxrate.SetColor(0xff000000)
 	widget.AddChild(taxrate)
@@ -466,18 +481,47 @@ func NewMainGameMenuNew(root *sws.RootWidget) *MainGameMenuNew {
 	widget.taxrate.SetColor(0xff000000)
 	widget.AddChild(widget.taxrate)
 
+	temperature := sws.NewLabelWidget(130, 25, "Avg temperature:")
+	temperature.Move(root.Width()-450, 100)
+	temperature.SetTextColor(sdl.Color{0xff, 0xff, 0xff, 0xff})
+	temperature.SetColor(0xff000000)
+	widget.AddChild(temperature)
+	widget.temperature.Move(root.Width()-310, 100)
+	widget.temperature.SetTextColor(sdl.Color{0xff, 0xff, 0xff, 0xff})
+	widget.temperature.SetColor(0xff000000)
+	widget.AddChild(widget.temperature)
+
+	rentingprice := sws.NewLabelWidget(130, 25, "Renting price:")
+	rentingprice.Move(root.Width()-450, 125)
+	rentingprice.SetTextColor(sdl.Color{0xff, 0xff, 0xff, 0xff})
+	rentingprice.SetColor(0xff000000)
+	widget.AddChild(rentingprice)
+	widget.rentingprice.Move(root.Width()-310, 125)
+	widget.rentingprice.SetTextColor(sdl.Color{0xff, 0xff, 0xff, 0xff})
+	widget.rentingprice.SetColor(0xff000000)
+	widget.AddChild(widget.rentingprice)
+
 	hr := sws.NewHr(160)
-	hr.Move(root.Width()-390, 110)
+	hr.Move(root.Width()-390, 160)
 	widget.AddChild(hr)
 
-	difficulty := sws.NewLabelWidget(90, 25, "Difficulty: ")
-	difficulty.Move(root.Width()-410, 125)
+	difficulty := sws.NewLabelWidget(130, 25, "Difficulty: ")
+	difficulty.Move(root.Width()-450, 175)
 	difficulty.SetTextColor(sdl.Color{0xff, 0xff, 0xff, 0xff})
 	difficulty.SetColor(0xff000000)
 	widget.AddChild(difficulty)
-	widget.difficulty.Move(root.Width()-310, 125)
+	widget.difficulty.Move(root.Width()-310, 175)
 	widget.difficulty.SetColor(0xff000000)
 	widget.AddChild(widget.difficulty)
+
+	companyname := sws.NewLabelWidget(130, 25, "Company name: ")
+	companyname.Move(root.Width()-450, 200)
+	companyname.SetTextColor(sdl.Color{0xff, 0xff, 0xff, 0xff})
+	companyname.SetColor(0xff000000)
+	widget.AddChild(companyname)
+	widget.companyname.Move(root.Width()-310, 200)
+	widget.companyname.SetColor(0xff000000)
+	widget.AddChild(widget.companyname)
 
 	widget.createbutton.Move(root.Width()-350, root.Height()-280)
 	widget.createbutton.SetColor(0xff000000)

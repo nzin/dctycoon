@@ -15,6 +15,7 @@ type Player struct {
 	location     *supplier.LocationType
 	reputation   *supplier.Reputation
 	locationname string
+	companyname  string
 }
 
 //
@@ -49,6 +50,10 @@ func (p *Player) GetLocation() *supplier.LocationType {
 	return p.location
 }
 
+func (p *Player) GetCompanyName() string {
+	return p.companyname
+}
+
 //
 // NewPlayer create a new player representation
 func NewPlayer() *Player {
@@ -61,12 +66,13 @@ func NewPlayer() *Player {
 		location:     location,
 		locationname: "siliconvalley",
 		reputation:   nil,
+		companyname:  "noname",
 	}
 
 	return p
 }
 
-func (self *Player) Init(timer *timer.GameTimer, initialcapital float64, locationname string) {
+func (self *Player) Init(timer *timer.GameTimer, initialcapital float64, locationname, companyname string) {
 	log.Debug("Player::Init(", timer, ",", initialcapital, ",", locationname, ")")
 	location := supplier.AvailableLocation["siliconvalley"]
 
@@ -82,6 +88,7 @@ func (self *Player) Init(timer *timer.GameTimer, initialcapital float64, locatio
 	self.ledger = accounting.NewLedger(timer, location.Taxrate, location.Bankinterestrate)
 	self.location = location
 	self.reputation = supplier.NewReputation()
+	self.companyname = companyname
 
 	// add some equity
 	self.ledger.AddMovement(accounting.LedgerMovement{
@@ -109,6 +116,7 @@ func (self *Player) LoadGame(timer *timer.GameTimer, v map[string]interface{}) {
 	self.location = location
 	self.locationname = locationname
 	self.reputation = supplier.NewReputation()
+	self.companyname = v["companyname"].(string)
 
 	self.ledger.Load(v["ledger"].(map[string]interface{}), location.Taxrate, location.Bankinterestrate)
 	self.inventory.Load(v["inventory"].(map[string]interface{}))
@@ -118,6 +126,7 @@ func (self *Player) LoadGame(timer *timer.GameTimer, v map[string]interface{}) {
 func (self *Player) Save() string {
 	save := fmt.Sprintf(`"location": "%s",`, self.locationname) + "\n"
 	save += fmt.Sprintf(`"inventory": %s,`, self.inventory.Save()) + "\n"
+	save += fmt.Sprintf(`"companyname": %s,`, self.companyname) + "\n"
 	save += fmt.Sprintf(`"reputation": %s,`, self.reputation.Save()) + "\n"
 	save += fmt.Sprintf(`"ledger": %s`, self.ledger.Save()) + "\n"
 	return save
