@@ -25,3 +25,9 @@ go get github.com/nzin/dctycoon # there will be an error message "undefined Asse
 cd go/src/github.com/nzin/dctycoon
 ./compile.sh
 ```
+
+# Licences
+
+This software is covered by the GNU GPLv3 (see LICENCE file)
+It use the Twitter Bootstrap v4 framework (https://github.com/twbs/bootstrap) covered by the MIT licence
+It used the "Font Awesome" (https://www.flaticon.com/packs/font-awesome) covered by Creative Common BY 3.0
