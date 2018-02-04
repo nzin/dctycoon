@@ -184,8 +184,7 @@ func (self *DatacenterMap) UninstallItem(item *supplier.InventoryItem) {
 //     ]
 //   }
 //
-func (self *DatacenterMap) LoadMap(dc map[string]interface{}) {
-	log.Debug("DatacenterMap::LoadMap(", dc, ")")
+func (self *DatacenterMap) loadRawMap(dc map[string]interface{}) {
 	self.width = int32(dc["width"].(float64))
 	self.height = int32(dc["height"].(float64))
 	self.tiles = make([][]*Tile, self.height)
@@ -222,6 +221,13 @@ func (self *DatacenterMap) LoadMap(dc map[string]interface{}) {
 		}
 		self.tiles[y][x] = NewTile(wall0, wall1, floor, rotation, decorationname)
 	}
+}
+
+func (self *DatacenterMap) LoadMap(dc map[string]interface{}) {
+	log.Debug("DatacenterMap::LoadMap(", dc, ")")
+
+	self.loadRawMap(dc)
+
 	// place everything except servers
 	for _, item := range self.inventory.Items {
 		if item.IsPlaced() && item.Typeitem != supplier.PRODUCT_SERVER {
@@ -232,6 +238,76 @@ func (self *DatacenterMap) LoadMap(dc map[string]interface{}) {
 	for _, item := range self.inventory.Items {
 		if item.IsPlaced() && item.Typeitem == supplier.PRODUCT_SERVER {
 			self.ItemInstalled(item)
+		}
+	}
+	self.ComputeHeatMap()
+	self.ComputeOverLimits()
+}
+
+//
+// MigrateToMap is used to upgrade a player from one map to another
+// without loosing inventory
+func (self *DatacenterMap) MigrateToMap(dc map[string]interface{}) {
+	log.Debug("DatacenterMap::MigrateToMap(", dc, ")")
+	self.loadRawMap(dc)
+	// place everything except servers
+	for _, item := range self.inventory.Items {
+		if item.IsPlaced() && (item.Typeitem != supplier.PRODUCT_SERVER || item.Serverconf.ConfType.NbU <= 0) {
+			oldX := item.Xplaced
+			oldY := item.Yplaced
+
+			// do we have to move anything
+			if oldX < self.width && oldY < self.height {
+				tile := self.tiles[oldY][oldX]
+				if tile.TileElement() == nil && item.Typeitem == supplier.PRODUCT_GENERATOR && tile.floor == "green" {
+					break
+				}
+				if tile.TileElement() == nil && item.Typeitem != supplier.PRODUCT_GENERATOR && tile.floor == "inside" {
+					break
+				}
+			}
+
+			// the case was not appropriate, we have to find a new place
+
+			replaced := false
+			for y := range self.tiles {
+				for x := range self.tiles[y] {
+					tile := self.tiles[y][x]
+
+					// is the case free
+					if tile.TileElement() == nil && item.Typeitem == supplier.PRODUCT_GENERATOR && tile.floor == "green" {
+						replaced = true
+						item.Xplaced = int32(x)
+						item.Yplaced = int32(y)
+						tile.ItemInstalled(item)
+					}
+					if tile.TileElement() == nil && item.Typeitem != supplier.PRODUCT_GENERATOR && tile.floor == "inside" {
+						replaced = true
+						item.Xplaced = int32(x)
+						item.Yplaced = int32(y)
+						tile.ItemInstalled(item)
+					}
+
+					// we moved a rack, we have to move the racked server
+					if item.Typeitem == supplier.PRODUCT_RACK && replaced {
+						for _, rackeditem := range self.inventory.Items {
+							if rackeditem.Typeitem == supplier.PRODUCT_SERVER && item.Serverconf.ConfType.NbU > 0 && rackeditem.Xplaced == oldX && rackeditem.Yplaced == oldY {
+								rackeditem.Xplaced = item.Xplaced
+								rackeditem.Yplaced = item.Yplaced
+								tile.ItemInstalled(rackeditem)
+							}
+						}
+					}
+				}
+			}
+
+			// no space to place the element? we have to discard customers :-( and uninstall it
+			if replaced == false {
+				if item.Typeitem == supplier.PRODUCT_SERVER {
+					self.inventory.DecommissionServer(item, false)
+				}
+				self.inventory.UninstallItem(item)
+			}
 		}
 	}
 	self.ComputeHeatMap()
