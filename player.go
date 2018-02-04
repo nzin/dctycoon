@@ -126,7 +126,7 @@ func (self *Player) LoadGame(timer *timer.GameTimer, v map[string]interface{}) {
 func (self *Player) Save() string {
 	save := fmt.Sprintf(`"location": "%s",`, self.locationname) + "\n"
 	save += fmt.Sprintf(`"inventory": %s,`, self.inventory.Save()) + "\n"
-	save += fmt.Sprintf(`"companyname": %s,`, self.companyname) + "\n"
+	save += fmt.Sprintf(`"companyname": "%s",`, self.companyname) + "\n"
 	save += fmt.Sprintf(`"reputation": %s,`, self.reputation.Save()) + "\n"
 	save += fmt.Sprintf(`"ledger": %s`, self.ledger.Save()) + "\n"
 	return save

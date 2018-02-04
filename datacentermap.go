@@ -67,7 +67,7 @@ func (self *DatacenterMap) GetWidth() int32 {
 }
 
 func (self *DatacenterMap) GetHeight() int32 {
-	return self.width
+	return self.height
 }
 
 func (self *DatacenterMap) GetTile(x, y int32) *Tile {
@@ -260,15 +260,16 @@ func (self *DatacenterMap) MigrateToMap(dc map[string]interface{}) {
 			if oldX < self.width && oldY < self.height {
 				tile := self.tiles[oldY][oldX]
 				if tile.TileElement() == nil && item.Typeitem == supplier.PRODUCT_GENERATOR && tile.floor == "green" {
+					tile.ItemInstalled(item)
 					break
 				}
 				if tile.TileElement() == nil && item.Typeitem != supplier.PRODUCT_GENERATOR && tile.floor == "inside" {
+					tile.ItemInstalled(item)
 					break
 				}
 			}
 
 			// the case was not appropriate, we have to find a new place
-
 			replaced := false
 			for y := range self.tiles {
 				for x := range self.tiles[y] {
@@ -291,18 +292,33 @@ func (self *DatacenterMap) MigrateToMap(dc map[string]interface{}) {
 					// we moved a rack, we have to move the racked server
 					if item.Typeitem == supplier.PRODUCT_RACK && replaced {
 						for _, rackeditem := range self.inventory.Items {
-							if rackeditem.Typeitem == supplier.PRODUCT_SERVER && item.Serverconf.ConfType.NbU > 0 && rackeditem.Xplaced == oldX && rackeditem.Yplaced == oldY {
+							if rackeditem.Typeitem == supplier.PRODUCT_SERVER && rackeditem.Serverconf.ConfType.NbU > 0 && rackeditem.Xplaced == oldX && rackeditem.Yplaced == oldY {
 								rackeditem.Xplaced = item.Xplaced
 								rackeditem.Yplaced = item.Yplaced
 								tile.ItemInstalled(rackeditem)
 							}
 						}
 					}
+					if replaced {
+						break
+					}
+				}
+				if replaced {
+					break
 				}
 			}
 
 			// no space to place the element? we have to discard customers :-( and uninstall it
 			if replaced == false {
+				// if rack
+				if item.Typeitem == supplier.PRODUCT_RACK {
+					for _, rackeditem := range self.inventory.Items {
+						if rackeditem.Typeitem == supplier.PRODUCT_SERVER && rackeditem.Serverconf.ConfType.NbU > 0 && rackeditem.Xplaced == oldX && rackeditem.Yplaced == oldY {
+							self.inventory.DecommissionServer(item, false)
+						}
+					}
+				}
+				// tower
 				if item.Typeitem == supplier.PRODUCT_SERVER {
 					self.inventory.DecommissionServer(item, false)
 				}

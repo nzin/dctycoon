@@ -215,8 +215,7 @@ func (self *Game) InitGame(locationid string, difficulty int32, companyname stri
 		s.NewDay(self.timer)
 	}
 	self.dcmap.SetGame(self.player.GetInventory(), self.player.GetLocation(), self.timer.CurrentTime)
-	self.dcmap.InitMap("24_24_standard.json")
-	//	self.dcmap.InitMap("3_4_room.json")
+	self.dcmap.InitMap("3_4_room.json")
 	self.gameui.SetGame(self.timer, self.player.GetInventory(), self.player.GetLedger(), self.trends, self.player.GetLocation(), self.dcmap)
 	self.gameui.ShowDC()
 }
@@ -270,6 +269,21 @@ func (self *Game) LoadGame(filename string) {
 	self.dcmap.SetGame(self.player.GetInventory(), self.player.GetLocation(), self.timer.CurrentTime)
 	self.dcmap.LoadMap(v["map"].(map[string]interface{}))
 	self.gameui.SetGame(self.timer, self.player.GetInventory(), self.player.GetLedger(), self.trends, self.player.GetLocation(), self.dcmap)
+	self.gameui.ShowDC()
+}
+
+func (self *Game) MigrateMap(mapname string) {
+	log.Debug("Game::MigrateMap(", mapname, ")")
+
+	datamap, err := global.Asset("assets/dcmap/" + mapname)
+	if err != nil {
+		return
+	}
+
+	mapjson := make(map[string]interface{})
+	err = json.Unmarshal(datamap, &mapjson)
+
+	self.dcmap.MigrateToMap(mapjson)
 	self.gameui.ShowDC()
 }
 

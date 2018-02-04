@@ -80,6 +80,7 @@ func (self *GameUI) SetGame(globaltimer *timer.GameTimer, inventory *supplier.In
 	self.supplierwidget.Hide()
 	self.inventorywidget.Hide()
 	self.accountingwidget.Hide()
+	self.statswidget.Hide()
 }
 
 func (self *GameUI) ShowDC() {
@@ -88,6 +89,12 @@ func (self *GameUI) ShowDC() {
 	self.rootwindow.AddChild(self.dc)
 	self.rootwindow.AddChild(self.dock)
 	self.rootwindow.SetFocus(self.dc)
+
+	self.supplierwidget.Hide()
+	self.inventorywidget.Hide()
+	self.accountingwidget.Hide()
+	self.statswidget.Hide()
+	self.dc.PostUpdate()
 }
 
 func (self *GameUI) ShowOpening() {
@@ -96,8 +103,4 @@ func (self *GameUI) ShowOpening() {
 
 	self.rootwindow.AddChild(self.opening)
 	self.rootwindow.SetFocus(self.opening)
-}
-
-func (self *GameUI) ShowHeatmap() {
-
 }

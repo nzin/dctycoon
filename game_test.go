@@ -15,7 +15,7 @@ func TestDemandAttribution(t *testing.T) {
 	root := &sws.RootWidget{}
 
 	game := NewGame(&quit, root, false)
-	game.InitGame("siliconvalley", DIFFICULTY_EASY)
+	game.InitGame("siliconvalley", DIFFICULTY_EASY, "noname")
 
 	assert.NotEmpty(t, game, "Game created")
 	assert.Equal(t, 3, len(game.npactors), "3 NPC created")

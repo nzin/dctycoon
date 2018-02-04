@@ -14,16 +14,20 @@ type DebugOpponentWidget struct {
 	table              *sws.TableWidget
 	data               [][]string
 	datachangecallback func()
+	bigmapbutton       *sws.ButtonWidget
+	smallmapbutton     *sws.ButtonWidget
 	game               *Game
 }
 
 func NewDebugOpponentWidget(w, h int32, game *Game) *DebugOpponentWidget {
 	core := sws.NewCoreWidget(w, h)
 	widget := &DebugOpponentWidget{
-		CoreWidget:    *core,
-		refreshbutton: sws.NewButtonWidget(200, 25, "Refresh"),
-		data:          make([][]string, 0, 0),
-		game:          game,
+		CoreWidget:     *core,
+		refreshbutton:  sws.NewButtonWidget(200, 25, "Refresh"),
+		data:           make([][]string, 0, 0),
+		bigmapbutton:   sws.NewButtonWidget(200, 25, "Switch to 24x24 map"),
+		smallmapbutton: sws.NewButtonWidget(200, 25, "Switch to 3x4 map"),
+		game:           game,
 	}
 	widget.refreshbutton.SetClicked(widget.refresh)
 	widget.AddChild(widget.refreshbutton)
@@ -31,6 +35,18 @@ func NewDebugOpponentWidget(w, h int32, game *Game) *DebugOpponentWidget {
 	widget.table = sws.NewTableWidget(200, 200, widget)
 	widget.table.Move(0, 25)
 	widget.AddChild(widget.table)
+
+	widget.bigmapbutton.Move(0, 250)
+	widget.AddChild(widget.bigmapbutton)
+	widget.bigmapbutton.SetClicked(func() {
+		game.MigrateMap("24_24_standard.json")
+	})
+
+	widget.smallmapbutton.Move(0, 275)
+	widget.AddChild(widget.smallmapbutton)
+	widget.smallmapbutton.SetClicked(func() {
+		game.MigrateMap("3_4_room.json")
+	})
 
 	return widget
 }
