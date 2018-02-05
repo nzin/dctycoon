@@ -42,7 +42,7 @@ func NewDebugOpponentWidget(w, h int32, game *Game) *DebugOpponentWidget {
 		game.MigrateMap("24_24_standard.json")
 	})
 
-	widget.smallmapbutton.Move(0, 275)
+	widget.smallmapbutton.Move(200, 250)
 	widget.AddChild(widget.smallmapbutton)
 	widget.smallmapbutton.SetClicked(func() {
 		game.MigrateMap("3_4_room.json")
@@ -75,7 +75,9 @@ func (self *DebugOpponentWidget) refresh() {
 func (self *DebugOpponentWidget) Resize(w, h int32) {
 	self.CoreWidget.Resize(w, h)
 	if h > 50 {
-		self.table.Resize(w, h-25)
+		self.table.Resize(w, h-50)
+		self.bigmapbutton.Move(0, h-25)
+		self.smallmapbutton.Move(200, h-25)
 	}
 }
 

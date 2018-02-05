@@ -94,6 +94,7 @@ func (self *GameUI) ShowDC() {
 	self.inventorywidget.Hide()
 	self.accountingwidget.Hide()
 	self.statswidget.Hide()
+	self.dc.HideUpgrade()
 	self.dc.PostUpdate()
 }
 
@@ -103,4 +104,11 @@ func (self *GameUI) ShowOpening() {
 
 	self.rootwindow.AddChild(self.opening)
 	self.rootwindow.SetFocus(self.opening)
+}
+
+func (self *GameUI) ShowUpgrade(game *Game, nextmap string) {
+	self.dc.ShowUpgrade()
+	self.dc.SetUpgradeCallback(func() {
+		game.MigrateMap(nextmap)
+	})
 }

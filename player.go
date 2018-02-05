@@ -16,6 +16,7 @@ type Player struct {
 	reputation   *supplier.Reputation
 	locationname string
 	companyname  string
+	maplevel     int32 // from 0 (3x4 map), to 2 (32x32 map)
 }
 
 //
@@ -54,6 +55,14 @@ func (p *Player) GetCompanyName() string {
 	return p.companyname
 }
 
+func (p *Player) GetMapLevel() int32 {
+	return p.maplevel
+}
+
+func (p *Player) SetMapLevel(maplevel int32) {
+	p.maplevel = maplevel
+}
+
 //
 // NewPlayer create a new player representation
 func NewPlayer() *Player {
@@ -67,12 +76,13 @@ func NewPlayer() *Player {
 		locationname: "siliconvalley",
 		reputation:   nil,
 		companyname:  "noname",
+		maplevel:     0,
 	}
 
 	return p
 }
 
-func (self *Player) Init(timer *timer.GameTimer, initialcapital float64, locationname, companyname string) {
+func (self *Player) Init(timer *timer.GameTimer, initialcapital float64, locationname, companyname string, maplevel int32) {
 	log.Debug("Player::Init(", timer, ",", initialcapital, ",", locationname, ")")
 	location := supplier.AvailableLocation["siliconvalley"]
 
@@ -89,6 +99,7 @@ func (self *Player) Init(timer *timer.GameTimer, initialcapital float64, locatio
 	self.location = location
 	self.reputation = supplier.NewReputation()
 	self.companyname = companyname
+	self.maplevel = maplevel
 
 	// add some equity
 	self.ledger.AddMovement(accounting.LedgerMovement{
@@ -117,6 +128,7 @@ func (self *Player) LoadGame(timer *timer.GameTimer, v map[string]interface{}) {
 	self.locationname = locationname
 	self.reputation = supplier.NewReputation()
 	self.companyname = v["companyname"].(string)
+	self.maplevel = int32(v["maplevel"].(float64))
 
 	self.ledger.Load(v["ledger"].(map[string]interface{}), location.Taxrate, location.Bankinterestrate)
 	self.inventory.Load(v["inventory"].(map[string]interface{}))
@@ -127,6 +139,7 @@ func (self *Player) Save() string {
 	save := fmt.Sprintf(`"location": "%s",`, self.locationname) + "\n"
 	save += fmt.Sprintf(`"inventory": %s,`, self.inventory.Save()) + "\n"
 	save += fmt.Sprintf(`"companyname": "%s",`, self.companyname) + "\n"
+	save += fmt.Sprintf(`"maplevel": %d,`, self.maplevel) + "\n"
 	save += fmt.Sprintf(`"reputation": %s,`, self.reputation.Save()) + "\n"
 	save += fmt.Sprintf(`"ledger": %s`, self.ledger.Save()) + "\n"
 	return save

@@ -250,7 +250,7 @@ func (self *DatacenterMap) LoadMap(dc map[string]interface{}) {
 func (self *DatacenterMap) MigrateToMap(dc map[string]interface{}) {
 	log.Debug("DatacenterMap::MigrateToMap(", dc, ")")
 	self.loadRawMap(dc)
-	// place everything except servers
+	// place everything except racked servers
 	for _, item := range self.inventory.Items {
 		if item.IsPlaced() && (item.Typeitem != supplier.PRODUCT_SERVER || item.Serverconf.ConfType.NbU <= 0) {
 			oldX := item.Xplaced
@@ -269,7 +269,7 @@ func (self *DatacenterMap) MigrateToMap(dc map[string]interface{}) {
 				}
 			}
 
-			// the case was not appropriate, we have to find a new place
+			// the old tile placement is no more appropriate, we have to find a new place
 			replaced := false
 			for y := range self.tiles {
 				for x := range self.tiles[y] {
@@ -549,6 +549,10 @@ func (self *DatacenterMap) MoveElement(xfrom, yfrom, xto, yto int32) bool {
 	tileFrom := self.GetTile(xfrom, yfrom)
 	element := tileFrom.element
 	tileTo := self.GetTile(xto, yto)
+
+	if tileTo.TileElement() != nil {
+		return false
+	}
 
 	if (tileTo.IsFloorOutside() && element.ElementType() == supplier.PRODUCT_GENERATOR) ||
 		(tileTo.IsFloorInsideNotAirFlow() && element.ElementType() != supplier.PRODUCT_GENERATOR) {

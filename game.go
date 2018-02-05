@@ -51,6 +51,7 @@ type Game struct {
 	currentSpeed     int
 	gamestats        *GameStats
 	debug            bool
+	showupgrade      bool
 }
 
 //
@@ -73,6 +74,7 @@ func NewGame(quit *bool, root *sws.RootWidget, debug bool) *Game {
 		currentSpeed:     SPEED_STOP,
 		gamestats:        NewGameStats(),
 		debug:            debug,
+		showupgrade:      false,
 	}
 	g.gameui = NewGameUI(quit, root, g)
 
@@ -145,12 +147,15 @@ func (self *Game) InitGame(locationid string, difficulty int32, companyname stri
 
 	var initialcapital float64
 	var nbopponents int32
+	maplevel := int32(0)
 	switch difficulty {
 	case DIFFICULTY_MEDIUM:
 		initialcapital = 100000.0
+		maplevel = 1
 		nbopponents = 5
 	case DIFFICULTY_HARD:
 		initialcapital = 50000.0
+		maplevel = 2
 		nbopponents = 7
 	default:
 		initialcapital = 200000.0
@@ -171,7 +176,7 @@ func (self *Game) InitGame(locationid string, difficulty int32, companyname stri
 
 	self.trends.Init(self.gameui.eventpublisher, self.timer)
 	self.player = NewPlayer()
-	self.player.Init(self.timer, initialcapital, locationid, companyname)
+	self.player.Init(self.timer, initialcapital, locationid, companyname, maplevel)
 
 	self.gamestats.InitGame(self.player.GetInventory(), self.player.GetReputation())
 
@@ -217,6 +222,7 @@ func (self *Game) InitGame(locationid string, difficulty int32, companyname stri
 	self.dcmap.SetGame(self.player.GetInventory(), self.player.GetLocation(), self.timer.CurrentTime)
 	self.dcmap.InitMap("3_4_room.json")
 	self.gameui.SetGame(self.timer, self.player.GetInventory(), self.player.GetLedger(), self.trends, self.player.GetLocation(), self.dcmap)
+	self.showupgrade = false
 	self.gameui.ShowDC()
 }
 
@@ -269,6 +275,8 @@ func (self *Game) LoadGame(filename string) {
 	self.dcmap.SetGame(self.player.GetInventory(), self.player.GetLocation(), self.timer.CurrentTime)
 	self.dcmap.LoadMap(v["map"].(map[string]interface{}))
 	self.gameui.SetGame(self.timer, self.player.GetInventory(), self.player.GetLedger(), self.trends, self.player.GetLocation(), self.dcmap)
+	self.showupgrade = false
+	self.CheckUpgrade()
 	self.gameui.ShowDC()
 }
 
@@ -284,6 +292,7 @@ func (self *Game) MigrateMap(mapname string) {
 	err = json.Unmarshal(datamap, &mapjson)
 
 	self.dcmap.MigrateToMap(mapjson)
+	self.showupgrade = false
 	self.gameui.ShowDC()
 }
 
@@ -389,6 +398,31 @@ func (self *Game) GenerateDemandAndFee() {
 		for _, a := range actors {
 			consumption, _, _ := a.GetInventory().GetGlobalPower()
 			a.GetLedger().PayUtility(a.GetInventory().GetMonthlyPowerlinesPrice()+consumption*24*30*a.GetLocation().Electricitycost/1000, self.timer.CurrentTime)
+		}
+	}
+	self.CheckUpgrade()
+}
+
+// CheckUpgrade check if we have to show the upgrade button on the DcWidget
+func (self *Game) CheckUpgrade() {
+	if self.showupgrade == false {
+		var nextmap string
+		accounts := self.GetPlayer().GetLedger().GetYearAccount(self.timer.CurrentTime.Year())
+		switch self.GetPlayer().GetMapLevel() {
+		case 0:
+			if accounts["51"] >= 100000 {
+				self.showupgrade = true
+				nextmap = "24_24_standard.json"
+			}
+		case 1:
+			if accounts["51"] >= 200000 {
+				self.showupgrade = true
+				nextmap = "32_32_standard.json"
+			}
+
+		}
+		if self.showupgrade {
+			self.gameui.ShowUpgrade(self, nextmap)
 		}
 	}
 }

@@ -34,6 +34,7 @@ type DcWidget struct {
 	showMap       int32
 	blinkon       bool
 	heatmapButton *sws.FlatButtonWidget
+	upgradeButton *sws.FlatButtonWidget
 
 	showInventoryManagement func()
 }
@@ -462,6 +463,7 @@ func (self *DcWidget) SetGame(inventory *supplier.Inventory, currenttime time.Ti
 	self.hc.SetGame(inventory, currenttime)
 	self.showMap = SHOW_MAPWALL
 	self.heatmapButton.SetText("Map without wall")
+	self.RemoveChild(self.upgradeButton)
 	self.PostUpdate()
 }
 
@@ -478,6 +480,7 @@ func NewDcWidget(w, h int32, rootwindow *sws.RootWidget) *DcWidget {
 		showMap:       SHOW_MAPWALL,
 		blinkon:       false,
 		heatmapButton: sws.NewFlatButtonWidget(200, 40, "Map without wall"),
+		upgradeButton: sws.NewFlatButtonWidget(200, 40, "Relocate for bigger"),
 	}
 
 	//widget.hc.Move(0,h/2-100)
@@ -516,6 +519,14 @@ func NewDcWidget(w, h int32, rootwindow *sws.RootWidget) *DcWidget {
 	widget.heatmapButton.Move(30, rootwindow.Height()-65)
 	widget.AddChild(widget.heatmapButton)
 
+	if icon, err := global.LoadImageAsset("assets/ui/small-rocket-ship-silhouette.png"); err == nil {
+		widget.upgradeButton.SetImageSurface(icon)
+	}
+	widget.upgradeButton.SetColor(0x80ffffff)
+	widget.upgradeButton.AlignImageLeft(true)
+	widget.upgradeButton.SetCentered(false)
+	widget.upgradeButton.Move(250, rootwindow.Height()-65)
+
 	sws.TimerAddEvent(time.Now(), 1000*time.Millisecond, func(evt *sws.TimerEvent) {
 		// to "blink" on over heat or over current
 		if widget.showMap != SHOW_HEATMAP {
@@ -529,4 +540,16 @@ func NewDcWidget(w, h int32, rootwindow *sws.RootWidget) *DcWidget {
 
 func (self *DcWidget) SetInventoryManagementCallback(showInventoryManagement func()) {
 	self.showInventoryManagement = showInventoryManagement
+}
+
+func (self *DcWidget) SetUpgradeCallback(callback func()) {
+	self.upgradeButton.SetClicked(callback)
+}
+
+func (self *DcWidget) ShowUpgrade() {
+	self.AddChild(self.upgradeButton)
+}
+
+func (self *DcWidget) HideUpgrade() {
+	self.RemoveChild(self.upgradeButton)
 }
