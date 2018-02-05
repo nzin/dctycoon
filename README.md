@@ -1,6 +1,7 @@
 # Introduction
 
-This game is heavily influence by the defunct Server Tycoon (http://www.servertycoon.com/).
+This game is heavily influence by the unfinished Server Tycoon (http://www.servertycoon.com/).
+
 i.e. I wanted to see the guys behind Server Tycoon create and release their game, but apparently they stopped developping it. So I decided to tentatively create my own. And because I began to learn Go in march 2017, I tried to use Go to develop it.
 
 # Compilation Requirements
@@ -34,5 +35,7 @@ cd go/src/github.com/nzin/dctycoon
 # Licences
 
 This software is covered by the GNU GPLv3 (see LICENCE file)
+
 It use the Twitter Bootstrap v4 framework (https://github.com/twbs/bootstrap) covered by the MIT licence
+
 It used the "Font Awesome" (https://www.flaticon.com/packs/font-awesome) covered by Creative Common BY 3.0
