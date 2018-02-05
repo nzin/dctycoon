@@ -256,6 +256,9 @@ type Inventory struct {
 // return true decomission was possible
 func (self *Inventory) DecommissionServer(item *InventoryItem, smoothly bool) bool {
 	log.Debug("Inventory::DecommissionServer(", item, ")")
+	if item.Typeitem != PRODUCT_SERVER {
+		return true
+	}
 	pool := item.Pool
 	if pool != nil && pool.IsAllocated(item) {
 		// 1st we discard it temporarily

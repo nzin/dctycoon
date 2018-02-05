@@ -8,10 +8,10 @@
         <!-- Bootstrap CSS -->
         <link rel="stylesheet" href="static/css/bootstrap.min.css">
     
-        <title>DCTycoon - The shop were the magic begins</title>
+        <title>{{.Companyname}} - The shop were the magic begins</title>
       </head>
       <body style="background-color:lightgrey">
-        <div class="d-flex p-2" style="align-items: center; background-color: rgb(71, 37, 110); color: white"><img src="static/dctycoon.png"><div style="font-size: x-large">DC-Tycoon </div><div>&nbsp;| The power at your fingers</div></div>
+        <div class="d-flex p-2" style="align-items: center; background-color: rgb(71, 37, 110); color: white"><img src="static/dctycoon.png"><div style="font-size: x-large">{{.Companyname}} </div><div>&nbsp;| The power at your fingers</div></div>
 
         <nav class="nav navbar-expand-lg navbar-dark bg-dark" id="myTab2" role="tablist">
             <a class="navbar-brand" href="#">Offers: </a>
@@ -21,7 +21,9 @@
             <div class="collapse navbar-collapse" id="navbarNavAltMarkup" role="tablist">
                 <div class="nav navbar-nav">
                     <a class="nav-item nav-link active" id="dedicated-tab"  data-toggle="tab" href="#dedicated"  role="tab" aria-controls="dedicated"  aria-selected="false">Dedicated</a>
+                    {{if .Vps}}
                     <a class="nav-item nav-link"        id="vps-tab"        data-toggle="tab" href="#vps"        role="tab" aria-controls="vps"        aria-selected="false">VPS</a>
+                    {{end}}
                     <a class="nav-item nav-link"        id="datacenter-tab" data-toggle="tab" href="#datacenter" role="tab" aria-controls="datacenter" aria-selected="false">Global Datacenter info</a>
                 </div>
             </div>
@@ -30,6 +32,7 @@
         <div class="tab-content" id="myTabContent">
             <div class="container tab-pane fade show active" id="dedicated" role="tabpanel" aria-labelledby="home-tab">
                 <br>
+                {{if .Dedicated}}
                 We offer a variety of dedicated servers with at least the following specs:
                 <br>
                 <br>
@@ -65,9 +68,13 @@
                 <br>
                 {{end}}
                 {{end}}
+                {{else}}
+                We do not have dedicated servers offer for the moment. Come back later.
+                {{end}}
             </div>
             <div class="container tab-pane fade" id="vps" role="tabpanel" aria-labelledby="profile-tab">
                 <br>
+                {{if .Vps}}
                 We offer a variety of VPS servers with at least the following specs:
                 <br>
                 <br>
@@ -102,11 +109,14 @@
                 <br>
                 {{end}}
                 {{end}}
+                {{else}}
+                We do not have VPS servers offer for the moment. Come back later
+                {{end}}
             </div>
             <div class="tab-pane fade" id="datacenter" role="tabpanel" aria-labelledby="datacenter-tab">
                 <br>
                 Our main facility is located at {{.Location}}<br>
-                To better server our customer we are connected to {{.ElectricalNetworks}} electrical networks, and we have a fully tested Diesel Generators on site
+                To better server our customer we are connected to {{.ElectricalNetworks}} electrical networks.
 
             </div>
         </div>

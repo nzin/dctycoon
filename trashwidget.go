@@ -1,11 +1,10 @@
 package dctycoon
 
 import (
-	"fmt"
-
 	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/sws"
+	log "github.com/sirupsen/logrus"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -17,7 +16,7 @@ type TrashWidget struct {
 }
 
 func (self *TrashWidget) DragDrop(x, y int32, payload sws.DragPayload) bool {
-	fmt.Println("TrashWidget::DragDrop(", x, ",", y, ",", payload, ")", payload.GetType())
+	log.Debug("TrashWidget::DragDrop(", x, ",", y, ",", payload, ")", payload.GetType())
 	if payload.GetType() == global.DRAG_RACK_SERVER_FROM_TOWER {
 		servermove := payload.(*ServerMovePayload)
 		discarded := self.inventory.DiscardItem(servermove.item)
