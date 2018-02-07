@@ -26,13 +26,13 @@ func TestMigrationMap(t *testing.T) {
 
 	datacenter.LoadMap(map1)
 
-	datamap2, err := global.Asset("assets/dcmap/24_24_standard.json")
-	assert.Empty(t, err, "load 24_24_standard.json map")
+	datamap2, err := global.Asset("assets/dcmap/20_20_standard.json")
+	assert.Empty(t, err, "load 20_20_standard.json map")
 
 	map2 := make(map[string]interface{})
 	err = json.Unmarshal(datamap2, &map2)
 
-	assert.Empty(t, err, "unmarshall 24_24_standard.json map")
+	assert.Empty(t, err, "unmarshall 20_20_standard.json map")
 
 	datacenter.MigrateToMap(map2)
 }
