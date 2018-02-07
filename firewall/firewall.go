@@ -3,6 +3,7 @@ package firewall
 import (
 	"fmt"
 
+	"github.com/BixData/gluabit32"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -28,16 +29,49 @@ func (firewall *Firewall) LoadRules(rules string) error {
 		firewall.vm.Close()
 	}
 	firewall.vm = lua.NewState()
+	gluabit32.Preload(firewall.vm)
 	return firewall.vm.DoString(rules)
 }
 
-// SubmitIcmp submit an ICMP package and returns true if it passes through the firewall
+// SubmitIcmp submit an ICMP packet and returns true if it passes through the firewall
 func (firewall *Firewall) SubmitIcmp(ipsrc, ipdst string, header [8]byte, payload string) bool {
 	if err := firewall.vm.CallByParam(lua.P{
 		Fn:      firewall.vm.GetGlobal("filterIcmp"), // name of Lua function
 		NRet:    1,                                   // number of returned values
 		Protect: true,                                // return err or panic
 	}, lua.LString(ipsrc), lua.LString(ipdst), lua.LString(string(header[:])), lua.LString(payload)); err != nil {
+		fmt.Println(err)
+		return false
+	}
+	if ret, ok := firewall.vm.Get(-1).(lua.LBool); ok {
+		return bool(ret)
+	}
+	return false
+}
+
+// SubmitUdp submit an UDP packet and returns true if it passes through the firewall
+func (firewall *Firewall) SubmitUdp(ipsrc, ipdst string, srcPort, dstPort uint16, payload string) bool {
+	if err := firewall.vm.CallByParam(lua.P{
+		Fn:      firewall.vm.GetGlobal("filterUdp"), // name of Lua function
+		NRet:    1,                                  // number of returned values
+		Protect: true,                               // return err or panic
+	}, lua.LString(ipsrc), lua.LString(ipdst), lua.LNumber(srcPort), lua.LNumber(dstPort), lua.LString(payload)); err != nil {
+		fmt.Println(err)
+		return false
+	}
+	if ret, ok := firewall.vm.Get(-1).(lua.LBool); ok {
+		return bool(ret)
+	}
+	return false
+}
+
+// SubmitTcp submit a TCP packet and returns true if it passes through the firewall
+func (firewall *Firewall) SubmitTcp(ipsrc, ipdst string, srcPort, dstPort uint16, flags uint8, payload string) bool {
+	if err := firewall.vm.CallByParam(lua.P{
+		Fn:      firewall.vm.GetGlobal("filterTcp"), // name of Lua function
+		NRet:    1,                                  // number of returned values
+		Protect: true,                               // return err or panic
+	}, lua.LString(ipsrc), lua.LString(ipdst), lua.LNumber(srcPort), lua.LNumber(dstPort), lua.LNumber(flags), lua.LString(payload)); err != nil {
 		fmt.Println(err)
 		return false
 	}
