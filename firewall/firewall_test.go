@@ -31,17 +31,17 @@ end
 func TestIcmp(t *testing.T) {
 	f := NewFirewall()
 	ret := f.SubmitIcmp("192,168.1.1", "192.168.2.1", [8]byte{8, 0, 0, 0, 0, 1, 0, 38}, "payload")
-	assert.Equal(t, false, ret, "no filterIcmp function")
+	assert.Equal(t, true, ret, "default filterIcmp function")
 
-	err := f.LoadRules(nonworkingCode)
+	err := f.SetRulesAndApply(nonworkingCode)
 	assert.NotEmpty(t, err, "broken code")
 
-	err = f.LoadRules(icmpDummyCode)
+	err = f.SetRulesAndApply(icmpDummyCode)
 	assert.Empty(t, err, "icmpDummyCode loaded correctly")
 	ret = f.SubmitIcmp("192,168.1.1", "192.168.2.1", [8]byte{8, 0, 0, 0, 0, 1, 0, 38}, "payload")
 	assert.Equal(t, true, ret, "dummy filter icmp")
 
-	err = f.LoadRules(icmpDummyCode2)
+	err = f.SetRulesAndApply(icmpDummyCode2)
 	assert.Empty(t, err, "icmpDummyCode2 loaded correctly")
 	ret = f.SubmitIcmp("192.168.1.1", "192.168.1.1", [8]byte{8, 0, 0, 0, 0, 1, 0, 38}, "payload")
 	assert.Equal(t, false, ret, "ipsrc==ipdst")
@@ -64,7 +64,7 @@ end
 func TestTcp(t *testing.T) {
 	f := NewFirewall()
 
-	err := f.LoadRules(tcpSynFilter)
+	err := f.SetRulesAndApply(tcpSynFilter)
 	assert.Empty(t, err, "tcpSynFilter loaded correctly")
 	ret := f.SubmitTcp("192,168.1.1", "192.168.2.1", 30000, 80, 0x02, "payload")
 	assert.Equal(t, false, ret, "reject SYN packet")

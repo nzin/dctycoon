@@ -2,6 +2,7 @@ package dctycoon
 
 import (
 	"github.com/nzin/dctycoon/accounting"
+	"github.com/nzin/dctycoon/firewall"
 	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/dctycoon/timer"
 	"github.com/nzin/sws"
@@ -17,6 +18,7 @@ type GameUI struct {
 	statswidget       *MainStatsWidget
 	accountingwidget  *accounting.MainAccountingWidget
 	electricitywidget *MainElectricityWidget
+	firewallwidget    *MainFirewallWidget
 	dock              *DockWidget
 	eventpublisher    *timer.EventPublisher
 }
@@ -34,6 +36,7 @@ func NewGameUI(quit *bool, root *sws.RootWidget, game *Game) *GameUI {
 		electricitywidget: NewMainElectricityWidget(root),
 		dock:              NewDockWidget(root, game, gamemenu),
 		eventpublisher:    timer.NewEventPublisher(root),
+		firewallwidget:    NewMainFirewallWidget(root),
 	}
 
 	gameui.dock.SetShopCallback(func() {
@@ -42,6 +45,10 @@ func NewGameUI(quit *bool, root *sws.RootWidget, game *Game) *GameUI {
 
 	gameui.dock.SetStatsCallback(func() {
 		gameui.statswidget.Show()
+	})
+
+	gameui.dock.SetFirewallCallback(func() {
+		gameui.firewallwidget.Show()
 	})
 
 	gameui.dock.SetLedgerCallback(func() {
@@ -67,7 +74,7 @@ func NewGameUI(quit *bool, root *sws.RootWidget, game *Game) *GameUI {
 // SetGame is used when creating a new game, or loading a game
 // This re-init all ledger / inventory UI.
 // Therefore you have to populate the ledger and inventory AFTER calling this method
-func (self *GameUI) SetGame(globaltimer *timer.GameTimer, inventory *supplier.Inventory, ledger *accounting.Ledger, trends *supplier.Trend, location *supplier.LocationType, dcmap *DatacenterMap) {
+func (self *GameUI) SetGame(globaltimer *timer.GameTimer, inventory *supplier.Inventory, ledger *accounting.Ledger, trends *supplier.Trend, location *supplier.LocationType, dcmap *DatacenterMap, firewall *firewall.Firewall) {
 	log.Debug("GameUI::InitGame()")
 	self.dc.SetGame(inventory, globaltimer.CurrentTime, dcmap)
 	self.supplierwidget.SetGame(globaltimer, inventory, ledger, trends)
@@ -75,12 +82,14 @@ func (self *GameUI) SetGame(globaltimer *timer.GameTimer, inventory *supplier.In
 	self.accountingwidget.SetGame(globaltimer, ledger)
 	self.dock.SetGame(globaltimer, ledger)
 	self.statswidget.SetGame()
+	self.firewallwidget.SetGame(firewall)
 	self.electricitywidget.SetGame(inventory, location)
 
 	self.supplierwidget.Hide()
 	self.inventorywidget.Hide()
 	self.accountingwidget.Hide()
 	self.statswidget.Hide()
+	self.firewallwidget.Hide()
 }
 
 func (self *GameUI) ShowDC() {
@@ -94,6 +103,7 @@ func (self *GameUI) ShowDC() {
 	self.inventorywidget.Hide()
 	self.accountingwidget.Hide()
 	self.statswidget.Hide()
+	self.firewallwidget.Hide()
 	self.dc.HideUpgrade()
 	self.dc.PostUpdate()
 }

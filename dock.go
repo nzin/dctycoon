@@ -21,9 +21,14 @@ type DockWidget struct {
 	electricity  *sws.FlatButtonWidget
 	accounting   *sws.FlatButtonWidget
 	stats        *sws.FlatButtonWidget
+	firewall     *sws.FlatButtonWidget
 	ledgerButton *sws.FlatButtonWidget
 	timerevent   *sws.TimerEvent
 	ledger       *accounting.Ledger
+}
+
+func (self *DockWidget) SetFirewallCallback(callback func()) {
+	self.firewall.SetClicked(callback)
 }
 
 func (self *DockWidget) SetStatsCallback(callback func()) {
@@ -132,6 +137,8 @@ func NewDockWidget(root *sws.RootWidget, game *Game, gamemenu *MainGameMenu) *Do
 	widget.electricity = widget.helperAddButton(25, 100, "assets/ui/icon-electricity.png")
 
 	widget.accounting = widget.helperAddButton(50, 100, "assets/ui/icon-paper-bill.png")
+
+	widget.firewall = widget.helperAddButton(75, 100, "assets/ui/icon-firewall.png")
 
 	widget.ledgerButton = sws.NewFlatButtonWidget(150, 25, "")
 	widget.ledgerButton.Move(0, 125)
