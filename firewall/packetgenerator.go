@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"encoding/base64"
 	"encoding/json"
 
 	"github.com/nzin/dctycoon/global"
@@ -168,4 +169,43 @@ func NewPacketGenerator(dcclassb string) *PacketGenerator {
 		dcclassb: dcclassb,
 	}
 	return packetgenerator
+}
+
+func (packet *Packet) Save() string {
+	harmless := "true"
+	if packet.Harmless == false {
+		harmless = "false"
+	}
+	str := fmt.Sprintf(`{"type": %d, "src": "%s", "dst": "%s", "srcport":%d, "dstport": %d, "icmpheader": "%s", "payload": "%s", "tcpflags": %d, "harmless": %s}`,
+		packet.PacketType,
+		packet.Ipsrc,
+		packet.Ipdst,
+		packet.SrcPort,
+		packet.DstPort,
+		base64.StdEncoding.EncodeToString(packet.IcmpHeader[:]),
+		packet.Payload,
+		packet.Tcpflags,
+		harmless,
+	)
+	return str
+}
+
+func NewPacket(data map[string]interface{}) *Packet {
+	var icmpheader [8]byte
+	if decoded, err := base64.StdEncoding.DecodeString(data["icmpheader"].(string)); err == nil {
+		copy(icmpheader[:], decoded)
+	}
+
+	packet := &Packet{
+		PacketType: int(data["type"].(float64)),
+		Ipsrc:      data["src"].(string),
+		Ipdst:      data["dst"].(string),
+		SrcPort:    uint16(data["srcport"].(float64)),
+		DstPort:    uint16(data["dstport"].(float64)),
+		IcmpHeader: icmpheader,
+		Payload:    data["payload"].(string),
+		Tcpflags:   uint8(data["tcpflags"].(float64)),
+		Harmless:   data["harmless"].(bool),
+	}
+	return packet
 }

@@ -1,7 +1,7 @@
 {
     "PacketType": "icmp",
-	"Ipsrc":      "IP_IN",
-	"Ipdst":      "IP_OUT",
+	"Ipsrc":      "[IP_IN]",
+	"Ipdst":      "[IP_OUT]",
 	"SrcPort":    "[RANDOM]",
 	"DstPort":    "53",
 	"IcmpHeader": "",

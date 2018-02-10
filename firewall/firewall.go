@@ -4,10 +4,12 @@ import (
 	"encoding/base64"
 	"fmt"
 	"math/rand"
+	"time"
 
 	"github.com/nzin/dctycoon/supplier"
 
 	"github.com/BixData/gluabit32"
+	log "github.com/sirupsen/logrus"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -26,11 +28,18 @@ import (
 //- ssh attack: login/password, wp-admin attack: "admin"/password
 //
 
+type FirewallEvent struct {
+	time   time.Time
+	packet *Packet
+	pass   bool
+}
+
 type Firewall struct {
 	vm              *lua.LState
 	dcClassBNetwork string
 	rules           string
 	generator       *PacketGenerator
+	lastEvents      []*FirewallEvent
 }
 
 var emptyRules = `local bit32 = require 'bit32'
@@ -58,6 +67,10 @@ function filterTcp( ipsrc, ipdst, srcPort, dstPort, flags, payload)
 	return true;
 end
 `
+
+func (firewall *Firewall) GetLastEvents() []*FirewallEvent {
+	return firewall.lastEvents
+}
 
 func (firewall *Firewall) GetRules() string {
 	return firewall.rules
@@ -142,13 +155,43 @@ func (firewall *Firewall) Load(data map[string]interface{}) {
 	if err != nil {
 		firewall.ResetRules()
 	}
+
+	// load past events
+	firewall.lastEvents = make([]*FirewallEvent, 0, 0)
+
+	array := data["lastevents"].([]map[string]interface{})
+	for i := 0; i < len(array); i++ {
+		var year, month, day int
+		fmt.Sscanf(array[i]["date"].(string), "%d-%d-%d", &year, &month, &day)
+
+		event := &FirewallEvent{
+			time:   time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC),
+			packet: NewPacket(array[i]["packet"].(map[string]interface{})),
+			pass:   array[i]["pass"].(bool),
+		}
+		firewall.lastEvents = append(firewall.lastEvents, event)
+	}
 }
 
 func (firewall *Firewall) Save() string {
-	return fmt.Sprintf(`{"datacenterClassB":"%s",rules":"%s"}`, firewall.dcClassBNetwork, base64.StdEncoding.EncodeToString([]byte(firewall.rules)))
+	str := fmt.Sprintf(`{"datacenterClassB":"%s",rules":"%s", "lastevents":[`, firewall.dcClassBNetwork, base64.StdEncoding.EncodeToString([]byte(firewall.rules)))
+	for i := 0; i < len(firewall.lastEvents); i++ {
+		event := firewall.lastEvents[i]
+		if i < 0 {
+			str += ","
+		}
+		pass := "true"
+		if event.pass == false {
+			pass = "false"
+		}
+		str += fmt.Sprintf(`{"date": "%d-%d-%d","packet":%s, "pass":%s}`, event.time.Year(), event.time.Month(), event.time.Day(), event.packet.Save(), pass)
+	}
+
+	return str + "]}"
 }
 
-func (firewall *Firewall) GenerateTraffic(reputation *supplier.Reputation) {
+func (firewall *Firewall) GenerateTraffic(reputation *supplier.Reputation, time time.Time) {
+	log.Debug("Firewall::GenerateTraffic(", reputation, ",", time, ")")
 	packet := firewall.generator.GenerateRandomPacket()
 	if packet == nil {
 		return
@@ -163,9 +206,22 @@ func (firewall *Firewall) GenerateTraffic(reputation *supplier.Reputation) {
 	case PACKET_TCP:
 		res = firewall.SubmitTcp(packet.Ipsrc, packet.Ipdst, packet.SrcPort, packet.DstPort, packet.Tcpflags, packet.Payload)
 	}
+
+	// store in the last events
+	if len(firewall.lastEvents) == 5 {
+		firewall.lastEvents = firewall.lastEvents[1:]
+	}
+	firewall.lastEvents = append(firewall.lastEvents, &FirewallEvent{
+		time:   time,
+		packet: packet,
+		pass:   res,
+	})
+
 	if res != packet.Harmless {
 		// something went wrong
+		reputation.RecordNegativePoint(time)
 	}
+	reputation.RecordPositivePoint(time)
 }
 
 func NewFirewall() *Firewall {
@@ -174,6 +230,7 @@ func NewFirewall() *Firewall {
 		vm:              lua.NewState(),
 		dcClassBNetwork: dcclassb,
 		generator:       NewPacketGenerator(dcclassb),
+		lastEvents:      make([]*FirewallEvent, 0, 0),
 	}
 
 	firewall.SetRulesAndApply(fmt.Sprintf(emptyRules, firewall.dcClassBNetwork))

@@ -400,6 +400,13 @@ func (self *Game) GenerateDemandAndFee() {
 			a.GetLedger().PayUtility(a.GetInventory().GetMonthlyPowerlinesPrice()+consumption*24*30*a.GetLocation().Electricitycost/1000, self.timer.CurrentTime)
 		}
 	}
+
+	// run firewall rules
+	if self.timer.CurrentTime.Day()%5 == 1 {
+		self.player.GetFirewall().GenerateTraffic(self.player.GetReputation(), self.timer.CurrentTime)
+	}
+
+	// see if we can switch to a bigger map
 	self.CheckUpgrade()
 }
 

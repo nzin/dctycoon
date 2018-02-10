@@ -30,4 +30,14 @@ func TestPackets(t *testing.T) {
 	fmt.Println(packet.Ipdst)
 	assert.Equal(t, true, strings.HasPrefix(packet.Ipdst, "18.2"), "to Datacenter IP")
 	assert.Equal(t, uint8(8), packet.IcmpHeader[0], "ICMP request")
+
+	packetstring := packet.Save()
+	packetjson := make(map[string]interface{})
+	json.Unmarshal([]byte(packetstring), &packetjson)
+	packet2 := NewPacket(packetjson)
+
+	assert.Equal(t, packet.Ipdst, packet2.Ipdst, "packet marshalled")
+	assert.Equal(t, packet.IcmpHeader, packet2.IcmpHeader, "packet marshalled")
+	assert.Equal(t, packet.Payload, packet2.Payload, "packet marshalled")
+	assert.Equal(t, packet.Harmless, packet2.Harmless, "packet marshalled")
 }
