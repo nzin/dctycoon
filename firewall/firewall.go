@@ -3,6 +3,9 @@ package firewall
 import (
 	"encoding/base64"
 	"fmt"
+	"math/rand"
+
+	"github.com/nzin/dctycoon/supplier"
 
 	"github.com/BixData/gluabit32"
 	lua "github.com/yuin/gopher-lua"
@@ -24,11 +27,14 @@ import (
 //
 
 type Firewall struct {
-	vm    *lua.LState
-	rules string
+	vm              *lua.LState
+	dcClassBNetwork string
+	rules           string
+	generator       *PacketGenerator
 }
 
 var emptyRules = `local bit32 = require 'bit32'
+datacenterClassB="%s"
 
 -- ipsrc,ipdst are string like '192.168.18.100'
 -- header is a [8]bytes string
@@ -57,8 +63,13 @@ func (firewall *Firewall) GetRules() string {
 	return firewall.rules
 }
 
+// GetDatacenterClassBNetwork returns the first 2 numbers of the A.B.C.D/16 of the Datacenter ipv4 class B network
+func (firewall *Firewall) GetDatacenterClassBNetwork() string {
+	return firewall.dcClassBNetwork
+}
+
 func (firewall *Firewall) ResetRules() {
-	firewall.SetRulesAndApply(emptyRules)
+	firewall.SetRulesAndApply(fmt.Sprintf(emptyRules, firewall.dcClassBNetwork))
 }
 
 // SetRulesAndApply will try to load the rules into the lua interpreter
@@ -122,6 +133,7 @@ func (firewall *Firewall) SubmitTcp(ipsrc, ipdst string, srcPort, dstPort uint16
 }
 
 func (firewall *Firewall) Load(data map[string]interface{}) {
+	firewall.dcClassBNetwork = (data["datacenterClassB"].(string))
 	decoded, err := base64.StdEncoding.DecodeString(data["rules"].(string))
 	if err != nil {
 		firewall.ResetRules()
@@ -133,14 +145,38 @@ func (firewall *Firewall) Load(data map[string]interface{}) {
 }
 
 func (firewall *Firewall) Save() string {
-	return fmt.Sprintf(`{"rules":"%s"}`, base64.StdEncoding.EncodeToString([]byte(firewall.rules)))
+	return fmt.Sprintf(`{"datacenterClassB":"%s",rules":"%s"}`, firewall.dcClassBNetwork, base64.StdEncoding.EncodeToString([]byte(firewall.rules)))
+}
+
+func (firewall *Firewall) GenerateTraffic(reputation *supplier.Reputation) {
+	packet := firewall.generator.GenerateRandomPacket()
+	if packet == nil {
+		return
+	}
+
+	var res bool
+	switch packet.PacketType {
+	case PACKET_ICMP:
+		res = firewall.SubmitIcmp(packet.Ipsrc, packet.Ipdst, packet.IcmpHeader, packet.Payload)
+	case PACKET_UDP:
+		res = firewall.SubmitUdp(packet.Ipsrc, packet.Ipdst, packet.SrcPort, packet.DstPort, packet.Payload)
+	case PACKET_TCP:
+		res = firewall.SubmitTcp(packet.Ipsrc, packet.Ipdst, packet.SrcPort, packet.DstPort, packet.Tcpflags, packet.Payload)
+	}
+	if res != packet.Harmless {
+		// something went wrong
+	}
 }
 
 func NewFirewall() *Firewall {
+	dcclassb := fmt.Sprintf("%d.%d", 20+rand.Int()%100, rand.Int()%254)
 	firewall := &Firewall{
-		vm: lua.NewState(),
+		vm:              lua.NewState(),
+		dcClassBNetwork: dcclassb,
+		generator:       NewPacketGenerator(dcclassb),
 	}
-	firewall.SetRulesAndApply(emptyRules)
+
+	firewall.SetRulesAndApply(fmt.Sprintf(emptyRules, firewall.dcClassBNetwork))
 
 	return firewall
 }
