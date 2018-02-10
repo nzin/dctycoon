@@ -43,6 +43,7 @@ type Firewall struct {
 }
 
 var emptyRules = `local bit32 = require 'bit32'
+-- all your datacenter servers have IPs like %s.x.x
 datacenterClassB="%s"
 
 -- ipsrc,ipdst are string like '192.168.18.100'
@@ -82,7 +83,7 @@ func (firewall *Firewall) GetDatacenterClassBNetwork() string {
 }
 
 func (firewall *Firewall) ResetRules() {
-	firewall.SetRulesAndApply(fmt.Sprintf(emptyRules, firewall.dcClassBNetwork))
+	firewall.SetRulesAndApply(fmt.Sprintf(emptyRules, firewall.dcClassBNetwork, firewall.dcClassBNetwork))
 }
 
 // SetRulesAndApply will try to load the rules into the lua interpreter
@@ -159,22 +160,23 @@ func (firewall *Firewall) Load(data map[string]interface{}) {
 	// load past events
 	firewall.lastEvents = make([]*FirewallEvent, 0, 0)
 
-	array := data["lastevents"].([]map[string]interface{})
+	array := data["lastevents"].([]interface{})
 	for i := 0; i < len(array); i++ {
+		event := array[i].(map[string]interface{})
 		var year, month, day int
-		fmt.Sscanf(array[i]["date"].(string), "%d-%d-%d", &year, &month, &day)
+		fmt.Sscanf(event["date"].(string), "%d-%d-%d", &year, &month, &day)
 
-		event := &FirewallEvent{
+		firewallevent := &FirewallEvent{
 			time:   time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC),
-			packet: NewPacket(array[i]["packet"].(map[string]interface{})),
-			pass:   array[i]["pass"].(bool),
+			packet: NewPacket(event["packet"].(map[string]interface{})),
+			pass:   event["pass"].(bool),
 		}
-		firewall.lastEvents = append(firewall.lastEvents, event)
+		firewall.lastEvents = append(firewall.lastEvents, firewallevent)
 	}
 }
 
 func (firewall *Firewall) Save() string {
-	str := fmt.Sprintf(`{"datacenterClassB":"%s",rules":"%s", "lastevents":[`, firewall.dcClassBNetwork, base64.StdEncoding.EncodeToString([]byte(firewall.rules)))
+	str := fmt.Sprintf(`{"datacenterClassB":"%s","rules":"%s", "lastevents":[`, firewall.dcClassBNetwork, base64.StdEncoding.EncodeToString([]byte(firewall.rules)))
 	for i := 0; i < len(firewall.lastEvents); i++ {
 		event := firewall.lastEvents[i]
 		if i < 0 {
@@ -233,7 +235,7 @@ func NewFirewall() *Firewall {
 		lastEvents:      make([]*FirewallEvent, 0, 0),
 	}
 
-	firewall.SetRulesAndApply(fmt.Sprintf(emptyRules, firewall.dcClassBNetwork))
+	firewall.SetRulesAndApply(fmt.Sprintf(emptyRules, firewall.dcClassBNetwork, firewall.dcClassBNetwork))
 
 	return firewall
 }

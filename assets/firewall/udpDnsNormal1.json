@@ -1,5 +1,5 @@
 {
-    "PacketType": "icmp",
+    "PacketType": "udp",
 	"Ipsrc":      "[IP_OUT]",
 	"Ipdst":      "[IP_IN]",
 	"SrcPort":    "[RANDOM]",
