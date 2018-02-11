@@ -1,0 +1,11 @@
+{
+    "PacketType": "tcp",
+	"Ipsrc":      "[IP_OUT]",
+	"Ipdst":      "[IP_IN]",
+	"SrcPort":    "[RANDOM]",
+	"DstPort":    "25",
+	"IcmpHeader": "",
+	"Payload":    "VRFY joe",
+	"Tcpflags":   "[SYN] [ACK]",
+	"Harmless":   false
+}

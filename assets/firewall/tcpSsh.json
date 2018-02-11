@@ -1,0 +1,11 @@
+{
+    "PacketType": "tcp",
+	"Ipsrc":      "[IP_OUT]",
+	"Ipdst":      "[IP_IN]",
+	"SrcPort":    "[RANDOM]",
+	"DstPort":    "22",
+	"IcmpHeader": "",
+	"Payload":    "AS:LDKA:LSDKA:LS",
+	"Tcpflags":   "[SYN]",
+	"Harmless":   true
+}

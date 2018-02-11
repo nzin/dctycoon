@@ -1,0 +1,11 @@
+{
+    "PacketType": "tcp",
+	"Ipsrc":      "[IP_OUT]",
+	"Ipdst":      "[IP_IN]",
+	"SrcPort":    "[RANDOM]",
+	"DstPort":    "80",
+	"IcmpHeader": "",
+	"Payload":    "GET /login.asp?user=admin&password='=''or' HTTP/1.1\\nServer: [SERVERNAME]",
+	"Tcpflags":   "[ACK]",
+	"Harmless":   false
+}

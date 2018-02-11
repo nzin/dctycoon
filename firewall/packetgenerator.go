@@ -49,6 +49,17 @@ type PacketGenerator struct {
 	dcclassb string
 }
 
+var serverlist = []string{
+	"slashdot.org",
+	"google.com",
+	"pets.com",
+	"comcast.com",
+	"weatherchannel.com",
+	"fion.cn",
+	"bild.de",
+	"zin.jp",
+}
+
 func (generator *PacketGenerator) generateIP(instruction string) string {
 	if instruction == "[IP_IN]" {
 		return fmt.Sprintf("%s.%d.%d", generator.dcclassb, rand.Int()%253, rand.Int()%253)
@@ -80,6 +91,10 @@ func (generator *PacketGenerator) generatePayload(instruction string) string {
 	if instruction == "[65K]" {
 		return strings.Repeat("A", 65536)
 	}
+
+	servername := serverlist[rand.Int()%len(serverlist)]
+	instruction = strings.Replace(instruction, "[SERVERNAME]", servername, -1)
+
 	return instruction
 }
 

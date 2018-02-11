@@ -1,0 +1,11 @@
+{
+    "PacketType": "tcp",
+	"Ipsrc":      "[IP_OUT]",
+	"Ipdst":      "[IP_IN]",
+	"SrcPort":    "[RANDOM]",
+	"DstPort":    "25",
+	"IcmpHeader": "",
+	"Payload":    "FROM: santaclaus@northpole.com",
+	"Tcpflags":   "[SYN] [ACK]",
+	"Harmless":   true
+}
