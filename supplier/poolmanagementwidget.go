@@ -116,6 +116,7 @@ type PoolManagementWidget struct {
 	inventory              *Inventory
 	root                   *sws.RootWidget
 	instock                []*InventoryItem
+	poolassignation        *sws.DropdownWidget
 	searchUnassignedButton *sws.ButtonWidget
 	searchPhysicalButton   *sws.ButtonWidget
 	searchVpsButton        *sws.ButtonWidget
@@ -428,9 +429,10 @@ func NewPoolManagementWidget(root *sws.RootWidget) *PoolManagementWidget {
 		inventory:              nil,
 		root:                   root,
 		instock:                make([]*InventoryItem, 0, 0),
-		searchUnassignedButton: sws.NewButtonWidget(170, 50, "Unassigned"),
-		searchPhysicalButton:   sws.NewButtonWidget(170, 50, "Physical pool"),
-		searchVpsButton:        sws.NewButtonWidget(170, 50, "Vps pool"),
+		poolassignation:        sws.NewDropdownWidget(150, 25, []string{"Unassigned", "Physical pool", "VPS pool"}),
+		searchUnassignedButton: sws.NewButtonWidget(170, 40, "Unassigned"),
+		searchPhysicalButton:   sws.NewButtonWidget(170, 40, "Physical pool"),
+		searchVpsButton:        sws.NewButtonWidget(170, 40, "Vps pool"),
 		searchbar:              sws.NewInputWidget(605, 25, "assigned:unassigned"),
 		selected:               make(map[*PoolManagementLineWidget]bool),
 		selectallButton:        sws.NewCheckboxWidget(),
@@ -440,35 +442,65 @@ func NewPoolManagementWidget(root *sws.RootWidget) *PoolManagementWidget {
 		addToVps:               sws.NewButtonWidget(170, 25, "> To vps pool"),
 		addToUnallocated:       sws.NewButtonWidget(170, 25, "> Back to unallocated"),
 	}
-	var assigned int32 = ASSIGNED_UNASSIGNED
+	labelAssignement := sws.NewLabelWidget(200, 25, "New servers are assigned to pool:")
+	labelAssignement.Move(5, 0)
+	widget.AddChild(labelAssignement)
+
+	widget.poolassignation.Move(205, 0)
+	widget.AddChild(widget.poolassignation)
+	widget.poolassignation.SetCallbackValueChanged(func() {
+		widget.inventory.SetDefaultPoolAllocation(widget.poolassignation.ActiveChoice)
+	})
+
+	var assigned int32 = ASSIGNED_PHYSICAL
 	widget.currentFilter.assigned = &assigned
 
 	widget.searchPhysicalButton.SetClicked(func() {
 		widget.Search("assigned:physical")
 	})
-	widget.searchPhysicalButton.Move(10, 5)
+	widget.searchPhysicalButton.Move(10, 25)
 	widget.searchPhysicalButton.SetButtonColor(global.PHYSICAL_COLOR)
 	widget.AddChild(widget.searchPhysicalButton)
 
 	widget.searchVpsButton.SetClicked(func() {
 		widget.Search("assigned:vps")
 	})
-	widget.searchVpsButton.Move(190, 5)
+	widget.searchVpsButton.Move(190, 25)
 	widget.searchVpsButton.SetButtonColor(global.VPS_COLOR)
 	widget.AddChild(widget.searchVpsButton)
 
 	widget.searchUnassignedButton.SetClicked(func() {
 		widget.Search("assigned:unassigned")
 	})
-	widget.searchUnassignedButton.Move(370, 5)
+	widget.searchUnassignedButton.Move(370, 25)
 	widget.AddChild(widget.searchUnassignedButton)
 
 	widget.searchbar.SetEnterCallback(func() {
 		widget.Search(widget.searchbar.GetText())
 	})
 
-	widget.searchbar.Move(10, 60)
+	widget.searchbar.Move(10, 70)
 	widget.AddChild(widget.searchbar)
+
+	widget.addToPhysical.Move(10, 100)
+	widget.addToPhysical.SetButtonColor(global.PHYSICAL_COLOR)
+	widget.addToPhysical.SetCentered(false)
+	widget.addToPhysical.SetClicked(func() {
+		widget.callbackToPool(widget.inventory.GetDefaultPhysicalPool())
+	})
+
+	widget.addToVps.Move(190, 100)
+	widget.addToVps.SetButtonColor(global.VPS_COLOR)
+	widget.addToVps.SetCentered(false)
+	widget.addToVps.SetClicked(func() {
+		widget.callbackToPool(widget.inventory.GetDefaultVpsPool())
+	})
+
+	widget.addToUnallocated.Move(370, 100)
+	widget.addToUnallocated.SetCentered(false)
+	widget.addToUnallocated.SetClicked(func() {
+		widget.callbackToPool(nil)
+	})
 
 	// description line
 	widget.selectallButton.Move(0, 125)
@@ -511,26 +543,6 @@ func NewPoolManagementWidget(root *sws.RootWidget) *PoolManagementWidget {
 	widget.scrolllisting.SetInnerWidget(widget.listing)
 	//	widget.AddChild(widget.scrolllisting)
 
-	widget.addToPhysical.Move(10, 100)
-	widget.addToPhysical.SetButtonColor(global.PHYSICAL_COLOR)
-	widget.addToPhysical.SetCentered(false)
-	widget.addToPhysical.SetClicked(func() {
-		widget.callbackToPool(widget.inventory.GetDefaultPhysicalPool())
-	})
-
-	widget.addToVps.Move(190, 100)
-	widget.addToVps.SetButtonColor(global.VPS_COLOR)
-	widget.addToVps.SetCentered(false)
-	widget.addToVps.SetClicked(func() {
-		widget.callbackToPool(widget.inventory.GetDefaultVpsPool())
-	})
-
-	widget.addToUnallocated.Move(370, 100)
-	widget.addToUnallocated.SetCentered(false)
-	widget.addToUnallocated.SetClicked(func() {
-		widget.callbackToPool(nil)
-	})
-
 	return widget
 }
 
@@ -548,4 +560,5 @@ func (self *PoolManagementWidget) SetGame(inventory *Inventory, currenttime time
 			self.ItemInStock(item)
 		}
 	}
+	self.poolassignation.SetActiveChoice(inventory.GetDefaultPoolAllocation())
 }
