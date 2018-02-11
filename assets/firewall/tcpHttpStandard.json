@@ -1,0 +1,11 @@
+{
+    "PacketType": "tcp",
+	"Ipsrc":      "[IP_OUT]",
+	"Ipdst":      "[IP_IN]",
+	"SrcPort":    "[RANDOM]",
+	"DstPort":    "80",
+	"IcmpHeader": "",
+	"Payload":    "GET /favicon.ico HTTP/1.1\\nServer: [SERVERNAME]",
+	"Tcpflags":   "[ACK]",
+	"Harmless":   true
+}

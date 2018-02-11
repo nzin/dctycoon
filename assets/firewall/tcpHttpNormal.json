@@ -1,0 +1,11 @@
+{
+    "PacketType": "tcp",
+	"Ipsrc":      "[IP_OUT]",
+	"Ipdst":      "[IP_IN]",
+	"SrcPort":    "[RANDOM]",
+	"DstPort":    "80",
+	"IcmpHeader": "",
+	"Payload":    "",
+	"Tcpflags":   "[SYN]",
+	"Harmless":   true
+}

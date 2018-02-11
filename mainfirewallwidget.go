@@ -130,7 +130,7 @@ type FirewallEventDetailIcmp struct {
 }
 
 func NewFirewallEventDetailIcmp(bgColor uint32, packet *firewall.Packet) *FirewallEventDetailIcmp {
-	corewidget := sws.NewCoreWidget(525, 75)
+	corewidget := sws.NewCoreWidget(900, 75)
 	corewidget.SetColor(bgColor)
 	details := &FirewallEventDetailIcmp{
 		CoreWidget: *corewidget,
@@ -164,7 +164,7 @@ func NewFirewallEventDetailIcmp(bgColor uint32, packet *firewall.Packet) *Firewa
 	if max100 > 100 {
 		max100 = 100
 	}
-	icmppayload := sws.NewLabelWidget(500, 25, fmt.Sprintf("%d (content='%s')", len(packet.Payload), packet.Payload[:max100]))
+	icmppayload := sws.NewLabelWidget(800, 25, fmt.Sprintf("%d (content='%s')", len(packet.Payload), packet.Payload[:max100]))
 	icmppayload.SetColor(bgColor)
 	icmppayload.Move(100, 50)
 	details.AddChild(icmppayload)
@@ -177,7 +177,7 @@ type FirewallEventDetailUdp struct {
 }
 
 func NewFirewallEventDetailUdp(bgColor uint32, packet *firewall.Packet) *FirewallEventDetailUdp {
-	corewidget := sws.NewCoreWidget(525, 75)
+	corewidget := sws.NewCoreWidget(900, 75)
 	corewidget.SetColor(bgColor)
 	details := &FirewallEventDetailUdp{
 		CoreWidget: *corewidget,
@@ -207,7 +207,7 @@ func NewFirewallEventDetailUdp(bgColor uint32, packet *firewall.Packet) *Firewal
 	labelpayload.Move(0, 50)
 	details.AddChild(labelpayload)
 
-	payload := sws.NewLabelWidget(500, 25, packet.Payload)
+	payload := sws.NewLabelWidget(800, 25, packet.Payload)
 	payload.SetColor(bgColor)
 	payload.Move(100, 50)
 	details.AddChild(payload)
@@ -220,7 +220,7 @@ type FirewallEventDetailTcp struct {
 }
 
 func NewFirewallEventDetailTcp(bgColor uint32, packet *firewall.Packet) *FirewallEventDetailTcp {
-	corewidget := sws.NewCoreWidget(525, 100)
+	corewidget := sws.NewCoreWidget(900, 100)
 	corewidget.SetColor(bgColor)
 	details := &FirewallEventDetailTcp{
 		CoreWidget: *corewidget,
@@ -247,10 +247,10 @@ func NewFirewallEventDetailTcp(bgColor uint32, packet *firewall.Packet) *Firewal
 
 	labelflags := sws.NewLabelWidget(300, 25, "Flags:")
 	labelflags.SetColor(bgColor)
-	labelflags.Move(0, 75)
+	labelflags.Move(0, 50)
 	details.AddChild(labelflags)
 
-	flagstxt := fmt.Sprintf("%x ", packet.Tcpflags)
+	flagstxt := fmt.Sprintf("0x%x ", packet.Tcpflags)
 	if packet.Tcpflags&0x1 != 0 {
 		flagstxt += "[FIN] "
 	}
@@ -277,17 +277,17 @@ func NewFirewallEventDetailTcp(bgColor uint32, packet *firewall.Packet) *Firewal
 	}
 	flags := sws.NewLabelWidget(500, 25, flagstxt)
 	flags.SetColor(bgColor)
-	flags.Move(100, 75)
+	flags.Move(100, 50)
 	details.AddChild(flags)
 
 	labelpayload := sws.NewLabelWidget(100, 25, "Payload:")
 	labelpayload.SetColor(bgColor)
-	labelpayload.Move(0, 100)
+	labelpayload.Move(0, 75)
 	details.AddChild(labelpayload)
 
-	payload := sws.NewLabelWidget(100, 25, packet.Payload)
+	payload := sws.NewLabelWidget(800, 25, packet.Payload)
 	payload.SetColor(bgColor)
-	payload.Move(100, 100)
+	payload.Move(100, 75)
 	details.AddChild(payload)
 
 	return details
@@ -324,7 +324,7 @@ func (self *FirewallStatusWidget) addFirewallEvent(event *firewall.FirewallEvent
 	labels = append(labels, event.Packet.Ipdst)
 
 	row := ui.NewTableWithDetailsRow(bgColor, labels, details)
-	self.pastEvents.AddRow(row)
+	self.pastEvents.AddRowTop(row)
 
 	events := self.firewall.GetLastEvents()
 	var success, fail int
@@ -362,7 +362,7 @@ func (self *FirewallStatusWidget) Resize(w, h int32) {
 	if h < 120 {
 		h = 120
 	}
-	self.pastEvents.Resize(525, h-90)
+	self.pastEvents.Resize(800, h-90)
 }
 
 func NewFirewallStatusWidget(w, h int32) *FirewallStatusWidget {
@@ -385,9 +385,9 @@ func NewFirewallStatusWidget(w, h int32) *FirewallStatusWidget {
 
 	widget.pastEvents.Move(10, 90)
 	widget.pastEvents.AddHeader("Date", 100, ui.TableWithDetailsRowByYearMonthDay)
-	widget.pastEvents.AddHeader("Protocol", 100, nil)
-	widget.pastEvents.AddHeader("Source IP", 150, nil)
-	widget.pastEvents.AddHeader("Dest IP", 150, nil)
+	widget.pastEvents.AddHeader("Protocol", 100, ui.TableWithDetailsRowByString)
+	widget.pastEvents.AddHeader("Source IP", 200, nil)
+	widget.pastEvents.AddHeader("Dest IP", 200, nil)
 	widget.AddChild(widget.pastEvents)
 
 	return widget

@@ -32,6 +32,11 @@ func NewTableWithDetailsRow(bgcolor uint32, labels []string, details sws.Widget)
 
 type TableWithDetailsRowBy func(l1, l2 string) bool
 
+// TableWithDetailsRowByString is TableWithDetailsRowBy helper implementation for string content
+func TableWithDetailsRowByString(l1, l2 string) bool {
+	return l1 < l2
+}
+
 // TableWithDetailsRowByPriceDollar is TableWithDetailsRowBy helper implementation for string like "123.45 $"
 func TableWithDetailsRowByPriceDollar(l1, l2 string) bool {
 	var f1, f2 float64
