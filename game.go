@@ -221,7 +221,7 @@ func (self *Game) InitGame(locationid string, difficulty int32, companyname stri
 	}
 	self.dcmap.SetGame(self.player.GetInventory(), self.player.GetLocation(), self.timer.CurrentTime)
 	self.dcmap.InitMap("3_4_room.json")
-	self.gameui.SetGame(self.timer, self.player.GetInventory(), self.player.GetLedger(), self.trends, self.player.GetLocation(), self.dcmap)
+	self.gameui.SetGame(self.timer, self.player.GetInventory(), self.player.GetLedger(), self.trends, self.player.GetLocation(), self.dcmap, self.player.GetFirewall())
 	self.showupgrade = false
 	self.gameui.ShowDC()
 }
@@ -274,10 +274,10 @@ func (self *Game) LoadGame(filename string) {
 	}
 	self.dcmap.SetGame(self.player.GetInventory(), self.player.GetLocation(), self.timer.CurrentTime)
 	self.dcmap.LoadMap(v["map"].(map[string]interface{}))
-	self.gameui.SetGame(self.timer, self.player.GetInventory(), self.player.GetLedger(), self.trends, self.player.GetLocation(), self.dcmap)
+	self.gameui.SetGame(self.timer, self.player.GetInventory(), self.player.GetLedger(), self.trends, self.player.GetLocation(), self.dcmap, self.player.GetFirewall())
 	self.showupgrade = false
-	self.CheckUpgrade()
 	self.gameui.ShowDC()
+	self.CheckUpgrade()
 }
 
 func (self *Game) MigrateMap(mapname string) {
@@ -400,6 +400,11 @@ func (self *Game) GenerateDemandAndFee() {
 			a.GetLedger().PayUtility(a.GetInventory().GetMonthlyPowerlinesPrice()+consumption*24*30*a.GetLocation().Electricitycost/1000, self.timer.CurrentTime)
 		}
 	}
+
+	// run firewall rules
+	self.player.GetFirewall().GenerateTraffic(self.player.GetReputation(), self.timer.CurrentTime)
+
+	// see if we can switch to a bigger map
 	self.CheckUpgrade()
 }
 
@@ -412,7 +417,7 @@ func (self *Game) CheckUpgrade() {
 		case 0:
 			if accounts["51"] >= 100000 {
 				self.showupgrade = true
-				nextmap = "24_24_standard.json"
+				nextmap = "20_20_standard.json"
 			}
 		case 1:
 			if accounts["51"] >= 200000 {

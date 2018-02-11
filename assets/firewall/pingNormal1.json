@@ -1,0 +1,11 @@
+{
+    "PacketType": "icmp",
+	"Ipsrc":      "[IP_OUT]",
+	"Ipdst":      "[IP_IN]",
+	"SrcPort":    "0",
+	"DstPort":    "0",
+	"IcmpHeader": "[ICMP_REQUEST]",
+	"Payload":    "ping",
+	"Tcpflags":   "",
+	"Harmless":   true
+}

@@ -1,0 +1,11 @@
+{
+    "PacketType": "udp",
+	"Ipsrc":      "[IP_OUT]",
+	"Ipdst":      "[IP_IN]",
+	"SrcPort":    "[RANDOM]",
+	"DstPort":    "389",
+	"IcmpHeader": "",
+	"Payload":    "search cn=com,cn=mycompany",
+	"Tcpflags":   "",
+	"Harmless":   true
+}

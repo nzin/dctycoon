@@ -25,7 +25,7 @@ func NewDebugOpponentWidget(w, h int32, game *Game) *DebugOpponentWidget {
 		CoreWidget:     *core,
 		refreshbutton:  sws.NewButtonWidget(200, 25, "Refresh"),
 		data:           make([][]string, 0, 0),
-		bigmapbutton:   sws.NewButtonWidget(200, 25, "Switch to 24x24 map"),
+		bigmapbutton:   sws.NewButtonWidget(200, 25, "Switch to 32x32 map"),
 		smallmapbutton: sws.NewButtonWidget(200, 25, "Switch to 3x4 map"),
 		game:           game,
 	}
@@ -39,7 +39,7 @@ func NewDebugOpponentWidget(w, h int32, game *Game) *DebugOpponentWidget {
 	widget.bigmapbutton.Move(0, 250)
 	widget.AddChild(widget.bigmapbutton)
 	widget.bigmapbutton.SetClicked(func() {
-		game.MigrateMap("24_24_standard.json")
+		game.MigrateMap("32_32_standard.json")
 	})
 
 	widget.smallmapbutton.Move(200, 250)

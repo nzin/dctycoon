@@ -152,7 +152,12 @@ func (self *DcWidget) findTile(x, y int32) (*Tile, int32, int32, bool) {
 	for ty := self.dcmap.GetHeight() - 1; ty >= 0; ty-- {
 		for tx := self.dcmap.GetWidth() - 1; tx >= 0; tx-- {
 			tile := self.dcmap.GetTile(tx, ty)
-			surface := (*tile).Draw()
+			var surface *sdl.Surface
+			if self.showMap == SHOW_MAP {
+				surface = (*tile).DrawWithoutWall()
+			} else {
+				surface = (*tile).Draw()
+			}
 			xShift := self.xRoot + (self.Surface().W / 2) + (TILE_WIDTH_STEP/2)*int32(tx) - (TILE_WIDTH_STEP/2)*int32(ty)
 			yShift := self.yRoot + (TILE_HEIGHT_STEP/2)*int32(tx) + (TILE_HEIGHT_STEP/2)*int32(ty)
 

@@ -1,0 +1,11 @@
+{
+    "PacketType": "udp",
+	"Ipsrc":      "[IP_IN]",
+	"Ipdst":      "[IP_OUT]",
+	"SrcPort":    "[RANDOM]",
+	"DstPort":    "53",
+	"IcmpHeader": "",
+	"Payload":    "google.com",
+	"Tcpflags":   "",
+	"Harmless":   false
+}

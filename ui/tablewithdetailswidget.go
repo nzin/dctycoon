@@ -146,6 +146,29 @@ func (self *TableWithDetails) AddRow(row *TableWithDetailsRow) {
 	self.PostUpdate()
 }
 
+func (self *TableWithDetails) GetRows() []*TableWithDetailsRow {
+	return self.rows
+}
+
+func (self *TableWithDetails) RemoveRow(row *TableWithDetailsRow) {
+	for i, r := range self.rows {
+		if r == row {
+			self.rows = append(self.rows[:i], self.rows[i+1:]...)
+			break
+		}
+	}
+	self.Resize(self.Width(), self.Height())
+	self.PostUpdate()
+}
+
+func (self *TableWithDetails) Truncate(length int) {
+	if len(self.rows) > length {
+		self.rows = self.rows[:length]
+		self.Resize(self.Width(), self.Height())
+		self.PostUpdate()
+	}
+}
+
 func (self *TableWithDetails) SetHeaderTextColor(color sdl.Color) {
 	self.headertextcolor = color
 	self.PostUpdate()

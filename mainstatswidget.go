@@ -206,7 +206,7 @@ type DemandStatDetailsWidget struct {
 }
 
 func NewDemandStatDetailsWidget(bgcolor uint32, stat *DemandStat) *DemandStatDetailsWidget {
-	corewidget := sws.NewCoreWidget(525, 0)
+	corewidget := sws.NewCoreWidget(525+15, 0)
 
 	line := &DemandStatDetailsWidget{
 		CoreWidget: *corewidget,
