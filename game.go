@@ -402,9 +402,7 @@ func (self *Game) GenerateDemandAndFee() {
 	}
 
 	// run firewall rules
-	if self.timer.CurrentTime.Day()%5 == 1 {
-		self.player.GetFirewall().GenerateTraffic(self.player.GetReputation(), self.timer.CurrentTime)
-	}
+	self.player.GetFirewall().GenerateTraffic(self.player.GetReputation(), self.timer.CurrentTime)
 
 	// see if we can switch to a bigger map
 	self.CheckUpgrade()

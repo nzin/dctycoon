@@ -18,6 +18,7 @@ const (
 	PACKET_TCP  = iota
 )
 
+// Packet is the internal memory structure representing a normal (or offensive) packet going through the firewall
 type Packet struct {
 	PacketType int
 	Ipsrc      string
@@ -30,15 +31,17 @@ type Packet struct {
 	Harmless   bool
 }
 
+// JsonPacket is the format used to serialize (savegame) a Packet
+// the string values can be a value, or a '[KEYWORD]'
 type JsonPacket struct {
 	PacketType string
-	Ipsrc      string
-	Ipdst      string
-	SrcPort    string
-	DstPort    string
-	IcmpHeader string
-	Payload    string
-	Tcpflags   string
+	Ipsrc      string // ip, [IP_IN], or [IP_OUT]
+	Ipdst      string // ip, [IP_IN], or [IP_OUT]
+	SrcPort    string // port, or [RANDOM]
+	DstPort    string // port, or [RANDOM]
+	IcmpHeader string // header (base64)
+	Payload    string // payload, or [65K]
+	Tcpflags   string // [FIN] and/or [SYN] and/or [RST] and/or [PSH] and/or [ACK] and/or [URG] and/or [ECE] and/or [CWR]
 	Harmless   bool
 }
 
@@ -169,6 +172,10 @@ func NewPacketGenerator(dcclassb string) *PacketGenerator {
 		dcclassb: dcclassb,
 	}
 	return packetgenerator
+}
+
+func (generator *PacketGenerator) SetGame(dcclassb string) {
+	generator.dcclassb = dcclassb
 }
 
 func (packet *Packet) Save() string {
