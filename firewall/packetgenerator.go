@@ -205,7 +205,7 @@ func (packet *Packet) Save() string {
 		packet.SrcPort,
 		packet.DstPort,
 		base64.StdEncoding.EncodeToString(packet.IcmpHeader[:]),
-		packet.Payload,
+		strings.Replace(packet.Payload, "\n", "\\n", -1),
 		packet.Tcpflags,
 		harmless,
 	)

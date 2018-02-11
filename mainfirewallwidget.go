@@ -63,10 +63,11 @@ func NewMainFirewallWidget(root *sws.RootWidget) *MainFirewallWidget {
 
 type FirewallRulesWidget struct {
 	sws.CoreWidget
-	firewall *firewall.Firewall
-	rules    *sws.TextAreaWidget
-	apply    *sws.ButtonWidget
-	reset    *sws.ButtonWidget
+	firewall    *firewall.Firewall
+	rules       *sws.TextAreaWidget
+	rulesscroll *sws.ScrollbarWidget
+	apply       *sws.ButtonWidget
+	reset       *sws.ButtonWidget
 }
 
 func (self *FirewallRulesWidget) SetGame(firewall *firewall.Firewall) {
@@ -82,7 +83,9 @@ func (self *FirewallRulesWidget) Resize(w, h int32) {
 	if h < 65 {
 		h = 55
 	}
-	self.rules.Resize(w-20, h-45)
+	self.rules.Resize(w-20-15, h-45)
+	self.rulesscroll.Resize(15, h-45)
+	self.rulesscroll.Move(w-25, 10)
 	self.apply.Move(10, h-35)
 	self.reset.Move(170, h-35)
 }
@@ -90,15 +93,34 @@ func (self *FirewallRulesWidget) Resize(w, h int32) {
 func NewFirewallRulesWidget(w, h int32, root *sws.RootWidget) *FirewallRulesWidget {
 	corewidget := sws.NewCoreWidget(w, h)
 	widget := &FirewallRulesWidget{
-		CoreWidget: *corewidget,
-		firewall:   nil,
-		rules:      sws.NewTextAreaWidget(w-20, h-45, ""),
-		apply:      sws.NewButtonWidget(150, 25, "Apply"),
-		reset:      sws.NewButtonWidget(150, 25, "Reset"),
+		CoreWidget:  *corewidget,
+		firewall:    nil,
+		rules:       sws.NewTextAreaWidget(w-20-15, h-45, ""),
+		rulesscroll: sws.NewScrollbarWidget(20, h-45, false),
+		apply:       sws.NewButtonWidget(150, 25, "Apply"),
+		reset:       sws.NewButtonWidget(150, 25, "Reset"),
 	}
 
 	widget.rules.Move(10, 10)
+	widget.rules.ShowLineNumber()
 	widget.AddChild(widget.rules)
+	widget.rules.SetHeightChangeCallback(func(height int32) {
+		maximum := height - widget.rules.Height()
+		if maximum < 0 {
+			maximum = 0
+		}
+		widget.rulesscroll.SetMaximum(maximum)
+		widget.rulesscroll.PostUpdate()
+	})
+	widget.rules.SetYOffsetChangedCallback(func(offset int32) {
+		widget.rulesscroll.SetPosition(offset)
+	})
+
+	widget.rulesscroll.Move(w-25, 10)
+	widget.AddChild(widget.rulesscroll)
+	widget.rulesscroll.SetCallback(func(currentposition int32) {
+		widget.rules.SetYOffset(currentposition)
+	})
 
 	widget.apply.Move(10, h-35)
 	widget.apply.SetClicked(func() {
