@@ -94,6 +94,7 @@ func (generator *PacketGenerator) generatePayload(instruction string) string {
 
 	servername := serverlist[rand.Int()%len(serverlist)]
 	instruction = strings.Replace(instruction, "[SERVERNAME]", servername, -1)
+	instruction = strings.Replace(instruction, "\n", "\\n", -1)
 
 	return instruction
 }
@@ -205,7 +206,8 @@ func (packet *Packet) Save() string {
 		packet.SrcPort,
 		packet.DstPort,
 		base64.StdEncoding.EncodeToString(packet.IcmpHeader[:]),
-		strings.Replace(packet.Payload, "\n", "\\n", -1),
+		//		strings.Replace(packet.Payload, "\n", "\\n", -1),
+		packet.Payload,
 		packet.Tcpflags,
 		harmless,
 	)
@@ -225,7 +227,7 @@ func NewPacket(data map[string]interface{}) *Packet {
 		SrcPort:    uint16(data["srcport"].(float64)),
 		DstPort:    uint16(data["dstport"].(float64)),
 		IcmpHeader: icmpheader,
-		Payload:    data["payload"].(string),
+		Payload:    strings.Replace(data["payload"].(string), "\n", "\\n", -1),
 		Tcpflags:   uint8(data["tcpflags"].(float64)),
 		Harmless:   data["harmless"].(bool),
 	}
