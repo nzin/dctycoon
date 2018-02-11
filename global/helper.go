@@ -116,12 +116,12 @@ func ParseMega(str string) int32 {
 // AdjustMega get a number in megabyte, reduce it in GB, TB and return the string result
 func AdjustMega(mega int32) string {
 	if mega >= 2000000 {
-		return strconv.Itoa(int(mega/1000000)) + " To"
+		return strconv.Itoa(int(mega/1000000)) + " TB"
 	}
 	if mega >= 2000 {
-		return strconv.Itoa(int(mega/1000)) + " Go"
+		return strconv.Itoa(int(mega/1000)) + " GB"
 	}
-	return strconv.Itoa(int(mega)) + " Mo"
+	return strconv.Itoa(int(mega)) + " MB"
 }
 
 //

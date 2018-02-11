@@ -28,6 +28,12 @@ const (
 	POWERLINE_1M   = iota
 )
 
+const (
+	ASSIGNED_UNASSIGNED = 0
+	ASSIGNED_PHYSICAL   = 1
+	ASSIGNED_VPS        = 2
+)
+
 func GetKilowattPowerline(powerline int32) float64 {
 	switch powerline {
 	case POWERLINE_10K:
@@ -249,6 +255,15 @@ type Inventory struct {
 	defaultPhysicalPool      ServerPool
 	defaultVpsPool           ServerPool
 	serverbundles            []*ServerBundle
+	defaultPoolAssignation   int32
+}
+
+func (self *Inventory) GetDefaultPoolAllocation() int32 {
+	return self.defaultPoolAssignation
+}
+
+func (self *Inventory) SetDefaultPoolAllocation(poolallocation int32) {
+	self.defaultPoolAssignation = poolallocation
 }
 
 // DecommissionServer try to relocate an offer on a given item
@@ -419,6 +434,24 @@ func (self *Inventory) triggerPowerChange() {
 	}
 }
 
+// registerFutureArrival is used to create a cronjob to
+// switch an item from "in delivery" to "in stock"
+func (self *Inventory) registerFutureArrival(item *InventoryItem) {
+	self.globaltimer.AddEvent(item.Deliverydate, func() {
+		for _, sub := range self.inventorysubscribers {
+			sub.ItemInStock(item)
+			if item.Typeitem == PRODUCT_SERVER {
+				switch self.defaultPoolAssignation {
+				case ASSIGNED_PHYSICAL:
+					self.AssignPool(item, self.defaultPhysicalPool)
+				case ASSIGNED_VPS:
+					self.AssignPool(item, self.defaultVpsPool)
+				}
+			}
+		}
+	})
+}
+
 func (self *Inventory) BuyCart(buydate time.Time) []*InventoryItem {
 	log.Debug("Inventory::BuyCart(", buydate, ")")
 	items := make([]*InventoryItem, 0, 0)
@@ -439,11 +472,7 @@ func (self *Inventory) BuyCart(buydate time.Time) []*InventoryItem {
 			for _, sub := range self.inventorysubscribers {
 				sub.ItemInTransit(inventoryitem)
 			}
-			self.globaltimer.AddEvent(inventoryitem.Deliverydate, func() {
-				for _, sub := range self.inventorysubscribers {
-					sub.ItemInStock(inventoryitem)
-				}
-			})
+			self.registerFutureArrival(inventoryitem)
 			items = append(items, inventoryitem)
 		}
 	}
@@ -577,14 +606,11 @@ func (self *Inventory) LoadItem(product map[string]interface{}) {
 	// now we store it
 	self.Items[item.Id] = item
 
-	for _, sub := range self.inventorysubscribers {
-		sub.ItemInTransit(item)
-	}
-	self.globaltimer.AddEvent(item.Deliverydate, func() {
+	/*
 		for _, sub := range self.inventorysubscribers {
-			sub.ItemInStock(item)
+			sub.ItemInTransit(item)
 		}
-	})
+		self.registerFutureArrival(item)*/
 }
 
 func (self *Inventory) loadOffer(offer map[string]interface{}) {
@@ -659,12 +685,9 @@ func (self *Inventory) loadPublishItem(item *InventoryItem) {
 	} else {
 		if self.globaltimer.CurrentTime.Before(item.Deliverydate) {
 			for _, sub := range self.inventorysubscribers {
-				instocksub := sub
 				sub.ItemInTransit(item)
-				self.globaltimer.AddEvent(item.Deliverydate, func() {
-					instocksub.ItemInStock(item)
-				})
 			}
+			self.registerFutureArrival(item)
 		} else {
 			for _, sub := range self.inventorysubscribers {
 				sub.ItemInStock(item)
@@ -682,6 +705,7 @@ func (self *Inventory) loadPowerlines(power map[string]interface{}) {
 func (self *Inventory) Load(conf map[string]interface{}) {
 	log.Debug("Inventory::Load(", conf, ")")
 	self.increment = int32(conf["increment"].(float64))
+	self.defaultPoolAssignation = int32(conf["defaultpoolassignation"].(float64))
 	self.consumptionHotspot = make(map[int32]map[int32]float64)
 	self.Items = make(map[int32]*InventoryItem)
 	if itemsinterface, ok := conf["items"]; ok {
@@ -727,6 +751,7 @@ func (self *Inventory) Save() string {
 	log.Debug("Inventory::Save()")
 	str := "{"
 	str += fmt.Sprintf(`"increment":%d,`, self.increment)
+	str += fmt.Sprintf(`"defaultpoolassignation": %d,`, self.defaultPoolAssignation)
 	str += `"serverbundles":[`
 	firstitem := true
 	for _, sb := range self.serverbundles {
@@ -941,6 +966,7 @@ func NewInventory(globaltimer *timer.GameTimer) *Inventory {
 		currentMaxPower:        POWERLINE_10K,
 		consumptionHotspot:     make(map[int32]map[int32]float64),
 		serverbundles:          make([]*ServerBundle, 0, 0),
+		defaultPoolAssignation: ASSIGNED_PHYSICAL,
 	}
 
 	inventory.AddPool(inventory.defaultPhysicalPool)
