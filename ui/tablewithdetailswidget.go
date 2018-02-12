@@ -287,6 +287,8 @@ func (self *TableWithDetails) Repaint() {
 
 	// headers
 	self.FillRect(0, 0, self.Width(), HEADER_HEIGHT, 0xffdddddd)
+	self.SetDrawColorHex(0xff000000)
+	self.DrawLine(0, HEADER_HEIGHT, self.Width(), HEADER_HEIGHT)
 
 	//bezel (+)
 	self.SetDrawColorHex(0xffffffff)
@@ -352,12 +354,13 @@ func (self *TableWithDetails) MousePressDown(x, y int32, button uint8) {
 		for i := int32(0); i < int32(len(self.header)); i++ {
 			size := self.headerSize[i]
 			if x >= xoffset && x < xoffset+size {
-				if self.currentSorter == i {
-					self.directionSorter = !self.directionSorter
-				} else {
-					self.currentSorter = i
-				}
-				if self.headerSort[self.currentSorter] != nil {
+				// do we have a sorter for this column?
+				if self.headerSort[i] != nil {
+					if self.currentSorter == i {
+						self.directionSorter = !self.directionSorter
+					} else {
+						self.currentSorter = i
+					}
 					sort.Sort(self)
 					self.PostUpdate()
 				}

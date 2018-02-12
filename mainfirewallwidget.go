@@ -401,7 +401,7 @@ func NewFirewallStatusWidget(w, h int32) *FirewallStatusWidget {
 	widget.sucessrate.Move(210, 30)
 	widget.AddChild(widget.sucessrate)
 
-	detailslablel := sws.NewLabelWidget(200, 25, "Last 20 packets filtered:")
+	detailslablel := sws.NewLabelWidget(300, 25, "Last 20 packets received (ingress):")
 	detailslablel.Move(10, 60)
 	widget.AddChild(detailslablel)
 
