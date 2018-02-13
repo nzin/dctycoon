@@ -132,6 +132,23 @@ func (self *PriorityAbstract) sortWeight(offer []*ServerOffer, getOfferValue fun
 	}
 }
 
+type PriorityReputation struct {
+	PriorityAbstract
+}
+
+func NewPriorityReputation(value int32) PriorityPoint {
+	priority := &PriorityReputation{
+		PriorityAbstract: PriorityAbstract{
+			weight: value,
+		},
+	}
+	return priority
+}
+
+func (self *PriorityReputation) Score(offer []*ServerOffer, points *map[*ServerOffer]float64) {
+	self.sortWeight(offer, func(offer *ServerOffer) float64 { return offer.Actor.GetReputationScore() }, points)
+}
+
 type PriorityPrice struct {
 	PriorityAbstract
 }

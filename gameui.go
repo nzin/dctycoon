@@ -2,7 +2,6 @@ package dctycoon
 
 import (
 	"github.com/nzin/dctycoon/accounting"
-	"github.com/nzin/dctycoon/firewall"
 	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/dctycoon/timer"
 	"github.com/nzin/sws"
@@ -74,16 +73,16 @@ func NewGameUI(quit *bool, root *sws.RootWidget, game *Game) *GameUI {
 // SetGame is used when creating a new game, or loading a game
 // This re-init all ledger / inventory UI.
 // Therefore you have to populate the ledger and inventory AFTER calling this method
-func (self *GameUI) SetGame(globaltimer *timer.GameTimer, inventory *supplier.Inventory, ledger *accounting.Ledger, trends *supplier.Trend, location *supplier.LocationType, dcmap *DatacenterMap, firewall *firewall.Firewall) {
+func (self *GameUI) SetGame(globaltimer *timer.GameTimer, player *Player, trends *supplier.Trend, dcmap *DatacenterMap) {
 	log.Debug("GameUI::InitGame()")
-	self.dc.SetGame(inventory, globaltimer.CurrentTime, dcmap)
-	self.supplierwidget.SetGame(globaltimer, inventory, ledger, trends)
-	self.inventorywidget.SetGame(inventory, globaltimer.CurrentTime)
-	self.accountingwidget.SetGame(globaltimer, ledger)
-	self.dock.SetGame(globaltimer, ledger)
+	self.dc.SetGame(player.GetInventory(), globaltimer.CurrentTime, dcmap)
+	self.supplierwidget.SetGame(globaltimer, player.GetInventory(), player.GetLedger(), trends)
+	self.inventorywidget.SetGame(player, globaltimer.CurrentTime)
+	self.accountingwidget.SetGame(globaltimer, player.GetLedger())
+	self.dock.SetGame(globaltimer, player.GetLedger())
 	self.statswidget.SetGame()
-	self.firewallwidget.SetGame(firewall)
-	self.electricitywidget.SetGame(inventory, location)
+	self.firewallwidget.SetGame(player.GetFirewall())
+	self.electricitywidget.SetGame(player.GetInventory(), player.GetLocation())
 
 	self.supplierwidget.Hide()
 	self.inventorywidget.Hide()

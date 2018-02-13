@@ -48,6 +48,7 @@ type NPDatacenter struct {
 	name            string
 	picture         string
 	reputationscore float64
+	offers          []*supplier.ServerOffer
 }
 
 //
@@ -100,6 +101,7 @@ func NewNPDatacenter() *NPDatacenter {
 		name:            "",
 		picture:         "",
 		reputationscore: 0.0,
+		offers:          make([]*supplier.ServerOffer, 0),
 	}
 
 	return datacenter
@@ -171,6 +173,35 @@ func (self *NPDatacenter) findPicture(male bool) string {
 	return ""
 }
 
+func (self *NPDatacenter) loadOffer(offer map[string]interface{}) {
+	log.Debug("NPDatacenter::LoadOffer(", offer, ")")
+	vps := offer["vps"].(bool)
+
+	pool := self.inventory.GetDefaultPhysicalPool()
+	if vps {
+		pool = self.inventory.GetDefaultVpsPool()
+	}
+
+	nbcores := int32(offer["nbcores"].(float64))
+	ramsize := int32(offer["ramsize"].(float64))
+	disksize := int32(offer["disksize"].(float64))
+	price, _ := offer["price"].(float64)
+
+	o := &supplier.ServerOffer{
+		Active:   offer["active"].(bool),
+		Name:     offer["name"].(string),
+		Actor:    self,
+		Pool:     pool,
+		Vps:      vps,
+		Nbcores:  nbcores,
+		Ramsize:  ramsize,
+		Disksize: disksize,
+		Vt:       offer["vt"].(bool),
+		Price:    price,
+	}
+	self.AddOffer(o)
+}
+
 func (self *NPDatacenter) LoadGame(timer *timer.GameTimer, trend *supplier.Trend, v map[string]interface{}) {
 	log.Debug("NPDatacenter::LoadGame(", timer, ",", trend, ",", v, ")")
 	if self.cronevent != nil {
@@ -216,6 +247,13 @@ func (self *NPDatacenter) LoadGame(timer *timer.GameTimer, trend *supplier.Trend
 	self.ledger.Load(v["ledger"].(map[string]interface{}), location.Taxrate, location.Bankinterestrate)
 	self.inventory.Load(v["inventory"].(map[string]interface{}))
 
+	if offersinterface, ok := v["offers"]; ok {
+		offers := offersinterface.([]interface{})
+		for _, offer := range offers {
+			self.loadOffer(offer.(map[string]interface{}))
+		}
+	}
+
 	self.cronevent = timer.AddCron(1, 1, -1, func() {
 		self.NewYearOperations()
 	})
@@ -228,8 +266,42 @@ func (self *NPDatacenter) Save() string {
 	save += fmt.Sprintf(`"picture": "%s",`, self.picture) + "\n"
 	save += fmt.Sprintf(`"reputation": %f,`, self.reputationscore) + "\n"
 	save += fmt.Sprintf(`"inventory": %s,`, self.inventory.Save()) + "\n"
+	save += `"offers":[`
+	firstitem := true
+	for _, offer := range self.offers {
+		if firstitem == true {
+			firstitem = false
+		} else {
+			save += ",\n"
+		}
+		save += offer.Save()
+	}
+	save += "],"
 	save += fmt.Sprintf(`"ledger": %s`, self.ledger.Save()) + "}\n"
 	return save
+}
+
+func (self *NPDatacenter) AddOffer(offer *supplier.ServerOffer) {
+	// check if not already present
+	for _, o := range self.offers {
+		if o == offer {
+			return
+		}
+	}
+	self.offers = append(self.offers, offer)
+}
+
+func (self *NPDatacenter) RemoveOffer(offer *supplier.ServerOffer) {
+	for i, o := range self.offers {
+		if o == offer {
+			self.offers = append(self.offers[:i], self.offers[i+1:]...)
+			break
+		}
+	}
+}
+
+func (self *NPDatacenter) GetOffers() []*supplier.ServerOffer {
+	return self.offers
 }
 
 //
@@ -239,8 +311,8 @@ func (self *NPDatacenter) Save() string {
 func (self *NPDatacenter) NewYearOperations() {
 	log.Debug("NPDatacenter::NewYearOperations()")
 	// let's begin by removing all offers
-	for _, o := range self.inventory.GetOffers() {
-		self.inventory.RemoveOffer(o)
+	for _, o := range self.GetOffers() {
+		self.RemoveOffer(o)
 	}
 
 	// loop over the buyoutprofile and buy some hardware + create the corresponding offer
@@ -345,18 +417,18 @@ func (self *NPDatacenter) NewYearOperations() {
 				}
 
 				offer := &supplier.ServerOffer{
-					Active:    true,
-					Name:      profilename,
-					Inventory: self.inventory,
-					Pool:      pool,
-					Vps:       profile.Vps,
-					Nbcores:   serverconf.NbCore * serverconf.NbProcessors,
-					Ramsize:   serverconf.NbSlotRam * serverconf.RamSize,
-					Disksize:  serverconf.NbDisks * serverconf.DiskSize,
-					Vt:        serverconf.VtSupport,
-					Price:     unitprice * profile.Margin,
+					Active:   true,
+					Name:     profilename,
+					Actor:    self,
+					Pool:     pool,
+					Vps:      profile.Vps,
+					Nbcores:  serverconf.NbCore * serverconf.NbProcessors,
+					Ramsize:  serverconf.NbSlotRam * serverconf.RamSize,
+					Disksize: serverconf.NbDisks * serverconf.DiskSize,
+					Vt:       serverconf.VtSupport,
+					Price:    unitprice * profile.Margin,
 				}
-				self.inventory.AddOffer(offer)
+				self.AddOffer(offer)
 			}
 		}
 	}

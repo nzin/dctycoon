@@ -84,7 +84,7 @@ type IndexTemplate struct {
 func (self *IndexPage) fillDedicated() []*DedicatedOffer {
 	dedicatedOffers := make([]*DedicatedOffer, 0, 0)
 	pool := game.GetPlayer().GetInventory().GetDefaultPhysicalPool()
-	for _, offer := range game.GetPlayer().GetInventory().GetOffers() {
+	for _, offer := range game.GetPlayer().GetOffers() {
 		if offer.Vps == false {
 			vtstring := "no"
 			if offer.Vt == true {
@@ -108,7 +108,7 @@ func (self *IndexPage) fillDedicated() []*DedicatedOffer {
 func (self *IndexPage) fillVps() []*VpsOffer {
 	vpsOffers := make([]*VpsOffer, 0, 0)
 	pool := game.GetPlayer().GetInventory().GetDefaultVpsPool()
-	for _, offer := range game.GetPlayer().GetInventory().GetOffers() {
+	for _, offer := range game.GetPlayer().GetOffers() {
 		if offer.Vps == true {
 			vps := &VpsOffer{
 				Name:      offer.Name,

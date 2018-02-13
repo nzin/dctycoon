@@ -20,6 +20,7 @@ type Player struct {
 	locationname string
 	companyname  string
 	maplevel     int32 // from 0 (3x4 map), to 2 (32x32 map)
+	offers       []*supplier.ServerOffer
 }
 
 //
@@ -85,6 +86,7 @@ func NewPlayer() *Player {
 		companyname:  "noname",
 		maplevel:     0,
 		firewall:     firewall.NewFirewall(),
+		offers:       make([]*supplier.ServerOffer, 0),
 	}
 
 	return p
@@ -119,6 +121,34 @@ func (self *Player) Init(timer *timer.GameTimer, initialcapital float64, locatio
 		Date:        timer.CurrentTime,
 	})
 }
+func (self *Player) loadOffer(offer map[string]interface{}) {
+	log.Debug("Player::LoadOffer(", offer, ")")
+	vps := offer["vps"].(bool)
+
+	pool := self.inventory.GetDefaultPhysicalPool()
+	if vps {
+		pool = self.inventory.GetDefaultVpsPool()
+	}
+
+	nbcores := int32(offer["nbcores"].(float64))
+	ramsize := int32(offer["ramsize"].(float64))
+	disksize := int32(offer["disksize"].(float64))
+	price, _ := offer["price"].(float64)
+
+	o := &supplier.ServerOffer{
+		Active:   offer["active"].(bool),
+		Name:     offer["name"].(string),
+		Actor:    self,
+		Pool:     pool,
+		Vps:      vps,
+		Nbcores:  nbcores,
+		Ramsize:  ramsize,
+		Disksize: disksize,
+		Vt:       offer["vt"].(bool),
+		Price:    price,
+	}
+	self.AddOffer(o)
+}
 
 func (self *Player) LoadGame(timer *timer.GameTimer, v map[string]interface{}) {
 	log.Debug("Player::LoadGame(", timer, ",", v, ")")
@@ -142,6 +172,12 @@ func (self *Player) LoadGame(timer *timer.GameTimer, v map[string]interface{}) {
 
 	self.ledger.Load(v["ledger"].(map[string]interface{}), location.Taxrate, location.Bankinterestrate)
 	self.inventory.Load(v["inventory"].(map[string]interface{}))
+	if offersinterface, ok := v["offers"]; ok {
+		offers := offersinterface.([]interface{})
+		for _, offer := range offers {
+			self.loadOffer(offer.(map[string]interface{}))
+		}
+	}
 	self.reputation.Load(v["reputation"].(map[string]interface{}))
 	self.firewall.Load(v["firewall"].(map[string]interface{}))
 }
@@ -149,10 +185,44 @@ func (self *Player) LoadGame(timer *timer.GameTimer, v map[string]interface{}) {
 func (self *Player) Save() string {
 	save := fmt.Sprintf(`"location": "%s",`, self.locationname) + "\n"
 	save += fmt.Sprintf(`"inventory": %s,`, self.inventory.Save()) + "\n"
+	save += `"offers":[`
+	firstitem := true
+	for _, offer := range self.offers {
+		if firstitem == true {
+			firstitem = false
+		} else {
+			save += ",\n"
+		}
+		save += offer.Save()
+	}
+	save += "],"
 	save += fmt.Sprintf(`"companyname": "%s",`, self.companyname) + "\n"
 	save += fmt.Sprintf(`"maplevel": %d,`, self.maplevel) + "\n"
 	save += fmt.Sprintf(`"reputation": %s,`, self.reputation.Save()) + "\n"
 	save += fmt.Sprintf(`"firewall": %s,`, self.firewall.Save()) + "\n"
 	save += fmt.Sprintf(`"ledger": %s`, self.ledger.Save()) + "\n"
 	return save
+}
+
+func (self *Player) AddOffer(offer *supplier.ServerOffer) {
+	// check if not already present
+	for _, o := range self.offers {
+		if o == offer {
+			return
+		}
+	}
+	self.offers = append(self.offers, offer)
+}
+
+func (self *Player) RemoveOffer(offer *supplier.ServerOffer) {
+	for i, o := range self.offers {
+		if o == offer {
+			self.offers = append(self.offers[:i], self.offers[i+1:]...)
+			break
+		}
+	}
+}
+
+func (self *Player) GetOffers() []*supplier.ServerOffer {
+	return self.offers
 }

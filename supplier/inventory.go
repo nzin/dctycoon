@@ -234,7 +234,6 @@ func (self *InventoryItem) ShortDescription(condensed bool) string {
 // Inventory structure owns the inventory of
 // - InventoryItems: servers, AC, rack, generator
 // - pools
-// - offers
 //
 type Inventory struct {
 	globaltimer              *timer.GameTimer
@@ -242,7 +241,6 @@ type Inventory struct {
 	Cart                     []*CartItem
 	Items                    map[int32]*InventoryItem
 	pools                    []ServerPool
-	offers                   []*ServerOffer
 	powerline                [3]int32
 	currentMaxPower          int32 // currentMaxPower is the current highest current provided by utility power lines, POWERLINE_10K, POWERLINE_50K, ...
 	consumptionHotspot       map[int32]map[int32]float64
@@ -613,38 +611,6 @@ func (self *Inventory) LoadItem(product map[string]interface{}) {
 		self.registerFutureArrival(item)*/
 }
 
-func (self *Inventory) loadOffer(offer map[string]interface{}) {
-	log.Debug("Inventory::LoadOffer(", offer, ")")
-	vps := offer["vps"].(bool)
-
-	var pool ServerPool
-	for _, p := range self.pools {
-		if p.IsVps() == vps {
-			pool = p
-			break
-		}
-	}
-
-	nbcores := int32(offer["nbcores"].(float64))
-	ramsize := int32(offer["ramsize"].(float64))
-	disksize := int32(offer["disksize"].(float64))
-	price, _ := offer["price"].(float64)
-
-	o := &ServerOffer{
-		Active:    offer["active"].(bool),
-		Name:      offer["name"].(string),
-		Inventory: self,
-		Pool:      pool,
-		Vps:       vps,
-		Nbcores:   nbcores,
-		Ramsize:   ramsize,
-		Disksize:  disksize,
-		Vt:        offer["vt"].(bool),
-		Price:     price,
-	}
-	self.AddOffer(o)
-}
-
 func (self *Inventory) loadServerBundle(bundle map[string]interface{}) {
 	var year, month, day int
 	fmt.Sscanf(bundle["date"].(string), "%d-%d-%d", &year, &month, &day)
@@ -714,12 +680,6 @@ func (self *Inventory) Load(conf map[string]interface{}) {
 			self.LoadItem(item.(map[string]interface{}))
 		}
 	}
-	if offersinterface, ok := conf["offers"]; ok {
-		offers := offersinterface.([]interface{})
-		for _, offer := range offers {
-			self.loadOffer(offer.(map[string]interface{}))
-		}
-	}
 
 	if bundleinterface, ok := conf["serverbundles"]; ok {
 		bundles := bundleinterface.([]interface{})
@@ -761,17 +721,6 @@ func (self *Inventory) Save() string {
 			str += ",\n"
 		}
 		str += sb.Save()
-	}
-	str += "],"
-	str += `"offers":[`
-	firstitem = true
-	for _, offer := range self.offers {
-		if firstitem == true {
-			firstitem = false
-		} else {
-			str += ",\n"
-		}
-		str += offer.Save()
 	}
 	str += "],"
 	str += `"items":[`
@@ -828,33 +777,6 @@ func (self *Inventory) GetPools() []ServerPool {
 
 func (self *Inventory) AddInventoryPoolSubscriber(subscriber InventoryPoolSubscriber) {
 	self.inventoryPoolSubscribers = append(self.inventoryPoolSubscribers, subscriber)
-}
-
-func (self *Inventory) AddOffer(offer *ServerOffer) {
-	// check if not already present
-	for _, o := range self.offers {
-		if o == offer {
-			return
-		}
-	}
-	self.offers = append(self.offers, offer)
-}
-
-func (self *Inventory) RemoveOffer(offer *ServerOffer) {
-	for i, o := range self.offers {
-		if o == offer {
-			self.offers = append(self.offers[:i], self.offers[i+1:]...)
-			break
-		}
-	}
-}
-
-func (self *Inventory) UpdateOffer(offer *ServerOffer) {
-	// nothing yet
-}
-
-func (self *Inventory) GetOffers() []*ServerOffer {
-	return self.offers
 }
 
 func (self *Inventory) GetDefaultPhysicalPool() ServerPool {
@@ -957,7 +879,6 @@ func NewInventory(globaltimer *timer.GameTimer) *Inventory {
 		Cart:                   make([]*CartItem, 0),
 		Items:                  make(map[int32]*InventoryItem),
 		pools:                  make([]ServerPool, 0),
-		offers:                 make([]*ServerOffer, 0),
 		inventorysubscribers:   make([]InventorySubscriber, 0),
 		powerchangeSubscribers: make([]InventoryPowerChangeSubscriber, 0, 0),
 		defaultPhysicalPool:    NewHardwareServerPool("default"),
