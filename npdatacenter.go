@@ -144,13 +144,13 @@ func (self *NPDatacenter) LoadGame(timer *timer.GameTimer, trend *supplier.Trend
 	// load buyout profile
 	data, err := global.Asset("assets/npdatacenter/" + profilename)
 	if err != nil {
-		log.Error("NewNPDatacenter(): asset assets/npdatacenter/" + profilename + " not found")
+		log.Error("NPDatacenter::LoadGame(): asset assets/npdatacenter/" + profilename + " not found")
 		return
 	}
 	profile := make(map[string]BuyoutProfile)
 	err = json.Unmarshal(data, &profile)
 	if err != nil {
-		log.Error("NewNPDatacenter(): asset assets/npdatacenter/" + profilename + " not json compatible")
+		log.Error("NPDatacenter::LoadGame(): asset assets/npdatacenter/" + profilename + " not json compatible")
 		return
 	}
 
