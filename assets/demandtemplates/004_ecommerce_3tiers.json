@@ -22,7 +22,7 @@
 				"cpu": 2,
 				"disk": 1,
 				"network":1,
-				"image":1,
+				"reputation":1,
 				"captive":1
 			},
 			"numbers": { "low": 2, "high": 5}
@@ -37,7 +37,7 @@
 				"price": 1,
 				"disk": 2,
 				"network":1,
-				"image":2,
+				"reputation":2,
 				"captive":1
 			},
 			"numbers": { "low": 2, "high": 2}
