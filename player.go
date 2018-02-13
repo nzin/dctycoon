@@ -12,15 +12,11 @@ import (
 )
 
 type Player struct {
-	inventory    *supplier.Inventory
-	ledger       *accounting.Ledger
-	location     *supplier.LocationType
-	reputation   *supplier.Reputation
-	firewall     *firewall.Firewall
-	locationname string
-	companyname  string
-	maplevel     int32 // from 0 (3x4 map), to 2 (32x32 map)
-	offers       []*supplier.ServerOffer
+	supplier.ActorAbstract
+	reputation  *supplier.Reputation
+	firewall    *firewall.Firewall
+	companyname string
+	maplevel    int32 // from 0 (3x4 map), to 2 (32x32 map)
 }
 
 //
@@ -35,28 +31,6 @@ func (p *Player) GetFirewall() *firewall.Firewall {
 
 func (p *Player) GetReputation() *supplier.Reputation {
 	return p.reputation
-}
-
-//
-// GetInventory is part of the Actor interface
-func (p *Player) GetInventory() *supplier.Inventory {
-	return p.inventory
-}
-
-//
-// GetLedger is part of the Actor interface
-func (p *Player) GetLedger() *accounting.Ledger {
-	return p.ledger
-}
-
-//
-// GetName is part of the Actor interface
-func (p *Player) GetName() string {
-	return "you"
-}
-
-func (p *Player) GetLocation() *supplier.LocationType {
-	return p.location
 }
 
 func (p *Player) GetCompanyName() string {
@@ -75,18 +49,14 @@ func (p *Player) SetMapLevel(maplevel int32) {
 // NewPlayer create a new player representation
 func NewPlayer() *Player {
 	log.Debug("NewPlayer()")
-	location := supplier.AvailableLocation["siliconvalley"]
 
+	actorabstract := supplier.NewActorAbstract()
 	p := &Player{
-		inventory:    nil,
-		ledger:       nil,
-		location:     location,
-		locationname: "siliconvalley",
-		reputation:   nil,
-		companyname:  "noname",
-		maplevel:     0,
-		firewall:     firewall.NewFirewall(),
-		offers:       make([]*supplier.ServerOffer, 0),
+		ActorAbstract: *actorabstract,
+		reputation:    nil,
+		companyname:   "noname",
+		maplevel:      0,
+		firewall:      firewall.NewFirewall(),
 	}
 
 	return p
@@ -94,26 +64,15 @@ func NewPlayer() *Player {
 
 func (self *Player) Init(timer *timer.GameTimer, initialcapital float64, locationname, companyname string, maplevel int32) {
 	log.Debug("Player::Init(", timer, ",", initialcapital, ",", locationname, ")")
-	location := supplier.AvailableLocation["siliconvalley"]
+	self.ActorAbstract.Init(timer, locationname, "you")
 
-	if l, ok := supplier.AvailableLocation[locationname]; ok {
-		location = l
-	} else {
-		log.Error("NewPlayer(): location " + locationname + " not found")
-		locationname = "siliconvalley"
-	}
-
-	self.locationname = locationname
-	self.inventory = supplier.NewInventory(timer)
-	self.ledger = accounting.NewLedger(timer, location.Taxrate, location.Bankinterestrate)
-	self.location = location
 	self.reputation = supplier.NewReputation()
 	self.companyname = companyname
 	self.maplevel = maplevel
 	self.firewall = firewall.NewFirewall()
 
 	// add some equity
-	self.ledger.AddMovement(accounting.LedgerMovement{
+	self.GetLedger().AddMovement(accounting.LedgerMovement{
 		Description: "initial capital",
 		Amount:      initialcapital,
 		AccountFrom: "4561",
@@ -121,61 +80,23 @@ func (self *Player) Init(timer *timer.GameTimer, initialcapital float64, locatio
 		Date:        timer.CurrentTime,
 	})
 }
-func (self *Player) loadOffer(offer map[string]interface{}) {
-	log.Debug("Player::LoadOffer(", offer, ")")
-	vps := offer["vps"].(bool)
-
-	pool := self.inventory.GetDefaultPhysicalPool()
-	if vps {
-		pool = self.inventory.GetDefaultVpsPool()
-	}
-
-	nbcores := int32(offer["nbcores"].(float64))
-	ramsize := int32(offer["ramsize"].(float64))
-	disksize := int32(offer["disksize"].(float64))
-	price, _ := offer["price"].(float64)
-
-	o := &supplier.ServerOffer{
-		Active:   offer["active"].(bool),
-		Name:     offer["name"].(string),
-		Actor:    self,
-		Pool:     pool,
-		Vps:      vps,
-		Nbcores:  nbcores,
-		Ramsize:  ramsize,
-		Disksize: disksize,
-		Vt:       offer["vt"].(bool),
-		Price:    price,
-	}
-	self.AddOffer(o)
-}
 
 func (self *Player) LoadGame(timer *timer.GameTimer, v map[string]interface{}) {
 	log.Debug("Player::LoadGame(", timer, ",", v, ")")
 	locationname := v["location"].(string)
-	location := supplier.AvailableLocation["siliconvalley"]
 
-	if l, ok := supplier.AvailableLocation[locationname]; ok {
-		location = l
-	} else {
-		log.Error("NewPlayer(): location " + locationname + " not found")
-		locationname = "siliconvalley"
-	}
-	self.inventory = supplier.NewInventory(timer)
-	self.ledger = accounting.NewLedger(timer, location.Taxrate, location.Bankinterestrate)
-	self.location = location
-	self.locationname = locationname
+	self.ActorAbstract.Init(timer, locationname, "you")
 	self.reputation = supplier.NewReputation()
 	self.companyname = v["companyname"].(string)
 	self.maplevel = int32(v["maplevel"].(float64))
 	self.firewall = firewall.NewFirewall()
 
-	self.ledger.Load(v["ledger"].(map[string]interface{}), location.Taxrate, location.Bankinterestrate)
-	self.inventory.Load(v["inventory"].(map[string]interface{}))
+	self.GetLedger().Load(v["ledger"].(map[string]interface{}), self.GetLocation().Taxrate, self.GetLocation().Bankinterestrate)
+	self.GetInventory().Load(v["inventory"].(map[string]interface{}))
 	if offersinterface, ok := v["offers"]; ok {
 		offers := offersinterface.([]interface{})
 		for _, offer := range offers {
-			self.loadOffer(offer.(map[string]interface{}))
+			self.LoadOffer(offer.(map[string]interface{}))
 		}
 	}
 	self.reputation.Load(v["reputation"].(map[string]interface{}))
@@ -183,11 +104,11 @@ func (self *Player) LoadGame(timer *timer.GameTimer, v map[string]interface{}) {
 }
 
 func (self *Player) Save() string {
-	save := fmt.Sprintf(`"location": "%s",`, self.locationname) + "\n"
-	save += fmt.Sprintf(`"inventory": %s,`, self.inventory.Save()) + "\n"
+	save := fmt.Sprintf(`"location": "%s",`, self.GetLocationName()) + "\n"
+	save += fmt.Sprintf(`"inventory": %s,`, self.GetInventory().Save()) + "\n"
 	save += `"offers":[`
 	firstitem := true
-	for _, offer := range self.offers {
+	for _, offer := range self.GetOffers() {
 		if firstitem == true {
 			firstitem = false
 		} else {
@@ -200,29 +121,6 @@ func (self *Player) Save() string {
 	save += fmt.Sprintf(`"maplevel": %d,`, self.maplevel) + "\n"
 	save += fmt.Sprintf(`"reputation": %s,`, self.reputation.Save()) + "\n"
 	save += fmt.Sprintf(`"firewall": %s,`, self.firewall.Save()) + "\n"
-	save += fmt.Sprintf(`"ledger": %s`, self.ledger.Save()) + "\n"
+	save += fmt.Sprintf(`"ledger": %s`, self.GetLedger().Save()) + "\n"
 	return save
-}
-
-func (self *Player) AddOffer(offer *supplier.ServerOffer) {
-	// check if not already present
-	for _, o := range self.offers {
-		if o == offer {
-			return
-		}
-	}
-	self.offers = append(self.offers, offer)
-}
-
-func (self *Player) RemoveOffer(offer *supplier.ServerOffer) {
-	for i, o := range self.offers {
-		if o == offer {
-			self.offers = append(self.offers[:i], self.offers[i+1:]...)
-			break
-		}
-	}
-}
-
-func (self *Player) GetOffers() []*supplier.ServerOffer {
-	return self.offers
 }

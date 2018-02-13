@@ -584,16 +584,6 @@ func (self *ServerContract) Save() string {
 	return str
 }
 
-// Actor -> Player or NPDatacenter
-type Actor interface {
-	GetInventory() *Inventory
-	GetLedger() *accounting.Ledger
-	GetName() string
-	GetLocation() *LocationType
-	GetReputationScore() float64
-	GetOffers() []*ServerOffer
-}
-
 type ServerBundle struct {
 	Contracts   []*ServerContract
 	Renewalrate float64
