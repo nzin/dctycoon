@@ -12,6 +12,7 @@ import (
 
 type ActorMock struct {
 	inventory *Inventory
+	offers    []*ServerOffer
 }
 
 func (self *ActorMock) GetReputationScore() float64 {
@@ -34,9 +35,20 @@ func (self *ActorMock) GetLocation() *LocationType {
 	return AvailableLocation["siliconvalley"]
 }
 
+func (self *ActorMock) GetOffers() []*ServerOffer {
+	return self.offers
+}
+
+func (self *ActorMock) AddOffer(offer *ServerOffer) {
+	self.offers = append(self.offers, offer)
+}
+
 func TestPool(t *testing.T) {
 	gt := timer.NewGameTimer()
 	inventory := NewInventory(gt)
+	actor := &ActorMock{
+		inventory: inventory,
+	}
 
 	// we create the servers
 	r100 := GetServerConfTypeByName("R100")
@@ -84,18 +96,18 @@ func TestPool(t *testing.T) {
 
 	// we now have to create an offer
 	offer1 := &ServerOffer{
-		Active:    true,
-		Name:      "my offer",
-		Inventory: inventory,
-		Pool:      defaultPhysicalPool,
-		Vps:       false,
-		Nbcores:   1,
-		Ramsize:   1,
-		Disksize:  50,
-		Vt:        false,
-		Price:     200.0,
+		Active:   true,
+		Name:     "my offer",
+		Actor:    actor,
+		Pool:     defaultPhysicalPool,
+		Vps:      false,
+		Nbcores:  1,
+		Ramsize:  1,
+		Disksize: 50,
+		Vt:       false,
+		Price:    200.0,
 	}
-	inventory.AddOffer(offer1)
+	actor.AddOffer(offer1)
 
 	// now we have to create an client demand and see if it matchs
 	payload := `
@@ -156,9 +168,6 @@ func TestPool(t *testing.T) {
 	assert.Equal(t, 2, len(demandtemplate.Specs), "2 servers asked ")
 
 	demand := demandtemplate.InstanciateDemand()
-	actor := &ActorMock{
-		inventory: inventory,
-	}
 	actors := []Actor{actor}
 	bundlecontracts, _ := demand.FindOffer(actors, time.Date(1999, 1, 1, 0, 0, 0, 0, time.UTC))
 	assert.Empty(t, bundlecontracts, "we didn't found servers fitting the demand")

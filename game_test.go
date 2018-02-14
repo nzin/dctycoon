@@ -44,13 +44,13 @@ func TestDemandAttribution(t *testing.T) {
 
 	// add server in inventory
 	opponent.NewYearOperations()
-	assert.Equal(t, 1, len(opponent.inventory.Items), "new year passed, we bought some servers")
+	assert.Equal(t, 1, len(opponent.GetInventory().Items), "new year passed, we bought some servers")
 	for i := 0; i < 10; i++ {
 		game.timer.TimerClock()
 	}
-	fmt.Println(opponent.inventory.Items[0])
+	fmt.Println(opponent.GetInventory().Items[0])
 	fmt.Println(game.timer.CurrentTime)
-	fmt.Println(opponent.inventory.GetOffers()[0])
+	fmt.Println(opponent.GetOffers()[0])
 	serverbundle, _ = demand.FindOffer(actors, game.timer.CurrentTime)
 	// flaky
 	//	assert.NotEmpty(t, serverbundle, "demand created and attributed")
