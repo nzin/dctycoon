@@ -295,6 +295,16 @@ func (self *Ledger) PayUtility(price float64, t time.Time) {
 	})
 }
 
+func (self *Ledger) PayMapUpgrade(price float64, t time.Time) {
+	self.AddMovement(LedgerMovement{
+		Description: "migrate to bigger map",
+		Amount:      price,
+		Date:        t,
+		AccountFrom: "5121",
+		AccountTo:   "61", // unknown account for transport/relocation
+	})
+}
+
 //
 // 161 (capital/debt) -> 5121 (current bank account)
 // every year (every month?) interest rate: 5121 -> 46 (fictious bank account for interest)

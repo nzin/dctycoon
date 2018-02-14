@@ -2,6 +2,7 @@ package dctycoon
 
 import (
 	"github.com/nzin/dctycoon/accounting"
+	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/dctycoon/timer"
 	"github.com/nzin/sws"
@@ -118,6 +119,10 @@ func (self *GameUI) ShowOpening() {
 func (self *GameUI) ShowUpgrade(game *Game, nextmap string) {
 	self.dc.ShowUpgrade()
 	self.dc.SetUpgradeCallback(func() {
-		game.MigrateMap(nextmap)
+		iconsurface, _ := global.LoadImageAsset("assets/ui/small-rocket-ship-silhouette.png")
+		sws.ShowModalYesNoSurfaceicon(self.rootwindow, "Relocate for bigger", iconsurface, "Are you sure you want to relocate now? There is a 50k fee for that.", func() {
+			game.GetPlayer().GetLedger().PayMapUpgrade(50000, game.timer.CurrentTime)
+			game.MigrateMap(nextmap)
+		}, nil)
 	})
 }
