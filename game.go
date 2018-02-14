@@ -399,6 +399,8 @@ func (self *Game) GenerateDemandAndFee() {
 			consumption, _, _ := a.GetInventory().GetGlobalPower()
 			a.GetLedger().PayUtility(a.GetInventory().GetMonthlyPowerlinesPrice()+consumption*24*30*a.GetLocation().Electricitycost/1000, self.timer.CurrentTime)
 		}
+		metersquares := self.dcmap.GetMeterSquares()
+		self.player.GetLedger().PayLandlord(metersquares, float64(metersquares)*self.player.GetLocation().Metersquareprice, self.timer.CurrentTime)
 	}
 
 	// run firewall rules

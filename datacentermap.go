@@ -42,6 +42,11 @@ type DatacenterMap struct {
 	height                int32
 	rackstatusSubscribers []RackStatusSubscriber
 	inoutage              bool
+	metersquares          int32
+}
+
+func (self *DatacenterMap) GetMeterSquares() int32 {
+	return self.metersquares
 }
 
 func (self *DatacenterMap) AddRackStatusSubscriber(subscriber RackStatusSubscriber) {
@@ -185,6 +190,7 @@ func (self *DatacenterMap) UninstallItem(item *supplier.InventoryItem) {
 //   }
 //
 func (self *DatacenterMap) loadRawMap(dc map[string]interface{}) {
+	self.metersquares = 0
 	self.width = int32(dc["width"].(float64))
 	self.height = int32(dc["height"].(float64))
 	self.tiles = make([][]*Tile, self.height)
@@ -220,6 +226,9 @@ func (self *DatacenterMap) loadRawMap(dc map[string]interface{}) {
 			self.overheating[y][x] = int32(data.(float64))
 		}
 		self.tiles[y][x] = NewTile(wall0, wall1, floor, rotation, decorationname)
+		if floor != "green" {
+			self.metersquares++
+		}
 	}
 }
 
@@ -606,6 +615,7 @@ func NewDatacenterMap() *DatacenterMap {
 		externaltemp:          0,
 		rackstatusSubscribers: make([]RackStatusSubscriber, 0, 0),
 		inoutage:              false,
+		metersquares:          0,
 	}
 	return dcmap
 }
