@@ -19,7 +19,7 @@ func TestPackets(t *testing.T) {
 	pingofdeath := generator.generatePayload("[65K]")
 	assert.Equal(t, 65536, len(pingofdeath), "Ping of death packet is > 64K")
 
-	asset, err := global.Asset("assets/firewall/pingNormal1.json")
+	asset, err := global.Asset("assets/firewall/icmpNormal1.json")
 	assert.NoError(t, err, "pingNormal1.json loaded")
 
 	var jsonpacket JsonPacket

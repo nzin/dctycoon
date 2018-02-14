@@ -36,16 +36,12 @@ type BuyoutProfile struct {
 }
 
 type NPDatacenter struct {
-	inventory       *supplier.Inventory
-	ledger          *accounting.Ledger
+	supplier.ActorAbstract
 	trend           *supplier.Trend
 	timer           *timer.GameTimer
-	location        *supplier.LocationType
-	locationname    string
 	buyoutprofile   map[string]BuyoutProfile
 	profilename     string
 	cronevent       *timer.GameCronEvent
-	name            string
 	picture         string
 	reputationscore float64
 }
@@ -56,48 +52,23 @@ func (self *NPDatacenter) GetReputationScore() float64 {
 	return self.reputationscore
 }
 
-//
-// GetInventory is part of the Actor interface
-func (self *NPDatacenter) GetInventory() *supplier.Inventory {
-	return self.inventory
-}
-
-//
-// GetLedger is part of the Actor interface
-func (self *NPDatacenter) GetLedger() *accounting.Ledger {
-	return self.ledger
-}
-
-func (self *NPDatacenter) GetName() string {
-	return self.name
-}
-
 func (self *NPDatacenter) GetPicture() string {
 	return self.picture
-}
-
-func (self *NPDatacenter) GetLocation() *supplier.LocationType {
-	return self.location
 }
 
 //
 // NewNPDatacenter() create a new NonPlayerDatacenter that will compete with the player
 func NewNPDatacenter() *NPDatacenter {
 	log.Debug("NewNPDatacenter()")
-	// a default value
-	location := supplier.AvailableLocation["siliconvalley"]
+	actorabstract := supplier.NewActorAbstract()
 
 	datacenter := &NPDatacenter{
-		inventory:       nil,
-		ledger:          nil,
+		ActorAbstract:   *actorabstract,
 		trend:           nil,
 		timer:           nil,
-		location:        location,
-		locationname:    "siliconvalley",
 		buyoutprofile:   nil,
 		profilename:     "",
 		cronevent:       nil,
-		name:            "",
 		picture:         "",
 		reputationscore: 0.0,
 	}
@@ -112,14 +83,7 @@ func (self *NPDatacenter) Init(timer *timer.GameTimer, initialcapital float64, l
 		self.timer.RemoveCron(self.cronevent)
 	}
 
-	location := supplier.AvailableLocation["siliconvalley"]
-
-	if l, ok := supplier.AvailableLocation[locationname]; ok {
-		location = l
-	} else {
-		log.Error("NewPlayer(): location " + locationname + " not found")
-		locationname = "siliconvalley"
-	}
+	self.ActorAbstract.Init(timer, locationname, name)
 
 	// load buyout profile
 	data, err := global.Asset("assets/npdatacenter/" + profilename)
@@ -135,28 +99,23 @@ func (self *NPDatacenter) Init(timer *timer.GameTimer, initialcapital float64, l
 	}
 
 	self.timer = timer
-	self.locationname = locationname
-	self.inventory = supplier.NewInventory(timer)
-	self.ledger = accounting.NewLedger(timer, location.Taxrate, location.Bankinterestrate)
-	self.location = location
 	self.trend = trend
 	self.profilename = profilename
 	self.buyoutprofile = profile
-	self.name = name
 	self.picture = self.findPicture(male)
 	self.reputationscore = 0.8 + rand.Float64()*0.2
 
+	self.cronevent = timer.AddCron(1, 1, -1, func() {
+		self.NewYearOperations()
+	})
+
 	// add some equity
-	self.ledger.AddMovement(accounting.LedgerMovement{
+	self.GetLedger().AddMovement(accounting.LedgerMovement{
 		Description: "initial capital",
 		Amount:      initialcapital,
 		AccountFrom: "4561",
 		AccountTo:   "5121",
 		Date:        timer.CurrentTime,
-	})
-
-	self.cronevent = timer.AddCron(1, 1, -1, func() {
-		self.NewYearOperations()
 	})
 }
 
@@ -178,43 +137,38 @@ func (self *NPDatacenter) LoadGame(timer *timer.GameTimer, trend *supplier.Trend
 	}
 
 	locationname := v["location"].(string)
-	location := supplier.AvailableLocation["siliconvalley"]
-
-	if l, ok := supplier.AvailableLocation[locationname]; ok {
-		location = l
-	} else {
-		log.Error("NewPlayer(): location " + locationname + " not found")
-		locationname = "siliconvalley"
-	}
+	name := v["name"].(string)
+	self.ActorAbstract.Init(timer, locationname, name)
 
 	profilename := v["profile"].(string)
 	// load buyout profile
 	data, err := global.Asset("assets/npdatacenter/" + profilename)
 	if err != nil {
-		log.Error("NewNPDatacenter(): asset assets/npdatacenter/" + profilename + " not found")
+		log.Error("NPDatacenter::LoadGame(): asset assets/npdatacenter/" + profilename + " not found")
 		return
 	}
 	profile := make(map[string]BuyoutProfile)
 	err = json.Unmarshal(data, &profile)
 	if err != nil {
-		log.Error("NewNPDatacenter(): asset assets/npdatacenter/" + profilename + " not json compatible")
+		log.Error("NPDatacenter::LoadGame(): asset assets/npdatacenter/" + profilename + " not json compatible")
 		return
 	}
 
-	self.timer = timer
-	self.inventory = supplier.NewInventory(timer)
-	self.ledger = accounting.NewLedger(timer, location.Taxrate, location.Bankinterestrate)
-	self.location = location
-	self.locationname = locationname
 	self.trend = trend
 	self.profilename = profilename
 	self.buyoutprofile = profile
-	self.name = v["name"].(string)
 	self.picture = v["picture"].(string)
 	self.reputationscore = v["reputation"].(float64)
 
-	self.ledger.Load(v["ledger"].(map[string]interface{}), location.Taxrate, location.Bankinterestrate)
-	self.inventory.Load(v["inventory"].(map[string]interface{}))
+	self.GetLedger().Load(v["ledger"].(map[string]interface{}), self.GetLocation().Taxrate, self.GetLocation().Bankinterestrate)
+	self.GetInventory().Load(v["inventory"].(map[string]interface{}))
+
+	if offersinterface, ok := v["offers"]; ok {
+		offers := offersinterface.([]interface{})
+		for _, offer := range offers {
+			self.LoadOffer(offer.(map[string]interface{}))
+		}
+	}
 
 	self.cronevent = timer.AddCron(1, 1, -1, func() {
 		self.NewYearOperations()
@@ -222,13 +176,24 @@ func (self *NPDatacenter) LoadGame(timer *timer.GameTimer, trend *supplier.Trend
 }
 
 func (self *NPDatacenter) Save() string {
-	save := fmt.Sprintf(`{"location": "%s",`, self.locationname) + "\n"
+	save := fmt.Sprintf(`{"location": "%s",`, self.GetLocationName()) + "\n"
 	save += fmt.Sprintf(`"profile": "%s",`, self.profilename) + "\n"
-	save += fmt.Sprintf(`"name": "%s",`, self.name) + "\n"
+	save += fmt.Sprintf(`"name": "%s",`, self.GetName()) + "\n"
 	save += fmt.Sprintf(`"picture": "%s",`, self.picture) + "\n"
 	save += fmt.Sprintf(`"reputation": %f,`, self.reputationscore) + "\n"
-	save += fmt.Sprintf(`"inventory": %s,`, self.inventory.Save()) + "\n"
-	save += fmt.Sprintf(`"ledger": %s`, self.ledger.Save()) + "}\n"
+	save += fmt.Sprintf(`"inventory": %s,`, self.GetInventory().Save()) + "\n"
+	save += `"offers":[`
+	firstitem := true
+	for _, offer := range self.GetOffers() {
+		if firstitem == true {
+			firstitem = false
+		} else {
+			save += ",\n"
+		}
+		save += offer.Save()
+	}
+	save += "],"
+	save += fmt.Sprintf(`"ledger": %s`, self.GetLedger().Save()) + "}\n"
 	return save
 }
 
@@ -239,8 +204,8 @@ func (self *NPDatacenter) Save() string {
 func (self *NPDatacenter) NewYearOperations() {
 	log.Debug("NPDatacenter::NewYearOperations()")
 	// let's begin by removing all offers
-	for _, o := range self.inventory.GetOffers() {
-		self.inventory.RemoveOffer(o)
+	for _, o := range self.GetOffers() {
+		self.RemoveOffer(o)
 	}
 
 	// loop over the buyoutprofile and buy some hardware + create the corresponding offer
@@ -308,7 +273,7 @@ func (self *NPDatacenter) NewYearOperations() {
 			unitprice := serverconf.Price(self.trend, self.timer.CurrentTime)
 			log.Info("NPDatacenter::NewYearOperations(): profilename", profilename, "unitprice:", unitprice, "profilemargin:", profile.Margin)
 
-			currentCash := self.ledger.GetYearAccount(self.timer.CurrentTime.Year())["51"]
+			currentCash := self.GetLedger().GetYearAccount(self.timer.CurrentTime.Year())["51"]
 
 			nb := int32((currentCash * profile.Buyperyear) / unitprice)
 			// if we can afford, then we buy it
@@ -319,18 +284,18 @@ func (self *NPDatacenter) NewYearOperations() {
 					Unitprice:  unitprice,
 					Nb:         nb,
 				}
-				self.inventory.Cart = append(self.inventory.Cart, item)
-				self.ledger.BuyProduct(fmt.Sprintf("buying %s", profilename), self.timer.CurrentTime, item.Unitprice*float64(nb))
-				items := self.inventory.BuyCart(self.timer.CurrentTime)
-				self.inventory.Cart = make([]*supplier.CartItem, 0)
+				self.GetInventory().Cart = append(self.GetInventory().Cart, item)
+				self.GetLedger().BuyProduct(fmt.Sprintf("buying %s", profilename), self.timer.CurrentTime, item.Unitprice*float64(nb))
+				items := self.GetInventory().BuyCart(self.timer.CurrentTime)
+				self.GetInventory().Cart = make([]*supplier.CartItem, 0)
 
 				// create the offer
 				var pool supplier.ServerPool
 				// check the first available pool
 				if profile.Vps {
-					pool = self.inventory.GetDefaultVpsPool()
+					pool = self.GetInventory().GetDefaultVpsPool()
 				} else {
-					pool = self.inventory.GetDefaultPhysicalPool()
+					pool = self.GetInventory().GetDefaultPhysicalPool()
 				}
 
 				// it shouldn't happen...
@@ -341,28 +306,28 @@ func (self *NPDatacenter) NewYearOperations() {
 
 				// add newly create InventoryItem to the pool
 				for _, i := range items {
-					self.inventory.AssignPool(i, pool)
+					self.GetInventory().AssignPool(i, pool)
 				}
 
 				offer := &supplier.ServerOffer{
-					Active:    true,
-					Name:      profilename,
-					Inventory: self.inventory,
-					Pool:      pool,
-					Vps:       profile.Vps,
-					Nbcores:   serverconf.NbCore * serverconf.NbProcessors,
-					Ramsize:   serverconf.NbSlotRam * serverconf.RamSize,
-					Disksize:  serverconf.NbDisks * serverconf.DiskSize,
-					Vt:        serverconf.VtSupport,
-					Price:     unitprice * profile.Margin,
+					Active:   true,
+					Name:     profilename,
+					Actor:    self,
+					Pool:     pool,
+					Vps:      profile.Vps,
+					Nbcores:  serverconf.NbCore * serverconf.NbProcessors,
+					Ramsize:  serverconf.NbSlotRam * serverconf.RamSize,
+					Disksize: serverconf.NbDisks * serverconf.DiskSize,
+					Vt:       serverconf.VtSupport,
+					Price:    unitprice * profile.Margin,
 				}
-				self.inventory.AddOffer(offer)
+				self.AddOffer(offer)
 			}
 		}
 	}
 
 	// hack: we (re)place all servers
-	for i, item := range self.inventory.Items {
+	for i, item := range self.GetInventory().Items {
 		item.Xplaced = 1
 		item.Yplaced = 1
 		item.Zplaced = i

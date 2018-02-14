@@ -295,6 +295,26 @@ func (self *Ledger) PayUtility(price float64, t time.Time) {
 	})
 }
 
+func (self *Ledger) PayMapUpgrade(price float64, t time.Time) {
+	self.AddMovement(LedgerMovement{
+		Description: "migrate to bigger map",
+		Amount:      price,
+		Date:        t,
+		AccountFrom: "5121",
+		AccountTo:   "61", // unknown account for transport/relocation
+	})
+}
+
+func (self *Ledger) PayLandlord(metersquare int32, price float64, t time.Time) {
+	self.AddMovement(LedgerMovement{
+		Description: fmt.Sprintf("%d m2 renting", metersquare),
+		Amount:      price,
+		Date:        t,
+		AccountFrom: "5121",
+		AccountTo:   "6132",
+	})
+}
+
 //
 // 161 (capital/debt) -> 5121 (current bank account)
 // every year (every month?) interest rate: 5121 -> 46 (fictious bank account for interest)

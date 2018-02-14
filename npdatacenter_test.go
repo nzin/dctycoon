@@ -58,7 +58,7 @@ func TestNPDatacenterBuyout(t *testing.T) {
 	assert.Equal(t, "R100", npd.buyoutprofile["R100physical"].Servertype, "check if the profile is correctly loaded")
 
 	npd.NewYearOperations()
-	assert.Equal(t, 1, len(npd.inventory.Items), "new year passed, we bought some servers")
-	assert.Equal(t, 1, len(npd.inventory.GetOffers()), "we have one offer for R100 server")
-	assert.Equal(t, float64(126.49499999999999), npd.inventory.GetOffers()[0].Price, "offer is priced as 81$")
+	assert.Equal(t, 1, len(npd.GetInventory().Items), "new year passed, we bought some servers")
+	assert.Equal(t, 1, len(npd.GetOffers()), "we have one offer for R100 server")
+	assert.Equal(t, float64(126.49499999999999), npd.GetOffers()[0].Price, "offer is priced as 81$")
 }

@@ -26,6 +26,8 @@ func TestMigrationMap(t *testing.T) {
 
 	datacenter.LoadMap(map1)
 
+	assert.Equal(t, int32(12), datacenter.GetMeterSquares(), "12 m2 room")
+
 	datamap2, err := global.Asset("assets/dcmap/20_20_standard.json")
 	assert.Empty(t, err, "load 20_20_standard.json map")
 

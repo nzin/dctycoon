@@ -221,7 +221,7 @@ func (self *Game) InitGame(locationid string, difficulty int32, companyname stri
 	}
 	self.dcmap.SetGame(self.player.GetInventory(), self.player.GetLocation(), self.timer.CurrentTime)
 	self.dcmap.InitMap("3_4_room.json")
-	self.gameui.SetGame(self.timer, self.player.GetInventory(), self.player.GetLedger(), self.trends, self.player.GetLocation(), self.dcmap, self.player.GetFirewall())
+	self.gameui.SetGame(self.timer, self.player, self.trends, self.dcmap)
 	self.showupgrade = false
 	self.gameui.ShowDC()
 }
@@ -274,7 +274,7 @@ func (self *Game) LoadGame(filename string) {
 	}
 	self.dcmap.SetGame(self.player.GetInventory(), self.player.GetLocation(), self.timer.CurrentTime)
 	self.dcmap.LoadMap(v["map"].(map[string]interface{}))
-	self.gameui.SetGame(self.timer, self.player.GetInventory(), self.player.GetLedger(), self.trends, self.player.GetLocation(), self.dcmap, self.player.GetFirewall())
+	self.gameui.SetGame(self.timer, self.player, self.trends, self.dcmap)
 	self.showupgrade = false
 	self.gameui.ShowDC()
 	self.CheckUpgrade()
@@ -399,6 +399,8 @@ func (self *Game) GenerateDemandAndFee() {
 			consumption, _, _ := a.GetInventory().GetGlobalPower()
 			a.GetLedger().PayUtility(a.GetInventory().GetMonthlyPowerlinesPrice()+consumption*24*30*a.GetLocation().Electricitycost/1000, self.timer.CurrentTime)
 		}
+		metersquares := self.dcmap.GetMeterSquares()
+		self.player.GetLedger().PayLandlord(metersquares, float64(metersquares)*self.player.GetLocation().Metersquareprice, self.timer.CurrentTime)
 	}
 
 	// run firewall rules

@@ -107,7 +107,7 @@ func NewOpponentStatWidgetLine(opponent *NPDatacenter) *OpponentStatWidgetLine {
 		opponent:   opponent,
 		picture:    sws.NewLabelWidget(100, 100, ""),
 		name:       sws.NewLabelWidget(300, 25, opponent.GetName()),
-		location:   sws.NewLabelWidget(300, 25, opponent.location.Name),
+		location:   sws.NewLabelWidget(300, 25, opponent.GetLocation().Name),
 		nbservers:  sws.NewLabelWidget(300, 25, fmt.Sprintf("%d", len(opponent.GetInventory().Items))),
 		reputation: sws.NewLabelWidget(300, 25, fmt.Sprintf("%.2f", opponent.GetReputationScore())),
 	}

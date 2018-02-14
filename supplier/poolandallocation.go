@@ -308,16 +308,16 @@ func NewVpsServerPool(name string, cpuoverallocation, ramoverallocation float64)
 }
 
 type ServerOffer struct {
-	Active    bool
-	Name      string
-	Inventory *Inventory
-	Pool      ServerPool
-	Vps       bool
-	Nbcores   int32
-	Ramsize   int32
-	Disksize  int32
-	Vt        bool    // only for non vps offer
-	Price     float64 // per month
+	Active   bool
+	Name     string
+	Actor    Actor
+	Pool     ServerPool
+	Vps      bool
+	Nbcores  int32
+	Ramsize  int32
+	Disksize int32
+	Vt       bool    // only for non vps offer
+	Price    float64 // per month
 	// network float64
 }
 
@@ -424,7 +424,7 @@ func (self *DemandInstance) FindOffer(actors []Actor, now time.Time) (*ServerBun
 		nooffer := false
 		for appname, app := range self.Template.Specs {
 			// we filter
-			offers := actor.GetInventory().GetOffers()
+			offers := actor.GetOffers()
 			for _, filter := range app.Filters {
 				offers = filter.Filter(offers)
 			}
@@ -504,6 +504,7 @@ func (self *DemandInstance) FindOffer(actors []Actor, now time.Time) (*ServerBun
 			points[invSelection[appname]] = 0.0
 			offers = append(offers, invSelection[appname])
 		}
+		// for each type of priorty we sort the different offers
 		for _, prio := range app.priorities {
 			prio.Score(offers, &points)
 		}
@@ -583,15 +584,6 @@ func (self *ServerContract) Save() string {
 	return str
 }
 
-// Actor -> Player or NPDatacenter
-type Actor interface {
-	GetInventory() *Inventory
-	GetLedger() *accounting.Ledger
-	GetName() string
-	GetLocation() *LocationType
-	GetReputationScore() float64
-}
-
 type ServerBundle struct {
 	Contracts   []*ServerContract
 	Renewalrate float64
@@ -638,7 +630,7 @@ type PriorityPoint interface {
 //					"price": 2,
 //					"disk": 1,
 //					"network":1,
-//					"image":1,
+//					"reputation":1,
 //					"captive":2
 //				},
 //				"numbers": { "low": 1, "high": 1}
@@ -692,7 +684,7 @@ func serverDemandParsing(json map[string]interface{}) *ServerDemandTemplate {
 //					"price": 2,
 //					"disk": 1,
 //					"network":1,
-//					"image":1,
+//					"reputation":1,
 //					"captive":2
 //				},
 //				"numbers": { "low": 1, "high": 1}
@@ -704,7 +696,7 @@ func serverDemandParsing(json map[string]interface{}) *ServerDemandTemplate {
 //				"priorities": {
 //					"disk": 1,
 //					"network":1,
-//					"image":1
+//					"reputation":1
 //				},
 //				"numbers": { "low": 1, "high": 1}
 //			}

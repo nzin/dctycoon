@@ -2,7 +2,7 @@ package dctycoon
 
 import (
 	"github.com/nzin/dctycoon/accounting"
-	"github.com/nzin/dctycoon/firewall"
+	"github.com/nzin/dctycoon/global"
 	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/dctycoon/timer"
 	"github.com/nzin/sws"
@@ -74,16 +74,16 @@ func NewGameUI(quit *bool, root *sws.RootWidget, game *Game) *GameUI {
 // SetGame is used when creating a new game, or loading a game
 // This re-init all ledger / inventory UI.
 // Therefore you have to populate the ledger and inventory AFTER calling this method
-func (self *GameUI) SetGame(globaltimer *timer.GameTimer, inventory *supplier.Inventory, ledger *accounting.Ledger, trends *supplier.Trend, location *supplier.LocationType, dcmap *DatacenterMap, firewall *firewall.Firewall) {
+func (self *GameUI) SetGame(globaltimer *timer.GameTimer, player *Player, trends *supplier.Trend, dcmap *DatacenterMap) {
 	log.Debug("GameUI::InitGame()")
-	self.dc.SetGame(inventory, globaltimer.CurrentTime, dcmap)
-	self.supplierwidget.SetGame(globaltimer, inventory, ledger, trends)
-	self.inventorywidget.SetGame(inventory, globaltimer.CurrentTime)
-	self.accountingwidget.SetGame(globaltimer, ledger)
-	self.dock.SetGame(globaltimer, ledger)
+	self.dc.SetGame(player.GetInventory(), globaltimer.CurrentTime, dcmap)
+	self.supplierwidget.SetGame(globaltimer, player.GetInventory(), player.GetLedger(), trends)
+	self.inventorywidget.SetGame(player, globaltimer.CurrentTime)
+	self.accountingwidget.SetGame(globaltimer, player.GetLedger())
+	self.dock.SetGame(globaltimer, player.GetLedger())
 	self.statswidget.SetGame()
-	self.firewallwidget.SetGame(firewall)
-	self.electricitywidget.SetGame(inventory, location)
+	self.firewallwidget.SetGame(player.GetFirewall())
+	self.electricitywidget.SetGame(player.GetInventory(), player.GetLocation())
 
 	self.supplierwidget.Hide()
 	self.inventorywidget.Hide()
@@ -119,6 +119,14 @@ func (self *GameUI) ShowOpening() {
 func (self *GameUI) ShowUpgrade(game *Game, nextmap string) {
 	self.dc.ShowUpgrade()
 	self.dc.SetUpgradeCallback(func() {
-		game.MigrateMap(nextmap)
+		speed := game.GetCurrentSpeed()
+		game.ChangeGameSpeed(SPEED_STOP)
+		iconsurface, _ := global.LoadImageAsset("assets/ui/small-rocket-ship-silhouette.png")
+		sws.ShowModalYesNoSurfaceicon(self.rootwindow, "Relocate for bigger", iconsurface, "Are you sure you want to relocate now?\nThere is a 50k fee for that.", func() {
+			game.GetPlayer().GetLedger().PayMapUpgrade(50000, game.timer.CurrentTime)
+			game.MigrateMap(nextmap)
+		}, func() {
+			game.ChangeGameSpeed(speed)
+		})
 	})
 }

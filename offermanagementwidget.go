@@ -1,4 +1,4 @@
-package supplier
+package dctycoon
 
 /*
  * Offer management widget allow to create and check physical/vps OFFERs
@@ -14,6 +14,7 @@ import (
 	"strconv"
 
 	"github.com/nzin/dctycoon/global"
+	"github.com/nzin/dctycoon/supplier"
 	"github.com/nzin/dctycoon/ui"
 	"github.com/nzin/sws"
 	log "github.com/sirupsen/logrus"
@@ -31,7 +32,7 @@ type OfferManagementLineWidget struct {
 	Price    *sws.LabelWidget
 	Fitting  *sws.LabelWidget
 
-	offer *ServerOffer
+	offer *supplier.ServerOffer
 }
 
 func (self *OfferManagementLineWidget) AddChild(child sws.Widget) {
@@ -77,20 +78,20 @@ func (self *OfferManagementLineWidget) Update() {
 	self.Fitting.SetText(fmt.Sprintf("%d", self.offer.Pool.HowManyFit(self.offer.Nbcores, self.offer.Ramsize, self.offer.Disksize, self.offer.Vt)))
 }
 
-func (self *OfferManagementLineWidget) InventoryItemAdd(*InventoryItem) {
+func (self *OfferManagementLineWidget) InventoryItemAdd(*supplier.InventoryItem) {
 	self.Update()
 }
-func (self *OfferManagementLineWidget) InventoryItemRemove(*InventoryItem) {
+func (self *OfferManagementLineWidget) InventoryItemRemove(*supplier.InventoryItem) {
 	self.Update()
 }
-func (self *OfferManagementLineWidget) InventoryItemAllocate(*InventoryItem) {
+func (self *OfferManagementLineWidget) InventoryItemAllocate(*supplier.InventoryItem) {
 	self.Update()
 }
-func (self *OfferManagementLineWidget) InventoryItemRelease(*InventoryItem) {
+func (self *OfferManagementLineWidget) InventoryItemRelease(*supplier.InventoryItem) {
 	self.Update()
 }
 
-func NewOfferManagementLineWidget(offer *ServerOffer) *OfferManagementLineWidget {
+func NewOfferManagementLineWidget(offer *supplier.ServerOffer) *OfferManagementLineWidget {
 	ramSizeText := fmt.Sprintf("%d Mo", offer.Ramsize)
 	if offer.Ramsize >= 2048 {
 		ramSizeText = fmt.Sprintf("%d Go", offer.Ramsize/1024)
@@ -163,7 +164,7 @@ func NewOfferManagementLineWidget(offer *ServerOffer) *OfferManagementLineWidget
 
 type OfferManagementWidget struct {
 	sws.CoreWidget
-	inventory      *Inventory
+	player         *Player
 	root           *sws.RootWidget
 	addoffer       *sws.ButtonWidget
 	updateoffer    *sws.ButtonWidget
@@ -208,7 +209,7 @@ func NewOfferManagementWidget(root *sws.RootWidget) *OfferManagementWidget {
 	corewidget := sws.NewCoreWidget(800, 400)
 	widget := &OfferManagementWidget{
 		CoreWidget:    *corewidget,
-		inventory:     nil,
+		player:        nil,
 		root:          root,
 		addoffer:      sws.NewButtonWidget(150, 25, "Create offer"),
 		updateoffer:   sws.NewButtonWidget(150, 25, "Update offer"),
@@ -217,7 +218,7 @@ func NewOfferManagementWidget(root *sws.RootWidget) *OfferManagementWidget {
 		scrolllisting: sws.NewScrollWidget(650, 0),
 		highlight:     nil,
 	}
-	widget.newofferwindow = NewOfferManagementNewOfferWidget(root, func(offer *ServerOffer) {
+	widget.newofferwindow = NewOfferManagementNewOfferWidget(root, func(offer *supplier.ServerOffer) {
 		if widget.highlight == nil {
 			offerline := NewOfferManagementLineWidget(offer)
 			offerline.Checkbox.SetClicked(func() {
@@ -228,10 +229,10 @@ func NewOfferManagementWidget(root *sws.RootWidget) *OfferManagementWidget {
 			widget.scrolllisting.PostUpdate()
 			// Inventory add offer
 			offer.Pool.AddPoolSubscriber(offerline)
-			widget.inventory.AddOffer(offer)
+			widget.player.AddOffer(offer)
 		} else {
 			// Inventory update offer
-			widget.inventory.UpdateOffer(offer)
+			//widget.player.UpdateOffer(offer)
 			offer.Pool.AddPoolSubscriber(widget.highlight)
 			widget.highlight.Update()
 		}
@@ -263,7 +264,7 @@ func NewOfferManagementWidget(root *sws.RootWidget) *OfferManagementWidget {
 			//unsubscribe pool
 			widget.highlight.offer.Pool.RemovePoolSubscriber(widget.highlight)
 			// Inventory remove offer
-			widget.inventory.RemoveOffer(widget.highlight.offer)
+			widget.player.RemoveOffer(widget.highlight.offer)
 			if len(widget.vbox.GetChildren()) == 0 {
 				widget.RemoveChild(widget.scrolllisting)
 			}
@@ -314,10 +315,10 @@ func NewOfferManagementWidget(root *sws.RootWidget) *OfferManagementWidget {
 	return widget
 }
 
-func (self *OfferManagementWidget) SetGame(inventory *Inventory) {
-	log.Debug("OfferManagementWidget::SetGame(", inventory, ")")
-	self.newofferwindow.SetGame(inventory)
-	if self.inventory != nil {
+func (self *OfferManagementWidget) SetGame(player *Player) {
+	log.Debug("OfferManagementWidget::SetGame(", player, ")")
+	self.newofferwindow.SetGame(player.GetInventory())
+	if self.player != nil {
 		for _, o := range self.vbox.GetChildren() {
 			line := o.(*OfferManagementLineWidget)
 
@@ -329,9 +330,9 @@ func (self *OfferManagementWidget) SetGame(inventory *Inventory) {
 		self.RemoveChild(self.scrolllisting)
 		self.highlight = nil
 	}
-	self.inventory = inventory
+	self.player = player
 
-	for _, o := range self.inventory.offers {
+	for _, o := range self.player.GetOffers() {
 		offerline := NewOfferManagementLineWidget(o)
 		offerline.Checkbox.SetClicked(func() {
 			self.HighlightLine(offerline, offerline.Checkbox.Selected)
@@ -344,15 +345,15 @@ func (self *OfferManagementWidget) SetGame(inventory *Inventory) {
 	}
 }
 
-func (self *OfferManagementNewOfferWidget) SetGame(inventory *Inventory) {
+func (self *OfferManagementNewOfferWidget) SetGame(inventory *supplier.Inventory) {
 	self.inventory = inventory
 }
 
-func (self *OfferManagementNewOfferWidget) Show(offer *ServerOffer) {
+func (self *OfferManagementNewOfferWidget) Show(offer *supplier.ServerOffer) {
 	self.rootwindow.AddChild(self.mainwidget)
 	self.rootwindow.SetFocus(self.mainwidget)
 	if offer == nil {
-		self.offer = &ServerOffer{}
+		self.offer = &supplier.ServerOffer{}
 		self.Name.SetText("")
 		self.Vps.SetSelected(false)
 		self.Nbcores.SetActiveChoice(0)
@@ -403,8 +404,8 @@ func (self *OfferManagementNewOfferWidget) Hide() {
 }
 
 type OfferManagementNewOfferWidget struct {
-	offer        *ServerOffer
-	inventory    *Inventory
+	offer        *supplier.ServerOffer
+	inventory    *supplier.Inventory
 	rootwindow   *sws.RootWidget
 	mainwidget   *sws.MainWidget
 	Name         *sws.InputWidget
@@ -417,11 +418,11 @@ type OfferManagementNewOfferWidget struct {
 	Price        *sws.InputWidget
 	Save         *sws.ButtonWidget
 	Cancel       *sws.ButtonWidget
-	savecallback func(*ServerOffer)
+	savecallback func(*supplier.ServerOffer)
 	HowManyFit   *sws.LabelWidget
 }
 
-func NewOfferManagementNewOfferWidget(root *sws.RootWidget, savecallback func(*ServerOffer)) *OfferManagementNewOfferWidget {
+func NewOfferManagementNewOfferWidget(root *sws.RootWidget, savecallback func(*supplier.ServerOffer)) *OfferManagementNewOfferWidget {
 	mainwidget := sws.NewMainWidget(400, 350, "Offer settings", false, false)
 	mainwidget.Move(100, 100)
 

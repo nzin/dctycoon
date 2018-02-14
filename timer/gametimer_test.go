@@ -12,10 +12,10 @@ func TestGameTimer(t *testing.T) {
 	passfebruary := false
 
 	gt := NewGameTimer()
-	gt.AddEvent(time.Date(1995, 2, 1, 1, 1, 1, 0, time.UTC), func() {
+	gt.AddEvent(time.Date(1997, 2, 1, 1, 1, 1, 0, time.UTC), func() {
 		passfebruary = true
 	})
-	gt.CurrentTime = time.Date(1995, 1, 30, 1, 1, 1, 0, time.UTC)
+	gt.CurrentTime = time.Date(1997, 1, 30, 1, 1, 1, 0, time.UTC)
 	// go to 31/1, nothing happens
 	gt.TimerClock()
 	assert.Equal(t, false, passfebruary, "31/1, nothing happens yet")
@@ -25,10 +25,10 @@ func TestGameTimer(t *testing.T) {
 
 	// skip some days...
 	passmarch := false
-	gt.AddEvent(time.Date(1995, 3, 1, 1, 1, 1, 0, time.UTC), func() {
+	gt.AddEvent(time.Date(1997, 3, 1, 1, 1, 1, 0, time.UTC), func() {
 		passmarch = true
 	})
-	gt.CurrentTime = time.Date(1995, 3, 3, 1, 1, 1, 0, time.UTC)
+	gt.CurrentTime = time.Date(1997, 3, 3, 1, 1, 1, 0, time.UTC)
 	gt.TimerClock()
 	assert.Equal(t, true, passmarch, "new month")
 }

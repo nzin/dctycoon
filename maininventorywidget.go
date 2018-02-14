@@ -23,7 +23,7 @@ type MainInventoryWidget struct {
 	mainwidget  *sws.MainWidget
 	tabwidget   *sws.TabWidget
 	serverpools *supplier.PoolManagementWidget
-	offers      *supplier.OfferManagementWidget
+	offers      *OfferManagementWidget
 }
 
 func (self *MainInventoryWidget) Show() {
@@ -50,7 +50,7 @@ func NewMainInventoryWidget(root *sws.RootWidget) *MainInventoryWidget {
 		mainwidget:  mainwidget,
 		tabwidget:   sws.NewTabWidget(200, 200),
 		serverpools: supplier.NewPoolManagementWidget(root),
-		offers:      supplier.NewOfferManagementWidget(root),
+		offers:      NewOfferManagementWidget(root),
 	}
 	widget.tabwidget.AddTab("server pools", widget.serverpools)
 	widget.tabwidget.AddTab("offers", widget.offers)
@@ -64,7 +64,7 @@ func NewMainInventoryWidget(root *sws.RootWidget) *MainInventoryWidget {
 	return widget
 }
 
-func (self *MainInventoryWidget) SetGame(inventory *supplier.Inventory, currenttime time.Time) {
-	self.serverpools.SetGame(inventory, currenttime)
-	self.offers.SetGame(inventory)
+func (self *MainInventoryWidget) SetGame(player *Player, currenttime time.Time) {
+	self.serverpools.SetGame(player.GetInventory(), currenttime)
+	self.offers.SetGame(player)
 }
