@@ -38,7 +38,7 @@ func (self *MainFirewallWidget) SetGame(firewall *firewall.Firewall) {
 
 // NewMainInventoryWidget presents the pool and offer management window
 func NewMainFirewallWidget(root *sws.RootWidget) *MainFirewallWidget {
-	mainwidget := sws.NewMainWidget(900, 600, " Firewall Management ", true, true)
+	mainwidget := sws.NewMainWidget(975, 600, " Firewall Management ", true, true)
 	mainwidget.Center(root)
 
 	widget := &MainFirewallWidget{
@@ -344,6 +344,13 @@ func (self *FirewallStatusWidget) addFirewallEvent(event *firewall.FirewallEvent
 	}
 	labels = append(labels, event.Packet.Ipsrc)
 	labels = append(labels, event.Packet.Ipdst)
+	labels = append(labels, fmt.Sprintf("%d", event.Packet.SrcPort))
+	labels = append(labels, fmt.Sprintf("%d", event.Packet.DstPort))
+	status := "BLOCK"
+	if event.Pass == true {
+		status = "PASS"
+	}
+	labels = append(labels, status)
 
 	row := ui.NewTableWithDetailsRow(bgColor, labels, details)
 	self.pastEvents.AddRowTop(row)
@@ -384,14 +391,14 @@ func (self *FirewallStatusWidget) Resize(w, h int32) {
 	if h < 120 {
 		h = 120
 	}
-	self.pastEvents.Resize(800, h-90)
+	self.pastEvents.Resize(940, h-90)
 }
 
 func NewFirewallStatusWidget(w, h int32) *FirewallStatusWidget {
 	corewidget := sws.NewCoreWidget(w, h)
 	widget := &FirewallStatusWidget{
 		CoreWidget: *corewidget,
-		pastEvents: ui.NewTableWithDetails(525, 200),
+		pastEvents: ui.NewTableWithDetails(940, 200),
 		sucessrate: sws.NewLabelWidget(100, 25, "100%"),
 	}
 	sucesslabel := sws.NewLabelWidget(200, 25, "Firewall effectiveness:")
@@ -410,6 +417,9 @@ func NewFirewallStatusWidget(w, h int32) *FirewallStatusWidget {
 	widget.pastEvents.AddHeader("Protocol", 100, ui.TableWithDetailsRowByString)
 	widget.pastEvents.AddHeader("Source IP", 200, nil)
 	widget.pastEvents.AddHeader("Dest IP", 200, nil)
+	widget.pastEvents.AddHeader("Src port", 100, nil)
+	widget.pastEvents.AddHeader("Dst port", 100, nil)
+	widget.pastEvents.AddHeader("Status", 100, nil)
 	widget.AddChild(widget.pastEvents)
 
 	return widget
