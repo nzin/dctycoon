@@ -250,13 +250,13 @@ func (firewall *Firewall) GenerateTraffic(reputation *supplier.Reputation, time 
 		s.PacketFiltered(event)
 	}
 
-	if time.Day()%5 == 1 {
-		if res != packet.Harmless {
-			// something went wrong
-			reputation.RecordNegativePoint(time)
-		}
-		reputation.RecordPositivePoint(time)
+	//	if time.Day()%5 == 1 {
+	if res != packet.Harmless {
+		// something went wrong
+		reputation.RecordNegativePoint(time)
 	}
+	reputation.RecordPositivePoint(time)
+	//	}
 }
 
 func NewFirewall() *Firewall {

