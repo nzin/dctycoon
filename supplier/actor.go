@@ -56,7 +56,7 @@ func (self *ActorAbstract) GetReputationScore() float64 {
 }
 
 func (actor *ActorAbstract) Init(timer *timer.GameTimer, locationname, name string) {
-	log.Error("ActorAbstract::Init(", timer, ",", locationname, ",", name, ")")
+	log.Debug("ActorAbstract::Init(", timer, ",", locationname, ",", name, ")")
 	location := AvailableLocation["siliconvalley"]
 
 	if l, ok := AvailableLocation[locationname]; ok {
