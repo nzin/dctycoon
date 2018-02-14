@@ -100,3 +100,30 @@ func TestBuyLedger(t *testing.T) {
 	assert.Equal(t, 500.0, accounts[1996]["51"], "500$ remaining after the purchase")
 	assert.Equal(t, 0.0, accounts[1996]["28"], "armotization")
 }
+
+func TestDifferentPaymentLedger(t *testing.T) {
+	// timer start in 1997
+	timer := timer.NewGameTimer()
+	ledger := NewLedger(timer, 0.15, 0.03)
+
+	ledger.AddMovement(LedgerMovement{
+		Description: "initial opening",
+		Amount:      10000,
+		AccountFrom: "4561",
+		AccountTo:   "5121",
+		Date:        time.Date(1997, 1, 1, 0, 0, 0, 0, time.UTC),
+	})
+
+	assert.Equal(t, float64(10000), ledger.GetYearAccount(1997)["51"], "10000 in cash")
+
+	ledger.PayLandlord(12, 1000, timer.CurrentTime)
+	assert.Equal(t, float64(9000), ledger.GetYearAccount(1997)["51"], "9000 in cash")
+
+	ledger.PayMapUpgrade(500, timer.CurrentTime)
+	assert.Equal(t, float64(8500), ledger.GetYearAccount(1997)["51"], "8500 in cash")
+
+	ledger.PayMapUpgrade(500, timer.CurrentTime)
+	assert.Equal(t, float64(8000), ledger.GetYearAccount(1997)["51"], "8000 in cash")
+
+	assert.Equal(t, float64(2000), ledger.GetYearAccount(1997)["61"], "2000 payed")
+}
