@@ -61,4 +61,13 @@ func TestNPDatacenterBuyout(t *testing.T) {
 	assert.Equal(t, 1, len(npd.GetInventory().Items), "new year passed, we bought some servers")
 	assert.Equal(t, 1, len(npd.GetOffers()), "we have one offer for R100 server")
 	assert.Equal(t, float64(126.49499999999999), npd.GetOffers()[0].Price, "offer is priced as 81$")
+
+	save := npd.Save()
+
+	npd = NewNPDatacenter()
+	var data interface{}
+	err := json.Unmarshal([]byte(save), &data)
+	assert.NoError(t, err, "unmarshall correctly npd save")
+	npd.LoadGame(gt, trend, data.(map[string]interface{}))
+	assert.Equal(t, 1, len(npd.GetInventory().Items), "reload: we still have 1 item in the inventory")
 }

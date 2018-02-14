@@ -420,11 +420,11 @@ func (self *DatacenterMap) PowerChange(time time.Time, consumed, generated, deli
 
 func (self *DatacenterMap) getHeatSpread(x, y int32) (temperature, spreadfactor float64) {
 	if y < 0 || y >= self.height || x < 0 || x >= self.width {
-		return self.externaltemp, 0.002
+		return self.externaltemp, 0.005
 	}
 	if self.tiles[y][x].floor == "green" {
 		// building wall are isolating a bit
-		return self.heatmap[y][x], 0.002
+		return self.heatmap[y][x], 0.005
 	} else {
 		return self.heatmap[y][x], 0.2
 	}
