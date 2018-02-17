@@ -97,6 +97,7 @@ func (generator *PacketGenerator) generatePayload(instruction string) string {
 	instruction = strings.Replace(instruction, "[IP_OUT]", generator.generateIP("[IP_OUT]"), -1)
 	instruction = strings.Replace(instruction, "[IP_IN]", generator.generateIP("[IP_IN]"), -1)
 	instruction = strings.Replace(instruction, "\n", "\\n", -1)
+	instruction = strings.Replace(instruction, "\\", "\\\\", -1)
 
 	return instruction
 }

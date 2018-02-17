@@ -42,8 +42,8 @@ func (self *BalanceWidget) LedgerChange() {
 	for _, i := range []string{"60", "61", "62", "63", "64", "65"} {
 		self.lines[i].N.SetText(fmt.Sprintf("%.2f $", yearaccountN[i]))
 		self.lines[i].N1.SetText(fmt.Sprintf("%.2f $", yearaccountN1[i]))
-		total60N += yearaccountN[i]
-		total60N1 += yearaccountN1[i]
+		total60N -= yearaccountN[i]
+		total60N1 -= yearaccountN1[i]
 	}
 	self.lines["6"].N.SetText(fmt.Sprintf("%.2f $", total60N))
 	self.lines["6"].N1.SetText(fmt.Sprintf("%.2f $", total60N1))
