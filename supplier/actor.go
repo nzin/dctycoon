@@ -10,9 +10,9 @@ import (
 type Actor interface {
 	GetInventory() *Inventory
 	GetLedger() *accounting.Ledger
-	GetName() string
+	GetName() string // "you" = player
 	GetLocation() *LocationType
-	GetReputationScore() float64
+	GetReputationScore() float64 // 0.0 <= score <= 1.0
 	GetOffers() []*ServerOffer
 }
 
@@ -50,7 +50,7 @@ func (self *ActorAbstract) GetName() string {
 }
 
 //
-// GetReputationScore is part of the Actor interface
+// GetReputationScore is part of the Actor interface. 0.0 <= score <= 1.0
 func (self *ActorAbstract) GetReputationScore() float64 {
 	return 0
 }
