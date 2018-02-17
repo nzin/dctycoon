@@ -109,7 +109,6 @@ func NewBankWidget(root *sws.RootWidget) *BankWidget {
 		} else {
 			maxDebtPossibleDebt := bankwidget.ledger.GetMaximumPossibleDdebt(bankwidget.timer.CurrentTime.Year())
 			currentDebt := bankwidget.ledger.GetCurrentDebt(bankwidget.timer.CurrentTime.Year())
-			fmt.Println("NewBankWidget, ask debt: max=", maxDebtPossibleDebt, " current debt:", currentDebt)
 			if asked+currentDebt > maxDebtPossibleDebt {
 				iconsurface, _ := global.LoadImageAsset("assets/ui/paper-bill.png")
 				sws.ShowModalErrorSurfaceicon(root, "Amount inquiry error", iconsurface, "Seriously? You want to borrow that amount?\n Kid, prove you can run a big business and we will reconsider your demand (check your EBITDA).", nil)

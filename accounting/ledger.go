@@ -177,6 +177,10 @@ func (self *Ledger) GetMaximumPossibleDdebt(currentyear int) float64 {
 
 	ebitdaN1 := totalSalesN1 + total60N1
 
+	// we want to let the user be able to at least borrow 5000
+	if ebitdaN1*4 < 5000 {
+		return 5000
+	}
 	return ebitdaN1 * 4
 }
 
