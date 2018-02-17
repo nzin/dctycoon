@@ -195,7 +195,6 @@ func (self *Ledger) GetYearAccount(year int) AccountYearly {
 }
 
 func (self *Ledger) AddMovement(ev LedgerMovement) {
-	fmt.Println("Ledger::AddMovement(", ev, ")")
 	log.Debug("Ledger::AddMovement(", ev, ")")
 	ev.Id = self.autoinc
 	self.Movements.ReplaceOrInsert(&ev)
@@ -493,8 +492,6 @@ func (self *Ledger) runLedgerMonth(accounts map[int]AccountYearly, currentYear *
 		profitlost, taxes := computeYearlyTaxes(accounts[previousYear], self.taxrate)
 		accounts[previousYear]["44"] = taxes
 
-		// 51: current balance, 44: taxes
-		accounts[previousYear]["51"] -= accounts[previousYear]["44"]
 		accounts[*currentYear] = make(AccountYearly)
 		// copy from previous year, accounts 1 to 5 (except 44 => 0)
 		for k, v := range accounts[previousYear] {
@@ -502,6 +499,9 @@ func (self *Ledger) runLedgerMonth(accounts map[int]AccountYearly, currentYear *
 				accounts[*currentYear][k] = v
 			}
 		}
+		// 51: current balance, 44: taxes
+		accounts[*currentYear]["51"] -= accounts[previousYear]["44"]
+
 		accounts[*currentYear]["44"] = 0
 		accounts[*currentYear]["45"] -= profitlost
 		accounts[*currentYear]["46"] += accounts[previousYear]["66"]
