@@ -158,6 +158,37 @@ type Ledger struct {
 	timer        *timer.GameTimer
 }
 
+// GetMaximumPossibleLoan return the maximum loan possible
+// without consideration of the current loan.
+// I take a maximum rate of debt/EBITDA = 4 (not sure it is the best ratio)
+// cf https://www.investopedia.com/terms/d/debt_edbitda.asp
+//
+// Other references:
+// - http://endettement.org/taux-dendettement-maximum-entreprise/
+// - https://www.investopedia.com/articles/investing/050115/free-cash-flow-vs-ebitda-which-should-you-analyze.asp
+// - https://en.wikipedia.org/wiki/Free_cash_flow
+func (self *Ledger) GetMaximumPossibleDdebt(currentyear int) float64 {
+	yearaccountN1 := self.GetYearAccount(currentyear - 1)
+	totalSalesN1 := -yearaccountN1["70"]
+	total60N1 := float64(0)
+	for _, i := range []string{"60", "61", "62", "63", "64", "65"} {
+		total60N1 += yearaccountN1[i]
+	}
+
+	ebitdaN1 := totalSalesN1 + total60N1
+
+	// we want to let the user be able to at least borrow 5000
+	if ebitdaN1*4 < 5000 {
+		return 5000
+	}
+	return ebitdaN1 * 4
+}
+
+func (self *Ledger) GetCurrentDebt(currentyear int) float64 {
+	yearaccountN := self.GetYearAccount(currentyear)
+	return -yearaccountN["16"]
+}
+
 func (self *Ledger) GetYearAccount(year int) AccountYearly {
 	if account, ok := self.accounts[year]; ok {
 		return account
@@ -275,6 +306,7 @@ func (self *Ledger) BuyProduct(desc string, t time.Time, price float64) {
 	}
 }
 
+// When a customer pay its monthly fee
 func (self *Ledger) PayServerRenting(price float64, t time.Time, desc string) {
 	self.AddMovement(LedgerMovement{
 		Description: desc,
@@ -434,8 +466,8 @@ func computeYearlyTaxes(accounts AccountYearly, taxrate float64) (profitlost, ta
 	var ebt float64
 	ebt -= accounts["70"]
 	for k, v := range accounts {
-		if k[0] == '6' {
-			ebt += v
+		if k[0] == '6' && k != "66" {
+			ebt -= v
 		}
 	}
 	ebt -= accounts["28"] // amortissements
@@ -464,8 +496,6 @@ func (self *Ledger) runLedgerMonth(accounts map[int]AccountYearly, currentYear *
 		profitlost, taxes := computeYearlyTaxes(accounts[previousYear], self.taxrate)
 		accounts[previousYear]["44"] = taxes
 
-		// 51: current balance, 44: taxes
-		accounts[previousYear]["51"] -= accounts[previousYear]["44"]
 		accounts[*currentYear] = make(AccountYearly)
 		// copy from previous year, accounts 1 to 5 (except 44 => 0)
 		for k, v := range accounts[previousYear] {
@@ -473,6 +503,9 @@ func (self *Ledger) runLedgerMonth(accounts map[int]AccountYearly, currentYear *
 				accounts[*currentYear][k] = v
 			}
 		}
+		// 51: current balance, 44: taxes
+		accounts[*currentYear]["51"] -= accounts[previousYear]["44"]
+
 		accounts[*currentYear]["44"] = 0
 		accounts[*currentYear]["45"] -= profitlost
 		accounts[*currentYear]["46"] += accounts[previousYear]["66"]

@@ -349,7 +349,7 @@ func (self *Game) GenerateDemandAndFee() {
 			if sb.Date.Month() == self.timer.CurrentTime.Month() &&
 				sb.Date.Day() == self.timer.CurrentTime.Day() {
 				// if we don't renew, we drop it
-				if rand.Float64() >= sb.Renewalrate {
+				if rand.Float64() >= sb.Renewalrate*a.GetReputationScore() {
 					for _, c := range sb.Contracts {
 						c.Item.Pool.Release(c.Item, c.Nbcores, c.Ramsize, c.Disksize)
 					}

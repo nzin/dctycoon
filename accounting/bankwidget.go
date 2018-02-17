@@ -107,16 +107,11 @@ func NewBankWidget(root *sws.RootWidget) *BankWidget {
 			iconsurface, _ := global.LoadImageAsset("assets/ui/paper-bill.png")
 			sws.ShowModalErrorSurfaceicon(root, "Amount error", iconsurface, "The amount doesn't seems to be a number", nil)
 		} else {
-			yearaccountN := bankwidget.ledger.GetYearAccount(bankwidget.timer.CurrentTime.Year())
-			yearaccountN1 := bankwidget.ledger.GetYearAccount(bankwidget.timer.CurrentTime.Year() - 1)
-			currentDebt := -yearaccountN["16"]
-			maxAllowed := 40000.0
-			if maxAllowed < 4*-yearaccountN1["70"] {
-				maxAllowed = 4 * -yearaccountN1["70"]
-			}
-			if asked+currentDebt > maxAllowed {
+			maxDebtPossibleDebt := bankwidget.ledger.GetMaximumPossibleDdebt(bankwidget.timer.CurrentTime.Year())
+			currentDebt := bankwidget.ledger.GetCurrentDebt(bankwidget.timer.CurrentTime.Year())
+			if asked+currentDebt > maxDebtPossibleDebt {
 				iconsurface, _ := global.LoadImageAsset("assets/ui/paper-bill.png")
-				sws.ShowModalErrorSurfaceicon(root, "Amount inquiry error", iconsurface, "Seriously? You want to loan that amount? Kid, prove you can run a big business and we will reconsider your demand", nil)
+				sws.ShowModalErrorSurfaceicon(root, "Amount inquiry error", iconsurface, "Seriously? You want to borrow that amount?\n Kid, prove you can run a big business and we will reconsider your demand (check your EBITDA).", nil)
 			} else {
 				bankwidget.ledger.AskLoan("bank loan", bankwidget.timer.CurrentTime, asked)
 			}

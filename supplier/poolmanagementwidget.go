@@ -22,6 +22,7 @@ type PoolManagementLineWidget struct {
 	cores     *sws.LabelWidget
 	ram       *sws.LabelWidget
 	disk      *sws.LabelWidget
+	allocated *sws.LabelWidget
 	item      *InventoryItem
 }
 
@@ -32,14 +33,20 @@ func NewPoolManagementLineWidget(item *InventoryItem) *PoolManagementLineWidget 
 		placement = fmt.Sprintf("%d/%d", item.Xplaced, item.Yplaced)
 	}
 
+	allocated := "-"
+	if item.Coresallocated != 0 {
+		allocated = "yes"
+	}
+
 	line := &PoolManagementLineWidget{
-		CoreWidget: *sws.NewCoreWidget(625, 25),
+		CoreWidget: *sws.NewCoreWidget(725, 25),
 		Checkbox:   sws.NewCheckboxWidget(),
 		desc:       sws.NewLabelWidget(200, 25, text),
 		placement:  sws.NewLabelWidget(100, 25, placement),
 		cores:      sws.NewLabelWidget(100, 25, fmt.Sprintf("%d", item.Serverconf.NbProcessors*item.Serverconf.NbCore)),
 		ram:        sws.NewLabelWidget(100, 25, global.AdjustMega(item.Serverconf.NbSlotRam*item.Serverconf.RamSize)),
 		disk:       sws.NewLabelWidget(100, 25, global.AdjustMega(item.Serverconf.NbDisks*item.Serverconf.DiskSize)),
+		allocated:  sws.NewLabelWidget(100, 25, allocated),
 		item:       item,
 	}
 	line.AddChild(line.Checkbox)
@@ -58,6 +65,9 @@ func NewPoolManagementLineWidget(item *InventoryItem) *PoolManagementLineWidget 
 
 	line.disk.Move(525, 0)
 	line.AddChild(line.disk)
+
+	line.allocated.Move(625, 0)
+	line.AddChild(line.allocated)
 
 	line.UpdateBgColor()
 
@@ -82,14 +92,22 @@ func (self *PoolManagementLineWidget) UpdateBgColor() {
 	self.cores.SetColor(bgcolor)
 	self.ram.SetColor(bgcolor)
 	self.disk.SetColor(bgcolor)
+	self.allocated.SetColor(bgcolor)
 }
 
-func (self *PoolManagementLineWidget) UpdatePlacement() {
+func (self *PoolManagementLineWidget) UpdateStatus() {
 	placement := " - "
 	if self.item.Xplaced != -1 {
 		placement = fmt.Sprintf("%d/%d", self.item.Xplaced, self.item.Yplaced)
 	}
 	self.placement.SetText(placement)
+
+	allocated := "-"
+	if self.item.Coresallocated != 0 {
+		allocated = "yes"
+	}
+
+	self.allocated.SetText(allocated)
 }
 
 func (self *PoolManagementLineWidget) AddChild(child sws.Widget) {
@@ -128,7 +146,7 @@ type PoolManagementWidget struct {
 	currentFilter          PoolManagementFilter
 	addToPhysical          *sws.ButtonWidget
 	addToVps               *sws.ButtonWidget
-	addToUnallocated       *sws.ButtonWidget
+	addToUnassigned        *sws.ButtonWidget
 }
 
 //
@@ -150,7 +168,7 @@ func (self *PoolManagementWidget) SelectLine(line *PoolManagementLineWidget, sel
 	}
 
 	// check which action is possible
-	var showPhysical, showVps, showUnallocated bool
+	var showPhysical, showVps, showUnassigned bool
 	for l, lSelected := range self.selected {
 		if lSelected {
 			if l.item.Pool == nil {
@@ -158,7 +176,7 @@ func (self *PoolManagementWidget) SelectLine(line *PoolManagementLineWidget, sel
 				showVps = true
 			} else {
 				if l.item.Coresallocated == 0 {
-					showUnallocated = true
+					showUnassigned = true
 					if l.item.Pool.IsVps() {
 						showPhysical = true
 					} else {
@@ -178,10 +196,10 @@ func (self *PoolManagementWidget) SelectLine(line *PoolManagementLineWidget, sel
 	} else {
 		self.RemoveChild(self.addToVps)
 	}
-	if showUnallocated {
-		self.AddChild(self.addToUnallocated)
+	if showUnassigned {
+		self.AddChild(self.addToUnassigned)
 	} else {
-		self.RemoveChild(self.addToUnallocated)
+		self.RemoveChild(self.addToUnassigned)
 	}
 }
 
@@ -251,6 +269,32 @@ func (self *PoolManagementWidget) ItemUninstalled(item *InventoryItem) {
 func (self *PoolManagementWidget) ItemChangedPool(*InventoryItem) {
 }
 
+// is part of PoolSubscriber interface
+func (self *PoolManagementWidget) InventoryItemAdd(*InventoryItem) {}
+
+// InventoryItemRemove is part of PoolSubscriber interface
+func (self *PoolManagementWidget) InventoryItemRemove(*InventoryItem) {}
+
+// InventoryItemAllocate is part of PoolSubscriber interface
+func (self *PoolManagementWidget) InventoryItemAllocate(item *InventoryItem) {
+	for _, l := range self.listing.GetChildren() {
+		line := l.(*PoolManagementLineWidget)
+		if line.item == item {
+			line.UpdateStatus()
+		}
+	}
+}
+
+// InventoryItemRelease is part of PoolSubscriber interface
+func (self *PoolManagementWidget) InventoryItemRelease(item *InventoryItem) {
+	for _, l := range self.listing.GetChildren() {
+		line := l.(*PoolManagementLineWidget)
+		if line.item == item {
+			line.UpdateStatus()
+		}
+	}
+}
+
 //
 // this function will add/remove the item from the listing
 // if the item still correspond (or not) to the search filter
@@ -274,7 +318,7 @@ func (self *PoolManagementWidget) updateLineInSearch(item *InventoryItem) {
 			self.AddChild(self.scrolllisting)
 		} else {
 			// in case updateLineInSearch() was called because of an item installed/uninstalled
-			foundLine.UpdatePlacement()
+			foundLine.UpdateStatus()
 		}
 	} else {
 		if foundLine != nil {
@@ -392,7 +436,7 @@ func (self *PoolManagementWidget) Search(search string) {
 	self.selected = make(map[*PoolManagementLineWidget]bool)
 	self.RemoveChild(self.addToPhysical)
 	self.RemoveChild(self.addToVps)
-	self.RemoveChild(self.addToUnallocated)
+	self.RemoveChild(self.addToUnassigned)
 
 	for _, c := range self.instock {
 		if self.searchFilter(c) == true {
@@ -412,8 +456,8 @@ func (self *PoolManagementWidget) Search(search string) {
 func (self *PoolManagementWidget) Resize(width, height int32) {
 	self.CoreWidget.Resize(width, height)
 	if height > 150 {
-		if width > 625 {
-			width = 625
+		if width > 725 {
+			width = 725
 		}
 		if width < 20 {
 			width = 20
@@ -440,7 +484,7 @@ func NewPoolManagementWidget(root *sws.RootWidget) *PoolManagementWidget {
 		scrolllisting:          sws.NewScrollWidget(625, 400),
 		addToPhysical:          sws.NewButtonWidget(170, 25, "> To physical pool"),
 		addToVps:               sws.NewButtonWidget(170, 25, "> To vps pool"),
-		addToUnallocated:       sws.NewButtonWidget(170, 25, "> Back to unallocated"),
+		addToUnassigned:        sws.NewButtonWidget(170, 25, "> Back to unassigned"),
 	}
 	labelAssignement := sws.NewLabelWidget(200, 25, "New servers are assigned to pool:")
 	labelAssignement.Move(5, 0)
@@ -496,9 +540,9 @@ func NewPoolManagementWidget(root *sws.RootWidget) *PoolManagementWidget {
 		widget.callbackToPool(widget.inventory.GetDefaultVpsPool())
 	})
 
-	widget.addToUnallocated.Move(370, 100)
-	widget.addToUnallocated.SetCentered(false)
-	widget.addToUnallocated.SetClicked(func() {
+	widget.addToUnassigned.Move(370, 100)
+	widget.addToUnassigned.SetCentered(false)
+	widget.addToUnassigned.SetClicked(func() {
 		widget.callbackToPool(nil)
 	})
 
@@ -534,7 +578,11 @@ func NewPoolManagementWidget(root *sws.RootWidget) *PoolManagementWidget {
 	globaldisk.Move(525, 125)
 	widget.AddChild(globaldisk)
 
-	na := ui.NewNothingWidget(625, 25)
+	globalallocated := sws.NewLabelWidget(100, 25, "Allocated")
+	globalallocated.Move(625, 125)
+	widget.AddChild(globalallocated)
+
+	na := ui.NewNothingWidget(725, 25)
 	na.Move(0, 150)
 	widget.AddChild(na)
 
@@ -553,6 +601,8 @@ func (self *PoolManagementWidget) SetGame(inventory *Inventory, currenttime time
 	}
 	self.inventory = inventory
 	inventory.AddInventorySubscriber(self)
+	inventory.GetDefaultPhysicalPool().AddPoolSubscriber(self)
+	inventory.GetDefaultVpsPool().AddPoolSubscriber(self)
 	self.Search("assigned:physical")
 	// for material not placed but in stock
 	for _, item := range self.inventory.Items {
@@ -561,4 +611,15 @@ func (self *PoolManagementWidget) SetGame(inventory *Inventory, currenttime time
 		}
 	}
 	self.poolassignation.SetActiveChoice(inventory.GetDefaultPoolAllocation())
+	height := self.Height()
+	width := self.Width()
+	if height > 150 {
+		if width > 725 {
+			width = 725
+		}
+		if width < 20 {
+			width = 20
+		}
+		self.scrolllisting.Resize(width, height-150)
+	}
 }

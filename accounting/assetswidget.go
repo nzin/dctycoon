@@ -61,7 +61,7 @@ func NewAssetsWidget() *AssetsWidget {
 	widget.addLine("28", "Amortization")
 	widget.addSeparator()
 	widget.addCategory("Fluid Assets")
-	widget.addLine("51", "Bank account")
+	widget.addLine("51", "Bank account (est.)")
 	widget.addSeparator()
 	widget.addLine("assets", "Total")
 

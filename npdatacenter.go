@@ -154,6 +154,7 @@ func (self *NPDatacenter) LoadGame(timer *timer.GameTimer, trend *supplier.Trend
 		return
 	}
 
+	self.timer = timer
 	self.trend = trend
 	self.profilename = profilename
 	self.buyoutprofile = profile

@@ -38,7 +38,7 @@ func (self *MainFirewallWidget) SetGame(firewall *firewall.Firewall) {
 
 // NewMainInventoryWidget presents the pool and offer management window
 func NewMainFirewallWidget(root *sws.RootWidget) *MainFirewallWidget {
-	mainwidget := sws.NewMainWidget(900, 600, " Firewall Management ", true, true)
+	mainwidget := sws.NewMainWidget(975, 600, " Firewall Management ", true, true)
 	mainwidget.Center(root)
 
 	widget := &MainFirewallWidget{
@@ -152,7 +152,7 @@ type FirewallEventDetailIcmp struct {
 }
 
 func NewFirewallEventDetailIcmp(bgColor uint32, packet *firewall.Packet) *FirewallEventDetailIcmp {
-	corewidget := sws.NewCoreWidget(900, 75)
+	corewidget := sws.NewCoreWidget(940, 75)
 	corewidget.SetColor(bgColor)
 	details := &FirewallEventDetailIcmp{
 		CoreWidget: *corewidget,
@@ -186,7 +186,7 @@ func NewFirewallEventDetailIcmp(bgColor uint32, packet *firewall.Packet) *Firewa
 	if max100 > 100 {
 		max100 = 100
 	}
-	icmppayload := sws.NewLabelWidget(800, 25, fmt.Sprintf("%d (content='%s')", len(packet.Payload), packet.Payload[:max100]))
+	icmppayload := sws.NewLabelWidget(900, 25, fmt.Sprintf("%d (content='%s')", len(packet.Payload), packet.Payload[:max100]))
 	icmppayload.SetColor(bgColor)
 	icmppayload.Move(100, 50)
 	details.AddChild(icmppayload)
@@ -199,7 +199,7 @@ type FirewallEventDetailUdp struct {
 }
 
 func NewFirewallEventDetailUdp(bgColor uint32, packet *firewall.Packet) *FirewallEventDetailUdp {
-	corewidget := sws.NewCoreWidget(900, 75)
+	corewidget := sws.NewCoreWidget(940, 75)
 	corewidget.SetColor(bgColor)
 	details := &FirewallEventDetailUdp{
 		CoreWidget: *corewidget,
@@ -229,7 +229,7 @@ func NewFirewallEventDetailUdp(bgColor uint32, packet *firewall.Packet) *Firewal
 	labelpayload.Move(0, 50)
 	details.AddChild(labelpayload)
 
-	payload := sws.NewLabelWidget(800, 25, packet.Payload)
+	payload := sws.NewLabelWidget(900, 25, packet.Payload)
 	payload.SetColor(bgColor)
 	payload.Move(100, 50)
 	details.AddChild(payload)
@@ -242,7 +242,7 @@ type FirewallEventDetailTcp struct {
 }
 
 func NewFirewallEventDetailTcp(bgColor uint32, packet *firewall.Packet) *FirewallEventDetailTcp {
-	corewidget := sws.NewCoreWidget(900, 100)
+	corewidget := sws.NewCoreWidget(940, 100)
 	corewidget.SetColor(bgColor)
 	details := &FirewallEventDetailTcp{
 		CoreWidget: *corewidget,
@@ -307,7 +307,7 @@ func NewFirewallEventDetailTcp(bgColor uint32, packet *firewall.Packet) *Firewal
 	labelpayload.Move(0, 75)
 	details.AddChild(labelpayload)
 
-	payload := sws.NewLabelWidget(800, 25, packet.Payload)
+	payload := sws.NewLabelWidget(900, 25, packet.Payload)
 	payload.SetColor(bgColor)
 	payload.Move(100, 75)
 	details.AddChild(payload)
@@ -344,6 +344,13 @@ func (self *FirewallStatusWidget) addFirewallEvent(event *firewall.FirewallEvent
 	}
 	labels = append(labels, event.Packet.Ipsrc)
 	labels = append(labels, event.Packet.Ipdst)
+	labels = append(labels, fmt.Sprintf("%d", event.Packet.SrcPort))
+	labels = append(labels, fmt.Sprintf("%d", event.Packet.DstPort))
+	status := "BLOCK"
+	if event.Pass == true {
+		status = "PASS"
+	}
+	labels = append(labels, status)
 
 	row := ui.NewTableWithDetailsRow(bgColor, labels, details)
 	self.pastEvents.AddRowTop(row)
@@ -384,14 +391,14 @@ func (self *FirewallStatusWidget) Resize(w, h int32) {
 	if h < 120 {
 		h = 120
 	}
-	self.pastEvents.Resize(800, h-90)
+	self.pastEvents.Resize(940, h-90)
 }
 
 func NewFirewallStatusWidget(w, h int32) *FirewallStatusWidget {
 	corewidget := sws.NewCoreWidget(w, h)
 	widget := &FirewallStatusWidget{
 		CoreWidget: *corewidget,
-		pastEvents: ui.NewTableWithDetails(525, 200),
+		pastEvents: ui.NewTableWithDetails(940, 200),
 		sucessrate: sws.NewLabelWidget(100, 25, "100%"),
 	}
 	sucesslabel := sws.NewLabelWidget(200, 25, "Firewall effectiveness:")
@@ -410,6 +417,9 @@ func NewFirewallStatusWidget(w, h int32) *FirewallStatusWidget {
 	widget.pastEvents.AddHeader("Protocol", 100, ui.TableWithDetailsRowByString)
 	widget.pastEvents.AddHeader("Source IP", 200, nil)
 	widget.pastEvents.AddHeader("Dest IP", 200, nil)
+	widget.pastEvents.AddHeader("Src port", 100, nil)
+	widget.pastEvents.AddHeader("Dst port", 100, nil)
+	widget.pastEvents.AddHeader("Status", 100, nil)
 	widget.AddChild(widget.pastEvents)
 
 	return widget
