@@ -152,7 +152,7 @@ type FirewallEventDetailIcmp struct {
 }
 
 func NewFirewallEventDetailIcmp(bgColor uint32, packet *firewall.Packet) *FirewallEventDetailIcmp {
-	corewidget := sws.NewCoreWidget(900, 75)
+	corewidget := sws.NewCoreWidget(940, 75)
 	corewidget.SetColor(bgColor)
 	details := &FirewallEventDetailIcmp{
 		CoreWidget: *corewidget,
@@ -186,7 +186,7 @@ func NewFirewallEventDetailIcmp(bgColor uint32, packet *firewall.Packet) *Firewa
 	if max100 > 100 {
 		max100 = 100
 	}
-	icmppayload := sws.NewLabelWidget(800, 25, fmt.Sprintf("%d (content='%s')", len(packet.Payload), packet.Payload[:max100]))
+	icmppayload := sws.NewLabelWidget(900, 25, fmt.Sprintf("%d (content='%s')", len(packet.Payload), packet.Payload[:max100]))
 	icmppayload.SetColor(bgColor)
 	icmppayload.Move(100, 50)
 	details.AddChild(icmppayload)
@@ -199,7 +199,7 @@ type FirewallEventDetailUdp struct {
 }
 
 func NewFirewallEventDetailUdp(bgColor uint32, packet *firewall.Packet) *FirewallEventDetailUdp {
-	corewidget := sws.NewCoreWidget(900, 75)
+	corewidget := sws.NewCoreWidget(940, 75)
 	corewidget.SetColor(bgColor)
 	details := &FirewallEventDetailUdp{
 		CoreWidget: *corewidget,
@@ -229,7 +229,7 @@ func NewFirewallEventDetailUdp(bgColor uint32, packet *firewall.Packet) *Firewal
 	labelpayload.Move(0, 50)
 	details.AddChild(labelpayload)
 
-	payload := sws.NewLabelWidget(800, 25, packet.Payload)
+	payload := sws.NewLabelWidget(900, 25, packet.Payload)
 	payload.SetColor(bgColor)
 	payload.Move(100, 50)
 	details.AddChild(payload)
@@ -242,7 +242,7 @@ type FirewallEventDetailTcp struct {
 }
 
 func NewFirewallEventDetailTcp(bgColor uint32, packet *firewall.Packet) *FirewallEventDetailTcp {
-	corewidget := sws.NewCoreWidget(900, 100)
+	corewidget := sws.NewCoreWidget(940, 100)
 	corewidget.SetColor(bgColor)
 	details := &FirewallEventDetailTcp{
 		CoreWidget: *corewidget,
@@ -307,7 +307,7 @@ func NewFirewallEventDetailTcp(bgColor uint32, packet *firewall.Packet) *Firewal
 	labelpayload.Move(0, 75)
 	details.AddChild(labelpayload)
 
-	payload := sws.NewLabelWidget(800, 25, packet.Payload)
+	payload := sws.NewLabelWidget(900, 25, packet.Payload)
 	payload.SetColor(bgColor)
 	payload.Move(100, 75)
 	details.AddChild(payload)
