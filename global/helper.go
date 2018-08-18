@@ -4,7 +4,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"unsafe"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/veandco/go-sdl2/img"
@@ -131,7 +130,10 @@ func LoadImageAsset(filename string) (*sdl.Surface, error) {
 	if err != nil {
 		return nil, err
 	}
-	src := sdl.RWFromMem(unsafe.Pointer(&data[0]), len(data))
+	src,err := sdl.RWFromMem(data)
+	if err != nil {
+		return nil, err
+	}
 	imagetype := strings.ToUpper(filename[len(filename)-3:])
 
 	return img.LoadTypedRW(src, false, imagetype)
