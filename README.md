@@ -9,7 +9,7 @@ i.e. I wanted to see the guys behind Server Tycoon create and release their game
 - you need go version 1.8.x minimum
 - Needs sws 0.5.1 library (https://github.com/nzin/sws) and especially grab sdl2 (see https://github.com/veandco/go-sdl2)
 - you should download dependancies with `go get -u ./...`
-- and finaly you should compile with `./compile.sh`
+- and finally you should compile with `./compile.sh`
 
 ## For Linux
 
