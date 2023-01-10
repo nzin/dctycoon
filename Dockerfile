@@ -1,4 +1,4 @@
-FROM golang:1.9-alpine3.7
+FROM golang:1.18-alpine
 MAINTAINER Jordi Riera <kender.jr@gmail.com>
 
 RUN apk add --no-cache \
@@ -17,8 +17,7 @@ RUN apk add --no-cache \
 
 WORKDIR /go/src/github.com/nzin/dctycoon/
 COPY . .
-RUN go get -u github.com/golang/lint/golint && \
-    go get -u github.com/jteeuwen/go-bindata/... && \
+RUN go install github.com/shuLhan/go-bindata/v4/cmd/go-bindata@master && \
     go get -u github.com/stretchr/testify/assert && \
     go get github.com/axw/gocov/gocov && \
     curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter && \

@@ -1,18 +1,16 @@
 package global
 
 import (
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
-	"unsafe"
-	"fmt"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/veandco/go-sdl2/img"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-//
 // GlowImage takes a asset path, load it, and add a glow effect around it
 func GlowImage(spriteassetpath string, color uint32) *sdl.Surface {
 	log.Debug("GlowImage(", spriteassetpath, ",", color, ")")
@@ -48,7 +46,6 @@ func GlowImage(spriteassetpath string, color uint32) *sdl.Surface {
 	return nil
 }
 
-//
 // FlashImage will flash/brighten a surface depending on the 'level'
 // - level=8 -> completely white
 // - level=0 -> the normal image
@@ -79,7 +76,6 @@ func FlashImage(surface *sdl.Surface, level uint32) {
 	}
 }
 
-//
 // ParseMega parse a string like 100M and translate it into
 // a int32 in Megabytes
 func ParseMega(str string) int32 {
@@ -113,7 +109,6 @@ func ParseMega(str string) int32 {
 	return int32(value)
 }
 
-//
 // AdjustMega get a number in megabyte, reduce it in GB, TB and return the string result
 func AdjustMega(mega int32) string {
 	if mega >= 2000000 {
@@ -125,16 +120,15 @@ func AdjustMega(mega int32) string {
 	return strconv.Itoa(int(mega)) + " MB"
 }
 
-//
 // LoadImageAsset load an SDL (PNG) image directly from assets
 func LoadImageAsset(filename string) (*sdl.Surface, error) {
 	data, err := Asset(filename)
 	if err != nil {
 		return nil, err
 	}
-	src := sdl.RWFromMem(unsafe.Pointer(&data[0]),len(data))
-	if src == nil {
-		return nil, fmt.Errorf("Unable to read "+filename)
+	src, err := sdl.RWFromMem(data)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to read " + filename + ": " + err.Error())
 	}
 	imagetype := strings.ToUpper(filename[len(filename)-3:])
 
@@ -160,11 +154,9 @@ func AdjustImage(image *sdl.Surface, w, h int32) (*sdl.Surface, error) {
 	return dst, nil
 }
 
-//
 // helper function, to know which pixel is in (x.y)
 //
 // It is mainly used to know if we are on a transparent pixel
-//
 func GetSurfacePixel(surface *sdl.Surface, x, y int32) (red, green, blue, alpha uint8) {
 	if x < 0 || x >= surface.W || y < 0 || y >= surface.H {
 		return 0, 0, 0, 0
